@@ -8,9 +8,22 @@ import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import AppLayout from "@/components/layout/AppLayout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import InventoryIndex from "./pages/inventory/InventoryIndex";
+import ProductsPage from "./pages/inventory/ProductsPage";
+import ProductForm from "./pages/inventory/ProductForm";
+import WarehousesPage from "./pages/inventory/WarehousesPage";
+import CategoriesPage from "./pages/inventory/CategoriesPage";
+import BundlesPage from "./pages/inventory/BundlesPage";
+import BundleForm from "./pages/inventory/BundleForm";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+const Protected = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute>
+    <AppLayout>{children}</AppLayout>
+  </ProtectedRoute>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -21,17 +34,17 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Dashboard />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
+            <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+            <Route path="/" element={<Protected><Dashboard /></Protected>} />
+            <Route path="/inventory" element={<Protected><InventoryIndex /></Protected>} />
+            <Route path="/inventory/products" element={<Protected><ProductsPage /></Protected>} />
+            <Route path="/inventory/products/new" element={<Protected><ProductForm /></Protected>} />
+            <Route path="/inventory/products/:id" element={<Protected><ProductForm /></Protected>} />
+            <Route path="/inventory/warehouses" element={<Protected><WarehousesPage /></Protected>} />
+            <Route path="/inventory/categories" element={<Protected><CategoriesPage /></Protected>} />
+            <Route path="/inventory/bundles" element={<Protected><BundlesPage /></Protected>} />
+            <Route path="/inventory/bundles/new" element={<Protected><BundleForm /></Protected>} />
+            <Route path="/inventory/bundles/:id" element={<Protected><BundleForm /></Protected>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
