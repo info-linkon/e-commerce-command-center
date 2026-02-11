@@ -21,6 +21,7 @@ import OrderDetail from "./pages/orders/OrderDetail";
 import PosPage from "./pages/PosPage";
 import WooSyncPage from "./pages/WooSyncPage";
 import ReportsPage from "./pages/ReportsPage";
+import DocumentsPage from "./pages/DocumentsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/orders/:id" element={<Protected><OrderDetail /></Protected>} />
             <Route path="/pos" element={<Protected><PosPage /></Protected>} />
             <Route path="/woo-sync" element={<Protected><WooSyncPage /></Protected>} />
+            <Route path="/documents" element={<Protected><DocumentsPage /></Protected>} />
             <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
