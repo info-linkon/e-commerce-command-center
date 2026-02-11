@@ -2,3 +2,6 @@ project_id = "gboskpvfvwrsiqwzpctk"
 
 [functions.woo-sync]
 verify_jwt = false
+
+[functions.ezcount-doc]
+verify_jwt = false

@@ -204,6 +204,65 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          doc_number: string | null
+          doc_type: number
+          doc_url: string | null
+          doc_uuid: string | null
+          error_message: string | null
+          id: string
+          order_id: string | null
+          status: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          doc_number?: string | null
+          doc_type: number
+          doc_url?: string | null
+          doc_uuid?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          doc_number?: string | null
+          doc_type?: number
+          doc_url?: string | null
+          doc_uuid?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory: {
         Row: {
           id: string
