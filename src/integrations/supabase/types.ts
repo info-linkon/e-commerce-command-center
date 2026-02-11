@@ -243,6 +243,90 @@ export type Database = {
           },
         ]
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          quantity: number
+          total_price: number
+          unit_price: number
+          variation_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+          variation_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+          variation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          notes: string | null
+          order_number: number
+          status: Database["public"]["Enums"]["order_status"]
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_variations: {
         Row: {
           cost_price: number
@@ -437,6 +521,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       bundle_type: "simple_bundle" | "variable_bundle"
+      order_status: "pending" | "processing" | "completed" | "cancelled"
       product_type: "simple" | "variable"
     }
     CompositeTypes: {
@@ -567,6 +652,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       bundle_type: ["simple_bundle", "variable_bundle"],
+      order_status: ["pending", "processing", "completed", "cancelled"],
       product_type: ["simple", "variable"],
     },
   },
