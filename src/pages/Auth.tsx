@@ -4,21 +4,20 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import logo from "@/assets/logo.webp";
 
 const Auth = () => {
-  const { user, loading, signIn, signUp } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
+  const { user, loading, signIn } = useAuth();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
         <div className="text-muted-foreground">טוען...</div>
       </div>
     );
@@ -30,20 +29,14 @@ const Auth = () => {
     e.preventDefault();
     setSubmitting(true);
 
-    const { error } = isLogin
-      ? await signIn(email, password)
-      : await signUp(email, password, displayName);
+    const email = `${username}@elwejha.app`;
+    const { error } = await signIn(email, password);
 
     if (error) {
       toast({
         title: "שגיאה",
-        description: error.message,
+        description: "שם משתמש או סיסמה לא נכונים",
         variant: "destructive",
-      });
-    } else if (!isLogin) {
-      toast({
-        title: "ההרשמה הצליחה",
-        description: "בדוק את האימייל שלך לאישור החשבון",
       });
     }
 
@@ -51,37 +44,25 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">מערכת ניהול עסקית</CardTitle>
-          <CardDescription>
-            {isLogin ? "התחבר לחשבון שלך" : "צור חשבון חדש"}
-          </CardDescription>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-muted to-background p-4">
+      <Card className="w-full max-w-sm shadow-xl border-primary/20">
+        <CardHeader className="text-center pb-2">
+          <img src={logo} alt="Elwejha Logo" className="w-28 h-28 mx-auto rounded-full shadow-lg" />
+          <h1 className="text-xl font-bold mt-3 text-foreground">מערכת ניהול</h1>
+          <p className="text-sm text-muted-foreground">הכנס את פרטי ההתחברות שלך</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="displayName">שם תצוגה</Label>
-                <Input
-                  id="displayName"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="הכנס שם תצוגה"
-                />
-              </div>
-            )}
             <div className="space-y-2">
-              <Label htmlFor="email">אימייל</Label>
+              <Label htmlFor="username">שם משתמש</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="הכנס שם משתמש"
                 required
                 dir="ltr"
+                autoComplete="username"
               />
             </div>
             <div className="space-y-2">
@@ -94,22 +75,13 @@ const Auth = () => {
                 placeholder="••••••••"
                 required
                 dir="ltr"
-                minLength={6}
+                autoComplete="current-password"
               />
             </div>
             <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? "מעבד..." : isLogin ? "התחבר" : "הירשם"}
+              {submitting ? "מתחבר..." : "התחבר"}
             </Button>
           </form>
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-muted-foreground underline hover:text-foreground"
-            >
-              {isLogin ? "אין לך חשבון? הירשם" : "יש לך חשבון? התחבר"}
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>
