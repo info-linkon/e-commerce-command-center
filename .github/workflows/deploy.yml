@@ -1,0 +1,44 @@
+# Triggered: 2026-02-02
+name: Build and Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main        # אם תעבוד על ברנצ' אחר, תשנה כאן
+
+# ביטול אוטומטי של ריצות ישנות כשיש deploy חדש
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build      # Vite => dist
+
+      - name: Deploy via FTP to cPanel
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
+          protocol: ftp
+          local-dir: dist/       # תיקיית ה-build של Vite
+          server-dir: /   # כאן צריך לשים את הנתיב המדויק על השרת
+          dangerous-clean-slate: true
