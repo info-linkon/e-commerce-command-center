@@ -14,16 +14,430 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bundle_items: {
+        Row: {
+          bundle_id: string
+          id: string
+          quantity: number
+          variation_id: string
+        }
+        Insert: {
+          bundle_id: string
+          id?: string
+          quantity?: number
+          variation_id: string
+        }
+        Update: {
+          bundle_id?: string
+          id?: string
+          quantity?: number
+          variation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundle_items_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "bundles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bundle_items_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bundle_variation_items: {
+        Row: {
+          bundle_variation_id: string
+          id: string
+          quantity: number
+          variation_id: string
+        }
+        Insert: {
+          bundle_variation_id: string
+          id?: string
+          quantity?: number
+          variation_id: string
+        }
+        Update: {
+          bundle_variation_id?: string
+          id?: string
+          quantity?: number
+          variation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundle_variation_items_bundle_variation_id_fkey"
+            columns: ["bundle_variation_id"]
+            isOneToOne: false
+            referencedRelation: "bundle_variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bundle_variation_items_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bundle_variations: {
+        Row: {
+          bundle_id: string
+          created_at: string
+          id: string
+          name: string
+          price: number
+          woo_id: number | null
+        }
+        Insert: {
+          bundle_id: string
+          created_at?: string
+          id?: string
+          name: string
+          price?: number
+          woo_id?: number | null
+        }
+        Update: {
+          bundle_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number
+          woo_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundle_variations_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "bundles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bundles: {
+        Row: {
+          bundle_type: Database["public"]["Enums"]["bundle_type"]
+          created_at: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          bundle_type?: Database["public"]["Enums"]["bundle_type"]
+          created_at?: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          bundle_type?: Database["public"]["Enums"]["bundle_type"]
+          created_at?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundles_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_registers: {
+        Row: {
+          created_at: string
+          current_balance: number
+          id: string
+          is_active: boolean
+          name: string
+          opening_balance: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_balance?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          opening_balance?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_balance?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          opening_balance?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          woo_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          woo_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          woo_id?: number | null
+        }
+        Relationships: []
+      }
+      inventory: {
+        Row: {
+          id: string
+          quantity: number
+          updated_at: string
+          variation_id: string
+          warehouse_id: string
+        }
+        Insert: {
+          id?: string
+          quantity?: number
+          updated_at?: string
+          variation_id: string
+          warehouse_id: string
+        }
+        Update: {
+          id?: string
+          quantity?: number
+          updated_at?: string
+          variation_id?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variations: {
+        Row: {
+          cost_price: number
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          product_id: string
+          sku: string | null
+          updated_at: string
+          woo_id: number | null
+        }
+        Insert: {
+          cost_price?: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          price?: number
+          product_id: string
+          sku?: string | null
+          updated_at?: string
+          woo_id?: number | null
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          product_id?: string
+          sku?: string | null
+          updated_at?: string
+          woo_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category_id: string | null
+          cost_price: number
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_published: boolean
+          name: string
+          product_type: Database["public"]["Enums"]["product_type"]
+          sale_price: number
+          short_description: string | null
+          sku: string | null
+          updated_at: string
+          woo_id: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          name: string
+          product_type?: Database["public"]["Enums"]["product_type"]
+          sale_price?: number
+          short_description?: string | null
+          sku?: string | null
+          updated_at?: string
+          woo_id?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          name?: string
+          product_type?: Database["public"]["Enums"]["product_type"]
+          sale_price?: number
+          short_description?: string | null
+          sku?: string | null
+          updated_at?: string
+          woo_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      warehouses: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      bundle_type: "simple_bundle" | "variable_bundle"
+      product_type: "simple" | "variable"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +564,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      bundle_type: ["simple_bundle", "variable_bundle"],
+      product_type: ["simple", "variable"],
+    },
   },
 } as const
