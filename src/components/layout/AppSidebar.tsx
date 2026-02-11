@@ -45,7 +45,7 @@ const menuItems = [
   { title: "פריטי אתר", url: "/website-items", icon: Globe },
   { title: "הזמנות", url: "/orders", icon: ShoppingCart },
   { title: "קופה", url: "/pos", icon: CreditCard },
-  { title: "סנכרון WooCommerce", url: "/woo-sync", icon: Globe },
+  
   { title: "מסמכים", url: "/documents", icon: FileText },
   { title: "דוחות", url: "/reports", icon: BarChart3 },
   { title: "הגדרות", url: "/settings", icon: Settings },
