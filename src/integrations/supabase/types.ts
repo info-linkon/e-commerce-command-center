@@ -290,6 +290,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          cash_register_id: string | null
           created_at: string
           customer_email: string | null
           customer_name: string | null
@@ -297,11 +298,13 @@ export type Database = {
           id: string
           notes: string | null
           order_number: number
+          source: Database["public"]["Enums"]["order_source"]
           status: Database["public"]["Enums"]["order_status"]
           total: number
           updated_at: string
         }
         Insert: {
+          cash_register_id?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string | null
@@ -309,11 +312,13 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: number
+          source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
         }
         Update: {
+          cash_register_id?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string | null
@@ -321,11 +326,65 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: number
+          source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_cash_register_id_fkey"
+            columns: ["cash_register_id"]
+            isOneToOne: false
+            referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          cash_register_id: string | null
+          created_at: string
+          id: string
+          order_id: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          reference: string | null
+        }
+        Insert: {
+          amount?: number
+          cash_register_id?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          reference?: string | null
+        }
+        Update: {
+          amount?: number
+          cash_register_id?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_cash_register_id_fkey"
+            columns: ["cash_register_id"]
+            isOneToOne: false
+            referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_variations: {
         Row: {
@@ -521,7 +580,9 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       bundle_type: "simple_bundle" | "variable_bundle"
+      order_source: "manual" | "pos" | "website"
       order_status: "pending" | "processing" | "completed" | "cancelled"
+      payment_method: "cash" | "bit" | "credit"
       product_type: "simple" | "variable"
     }
     CompositeTypes: {
@@ -652,7 +713,9 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       bundle_type: ["simple_bundle", "variable_bundle"],
+      order_source: ["manual", "pos", "website"],
       order_status: ["pending", "processing", "completed", "cancelled"],
+      payment_method: ["cash", "bit", "credit"],
       product_type: ["simple", "variable"],
     },
   },

@@ -18,6 +18,7 @@ import BundleForm from "./pages/inventory/BundleForm";
 import OrdersPage from "./pages/orders/OrdersPage";
 import OrderForm from "./pages/orders/OrderForm";
 import OrderDetail from "./pages/orders/OrderDetail";
+import PosPage from "./pages/PosPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
             <Route path="/orders/new" element={<Protected><OrderForm /></Protected>} />
             <Route path="/orders/:id" element={<Protected><OrderDetail /></Protected>} />
+            <Route path="/pos" element={<Protected><PosPage /></Protected>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
