@@ -1,99 +1,113 @@
 
 
-# תוכנית בנייה - שלב 1: תשתית, אימות, ניווט ודשבורד
+# שלב 2: ניהול מלאי פנימי - פריטים, וריאציות, מחסנים, קטגוריות ומארזים
 
-זהו השלב הראשון מתוך 8 שלבים. נבנה את הבסיס של המערכת כולל מסד נתונים, אימות משתמשים, מבנה ניווט RTL, ודשבורד ראשי.
+שלב זה בונה את מערכת ניהול המלאי המלאה - הליבה של המערכת.
 
 ---
 
-## מה ייבנה בשלב הזה
+## מה ייבנה
 
-### 1. מסד נתונים - טבלאות בסיס
-יצירת הטבלאות הבאות ב-Supabase:
+### 1. ניהול מחסנים (/inventory/warehouses)
+- טבלת מחסנים עם שם, כתובת, סטטוס (פעיל/לא פעיל)
+- הוספה, עריכה, מחיקה של מחסנים
+- Dialog לטופס הוספה/עריכה
 
-- **profiles** - פרופילי משתמשים (שם תצוגה, טלפון)
-- **user_roles** - תפקידי משתמשים (עם enum: admin, user)
-- **warehouses** - מחסנים (שם, כתובת, פעיל/לא)
-- **cash_registers** - קופות מזומנים (שם, יתרת פתיחה, פעיל/לא)
-- **products** - פריטים (שם, SKU, מחיר עלות, מחיר מכירה, סוג מוצר, מפורסם באתר, WooCommerce ID)
-- **product_variations** - וריאציות (שם, SKU, מחיר, WooCommerce ID)
-- **bundles** - מארזים (מוצר מארז, סוג: פשוט/עם משתנים)
-- **bundle_items** - פריטי מארז (וריאציה + כמות)
-- **bundle_variations** - וריאציות מארז (שם, מחיר)
-- **bundle_variation_items** - פריטי וריאציית מארז
-- **inventory** - מלאי (וריאציה x מחסן = כמות)
-- **categories** - קטגוריות (שם, סדר תצוגה, WooCommerce ID)
+### 2. ניהול קטגוריות (/inventory/categories)
+- טבלת קטגוריות עם שם וסדר תצוגה
+- הוספה, עריכה, מחיקה
+- גרירה לשינוי סדר (או כפתורי חצים)
 
-כל הטבלאות יכללו RLS policies מתאימות.
+### 3. ניהול פריטים (/inventory/products)
+- רשימת מוצרים בטבלה עם חיפוש וסינון לפי קטגוריה
+- הוספת מוצר חדש (פשוט או עם וריאציות)
+- עריכת מוצר קיים
+- מחיקת מוצר
+- ניהול וריאציות בתוך דף המוצר (הוספה, עריכה, מחיקה)
 
-### 2. אימות משתמשים
-- דף התחברות בעברית (אימייל + סיסמה)
-- הגנת מסלולים - רק משתמשים מחוברים נכנסים למערכת
-- יצירת פרופיל אוטומטית בהרשמה (Trigger)
-- ניהול Session עם onAuthStateChange
+### 4. ניהול מארזים (Bundles) (/inventory/bundles)
+- יצירת מארז חדש (מארז פשוט או מארז עם וריאציות)
+- בחירת פריטים (וריאציות) + כמויות שמרכיבים את המארז
+- עריכה ומחיקה
 
-### 3. מבנה ניווט RTL
-- Sidebar ימני קבוע עם תפריט ניווט
-- סעיפי תפריט: דשבורד, מלאי, פריטי אתר, הזמנות, קופה, מסמכים, דוחות, הגדרות
-- אייקונים לכל סעיף (Lucide icons)
-- לוגו בראש הסרגל
-- כפתור התנתקות
-
-### 4. דשבורד ראשי
-- כרטיסי סיכום: מכירות היום, הזמנות ממתינות, פריטים במלאי נמוך, סה"כ הכנסות החודש
-- גרף מכירות שבועי (Recharts)
-- רשימת פעולות אחרונות
-- התראות מלאי נמוך
+### 5. תצוגת מלאי (/inventory)
+- טבלה מרכזית: וריאציה x מחסן = כמות
+- עדכון כמויות ישירות מהטבלה
+- סינון לפי מחסן, מוצר, קטגוריה
+- התראת מלאי נמוך (סף ברירת מחדל: 5)
 
 ---
 
 ## פרטים טכניים
 
-### מבנה תיקיות
+### מבנה תיקיות חדש
 ```text
 src/
-  components/
-    layout/
-      AppSidebar.tsx        -- סרגל צד ראשי
-      AppLayout.tsx          -- Layout wrapper עם RTL
-      ProtectedRoute.tsx     -- הגנת מסלולים
-    dashboard/
-      StatsCards.tsx          -- כרטיסי סיכום
-      SalesChart.tsx          -- גרף מכירות
-      RecentActivity.tsx     -- פעולות אחרונות
-      LowStockAlerts.tsx     -- התראות מלאי
-  hooks/
-    useAuth.tsx              -- Hook לניהול אימות
   pages/
-    Auth.tsx                 -- דף התחברות
-    Dashboard.tsx            -- דשבורד ראשי
-    Index.tsx                -- Redirect לדשבורד
+    inventory/
+      InventoryIndex.tsx       -- תצוגת מלאי ראשית
+      ProductsPage.tsx         -- ניהול פריטים
+      ProductForm.tsx          -- טופס הוספה/עריכה מוצר
+      WarehousesPage.tsx       -- ניהול מחסנים
+      CategoriesPage.tsx       -- ניהול קטגוריות
+      BundlesPage.tsx          -- ניהול מארזים
+      BundleForm.tsx           -- טופס מארז
+  components/
+    inventory/
+      ProductsTable.tsx        -- טבלת מוצרים
+      VariationsManager.tsx    -- ניהול וריאציות בתוך מוצר
+      InventoryTable.tsx       -- טבלת מלאי (כמויות)
+      WarehouseDialog.tsx      -- Dialog להוספת/עריכת מחסן
+      CategoryDialog.tsx       -- Dialog לקטגוריה
+      BundleItemsPicker.tsx    -- בוחר פריטים למארז
+  hooks/
+    useProducts.ts             -- React Query hooks למוצרים
+    useWarehouses.ts           -- hooks למחסנים
+    useCategories.ts           -- hooks לקטגוריות
+    useInventory.ts            -- hooks למלאי
+    useBundles.ts              -- hooks למארזים
 ```
 
-### SQL Migration - טבלאות בסיס
-- יצירת enum לסוגי מוצרים: simple, variable
-- יצירת enum לסוגי מארזים: simple_bundle, variable_bundle
-- יצירת enum לתפקידים: admin, user
-- יצירת כל הטבלאות עם foreign keys, indexes, ו-RLS policies
-- Trigger ליצירת פרופיל אוטומטית בהרשמה
+### ניווט - תפריט משנה למלאי
+עדכון ה-Sidebar כך שלחיצה על "מלאי" תפתח תת-תפריט:
+- מלאי (תצוגה ראשית)
+- פריטים
+- מחסנים
+- קטגוריות
+- מארזים
 
-### RTL ועברית
-- הוספת `dir="rtl"` ו-`lang="he"` ל-HTML
-- עדכון index.css עם font-family עברי (system fonts)
-- Sidebar בצד ימין
+### React Query Hooks
+כל hook יכלול:
+- `useQuery` לשליפת נתונים
+- `useMutation` להוספה, עריכה, מחיקה
+- Invalidation אוטומטי של cache לאחר שינויים
+- Toast notifications להצלחה/שגיאה
 
-### הגנת אבטחה
-- RLS על כל הטבלאות - רק משתמשים מאומתים
-- תפקידים בטבלה נפרדת (user_roles) עם security definer function
-- אין בדיקות הרשאה בצד לקוח
+### Routes חדשים ב-App.tsx
+```text
+/inventory          -- תצוגת מלאי ראשית
+/inventory/products -- ניהול פריטים
+/inventory/products/new -- הוספת מוצר
+/inventory/products/:id -- עריכת מוצר
+/inventory/warehouses -- ניהול מחסנים
+/inventory/categories -- ניהול קטגוריות
+/inventory/bundles    -- ניהול מארזים
+/inventory/bundles/new -- הוספת מארז
+/inventory/bundles/:id -- עריכת מארז
+```
+
+### אין שינויי מסד נתונים
+כל הטבלאות הנדרשות (products, product_variations, warehouses, categories, bundles, bundle_items, bundle_variations, bundle_variation_items, inventory) כבר קיימות מהשלב הקודם.
 
 ---
 
 ## סדר ביצוע
-1. SQL Migration - יצירת כל הטבלאות, triggers, ו-RLS
-2. עדכון RTL והגדרות עברית
-3. בניית useAuth hook ודף התחברות
-4. בניית Layout (Sidebar + ProtectedRoute)
-5. בניית דשבורד עם כרטיסי סיכום וגרפים (נתונים ריקים בשלב זה)
-6. הגדרת Routes ב-App.tsx
+1. יצירת React Query hooks לכל הישויות (products, warehouses, categories, inventory, bundles)
+2. עדכון Sidebar עם תת-תפריט למלאי
+3. בניית דף מחסנים (הכי פשוט - נקודת התחלה טובה)
+4. בניית דף קטגוריות
+5. בניית דף פריטים עם טופס הוספה/עריכה + ניהול וריאציות
+6. בניית דף מארזים עם טופס
+7. בניית תצוגת מלאי ראשית (טבלת כמויות)
+8. הוספת כל ה-Routes ל-App.tsx
 
