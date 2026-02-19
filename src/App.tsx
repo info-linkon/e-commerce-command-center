@@ -42,9 +42,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<FlowsPage />} />
             <Route path="/flows" element={<FlowsPage />} />
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
-            <Route path="/" element={<Protected><Dashboard /></Protected>} />
             <Route path="/inventory" element={<Protected><InventoryIndex /></Protected>} />
             <Route path="/inventory/products" element={<Protected><ProductsPage /></Protected>} />
             <Route path="/inventory/products/new" element={<Protected><ProductForm /></Protected>} />
