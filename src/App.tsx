@@ -23,6 +23,7 @@ import WooSyncPage from "./pages/WooSyncPage";
 import ReportsPage from "./pages/ReportsPage";
 import DocumentsPage from "./pages/DocumentsPage";
 import NotFound from "./pages/NotFound";
+import FlowsPage from "./pages/FlowsPage";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/flows" element={<FlowsPage />} />
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
             <Route path="/" element={<Protected><Dashboard /></Protected>} />
             <Route path="/inventory" element={<Protected><InventoryIndex /></Protected>} />
