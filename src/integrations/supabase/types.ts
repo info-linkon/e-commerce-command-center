@@ -180,6 +180,51 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          from_register_id: string
+          id: string
+          notes: string | null
+          to_register_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          from_register_id: string
+          id?: string
+          notes?: string | null
+          to_register_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          from_register_id?: string
+          id?: string
+          notes?: string | null
+          to_register_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_transfers_from_register_id_fkey"
+            columns: ["from_register_id"]
+            isOneToOne: false
+            referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_transfers_to_register_id_fkey"
+            columns: ["to_register_id"]
+            isOneToOne: false
+            referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -203,6 +248,86 @@ export type Database = {
           woo_id?: number | null
         }
         Relationships: []
+      }
+      deliveries: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          delivery_company_id: string
+          id: string
+          notes: string | null
+          order_id: string
+          status: Database["public"]["Enums"]["delivery_status"]
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          delivery_company_id: string
+          id?: string
+          notes?: string | null
+          order_id: string
+          status?: Database["public"]["Enums"]["delivery_status"]
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          delivery_company_id?: string
+          id?: string
+          notes?: string | null
+          order_id?: string
+          status?: Database["public"]["Enums"]["delivery_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliveries_delivery_company_id_fkey"
+            columns: ["delivery_company_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliveries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_companies: {
+        Row: {
+          cash_register_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          is_internal: boolean
+          name: string
+        }
+        Insert: {
+          cash_register_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_internal?: boolean
+          name: string
+        }
+        Update: {
+          cash_register_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_internal?: boolean
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_companies_cash_register_id_fkey"
+            columns: ["cash_register_id"]
+            isOneToOne: false
+            referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       documents: {
         Row: {
@@ -263,6 +388,50 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount: number
+          cash_register_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          document_file: string | null
+          document_url: string | null
+          id: string
+          payment_source: Database["public"]["Enums"]["expense_payment_source"]
+        }
+        Insert: {
+          amount: number
+          cash_register_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          document_file?: string | null
+          document_url?: string | null
+          id?: string
+          payment_source: Database["public"]["Enums"]["expense_payment_source"]
+        }
+        Update: {
+          amount?: number
+          cash_register_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          document_file?: string | null
+          document_url?: string | null
+          id?: string
+          payment_source?: Database["public"]["Enums"]["expense_payment_source"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_cash_register_id_fkey"
+            columns: ["cash_register_id"]
+            isOneToOne: false
+            referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory: {
         Row: {
           id: string
@@ -296,6 +465,141 @@ export type Database = {
           {
             foreignKeyName: "inventory_warehouse_id_fkey"
             columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_log: {
+        Row: {
+          action_type: Database["public"]["Enums"]["inventory_action_type"]
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          quantity_after: number
+          quantity_change: number
+          reference_id: string | null
+          variation_id: string
+          warehouse_id: string
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["inventory_action_type"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          quantity_after: number
+          quantity_change: number
+          reference_id?: string | null
+          variation_id: string
+          warehouse_id: string
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["inventory_action_type"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          quantity_after?: number
+          quantity_change?: number
+          reference_id?: string | null
+          variation_id?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_log_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_log_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transfer_items: {
+        Row: {
+          id: string
+          quantity: number
+          transfer_id: string
+          variation_id: string
+        }
+        Insert: {
+          id?: string
+          quantity: number
+          transfer_id: string
+          variation_id: string
+        }
+        Update: {
+          id?: string
+          quantity?: number
+          transfer_id?: string
+          variation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transfer_items_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_transfers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transfer_items_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transfers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          from_warehouse_id: string
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["transfer_status"]
+          to_warehouse_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          from_warehouse_id: string
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["transfer_status"]
+          to_warehouse_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          from_warehouse_id?: string
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["transfer_status"]
+          to_warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transfers_from_warehouse_id_fkey"
+            columns: ["from_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transfers_to_warehouse_id_fkey"
+            columns: ["to_warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
             referencedColumns: ["id"]
@@ -347,8 +651,52 @@ export type Database = {
           },
         ]
       }
+      order_picking_items: {
+        Row: {
+          id: string
+          order_id: string
+          order_item_id: string
+          picked: boolean
+          picked_at: string | null
+          picked_by: string | null
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          order_item_id: string
+          picked?: boolean
+          picked_at?: string | null
+          picked_by?: string | null
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          order_item_id?: string
+          picked?: boolean
+          picked_at?: string | null
+          picked_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_picking_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_picking_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
+          assigned_user_id: string | null
+          assigned_warehouse_id: string | null
           cash_register_id: string | null
           created_at: string
           customer_email: string | null
@@ -357,12 +705,15 @@ export type Database = {
           id: string
           notes: string | null
           order_number: number
+          picking_status: Database["public"]["Enums"]["picking_status"] | null
           source: Database["public"]["Enums"]["order_source"]
           status: Database["public"]["Enums"]["order_status"]
           total: number
           updated_at: string
         }
         Insert: {
+          assigned_user_id?: string | null
+          assigned_warehouse_id?: string | null
           cash_register_id?: string | null
           created_at?: string
           customer_email?: string | null
@@ -371,12 +722,15 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: number
+          picking_status?: Database["public"]["Enums"]["picking_status"] | null
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
         }
         Update: {
+          assigned_user_id?: string | null
+          assigned_warehouse_id?: string | null
           cash_register_id?: string | null
           created_at?: string
           customer_email?: string | null
@@ -385,12 +739,20 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: number
+          picking_status?: Database["public"]["Enums"]["picking_status"] | null
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_assigned_warehouse_id_fkey"
+            columns: ["assigned_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_cash_register_id_fkey"
             columns: ["cash_register_id"]
@@ -639,10 +1001,20 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       bundle_type: "simple_bundle" | "variable_bundle"
+      delivery_status: "pending" | "in_transit" | "delivered"
+      expense_payment_source: "credit_card" | "cash_register"
+      inventory_action_type:
+        | "intake"
+        | "sale"
+        | "transfer_in"
+        | "transfer_out"
+        | "adjustment"
       order_source: "manual" | "pos" | "website"
       order_status: "pending" | "processing" | "completed" | "cancelled"
       payment_method: "cash" | "bit" | "credit"
+      picking_status: "not_started" | "in_progress" | "completed"
       product_type: "simple" | "variable"
+      transfer_status: "pending" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -772,10 +1144,21 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       bundle_type: ["simple_bundle", "variable_bundle"],
+      delivery_status: ["pending", "in_transit", "delivered"],
+      expense_payment_source: ["credit_card", "cash_register"],
+      inventory_action_type: [
+        "intake",
+        "sale",
+        "transfer_in",
+        "transfer_out",
+        "adjustment",
+      ],
       order_source: ["manual", "pos", "website"],
       order_status: ["pending", "processing", "completed", "cancelled"],
       payment_method: ["cash", "bit", "credit"],
+      picking_status: ["not_started", "in_progress", "completed"],
       product_type: ["simple", "variable"],
+      transfer_status: ["pending", "completed"],
     },
   },
 } as const
