@@ -106,6 +106,7 @@ const IntakePage = () => {
 
       qc.invalidateQueries({ queryKey: ["inventory"] });
       qc.invalidateQueries({ queryKey: ["inventory_log"] });
+      syncMultipleStockToWoo(items.map((i) => i.variation_id));
       setItems([]);
       toast.success(`${items.length} פריטים נקלטו בהצלחה`);
     } catch {
