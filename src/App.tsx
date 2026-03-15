@@ -25,6 +25,8 @@ import PosPage from "./pages/PosPage";
 import WooSyncPage from "./pages/WooSyncPage";
 import ReportsPage from "./pages/ReportsPage";
 import DocumentsPage from "./pages/DocumentsPage";
+import DeliveriesPage from "./pages/deliveries/DeliveriesPage";
+import DeliveryCompaniesPage from "./pages/settings/DeliveryCompaniesPage";
 import NotFound from "./pages/NotFound";
 import FlowsPage from "./pages/FlowsPage";
 
