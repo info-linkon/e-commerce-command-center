@@ -57,6 +57,9 @@ export function useUpsertInventory() {
           action_type: "adjustment",
           notes: `התאמה ידנית: ${oldQty} → ${quantity}`,
         });
+
+        // Sync to WooCommerce
+        syncStockToWoo(variationId);
       }
     },
     onSuccess: () => {

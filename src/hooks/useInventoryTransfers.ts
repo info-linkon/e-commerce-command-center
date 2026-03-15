@@ -112,6 +112,9 @@ export function useCreateTransfer() {
         });
       }
 
+      // Sync all affected variations to WooCommerce
+      syncMultipleStockToWoo(input.items.map((i) => i.variation_id));
+
       return transfer;
     },
     onSuccess: () => {
