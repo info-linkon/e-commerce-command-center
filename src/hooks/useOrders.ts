@@ -185,6 +185,9 @@ export function useAssignWarehouse() {
         });
       }
 
+      // Sync to WooCommerce
+      syncMultipleStockToWoo(items.map((item: any) => item.variation_id));
+
       // 3. Update order with warehouse assignment + status to processing
       const { error: updateErr } = await supabase
         .from("orders")
