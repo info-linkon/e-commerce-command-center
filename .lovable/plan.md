@@ -1,41 +1,24 @@
 
-# דף ציבורי - System Flows
 
-## מה ייבנה
-דף ציבורי (ללא צורך בהתחברות) בנתיב `/flows` שמציג את כל הדיאגרמות של המערכת בצורה אינטראקטיבית ויפה.
+# עדכון דיאגרמת Flow הזמנה
 
-## מבנה הדף
-- כותרת עם הלוגו ושם המערכת "ELWEJHA - System Flows"
-- רשימת כרטיסים (Accordion) -- כל Flow בכרטיס נפרד
-- לחיצה על כרטיס פותחת את הדיאגרמה המלאה
+## שינויים בקובץ `src/pages/FlowsPage.tsx`
 
-## הדיאגרמות שיוצגו (7 Flows)
+### 1. עדכון הדיאגרמה הראשונה (order-flow)
+- הורדת מלאי (`inventory & inventory_log`) תזוז מיד אחרי שיוך למחסן (אחרי `assigned_warehouse_id`)
+- סנכרון מלאי ל-WooCommerce יבוא מיד אחרי הורדת המלאי
+- הליקוט יהפוך לאימות פיזי בלבד (לא משפיע על מלאי)
+- הוספת ענף ביטול: מכל שלב לפני delivered, ביטול מחזיר מלאי (`action_type: cancellation`) + סנכרון WooCommerce
+- הוספת ענף חוסר בליקוט: אם פריט חסר → התאמת מלאי (`adjustment`)
 
-1. **Flow הזמנה מלא (A-Z)** -- מקבלת הזמנה מאתר/קופה עד סגירה סופית
-2. **ניהול מלאי** -- קליטה, העברה, מכירה, התאמה + לוג
-3. **מבנה מוצר** -- פריטים, וריאציות, מארזים
-4. **Flow כספי -- קופות** -- כסף ממכירה -> קופת עובד/שליח -> קופה ראשית
-5. **הוצאות עסקיות** -- רישום הוצאה + מקור תשלום
-6. **סנכרון WooCommerce** -- webhooks, סנכרון מלאי ומוצרים
-7. **ליקוט ומשלוחים** -- צ'קליסט ליקוט -> בחירת שליח -> מסירה
+### 2. מבנה הדיאגרמה החדשה
+```text
+Order → Assign Warehouse → Deduct Inventory → Sync WooCommerce
+  → Picking (verification only)
+    → Item missing? → Adjustment flow
+    → All picked? → Delivery → Payment → Complete
+  → Cancel at any point? → Restore inventory → Sync WooCommerce
+```
 
-## פרטים טכניים
+קובץ אחד לעריכה: `src/pages/FlowsPage.tsx` (עדכון ה-diagram string של order-flow בלבד).
 
-### קבצים חדשים
-- `src/pages/FlowsPage.tsx` -- הדף הציבורי עם כל הדיאגרמות
-  - שימוש ב-Mermaid.js (CDN) לרינדור הדיאגרמות
-  - עיצוב responsive עם Accordion מ-shadcn/ui
-  - כל דיאגרמה מוגדרת כ-string של Mermaid syntax ומרונדרת ב-useEffect
-
-### שינויים בקבצים קיימים
-- `src/App.tsx` -- הוספת route ציבורי `/flows` (ללא `Protected` wrapper)
-
-### ספריית Mermaid
-- שימוש ב-`mermaid` npm package לרינדור דיאגרמות בצד הלקוח
-- כל דיאגרמה ברכיב נפרד שמרנדר את ה-SVG אוטומטית
-
-### עיצוב
-- רקע נקי, כרטיסים עם צל
-- כל Flow עם אייקון, כותרת בעברית, ותיאור קצר
-- הדיאגרמה נפתחת באקורדיון
-- תמיכה בנייד (scroll אופקי לדיאגרמות רחבות)
