@@ -31,6 +31,8 @@ import CashRegistersPage from "./pages/CashRegistersPage";
 import ExpensesPage from "./pages/ExpensesPage";
 import NotFound from "./pages/NotFound";
 import FlowsPage from "./pages/FlowsPage";
+import WebsiteItemsPage from "./pages/WebsiteItemsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
