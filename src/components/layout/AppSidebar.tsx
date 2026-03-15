@@ -5,6 +5,8 @@ import {
   Truck,
   ShoppingCart,
   CreditCard,
+  Wallet,
+  Receipt,
   FileText,
   BarChart3,
   Settings,
