@@ -51,28 +51,39 @@ const flows: FlowDef[] = [
     A2[קופה POS] -->|הזמנה ידנית| B
     B --> C{שיוך למחסן}
     C --> D[assigned_warehouse_id]
-    D --> E[מסך ליקוט - picking_status: not_started]
-    E --> F[עובד מאשר פריטים אחד אחד]
+    D --> R[הורדת מלאי - inventory & inventory_log action: sale]
+    R --> S[סנכרון מלאי ל-WooCommerce]
+    S --> E[מסך ליקוט - אימות פיזי בלבד]
+    E --> F[עובד מאמת פריטים אחד אחד]
     F --> G[picking_status: in_progress]
-    G --> H{כל הפריטים לוקטו?}
-    H -->|לא| F
+    G --> H{כל הפריטים נמצאו?}
+    H -->|לא| ADJ[התאמת מלאי - adjustment]
+    ADJ --> H
     H -->|כן| I[picking_status: completed]
     I --> J{בחירת משלוח}
-    J -->|עובד פנימי| K[deliveries - delivery_company is_internal=true]
-    J -->|חברה חיצונית| L[deliveries - delivery_company is_internal=false]
+    J -->|עובד פנימי| K[deliveries - is_internal=true]
+    J -->|חברה חיצונית| L[deliveries - is_internal=false]
     K --> M[status: in_transit]
     L --> M
     M --> N[מסירה ללקוח]
     N --> O[status: delivered]
     O --> P[רישום תשלום - payments table]
     P --> Q[עדכון קופת המוסר - cash_register]
-    Q --> R[הורדת מלאי - inventory & inventory_log]
-    R --> S[סנכרון מלאי ל-WooCommerce]
-    S --> T[הזמנה completed ✅]
+    Q --> T[הזמנה completed]
+
+    B -.->|ביטול הזמנה| CX[status: cancelled]
+    D -.->|ביטול הזמנה| CX
+    I -.->|ביטול הזמנה| CX
+    CX --> CR[החזרת מלאי - action: cancellation]
+    CR --> CS[סנכרון מלאי ל-WooCommerce]
 
     style A fill:#e8d5b7,stroke:#b07a2e
     style A2 fill:#e8d5b7,stroke:#b07a2e
-    style T fill:#c8e6c9,stroke:#2e7d32`,
+    style T fill:#c8e6c9,stroke:#2e7d32
+    style R fill:#bbdefb,stroke:#1565c0
+    style CX fill:#ffcdd2,stroke:#c62828
+    style CR fill:#ffcdd2,stroke:#c62828
+    style ADJ fill:#fff9c4,stroke:#f9a825`,
   },
   {
     id: "inventory-flow",
