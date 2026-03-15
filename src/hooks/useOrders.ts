@@ -18,7 +18,7 @@ export function useOrders(status?: OrderStatus) {
     queryFn: async () => {
       let query = supabase
         .from("orders")
-        .select("*")
+        .select("*, warehouses(name)")
         .order("created_at", { ascending: false });
       if (status) query = query.eq("status", status);
       const { data, error } = await query;
@@ -35,7 +35,7 @@ export function useOrder(id?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, order_items(*, product_variations(*, products(name)))")
+        .select("*, order_items(*, product_variations(*, products(name))), warehouses(name)")
         .eq("id", id!)
         .single();
       if (error) throw error;
@@ -113,7 +113,7 @@ export function useCreateOrder() {
             }
           }
         }
-        // For non-POS orders, inventory deduction happens at warehouse assignment (step 4)
+        // For non-POS orders, inventory deduction happens at warehouse assignment
       }
 
       return order;
@@ -125,6 +125,165 @@ export function useCreateOrder() {
       toast.success("ההזמנה נוצרה בהצלחה");
     },
     onError: () => toast.error("שגיאה ביצירת הזמנה"),
+  });
+}
+
+export function useAssignWarehouse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, warehouseId }: { orderId: string; warehouseId: string }) => {
+      // 1. Get order with items
+      const { data: order, error: orderErr } = await supabase
+        .from("orders")
+        .select("*, order_items(*, product_variations(*, products(name)))")
+        .eq("id", orderId)
+        .single();
+      if (orderErr) throw orderErr;
+
+      // Prevent re-assignment if already assigned
+      if (order.assigned_warehouse_id) {
+        throw new Error("ההזמנה כבר שויכה למחסן");
+      }
+
+      const items = (order.order_items as any[]) || [];
+
+      // 2. Deduct inventory from the assigned warehouse + log
+      for (const item of items) {
+        const { data: inv } = await supabase
+          .from("inventory")
+          .select("*")
+          .eq("variation_id", item.variation_id)
+          .eq("warehouse_id", warehouseId)
+          .maybeSingle();
+
+        const currentQty = inv?.quantity || 0;
+        const newQty = currentQty - item.quantity;
+
+        if (inv) {
+          await supabase
+            .from("inventory")
+            .update({ quantity: newQty })
+            .eq("id", inv.id);
+        } else {
+          // Create negative inventory record if none exists
+          await supabase
+            .from("inventory")
+            .insert({ variation_id: item.variation_id, warehouse_id: warehouseId, quantity: newQty });
+        }
+
+        await logInventoryChange({
+          variation_id: item.variation_id,
+          warehouse_id: warehouseId,
+          quantity_change: -item.quantity,
+          quantity_after: newQty,
+          action_type: "sale",
+          reference_id: orderId,
+          notes: `שיוך הזמנה #${order.order_number} למחסן`,
+        });
+      }
+
+      // 3. Update order with warehouse assignment + status to processing
+      const { error: updateErr } = await supabase
+        .from("orders")
+        .update({
+          assigned_warehouse_id: warehouseId,
+          status: "processing" as OrderStatus,
+          picking_status: "not_started",
+        })
+        .eq("id", orderId);
+      if (updateErr) throw updateErr;
+
+      // 4. Create picking items
+      const pickingItems = items.map((item: any) => ({
+        order_id: orderId,
+        order_item_id: item.id,
+      }));
+      if (pickingItems.length > 0) {
+        const { error: pickErr } = await supabase
+          .from("order_picking_items")
+          .insert(pickingItems);
+        if (pickErr) throw pickErr;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["inventory_log"] });
+      toast.success("ההזמנה שויכה למחסן והמלאי עודכן");
+    },
+    onError: (err: any) => toast.error(err?.message || "שגיאה בשיוך למחסן"),
+  });
+}
+
+export function useCancelOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      // 1. Get order with items
+      const { data: order, error: orderErr } = await supabase
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq("id", orderId)
+        .single();
+      if (orderErr) throw orderErr;
+
+      if (order.status === "cancelled") {
+        throw new Error("ההזמנה כבר בוטלה");
+      }
+
+      const items = (order.order_items as any[]) || [];
+      const warehouseId = order.assigned_warehouse_id;
+
+      // 2. If warehouse was assigned, restore inventory
+      if (warehouseId) {
+        for (const item of items) {
+          const { data: inv } = await supabase
+            .from("inventory")
+            .select("*")
+            .eq("variation_id", item.variation_id)
+            .eq("warehouse_id", warehouseId)
+            .maybeSingle();
+
+          const currentQty = inv?.quantity || 0;
+          const newQty = currentQty + item.quantity;
+
+          if (inv) {
+            await supabase
+              .from("inventory")
+              .update({ quantity: newQty })
+              .eq("id", inv.id);
+          } else {
+            await supabase
+              .from("inventory")
+              .insert({ variation_id: item.variation_id, warehouse_id: warehouseId, quantity: newQty });
+          }
+
+          await logInventoryChange({
+            variation_id: item.variation_id,
+            warehouse_id: warehouseId,
+            quantity_change: item.quantity,
+            quantity_after: newQty,
+            action_type: "adjustment",
+            reference_id: orderId,
+            notes: `ביטול הזמנה #${order.order_number} — החזרת מלאי`,
+          });
+        }
+      }
+
+      // 3. Update order status
+      const { error: updateErr } = await supabase
+        .from("orders")
+        .update({ status: "cancelled" as OrderStatus })
+        .eq("id", orderId);
+      if (updateErr) throw updateErr;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["inventory_log"] });
+      toast.success("ההזמנה בוטלה והמלאי הוחזר");
+    },
+    onError: (err: any) => toast.error(err?.message || "שגיאה בביטול הזמנה"),
   });
 }
 
