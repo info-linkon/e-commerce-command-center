@@ -49,6 +49,8 @@ const menuItems = [
   { title: "הזמנות", url: "/orders", icon: ShoppingCart },
   { title: "משלוחים", url: "/deliveries", icon: Truck },
   { title: "קופה", url: "/pos", icon: CreditCard },
+  { title: "קופות", url: "/cash-registers", icon: Wallet },
+  { title: "הוצאות", url: "/expenses", icon: Receipt },
   { title: "מסמכים", url: "/documents", icon: FileText },
   { title: "דוחות", url: "/reports", icon: BarChart3 },
   { title: "הגדרות", url: "/settings", icon: Settings },
