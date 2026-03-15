@@ -166,6 +166,17 @@ const OrderDetail = () => {
         <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} />
       )}
 
+      {/* Payment Section */}
+      {isAssigned && (
+        <PaymentSection
+          orderId={order.id}
+          orderTotal={Number(order.total)}
+          isDelivered={delivery?.status === "delivered"}
+          isCancelled={isCancelled}
+          isCompleted={isCompleted}
+        />
+      )
+
       {/* Items Table */}
       <Card>
         <CardHeader><CardTitle>פריטים</CardTitle></CardHeader>
