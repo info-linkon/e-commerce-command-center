@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
 import { toast } from "sonner";
+import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
 
 interface IntakeItem {
   variation_id: string;
@@ -105,6 +106,7 @@ const IntakePage = () => {
 
       qc.invalidateQueries({ queryKey: ["inventory"] });
       qc.invalidateQueries({ queryKey: ["inventory_log"] });
+      syncMultipleStockToWoo(items.map((i) => i.variation_id));
       setItems([]);
       toast.success(`${items.length} פריטים נקלטו בהצלחה`);
     } catch {

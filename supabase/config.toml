@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.ezcount-doc]
 verify_jwt = false
+
+[functions.woo-stock-update]
+verify_jwt = false
+
+[functions.woo-webhook]
+verify_jwt = false

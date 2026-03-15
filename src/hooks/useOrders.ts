@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
+import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
 
 export type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
 
@@ -112,6 +113,8 @@ export function useCreateOrder() {
               }
             }
           }
+          // Sync POS items to WooCommerce
+          syncMultipleStockToWoo(items.map((i) => i.variation_id));
         }
         // For non-POS orders, inventory deduction happens at warehouse assignment
       }
@@ -181,6 +184,9 @@ export function useAssignWarehouse() {
           notes: `שיוך הזמנה #${order.order_number} למחסן`,
         });
       }
+
+      // Sync to WooCommerce
+      syncMultipleStockToWoo(items.map((item: any) => item.variation_id));
 
       // 3. Update order with warehouse assignment + status to processing
       const { error: updateErr } = await supabase
@@ -268,6 +274,9 @@ export function useCancelOrder() {
             notes: `ביטול הזמנה #${order.order_number} — החזרת מלאי`,
           });
         }
+
+        // Sync restored stock to WooCommerce
+        syncMultipleStockToWoo(items.map((item: any) => item.variation_id));
       }
 
       // 3. Update order status
