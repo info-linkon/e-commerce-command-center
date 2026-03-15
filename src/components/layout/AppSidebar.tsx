@@ -2,6 +2,7 @@ import {
   LayoutDashboard,
   Package,
   Globe,
+  Truck,
   ShoppingCart,
   CreditCard,
   FileText,
