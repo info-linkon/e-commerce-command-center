@@ -175,7 +175,7 @@ const OrderDetail = () => {
           isCancelled={isCancelled}
           isCompleted={isCompleted}
         />
-      )
+      )}
 
       {/* Items Table */}
       <Card>
