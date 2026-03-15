@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
 import { toast } from "sonner";
+import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
 
 interface IntakeItem {
   variation_id: string;
