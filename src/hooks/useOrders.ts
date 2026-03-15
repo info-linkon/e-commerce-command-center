@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logInventoryChange } from "@/hooks/useInventoryLog";
 
 export type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
 
@@ -53,6 +54,8 @@ export function useCreateOrder() {
       notes?: string;
       total: number;
       status?: OrderStatus;
+      source?: string;
+      cash_register_id?: string;
       items: OrderItem[];
     }) => {
       const { items, ...orderData } = input;
@@ -73,28 +76,41 @@ export function useCreateOrder() {
           .insert(orderItems);
         if (itemsError) throw itemsError;
 
-        // Update inventory - decrease quantities
-        for (const item of items) {
-          // Get all inventory records for this variation and decrease proportionally
-          const { data: invRecords } = await supabase
-            .from("inventory")
-            .select("*")
-            .eq("variation_id", item.variation_id);
-          
-          if (invRecords && invRecords.length > 0) {
-            // Decrease from first warehouse that has enough stock
-            let remaining = item.quantity;
-            for (const inv of invRecords) {
-              if (remaining <= 0) break;
-              const decrease = Math.min(remaining, inv.quantity);
-              await supabase
-                .from("inventory")
-                .update({ quantity: inv.quantity - decrease })
-                .eq("id", inv.id);
-              remaining -= decrease;
+        // For POS orders (completed immediately), deduct inventory + log
+        if (input.status === "completed") {
+          for (const item of items) {
+            const { data: invRecords } = await supabase
+              .from("inventory")
+              .select("*")
+              .eq("variation_id", item.variation_id);
+            
+            if (invRecords && invRecords.length > 0) {
+              let remaining = item.quantity;
+              for (const inv of invRecords) {
+                if (remaining <= 0) break;
+                const decrease = Math.min(remaining, inv.quantity);
+                const newQty = inv.quantity - decrease;
+                await supabase
+                  .from("inventory")
+                  .update({ quantity: newQty })
+                  .eq("id", inv.id);
+                
+                await logInventoryChange({
+                  variation_id: item.variation_id,
+                  warehouse_id: inv.warehouse_id,
+                  quantity_change: -decrease,
+                  quantity_after: newQty,
+                  action_type: "sale",
+                  reference_id: order.id,
+                  notes: `מכירה POS - הזמנה #${order.order_number}`,
+                });
+
+                remaining -= decrease;
+              }
             }
           }
         }
+        // For non-POS orders, inventory deduction happens at warehouse assignment (step 4)
       }
 
       return order;
@@ -102,6 +118,7 @@ export function useCreateOrder() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["inventory_log"] });
       toast.success("ההזמנה נוצרה בהצלחה");
     },
     onError: () => toast.error("שגיאה ביצירת הזמנה"),

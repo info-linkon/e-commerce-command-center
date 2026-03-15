@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logInventoryChange } from "@/hooks/useInventoryLog";
 
 export function useInventory(warehouseId?: string) {
   return useQuery({
@@ -24,10 +25,13 @@ export function useUpsertInventory() {
       // Check if record exists
       const { data: existing } = await supabase
         .from("inventory")
-        .select("id")
+        .select("id, quantity")
         .eq("variation_id", variationId)
         .eq("warehouse_id", warehouseId)
         .maybeSingle();
+
+      const oldQty = existing?.quantity || 0;
+      const change = quantity - oldQty;
 
       if (existing) {
         const { error } = await supabase
@@ -41,9 +45,22 @@ export function useUpsertInventory() {
           .insert({ variation_id: variationId, warehouse_id: warehouseId, quantity });
         if (error) throw error;
       }
+
+      // Log the adjustment
+      if (change !== 0) {
+        await logInventoryChange({
+          variation_id: variationId,
+          warehouse_id: warehouseId,
+          quantity_change: change,
+          quantity_after: quantity,
+          action_type: "adjustment",
+          notes: `התאמה ידנית: ${oldQty} → ${quantity}`,
+        });
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["inventory_log"] });
       toast.success("הכמות עודכנה בהצלחה");
     },
     onError: () => toast.error("שגיאה בעדכון כמות"),
