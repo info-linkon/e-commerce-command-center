@@ -25,6 +25,8 @@ import PosPage from "./pages/PosPage";
 import WooSyncPage from "./pages/WooSyncPage";
 import ReportsPage from "./pages/ReportsPage";
 import DocumentsPage from "./pages/DocumentsPage";
+import DeliveriesPage from "./pages/deliveries/DeliveriesPage";
+import DeliveryCompaniesPage from "./pages/settings/DeliveryCompaniesPage";
 import NotFound from "./pages/NotFound";
 import FlowsPage from "./pages/FlowsPage";
 
@@ -64,6 +66,8 @@ const App = () => (
             <Route path="/orders/new" element={<Protected><OrderForm /></Protected>} />
             <Route path="/orders/:id" element={<Protected><OrderDetail /></Protected>} />
             <Route path="/pos" element={<Protected><PosPage /></Protected>} />
+            <Route path="/deliveries" element={<Protected><DeliveriesPage /></Protected>} />
+            <Route path="/settings/delivery-companies" element={<Protected><DeliveryCompaniesPage /></Protected>} />
             <Route path="/woo-sync" element={<Protected><WooSyncPage /></Protected>} />
             <Route path="/documents" element={<Protected><DocumentsPage /></Protected>} />
             <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />

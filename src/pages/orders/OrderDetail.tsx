@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Warehouse, XCircle, AlertTriangle } from "lucide-react";
+import DeliveryAssignment from "@/components/orders/DeliveryAssignment";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -155,6 +156,11 @@ const OrderDetail = () => {
       {/* Picking Checklist */}
       {isAssigned && !isCancelled && (
         <PickingChecklist orderId={order.id} pickingStatus={order.picking_status} />
+      )}
+
+      {/* Delivery Assignment */}
+      {isAssigned && !isCancelled && (
+        <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} />
       )}
 
       {/* Items Table */}
