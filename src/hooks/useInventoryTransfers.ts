@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
+import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
 import { toast } from "sonner";
 
 export function useInventoryTransfers() {
