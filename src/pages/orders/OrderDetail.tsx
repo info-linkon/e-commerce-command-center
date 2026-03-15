@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useOrder, useUpdateOrderStatus, useAssignWarehouse, useCancelOrder, type OrderStatus } from "@/hooks/useOrders";
 import { useWarehouses } from "@/hooks/useWarehouses";
+import PickingChecklist from "@/components/orders/PickingChecklist";
 
 const statusLabels: Record<OrderStatus, string> = {
   pending: "ממתינה",
