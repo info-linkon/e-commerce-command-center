@@ -8,9 +8,6 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Warehouse,
-  Tags,
-  Boxes,
   ChevronDown,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -38,6 +35,9 @@ const inventorySubItems = [
   { title: "מחסנים", url: "/inventory/warehouses" },
   { title: "קטגוריות", url: "/inventory/categories" },
   { title: "מארזים", url: "/inventory/bundles" },
+  { title: "קליטת מלאי", url: "/inventory/intake" },
+  { title: "העברות", url: "/inventory/transfers" },
+  { title: "לוג תנועות", url: "/inventory/log" },
 ];
 
 const menuItems = [
@@ -45,7 +45,6 @@ const menuItems = [
   { title: "פריטי אתר", url: "/website-items", icon: Globe },
   { title: "הזמנות", url: "/orders", icon: ShoppingCart },
   { title: "קופה", url: "/pos", icon: CreditCard },
-  
   { title: "מסמכים", url: "/documents", icon: FileText },
   { title: "דוחות", url: "/reports", icon: BarChart3 },
   { title: "הגדרות", url: "/settings", icon: Settings },
