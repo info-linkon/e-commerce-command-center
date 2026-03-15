@@ -49,6 +49,7 @@ const OrderDetail = () => {
   const navigate = useNavigate();
   const { data: order, isLoading } = useOrder(id);
   const { data: warehouses } = useWarehouses();
+  const { data: delivery } = useOrderDelivery(id);
   const updateStatus = useUpdateOrderStatus();
   const assignWarehouse = useAssignWarehouse();
   const cancelOrder = useCancelOrder();
