@@ -152,6 +152,11 @@ const OrderDetail = () => {
         </Card>
       </div>
 
+      {/* Picking Checklist */}
+      {isAssigned && !isCancelled && (
+        <PickingChecklist orderId={order.id} pickingStatus={order.picking_status} />
+      )}
+
       {/* Items Table */}
       <Card>
         <CardHeader><CardTitle>פריטים</CardTitle></CardHeader>
