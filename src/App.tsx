@@ -27,6 +27,8 @@ import ReportsPage from "./pages/ReportsPage";
 import DocumentsPage from "./pages/DocumentsPage";
 import DeliveriesPage from "./pages/deliveries/DeliveriesPage";
 import DeliveryCompaniesPage from "./pages/settings/DeliveryCompaniesPage";
+import CashRegistersPage from "./pages/CashRegistersPage";
+import ExpensesPage from "./pages/ExpensesPage";
 import NotFound from "./pages/NotFound";
 import FlowsPage from "./pages/FlowsPage";
 
@@ -68,6 +70,8 @@ const App = () => (
             <Route path="/pos" element={<Protected><PosPage /></Protected>} />
             <Route path="/deliveries" element={<Protected><DeliveriesPage /></Protected>} />
             <Route path="/settings/delivery-companies" element={<Protected><DeliveryCompaniesPage /></Protected>} />
+            <Route path="/cash-registers" element={<Protected><CashRegistersPage /></Protected>} />
+            <Route path="/expenses" element={<Protected><ExpensesPage /></Protected>} />
             <Route path="/woo-sync" element={<Protected><WooSyncPage /></Protected>} />
             <Route path="/documents" element={<Protected><DocumentsPage /></Protected>} />
             <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
