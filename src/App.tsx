@@ -75,6 +75,8 @@ const App = () => (
             <Route path="/cash-registers" element={<Protected><CashRegistersPage /></Protected>} />
             <Route path="/expenses" element={<Protected><ExpensesPage /></Protected>} />
             <Route path="/woo-sync" element={<Protected><WooSyncPage /></Protected>} />
+            <Route path="/website-items" element={<Protected><WebsiteItemsPage /></Protected>} />
+            <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
             <Route path="/documents" element={<Protected><DocumentsPage /></Protected>} />
             <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
