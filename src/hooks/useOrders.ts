@@ -274,6 +274,9 @@ export function useCancelOrder() {
             notes: `ביטול הזמנה #${order.order_number} — החזרת מלאי`,
           });
         }
+
+        // Sync restored stock to WooCommerce
+        syncMultipleStockToWoo(items.map((item: any) => item.variation_id));
       }
 
       // 3. Update order status
