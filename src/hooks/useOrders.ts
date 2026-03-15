@@ -113,6 +113,8 @@ export function useCreateOrder() {
               }
             }
           }
+          // Sync POS items to WooCommerce
+          syncMultipleStockToWoo(items.map((i) => i.variation_id));
         }
         // For non-POS orders, inventory deduction happens at warehouse assignment
       }
