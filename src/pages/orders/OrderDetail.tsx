@@ -158,6 +158,11 @@ const OrderDetail = () => {
         <PickingChecklist orderId={order.id} pickingStatus={order.picking_status} />
       )}
 
+      {/* Delivery Assignment */}
+      {isAssigned && !isCancelled && (
+        <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} />
+      )}
+
       {/* Items Table */}
       <Card>
         <CardHeader><CardTitle>פריטים</CardTitle></CardHeader>

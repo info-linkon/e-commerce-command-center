@@ -45,6 +45,7 @@ const menuItems = [
   { title: "דשבורד", url: "/dashboard", icon: LayoutDashboard },
   { title: "פריטי אתר", url: "/website-items", icon: Globe },
   { title: "הזמנות", url: "/orders", icon: ShoppingCart },
+  { title: "משלוחים", url: "/deliveries", icon: Truck },
   { title: "קופה", url: "/pos", icon: CreditCard },
   { title: "מסמכים", url: "/documents", icon: FileText },
   { title: "דוחות", url: "/reports", icon: BarChart3 },
