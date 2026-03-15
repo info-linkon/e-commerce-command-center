@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Warehouse, XCircle, AlertTriangle } from "lucide-react";
 import DeliveryAssignment from "@/components/orders/DeliveryAssignment";
+import PaymentSection from "@/components/orders/PaymentSection";
+import { useOrderDelivery } from "@/hooks/useDeliveries";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,6 +49,7 @@ const OrderDetail = () => {
   const navigate = useNavigate();
   const { data: order, isLoading } = useOrder(id);
   const { data: warehouses } = useWarehouses();
+  const { data: delivery } = useOrderDelivery(id);
   const updateStatus = useUpdateOrderStatus();
   const assignWarehouse = useAssignWarehouse();
   const cancelOrder = useCancelOrder();
@@ -161,6 +164,17 @@ const OrderDetail = () => {
       {/* Delivery Assignment */}
       {isAssigned && !isCancelled && (
         <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} />
+      )}
+
+      {/* Payment Section */}
+      {isAssigned && (
+        <PaymentSection
+          orderId={order.id}
+          orderTotal={Number(order.total)}
+          isDelivered={delivery?.status === "delivered"}
+          isCancelled={isCancelled}
+          isCompleted={isCompleted}
+        />
       )}
 
       {/* Items Table */}
