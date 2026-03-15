@@ -58,10 +58,13 @@ export function useCreateOrder() {
       cash_register_id?: string;
       items: OrderItem[];
     }) => {
-      const { items, ...orderData } = input;
+      const { items, source, cash_register_id, ...rest } = input;
+      const orderPayload: any = { ...rest };
+      if (source) orderPayload.source = source;
+      if (cash_register_id) orderPayload.cash_register_id = cash_register_id;
       const { data: order, error } = await supabase
         .from("orders")
-        .insert(orderData)
+        .insert(orderPayload)
         .select()
         .single();
       if (error) throw error;
