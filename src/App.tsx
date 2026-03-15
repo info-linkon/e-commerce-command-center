@@ -27,6 +27,8 @@ import ReportsPage from "./pages/ReportsPage";
 import DocumentsPage from "./pages/DocumentsPage";
 import DeliveriesPage from "./pages/deliveries/DeliveriesPage";
 import DeliveryCompaniesPage from "./pages/settings/DeliveryCompaniesPage";
+import CashRegistersPage from "./pages/CashRegistersPage";
+import ExpensesPage from "./pages/ExpensesPage";
 import NotFound from "./pages/NotFound";
 import FlowsPage from "./pages/FlowsPage";
 
