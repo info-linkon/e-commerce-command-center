@@ -216,6 +216,9 @@ export function useAssignWarehouse() {
           .insert(pickingItems);
         if (pickErr) throw pickErr;
       }
+
+      // 5. Sync status to WooCommerce
+      syncOrderStatusToWoo(orderId);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
