@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,9 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useProduct, useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { VariationsManager } from "@/components/inventory/VariationsManager";
+import { syncProductToWoo } from "@/lib/wooProductSync";
+import { toast } from "sonner";
 
 const ProductForm = () => {
   const { id } = useParams();
@@ -61,6 +64,21 @@ const ProductForm = () => {
     }
   };
 
+  const [syncing, setSyncing] = useState(false);
+
+  const handleManualSync = async () => {
+    if (!id) return;
+    setSyncing(true);
+    try {
+      await syncProductToWoo(id);
+      toast.success("סנכרון לוו הושלם");
+    } catch {
+      toast.error("שגיאה בסנכרון");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center gap-3">
@@ -68,6 +86,11 @@ const ProductForm = () => {
           <ArrowRight className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold">{isEditing ? "עריכת פריט" : "הוספת פריט חדש"}</h1>
+        {isEditing && (
+          <Badge variant={product?.woo_id ? "default" : "secondary"} className="mr-2">
+            {product?.woo_id ? "מסונכרן לוו" : "לא מסונכרן"}
+          </Badge>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -155,6 +178,12 @@ const ProductForm = () => {
           <Button className="w-full" onClick={handleSave} disabled={!form.name || createProduct.isPending || updateProduct.isPending}>
             {createProduct.isPending || updateProduct.isPending ? "שומר..." : "שמור"}
           </Button>
+          {isEditing && (
+            <Button variant="outline" className="w-full" onClick={handleManualSync} disabled={syncing}>
+              <RefreshCw className={`h-4 w-4 ml-1 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "מסנכרן..." : "סנכרן לוו"}
+            </Button>
+          )}
         </div>
       </div>
     </div>

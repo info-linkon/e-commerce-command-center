@@ -17,6 +17,7 @@ import BundlesPage from "./pages/inventory/BundlesPage";
 import BundleForm from "./pages/inventory/BundleForm";
 import InventoryLogPage from "./pages/inventory/InventoryLogPage";
 import IntakePage from "./pages/inventory/IntakePage";
+import IntakeHistoryPage from "./pages/inventory/IntakeHistoryPage";
 import TransfersPage from "./pages/inventory/TransfersPage";
 import OrdersPage from "./pages/orders/OrdersPage";
 import OrderForm from "./pages/orders/OrderForm";
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/inventory/bundles/:id" element={<Protected><BundleForm /></Protected>} />
             <Route path="/inventory/log" element={<Protected><InventoryLogPage /></Protected>} />
             <Route path="/inventory/intake" element={<Protected><IntakePage /></Protected>} />
+            <Route path="/inventory/intake-history" element={<Protected><IntakeHistoryPage /></Protected>} />
             <Route path="/inventory/transfers" element={<Protected><TransfersPage /></Protected>} />
             <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
             <Route path="/orders/new" element={<Protected><OrderForm /></Protected>} />

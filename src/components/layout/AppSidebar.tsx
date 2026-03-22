@@ -39,6 +39,7 @@ const inventorySubItems = [
   { title: "קטגוריות", url: "/inventory/categories" },
   { title: "מארזים", url: "/inventory/bundles" },
   { title: "קליטת מלאי", url: "/inventory/intake" },
+  { title: "היסטוריית קליטות", url: "/inventory/intake-history" },
   { title: "העברות", url: "/inventory/transfers" },
   { title: "לוג תנועות", url: "/inventory/log" },
 ];

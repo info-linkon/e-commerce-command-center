@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { syncProductToWoo } from "@/lib/wooProductSync";
 
 type Product = Tables<"products">;
 type ProductVariation = Tables<"product_variations">;
@@ -62,9 +63,12 @@ export function useCreateProduct() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["products"] });
       toast.success("המוצר נוצר בהצלחה");
+      if (data.is_published) {
+        syncProductToWoo(data.id);
+      }
     },
     onError: () => toast.error("שגיאה ביצירת מוצר"),
   });
@@ -78,9 +82,12 @@ export function useUpdateProduct() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["products"] });
       toast.success("המוצר עודכן בהצלחה");
+      if (data.is_published) {
+        syncProductToWoo(data.id);
+      }
     },
     onError: () => toast.error("שגיאה בעדכון מוצר"),
   });

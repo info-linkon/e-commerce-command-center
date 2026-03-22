@@ -432,6 +432,89 @@ export type Database = {
           },
         ]
       }
+      intake_session_items: {
+        Row: {
+          cost_price: number
+          id: string
+          quantity: number
+          session_id: string
+          variation_id: string
+        }
+        Insert: {
+          cost_price?: number
+          id?: string
+          quantity?: number
+          session_id: string
+          variation_id: string
+        }
+        Update: {
+          cost_price?: number
+          id?: string
+          quantity?: number
+          session_id?: string
+          variation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intake_session_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "intake_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intake_session_items_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intake_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          reference_number: string | null
+          status: Database["public"]["Enums"]["intake_status"]
+          supplier_name: string | null
+          total_items: number
+          warehouse_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          reference_number?: string | null
+          status?: Database["public"]["Enums"]["intake_status"]
+          supplier_name?: string | null
+          total_items?: number
+          warehouse_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          reference_number?: string | null
+          status?: Database["public"]["Enums"]["intake_status"]
+          supplier_name?: string | null
+          total_items?: number
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intake_sessions_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory: {
         Row: {
           id: string
@@ -1003,6 +1086,7 @@ export type Database = {
       bundle_type: "simple_bundle" | "variable_bundle"
       delivery_status: "pending" | "in_transit" | "delivered"
       expense_payment_source: "credit_card" | "cash_register"
+      intake_status: "draft" | "completed"
       inventory_action_type:
         | "intake"
         | "sale"
@@ -1146,6 +1230,7 @@ export const Constants = {
       bundle_type: ["simple_bundle", "variable_bundle"],
       delivery_status: ["pending", "in_transit", "delivered"],
       expense_payment_source: ["credit_card", "cash_register"],
+      intake_status: ["draft", "completed"],
       inventory_action_type: [
         "intake",
         "sale",
