@@ -1,13 +1,18 @@
 import { useState, useMemo } from "react";
-import { Search, AlertTriangle } from "lucide-react";
+import { Search, AlertTriangle, Warehouse, Plus, Pencil, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useInventory, useUpsertInventory } from "@/hooks/useInventory";
-import { useWarehouses } from "@/hooks/useWarehouses";
+import { useWarehouses, useCreateWarehouse, useUpdateWarehouse, useDeleteWarehouse } from "@/hooks/useWarehouses";
 import { useCategories } from "@/hooks/useCategories";
+import { WarehouseDialog } from "@/components/inventory/WarehouseDialog";
+import { Tables } from "@/integrations/supabase/types";
 
+type WarehouseType = Tables<"warehouses">;
 const LOW_STOCK_THRESHOLD = 5;
 
 const InventoryIndex = () => {
@@ -18,6 +23,22 @@ const InventoryIndex = () => {
   const { data: warehouses } = useWarehouses();
   const { data: categories } = useCategories();
   const upsertInventory = useUpsertInventory();
+
+  // Warehouses management state
+  const [whManagerOpen, setWhManagerOpen] = useState(false);
+  const [whDialogOpen, setWhDialogOpen] = useState(false);
+  const [editingWh, setEditingWh] = useState<WarehouseType | null>(null);
+  const createWarehouse = useCreateWarehouse();
+  const updateWarehouse = useUpdateWarehouse();
+  const deleteWarehouse = useDeleteWarehouse();
+
+  const handleWhSave = (data: { name: string; address: string; is_active: boolean }) => {
+    if (editingWh) {
+      updateWarehouse.mutate({ id: editingWh.id, ...data }, { onSuccess: () => setWhDialogOpen(false) });
+    } else {
+      createWarehouse.mutate(data, { onSuccess: () => setWhDialogOpen(false) });
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!inventoryData) return [];
@@ -38,7 +59,13 @@ const InventoryIndex = () => {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <h1 className="text-2xl font-bold">תצוגת מלאי</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">תצוגת מלאי</h1>
+        <Button variant="outline" onClick={() => setWhManagerOpen(true)}>
+          <Warehouse className="ml-2 h-4 w-4" />
+          ניהול מחסנים
+        </Button>
+      </div>
 
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-48">
@@ -69,11 +96,11 @@ const InventoryIndex = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-right">מוצר</TableHead>
-              <TableHead className="text-right">וריאציה</TableHead>
-              <TableHead className="text-right">מחסן</TableHead>
-              <TableHead className="text-right">כמות</TableHead>
-              <TableHead className="text-right w-20">סטטוס</TableHead>
+              <TableHead>מוצר</TableHead>
+              <TableHead>וריאציה</TableHead>
+              <TableHead>מחסן</TableHead>
+              <TableHead>כמות</TableHead>
+              <TableHead className="w-20">סטטוס</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -116,6 +143,68 @@ const InventoryIndex = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Warehouses Manager Dialog */}
+      <Dialog open={whManagerOpen} onOpenChange={setWhManagerOpen}>
+        <DialogContent className="sm:max-w-xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>ניהול מחסנים</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button size="sm" onClick={() => { setEditingWh(null); setWhDialogOpen(true); }}>
+                <Plus className="ml-1 h-4 w-4" />
+                מחסן חדש
+              </Button>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>שם</TableHead>
+                  <TableHead>כתובת</TableHead>
+                  <TableHead>סטטוס</TableHead>
+                  <TableHead className="w-24">פעולות</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {!warehouses?.length ? (
+                  <TableRow><TableCell colSpan={4} className="text-center py-4 text-muted-foreground">אין מחסנים</TableCell></TableRow>
+                ) : (
+                  warehouses.map((w) => (
+                    <TableRow key={w.id}>
+                      <TableCell className="font-medium">{w.name}</TableCell>
+                      <TableCell>{w.address || "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant={w.is_active ? "default" : "secondary"}>
+                          {w.is_active ? "פעיל" : "לא פעיל"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => { setEditingWh(w); setWhDialogOpen(true); }}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => deleteWarehouse.mutate(w.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <WarehouseDialog
+        open={whDialogOpen}
+        onOpenChange={setWhDialogOpen}
+        warehouse={editingWh}
+        onSave={handleWhSave}
+        loading={createWarehouse.isPending || updateWarehouse.isPending}
+      />
     </div>
   );
 };

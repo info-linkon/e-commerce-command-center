@@ -11,13 +11,9 @@ import Dashboard from "./pages/Dashboard";
 import InventoryIndex from "./pages/inventory/InventoryIndex";
 import ProductsPage from "./pages/inventory/ProductsPage";
 import ProductForm from "./pages/inventory/ProductForm";
-import WarehousesPage from "./pages/inventory/WarehousesPage";
-import CategoriesPage from "./pages/inventory/CategoriesPage";
 import BundlesPage from "./pages/inventory/BundlesPage";
 import BundleForm from "./pages/inventory/BundleForm";
-import InventoryLogPage from "./pages/inventory/InventoryLogPage";
 import IntakePage from "./pages/inventory/IntakePage";
-import IntakeHistoryPage from "./pages/inventory/IntakeHistoryPage";
 import TransfersPage from "./pages/inventory/TransfersPage";
 import OrdersPage from "./pages/orders/OrdersPage";
 import OrderForm from "./pages/orders/OrderForm";
@@ -25,11 +21,10 @@ import OrderDetail from "./pages/orders/OrderDetail";
 import PosPage from "./pages/PosPage";
 import WooSyncPage from "./pages/WooSyncPage";
 import ReportsPage from "./pages/ReportsPage";
-import DocumentsPage from "./pages/DocumentsPage";
+import FinancePage from "./pages/FinancePage";
 import DeliveriesPage from "./pages/deliveries/DeliveriesPage";
 import DeliveryCompaniesPage from "./pages/settings/DeliveryCompaniesPage";
 import CashRegistersPage from "./pages/CashRegistersPage";
-import ExpensesPage from "./pages/ExpensesPage";
 import NotFound from "./pages/NotFound";
 import FlowsPage from "./pages/FlowsPage";
 import WebsiteItemsPage from "./pages/WebsiteItemsPage";
@@ -59,14 +54,10 @@ const App = () => (
             <Route path="/inventory/products" element={<Protected><ProductsPage /></Protected>} />
             <Route path="/inventory/products/new" element={<Protected><ProductForm /></Protected>} />
             <Route path="/inventory/products/:id" element={<Protected><ProductForm /></Protected>} />
-            <Route path="/inventory/warehouses" element={<Protected><WarehousesPage /></Protected>} />
-            <Route path="/inventory/categories" element={<Protected><CategoriesPage /></Protected>} />
             <Route path="/inventory/bundles" element={<Protected><BundlesPage /></Protected>} />
             <Route path="/inventory/bundles/new" element={<Protected><BundleForm /></Protected>} />
             <Route path="/inventory/bundles/:id" element={<Protected><BundleForm /></Protected>} />
-            <Route path="/inventory/log" element={<Protected><InventoryLogPage /></Protected>} />
             <Route path="/inventory/intake" element={<Protected><IntakePage /></Protected>} />
-            <Route path="/inventory/intake-history" element={<Protected><IntakeHistoryPage /></Protected>} />
             <Route path="/inventory/transfers" element={<Protected><TransfersPage /></Protected>} />
             <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
             <Route path="/orders/new" element={<Protected><OrderForm /></Protected>} />
@@ -75,11 +66,10 @@ const App = () => (
             <Route path="/deliveries" element={<Protected><DeliveriesPage /></Protected>} />
             <Route path="/settings/delivery-companies" element={<Protected><DeliveryCompaniesPage /></Protected>} />
             <Route path="/cash-registers" element={<Protected><CashRegistersPage /></Protected>} />
-            <Route path="/expenses" element={<Protected><ExpensesPage /></Protected>} />
+            <Route path="/finance" element={<Protected><FinancePage /></Protected>} />
             <Route path="/woo-sync" element={<Protected><WooSyncPage /></Protected>} />
             <Route path="/website-items" element={<Protected><WebsiteItemsPage /></Protected>} />
             <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
-            <Route path="/documents" element={<Protected><DocumentsPage /></Protected>} />
             <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

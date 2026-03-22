@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useProducts, useDeleteProduct } from "@/hooks/useProducts";
-import { useCategories } from "@/hooks/useCategories";
+import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/useCategories";
+import { CategoryDialog } from "@/components/inventory/CategoryDialog";
+import { Tables } from "@/integrations/supabase/types";
+
+type Category = Tables<"categories">;
 
 const ProductsPage = () => {
   const navigate = useNavigate();
@@ -16,6 +21,22 @@ const ProductsPage = () => {
   const { data: products, isLoading } = useProducts(categoryFilter === "all" ? undefined : categoryFilter);
   const { data: categories } = useCategories();
   const deleteProduct = useDeleteProduct();
+
+  // Categories management state
+  const [catManagerOpen, setCatManagerOpen] = useState(false);
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [editingCat, setEditingCat] = useState<Category | null>(null);
+  const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
+  const deleteCategory = useDeleteCategory();
+
+  const handleCatSave = (data: { name: string; display_order: number }) => {
+    if (editingCat) {
+      updateCategory.mutate({ id: editingCat.id, ...data }, { onSuccess: () => setCatDialogOpen(false) });
+    } else {
+      createCategory.mutate(data, { onSuccess: () => setCatDialogOpen(false) });
+    }
+  };
 
   const filtered = products?.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -26,10 +47,16 @@ const ProductsPage = () => {
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">ניהול פריטים</h1>
-        <Button onClick={() => navigate("/inventory/products/new")}>
-          <Plus className="ml-2 h-4 w-4" />
-          הוסף פריט
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setCatManagerOpen(true)}>
+            <FolderOpen className="ml-2 h-4 w-4" />
+            ניהול קטגוריות
+          </Button>
+          <Button onClick={() => navigate("/inventory/products/new")}>
+            <Plus className="ml-2 h-4 w-4" />
+            הוסף פריט
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-3">
@@ -59,13 +86,13 @@ const ProductsPage = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-right">שם</TableHead>
-              <TableHead className="text-right">מק״ט</TableHead>
-              <TableHead className="text-right">קטגוריה</TableHead>
-              <TableHead className="text-right">סוג</TableHead>
-              <TableHead className="text-right">מחיר מכירה</TableHead>
-              <TableHead className="text-right">עלות</TableHead>
-              <TableHead className="text-right w-24">פעולות</TableHead>
+              <TableHead>שם</TableHead>
+              <TableHead>מק״ט</TableHead>
+              <TableHead>קטגוריה</TableHead>
+              <TableHead>סוג</TableHead>
+              <TableHead>מחיר מכירה</TableHead>
+              <TableHead>עלות</TableHead>
+              <TableHead className="w-24">פעולות</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -102,6 +129,62 @@ const ProductsPage = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Categories Manager Dialog */}
+      <Dialog open={catManagerOpen} onOpenChange={setCatManagerOpen}>
+        <DialogContent className="sm:max-w-xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>ניהול קטגוריות</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button size="sm" onClick={() => { setEditingCat(null); setCatDialogOpen(true); }}>
+                <Plus className="ml-1 h-4 w-4" />
+                קטגוריה חדשה
+              </Button>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>סדר</TableHead>
+                  <TableHead>שם</TableHead>
+                  <TableHead className="w-24">פעולות</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {!categories?.length ? (
+                  <TableRow><TableCell colSpan={3} className="text-center py-4 text-muted-foreground">אין קטגוריות</TableCell></TableRow>
+                ) : (
+                  categories.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell>{c.display_order}</TableCell>
+                      <TableCell className="font-medium">{c.name}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => { setEditingCat(c); setCatDialogOpen(true); }}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => deleteCategory.mutate(c.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <CategoryDialog
+        open={catDialogOpen}
+        onOpenChange={setCatDialogOpen}
+        category={editingCat}
+        onSave={handleCatSave}
+        loading={createCategory.isPending || updateCategory.isPending}
+      />
     </div>
   );
 };

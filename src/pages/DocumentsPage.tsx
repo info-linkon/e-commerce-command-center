@@ -38,12 +38,11 @@ interface PaymentRow {
   amount: number;
 }
 
-export default function DocumentsPage() {
+export default function DocumentsPage({ embedded = false }: { embedded?: boolean }) {
   const { data: documents, isLoading } = useDocuments();
   const createDoc = useCreateDocument();
   const [open, setOpen] = useState(false);
 
-  // Form state
   const [docType, setDocType] = useState<CreateDocInput["doc_type"]>("tax_invoice");
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -103,7 +102,8 @@ export default function DocumentsPage() {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">מסמכים</h1>
+        {!embedded && <h1 className="text-2xl font-bold">מסמכים</h1>}
+        {embedded && <div />}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -117,7 +117,6 @@ export default function DocumentsPage() {
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* Doc type */}
               <div className="space-y-2">
                 <Label>סוג מסמך</Label>
                 <Select value={docType} onValueChange={(v) => setDocType(v as CreateDocInput["doc_type"])}>
@@ -130,7 +129,6 @@ export default function DocumentsPage() {
                 </Select>
               </div>
 
-              {/* Customer */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>שם לקוח *</Label>
@@ -146,7 +144,6 @@ export default function DocumentsPage() {
                 </div>
               </div>
 
-              {/* Items */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>פריטים</Label>
@@ -177,10 +174,9 @@ export default function DocumentsPage() {
                     </div>
                   </div>
                 ))}
-                <div className="text-left font-medium">סה״כ: ₪{itemsTotal.toFixed(2)}</div>
+                <div className="text-right font-medium">סה״כ: ₪{itemsTotal.toFixed(2)}</div>
               </div>
 
-              {/* Payments */}
               {needsPayments && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -214,7 +210,6 @@ export default function DocumentsPage() {
                 </div>
               )}
 
-              {/* Description / Comment */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>תיאור</Label>
@@ -226,7 +221,6 @@ export default function DocumentsPage() {
                 </div>
               </div>
 
-              {/* Options */}
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="dontSendEmail" checked={dontSendEmail} onChange={(e) => setDontSendEmail(e.target.checked)} />
                 <Label htmlFor="dontSendEmail">אל תשלח מייל ללקוח</Label>
@@ -241,7 +235,6 @@ export default function DocumentsPage() {
         </Dialog>
       </div>
 
-      {/* Documents list */}
       <Card>
         <CardHeader>
           <CardTitle>מסמכים אחרונים</CardTitle>
