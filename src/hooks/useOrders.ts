@@ -4,6 +4,12 @@ import { toast } from "sonner";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
 import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
 
+function syncOrderStatusToWoo(orderId: string) {
+  supabase.functions.invoke("woo-sync", {
+    body: { action: "update_order_status", order_id: orderId },
+  }).catch((err) => console.error("Woo status sync error:", err));
+}
+
 export type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
 
 export interface OrderItem {
@@ -210,6 +216,9 @@ export function useAssignWarehouse() {
           .insert(pickingItems);
         if (pickErr) throw pickErr;
       }
+
+      // 5. Sync status to WooCommerce
+      syncOrderStatusToWoo(orderId);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
@@ -285,6 +294,9 @@ export function useCancelOrder() {
         .update({ status: "cancelled" as OrderStatus })
         .eq("id", orderId);
       if (updateErr) throw updateErr;
+
+      // Sync cancelled status to WooCommerce
+      syncOrderStatusToWoo(orderId);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
@@ -302,6 +314,8 @@ export function useUpdateOrderStatus() {
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
       const { error } = await supabase.from("orders").update({ status }).eq("id", id);
       if (error) throw error;
+      // Sync status to WooCommerce
+      syncOrderStatusToWoo(id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
