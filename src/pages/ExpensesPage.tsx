@@ -175,8 +175,8 @@ const ExpensesPage = () => {
                       {new Date(e.created_at).toLocaleString("he-IL")}
                     </TableCell>
                     <TableCell>
-                      {e.document_url ? (
-                        <a href={e.document_url} target="_blank" rel="noopener noreferrer" className="text-primary underline text-sm">
+                      {(e.document_file || e.document_url) ? (
+                        <a href={e.document_file || e.document_url} target="_blank" rel="noopener noreferrer" className="text-primary underline text-sm">
                           צפה
                         </a>
                       ) : "—"}
