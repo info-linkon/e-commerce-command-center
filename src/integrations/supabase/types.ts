@@ -789,6 +789,10 @@ export type Database = {
           notes: string | null
           order_number: number
           picking_status: Database["public"]["Enums"]["picking_status"] | null
+          shipping_address: string | null
+          shipping_city: string | null
+          shipping_country: string | null
+          shipping_postcode: string | null
           source: Database["public"]["Enums"]["order_source"]
           status: Database["public"]["Enums"]["order_status"]
           total: number
@@ -808,6 +812,10 @@ export type Database = {
           notes?: string | null
           order_number?: number
           picking_status?: Database["public"]["Enums"]["picking_status"] | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_postcode?: string | null
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
@@ -827,6 +835,10 @@ export type Database = {
           notes?: string | null
           order_number?: number
           picking_status?: Database["public"]["Enums"]["picking_status"] | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_postcode?: string | null
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
