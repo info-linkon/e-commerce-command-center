@@ -38,7 +38,7 @@ const ExpensesPage = () => {
         amount: parseFloat(amount),
         payment_source: source as any,
         cash_register_id: source === "cash_register" ? registerId || null : null,
-        document_url: docUrl || undefined,
+        document_file: docFile || undefined,
       },
       {
         onSuccess: () => {
