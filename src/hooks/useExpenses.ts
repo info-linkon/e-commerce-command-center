@@ -28,7 +28,24 @@ export function useCreateExpense() {
       payment_source: ExpensePaymentSource;
       cash_register_id?: string | null;
       document_url?: string;
+      document_file?: File;
     }) => {
+      let fileUrl: string | null = null;
+
+      // Upload file if provided
+      if (input.document_file) {
+        const ext = input.document_file.name.split(".").pop();
+        const path = `${crypto.randomUUID()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("expense-documents")
+          .upload(path, input.document_file);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage
+          .from("expense-documents")
+          .getPublicUrl(path);
+        fileUrl = urlData.publicUrl;
+      }
+
       // 1. Insert expense
       const { error } = await supabase.from("expenses").insert({
         description: input.description,
@@ -36,6 +53,7 @@ export function useCreateExpense() {
         payment_source: input.payment_source,
         cash_register_id: input.cash_register_id || null,
         document_url: input.document_url || null,
+        document_file: fileUrl,
       });
       if (error) throw error;
 
