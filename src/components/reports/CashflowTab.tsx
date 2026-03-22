@@ -64,7 +64,7 @@ export default function CashflowTab({ startDate }: Props) {
                 <Wallet className="h-4 w-4 text-primary" />
                 <p className="text-sm text-muted-foreground">{r.name}</p>
               </div>
-              <p className="text-xl font-bold mt-1 text-left">₪{Number(r.current_balance).toFixed(0)}</p>
+              <p className="text-xl font-bold mt-1">₪{Number(r.current_balance).toFixed(0)}</p>
             </CardContent>
           </Card>
         ))}
@@ -91,11 +91,11 @@ export default function CashflowTab({ startDate }: Props) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">תאריך</TableHead>
-                  <TableHead className="text-right">מקופה</TableHead>
-                  <TableHead className="text-right">לקופה</TableHead>
-                  <TableHead className="text-right">סכום</TableHead>
-                  <TableHead className="text-right">הערות</TableHead>
+                  <TableHead>תאריך</TableHead>
+                  <TableHead>מקופה</TableHead>
+                  <TableHead>לקופה</TableHead>
+                  <TableHead>סכום</TableHead>
+                  <TableHead>הערות</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -122,12 +122,12 @@ export default function CashflowTab({ startDate }: Props) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">תאריך</TableHead>
-                <TableHead className="text-right">הזמנה</TableHead>
-                <TableHead className="text-right">אמצעי</TableHead>
-                <TableHead className="text-right">קופה</TableHead>
-                <TableHead className="text-right">סכום</TableHead>
-                <TableHead className="text-right">הפניה</TableHead>
+                 <TableHead>תאריך</TableHead>
+                 <TableHead>הזמנה</TableHead>
+                 <TableHead>אמצעי</TableHead>
+                 <TableHead>קופה</TableHead>
+                 <TableHead>סכום</TableHead>
+                 <TableHead>הפניה</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
