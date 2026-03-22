@@ -64,6 +64,21 @@ const ProductForm = () => {
     }
   };
 
+  const [syncing, setSyncing] = useState(false);
+
+  const handleManualSync = async () => {
+    if (!id) return;
+    setSyncing(true);
+    try {
+      await syncProductToWoo(id);
+      toast.success("סנכרון לוו הושלם");
+    } catch {
+      toast.error("שגיאה בסנכרון");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center gap-3">
@@ -71,6 +86,11 @@ const ProductForm = () => {
           <ArrowRight className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold">{isEditing ? "עריכת פריט" : "הוספת פריט חדש"}</h1>
+        {isEditing && (
+          <Badge variant={product?.woo_id ? "default" : "secondary"} className="mr-2">
+            {product?.woo_id ? "מסונכרן לוו" : "לא מסונכרן"}
+          </Badge>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
