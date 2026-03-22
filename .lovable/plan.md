@@ -1,71 +1,54 @@
 
 
-# שיפור מסך הדוחות - תוכנית מלאה
+# תוכנית תיקון RTL מלאה
 
-## מצב נוכחי
-דף הדוחות (`ReportsPage.tsx`) הוא דף יחיד עם dropdown לבחירת סוג דוח (מכירות, מוצרים מובילים, מלאי, תשלומים, רווחיות). חסרים: לוג תנועות, סיכומי קופות, הוצאות, וקישור להזמנות.
+## הבעיה
+המערכת בעברית אבל יישור RTL לא עקבי: חלק מהדפים חסרים `dir="rtl"`, ערכים מספריים מיושרים שמאלה (`text-left`), כותרות טבלאות מוגדרות `text-right` ידנית במקום לתקן את הבסיס, וב-`justify-between` הסדר הפוך בקומפוננטות דוחות.
 
-## מבנה חדש - Tabs במקום Dropdown
+## שינויים
 
-הדף ישתמש ב-Tabs עם הלשוניות הבאות:
+### 1. תיקון גלובלי — AppLayout + index.html
+- **`src/components/layout/AppLayout.tsx`**: הוסיף `dir="rtl"` על ה-wrapper הראשי כדי שכל הדפים ירשו RTL אוטומטית
+- כך לא צריך `dir="rtl"` בכל דף בנפרד
 
-### 1. סקירה כללית (דשבורד דוחות)
-- **4 כרטיסי סיכום**: סה"כ מכירות | סה"כ הוצאות | רווח נקי | יתרת קופות
-- **גרף מכירות לפי תאריך** (LineChart)
-- **גרף רווחיות** (הכנסות vs עלויות vs רווח)
+### 2. תיקון רכיב TableHead הבסיסי
+- **`src/components/ui/table.tsx`**: שנה `text-left` ל-`text-right` ב-TableHead — זה יתקן את כל הטבלאות במערכת בבת אחת ויבטל את הצורך ב-`className="text-right"` בכל TableHead
 
-### 2. מכירות ומוצרים
-- טבלת מכירות מפורטת עם **קישור למספר הזמנה** (לחיצה מנווטת ל-`/orders/{id}`)
-- גרף מוצרים מובילים
-- טבלת מוצרים עם כמות, הכנסות, רווח
+### 3. תיקון DialogHeader/SheetHeader/AlertDialogHeader
+- **`src/components/ui/dialog.tsx`**: שנה `sm:text-left` ל-`sm:text-right`
+- **`src/components/ui/sheet.tsx`**: שנה `sm:text-left` ל-`sm:text-right`
+- **`src/components/ui/alert-dialog.tsx`**: שנה `sm:text-left` ל-`sm:text-right`
+- **`src/components/ui/drawer.tsx`**: שנה `sm:text-left` ל-`sm:text-right`
 
-### 3. תנועות מלאי (לוג)
-- הטמעת לוג תנועות המלאי ישירות בדף הדוחות (אותו קוד כמו `InventoryLogPage`)
-- פילטרים: מחסן, סוג פעולה, תאריכים
-- כל תנועה מציגה **מזהה הזמנה/העברה** (`reference_id`) כקישור
+### 4. תיקון sidebar
+- **`src/components/ui/sidebar.tsx`**: שנה `text-left` ל-`text-right` ב-sidebarMenuButtonVariants
 
-### 4. קופות ותשלומים
-- **סיכום יתרות** כל הקופות (כרטיסי סיכום)
-- **טבלת תשלומים** מפורטת: תאריך, סכום, אמצעי תשלום, קופה, **מספר הזמנה** (קישור)
-- **טבלת העברות** בין קופות
-- **גרף פאי** - התפלגות אמצעי תשלום
+### 5. תיקון קומפוננטות דוחות — סדר RTL
+הבעיה: ב-`justify-between` האייקון מופיע משמאל והטקסט מימין, אבל הערכים המספריים מיושרים שמאלה.
 
-### 5. הוצאות
-- סיכום הוצאות בתקופה
-- טבלת הוצאות עם מקור תשלום, תיאור, סכום
-- גרף הוצאות לפי תאריך
+- **`src/components/reports/OverviewTab.tsx`**: 
+  - הפוך סדר אלמנטים בכרטיסי סיכום (label מימין, icon משמאל)
+  - שנה `text-left` ל-`text-right` בערכים
+- **`src/components/reports/CashflowTab.tsx`**: אותו תיקון לכרטיסי קופות
+- **`src/components/reports/ExpensesTab.tsx`**: תיקון סדר בכרטיס סיכום
 
-### 6. רווחיות
-- כרטיסי סיכום: הכנסות, עלויות, הוצאות, **רווח נקי** (כולל הוצאות)
-- גרף רווחיות לפי תאריך
-- טבלת רווחיות לפי מוצר
+### 6. דף Dashboard
+- **`src/pages/Dashboard.tsx`**: הוסיף `dir="rtl"` (למקרה ש-AppLayout לא מספיק)
 
-## שינויים טכניים
+### 7. ניקוי `dir="rtl"` מיותר מדפים בודדים
+לאחר התיקון הגלובלי, ה-`dir="rtl"` בכל דף הוא מיותר אבל לא מזיק — ניתן להשאיר או לנקות. עדיף לנקות לקוד נקי יותר.
 
-### קבצים שישתנו:
-- **`src/pages/ReportsPage.tsx`** — שכתוב מלא: מעבר מ-dropdown ל-Tabs, הוספת כל הלשוניות החדשות
-
-### קבצים חדשים (קומפוננטות משנה):
-- **`src/components/reports/OverviewTab.tsx`** — סקירה כללית
-- **`src/components/reports/SalesTab.tsx`** — מכירות ומוצרים
-- **`src/components/reports/InventoryLogTab.tsx`** — לוג תנועות
-- **`src/components/reports/CashflowTab.tsx`** — קופות ותשלומים
-- **`src/components/reports/ExpensesTab.tsx`** — הוצאות
-- **`src/components/reports/ProfitabilityTab.tsx`** — רווחיות
-
-### Hooks קיימים בשימוש:
-- `useInventoryLog` — לוג תנועות
-- `useCashRegisters` — יתרות קופות
-- `useExpenses` — הוצאות
-- `useOrderPayments` — תשלומים (יורחב ל-query כללי)
-- שאילתות ישירות ל-Supabase לנתוני מכירות ורווחיות
-
-### שינויים ב-DB:
-אין צורך בשינויי סכמה. כל הנתונים קיימים בטבלאות הנוכחיות.
-
-### קישורים להזמנות:
-בכל טבלה שמציגה מספר הזמנה, הוא יהיה `<Link>` שמנווט ל-`/orders/{order_id}`.
-
-## פילטר תקופה גלובלי
-בחירת תקופה (7/30/90/365 ימים) תהיה **מעל ה-Tabs** וחלה על כל הלשוניות.
+## סיכום קבצים לשינוי
+| קובץ | שינוי |
+|---|---|
+| `src/components/layout/AppLayout.tsx` | הוסיף `dir="rtl"` |
+| `src/components/ui/table.tsx` | `text-left` → `text-right` |
+| `src/components/ui/dialog.tsx` | `sm:text-left` → `sm:text-right` |
+| `src/components/ui/sheet.tsx` | `sm:text-left` → `sm:text-right` |
+| `src/components/ui/alert-dialog.tsx` | `sm:text-left` → `sm:text-right` |
+| `src/components/ui/drawer.tsx` | `sm:text-left` → `sm:text-right` |
+| `src/components/ui/sidebar.tsx` | `text-left` → `text-right` |
+| `src/components/reports/OverviewTab.tsx` | תיקון סדר RTL וערכים |
+| `src/components/reports/CashflowTab.tsx` | תיקון סדר RTL וערכים |
+| `src/components/reports/ExpensesTab.tsx` | תיקון סדר RTL |
 
