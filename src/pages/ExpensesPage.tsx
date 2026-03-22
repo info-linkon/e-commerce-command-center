@@ -27,7 +27,8 @@ const ExpensesPage = () => {
   const [amount, setAmount] = useState("");
   const [source, setSource] = useState<string>("credit_card");
   const [registerId, setRegisterId] = useState("");
-  const [docUrl, setDocUrl] = useState("");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreate = () => {
     if (!description.trim() || !amount) return;
