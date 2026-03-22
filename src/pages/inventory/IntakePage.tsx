@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { PackagePlus, Plus, Trash2, ArrowLeft, ArrowRight, Check, History } from "lucide-react";
+import { useState, useMemo } from "react";
+import { PackagePlus, Plus, Trash2, ArrowLeft, ArrowRight, Check, History, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -238,21 +238,23 @@ const IntakePage = () => {
             <Card>
               <CardHeader><CardTitle>פריטים לקליטה</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Select value={selectedVariation} onValueChange={setSelectedVariation}>
-                    <SelectTrigger className="flex-1"><SelectValue placeholder="בחר פריט..." /></SelectTrigger>
-                    <SelectContent>
-                      {variations?.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
-                          {(v.products as any)?.name} — {v.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={addItem} disabled={!selectedVariation}>
-                    <Plus className="h-4 w-4 ml-1" />הוסף
-                  </Button>
-                </div>
+                <VariationSearch
+                  variations={variations || []}
+                  excludeIds={items.map((i) => i.variation_id)}
+                  onSelect={(v) => {
+                    if (items.find((i) => i.variation_id === v.id)) {
+                      toast.error("הפריט כבר ברשימה");
+                      return;
+                    }
+                    setItems([...items, {
+                      variation_id: v.id,
+                      variation_name: v.name,
+                      product_name: (v.products as any)?.name || "",
+                      quantity: 1,
+                      cost_price: Number(v.cost_price) || 0,
+                    }]);
+                  }}
+                />
 
                 {items.length > 0 && (
                   <Table>
@@ -472,6 +474,61 @@ function SessionDetails({ sessionId, notes }: { sessionId: string; notes: string
         <p className="text-sm font-medium">
           סה״כ עלות: ₪{items.reduce((s, i) => s + i.quantity * Number(i.cost_price), 0).toFixed(2)}
         </p>
+      )}
+    </div>
+  );
+}
+
+function VariationSearch({ variations, excludeIds, onSelect }: {
+  variations: any[];
+  excludeIds: string[];
+  onSelect: (v: any) => void;
+}) {
+  const [search, setSearch] = useState("");
+  
+  const filtered = useMemo(() => {
+    if (!search.trim()) return [];
+    const q = search.toLowerCase();
+    return variations
+      .filter((v) => !excludeIds.includes(v.id))
+      .filter((v) => {
+        const productName = (v.products as any)?.name?.toLowerCase() || "";
+        const varName = v.name?.toLowerCase() || "";
+        const sku = v.sku?.toLowerCase() || "";
+        return productName.includes(q) || varName.includes(q) || sku.includes(q);
+      })
+      .slice(0, 20);
+  }, [variations, excludeIds, search]);
+
+  return (
+    <div className="space-y-2">
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="חיפוש לפי שם מוצר, וריאציה או מק״ט..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pr-9"
+        />
+      </div>
+      {search.trim() && (
+        <div className="border rounded-md max-h-48 overflow-y-auto">
+          {filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-3">לא נמצאו תוצאות</p>
+          ) : (
+            filtered.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                className="w-full text-right px-3 py-2 hover:bg-muted/50 text-sm border-b last:border-b-0 flex justify-between items-center"
+                onClick={() => { onSelect(v); setSearch(""); }}
+              >
+                <span>{(v.products as any)?.name} — {v.name}</span>
+                {v.sku && <span className="text-muted-foreground text-xs">{v.sku}</span>}
+              </button>
+            ))
+          )}
+        </div>
       )}
     </div>
   );
