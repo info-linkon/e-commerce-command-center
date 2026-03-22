@@ -199,6 +199,18 @@ const OrderDetail = () => {
             <div><span className="text-muted-foreground">שם:</span> {order.customer_name || "—"}</div>
             <div><span className="text-muted-foreground">טלפון:</span> {order.customer_phone || "—"}</div>
             <div><span className="text-muted-foreground">אימייל:</span> {order.customer_email || "—"}</div>
+            {((order as any).shipping_address || (order as any).shipping_city) && (
+              <div className="pt-2 border-t border-border">
+                <span className="text-muted-foreground font-medium">כתובת משלוח:</span>
+                <div className="mt-1">
+                  {(order as any).shipping_address && <div>{(order as any).shipping_address}</div>}
+                  {((order as any).shipping_city || (order as any).shipping_postcode) && (
+                    <div>{[(order as any).shipping_city, (order as any).shipping_postcode].filter(Boolean).join(" ")}</div>
+                  )}
+                  {(order as any).shipping_country && <div>{(order as any).shipping_country}</div>}
+                </div>
+              </div>
+            )}
             {order.notes && <div><span className="text-muted-foreground">הערות:</span> {order.notes}</div>}
           </CardContent>
         </Card>
