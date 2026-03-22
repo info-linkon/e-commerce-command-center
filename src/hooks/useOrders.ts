@@ -294,6 +294,9 @@ export function useCancelOrder() {
         .update({ status: "cancelled" as OrderStatus })
         .eq("id", orderId);
       if (updateErr) throw updateErr;
+
+      // Sync cancelled status to WooCommerce
+      syncOrderStatusToWoo(orderId);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
