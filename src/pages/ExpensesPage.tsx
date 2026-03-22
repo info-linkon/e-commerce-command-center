@@ -17,7 +17,7 @@ const sourceLabels: Record<string, string> = {
   credit_card: "אשראי",
 };
 
-const ExpensesPage = () => {
+const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
   const { data: expenses, isLoading } = useExpenses();
   const { data: registers } = useCashRegisters();
   const createExpense = useCreateExpense();
@@ -59,10 +59,12 @@ const ExpensesPage = () => {
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Receipt className="h-6 w-6" />
-            הוצאות
-          </h1>
+          {!embedded && (
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Receipt className="h-6 w-6" />
+              הוצאות
+            </h1>
+          )}
           <p className="text-sm text-muted-foreground mt-1">
             סה״כ: ₪{totalExpenses.toFixed(2)}
           </p>
@@ -153,11 +155,11 @@ const ExpensesPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">תיאור</TableHead>
-                  <TableHead className="text-right">סכום</TableHead>
-                  <TableHead className="text-right">מקור</TableHead>
-                  <TableHead className="text-right">תאריך</TableHead>
-                  <TableHead className="text-right">מסמך</TableHead>
+                  <TableHead>תיאור</TableHead>
+                  <TableHead>סכום</TableHead>
+                  <TableHead>מקור</TableHead>
+                  <TableHead>תאריך</TableHead>
+                  <TableHead>מסמך</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

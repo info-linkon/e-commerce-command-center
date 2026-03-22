@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PackagePlus, Plus, Trash2, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { PackagePlus, Plus, Trash2, ArrowLeft, ArrowRight, Check, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,12 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useWarehouses } from "@/hooks/useWarehouses";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
 import { toast } from "sonner";
 import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
+import { useIntakeSessions, useIntakeSessionItems } from "@/hooks/useIntakeSessions";
+import { format } from "date-fns";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface IntakeItem {
   variation_id: string;
@@ -80,7 +85,6 @@ const IntakePage = () => {
     if (!warehouseId || items.length === 0) return;
     setSubmitting(true);
     try {
-      // 1. Create intake session
       const { data: session, error: sessionErr } = await supabase
         .from("intake_sessions")
         .insert({
@@ -95,7 +99,6 @@ const IntakePage = () => {
         .single();
       if (sessionErr) throw sessionErr;
 
-      // 2. Save session items
       await supabase.from("intake_session_items").insert(
         items.map((item) => ({
           session_id: session.id,
@@ -105,7 +108,6 @@ const IntakePage = () => {
         }))
       );
 
-      // 3. Update inventory + log
       for (const item of items) {
         const { data: existing } = await supabase
           .from("inventory")
@@ -144,7 +146,6 @@ const IntakePage = () => {
       syncMultipleStockToWoo(items.map((i) => i.variation_id));
 
       toast.success(`${items.length} פריטים נקלטו בהצלחה`);
-      // Reset
       setStep(1);
       setItems([]);
       setSupplierName("");
@@ -165,200 +166,315 @@ const IntakePage = () => {
         <h1 className="text-2xl font-bold">קליטת מלאי</h1>
       </div>
 
-      {/* Steps indicator */}
-      <div className="flex items-center gap-4">
-        {[1, 2, 3].map((s) => (
-          <div key={s} className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-              step === s ? "bg-primary text-primary-foreground" : step > s ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
-            }`}>
-              {step > s ? <Check className="h-4 w-4" /> : s}
-            </div>
-            <span className={`text-sm ${step === s ? "font-medium" : "text-muted-foreground"}`}>
-              {s === 1 ? "פרטי קליטה" : s === 2 ? "הוספת פריטים" : "סיכום ואישור"}
-            </span>
-            {s < 3 && <div className="w-8 h-px bg-border" />}
-          </div>
-        ))}
-      </div>
+      <Tabs defaultValue="new" dir="rtl">
+        <TabsList>
+          <TabsTrigger value="new" className="gap-2">
+            <PackagePlus className="h-4 w-4" />
+            קליטה חדשה
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="h-4 w-4" />
+            היסטוריה
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Step 1: Session details */}
-      {step === 1 && (
-        <Card>
-          <CardHeader><CardTitle>פרטי קליטה</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>מחסן יעד *</Label>
-              <Select value={warehouseId} onValueChange={setWarehouseId}>
-                <SelectTrigger><SelectValue placeholder="בחר מחסן..." /></SelectTrigger>
-                <SelectContent>
-                  {warehouses?.filter((w) => w.is_active).map((w) => (
-                    <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>שם ספק</Label>
-                <Input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} placeholder="אופציונלי" />
-              </div>
-              <div className="space-y-2">
-                <Label>מספר אסמכתא / חשבונית</Label>
-                <Input value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} placeholder="אופציונלי" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>הערות</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="הערות לקליטה..." rows={3} />
-            </div>
-            <div className="flex justify-start">
-              <Button onClick={() => setStep(2)} disabled={!warehouseId}>
-                המשך לפריטים <ArrowLeft className="h-4 w-4 mr-1" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2: Add items */}
-      {step === 2 && (
-        <Card>
-          <CardHeader><CardTitle>פריטים לקליטה</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Select value={selectedVariation} onValueChange={setSelectedVariation}>
-                <SelectTrigger className="flex-1"><SelectValue placeholder="בחר פריט..." /></SelectTrigger>
-                <SelectContent>
-                  {variations?.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {(v.products as any)?.name} — {v.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={addItem} disabled={!selectedVariation}>
-                <Plus className="h-4 w-4 ml-1" />הוסף
-              </Button>
-            </div>
-
-            {items.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>מוצר</TableHead>
-                    <TableHead>וריאציה</TableHead>
-                    <TableHead>כמות</TableHead>
-                    <TableHead>מחיר עלות ליח׳</TableHead>
-                    <TableHead>סה״כ</TableHead>
-                    <TableHead className="w-12" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item, idx) => (
-                    <TableRow key={item.variation_id}>
-                      <TableCell>{item.product_name}</TableCell>
-                      <TableCell>{item.variation_name}</TableCell>
-                      <TableCell>
-                        <Input type="number" min={1} value={item.quantity}
-                          onChange={(e) => updateItem(idx, "quantity", Number(e.target.value))}
-                          className="w-20 h-8" />
-                      </TableCell>
-                      <TableCell>
-                        <Input type="number" min={0} step={0.01} value={item.cost_price}
-                          onChange={(e) => updateItem(idx, "cost_price", Number(e.target.value))}
-                          className="w-24 h-8" />
-                      </TableCell>
-                      <TableCell className="font-medium">₪{(item.quantity * item.cost_price).toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" onClick={() => removeItem(idx)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setStep(1)}>
-                <ArrowRight className="h-4 w-4 ml-1" /> חזור
-              </Button>
-              <Button onClick={() => setStep(3)} disabled={items.length === 0}>
-                המשך לסיכום <ArrowLeft className="h-4 w-4 mr-1" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Summary */}
-      {step === 3 && (
-        <Card>
-          <CardHeader><CardTitle>סיכום ואישור</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-muted p-3 rounded-lg">
-                <p className="text-sm text-muted-foreground">מחסן</p>
-                <p className="font-bold">{warehouses?.find((w) => w.id === warehouseId)?.name}</p>
-              </div>
-              {supplierName && (
-                <div className="bg-muted p-3 rounded-lg">
-                  <p className="text-sm text-muted-foreground">ספק</p>
-                  <p className="font-bold">{supplierName}</p>
+        <TabsContent value="new" className="space-y-6">
+          {/* Steps indicator */}
+          <div className="flex items-center gap-4">
+            {[1, 2, 3].map((s) => (
+              <div key={s} className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  step === s ? "bg-primary text-primary-foreground" : step > s ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
+                }`}>
+                  {step > s ? <Check className="h-4 w-4" /> : s}
                 </div>
-              )}
-              <div className="bg-muted p-3 rounded-lg">
-                <p className="text-sm text-muted-foreground">פריטים</p>
-                <p className="font-bold">{items.length} סוגים / {totalUnits} יחידות</p>
+                <span className={`text-sm ${step === s ? "font-medium" : "text-muted-foreground"}`}>
+                  {s === 1 ? "פרטי קליטה" : s === 2 ? "הוספת פריטים" : "סיכום ואישור"}
+                </span>
+                {s < 3 && <div className="w-8 h-px bg-border" />}
               </div>
-              <div className="bg-muted p-3 rounded-lg">
-                <p className="text-sm text-muted-foreground">סה״כ עלות</p>
-                <p className="font-bold">₪{totalCost.toFixed(2)}</p>
-              </div>
-            </div>
+            ))}
+          </div>
 
-            {referenceNumber && (
-              <p className="text-sm text-muted-foreground">אסמכתא: {referenceNumber}</p>
-            )}
+          {step === 1 && (
+            <Card>
+              <CardHeader><CardTitle>פרטי קליטה</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>מחסן יעד *</Label>
+                  <Select value={warehouseId} onValueChange={setWarehouseId}>
+                    <SelectTrigger><SelectValue placeholder="בחר מחסן..." /></SelectTrigger>
+                    <SelectContent>
+                      {warehouses?.filter((w) => w.is_active).map((w) => (
+                        <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>שם ספק</Label>
+                    <Input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} placeholder="אופציונלי" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>מספר אסמכתא / חשבונית</Label>
+                    <Input value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} placeholder="אופציונלי" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>הערות</Label>
+                  <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="הערות לקליטה..." rows={3} />
+                </div>
+                <div className="flex justify-start">
+                  <Button onClick={() => setStep(2)} disabled={!warehouseId}>
+                    המשך לפריטים <ArrowLeft className="h-4 w-4 mr-1" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>מוצר</TableHead>
-                  <TableHead>וריאציה</TableHead>
-                  <TableHead>כמות</TableHead>
-                  <TableHead>עלות ליח׳</TableHead>
-                  <TableHead>סה״כ</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((item) => (
-                  <TableRow key={item.variation_id}>
-                    <TableCell>{item.product_name}</TableCell>
-                    <TableCell>{item.variation_name}</TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell>₪{item.cost_price.toFixed(2)}</TableCell>
-                    <TableCell className="font-medium">₪{(item.quantity * item.cost_price).toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          {step === 2 && (
+            <Card>
+              <CardHeader><CardTitle>פריטים לקליטה</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Select value={selectedVariation} onValueChange={setSelectedVariation}>
+                    <SelectTrigger className="flex-1"><SelectValue placeholder="בחר פריט..." /></SelectTrigger>
+                    <SelectContent>
+                      {variations?.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {(v.products as any)?.name} — {v.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={addItem} disabled={!selectedVariation}>
+                    <Plus className="h-4 w-4 ml-1" />הוסף
+                  </Button>
+                </div>
 
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setStep(2)}>
-                <ArrowRight className="h-4 w-4 ml-1" /> חזור
-              </Button>
-              <Button onClick={handleSubmit} disabled={submitting} size="lg">
-                {submitting ? "מעבד..." : `אשר קליטת ${totalUnits} יחידות`}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                {items.length > 0 && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>מוצר</TableHead>
+                        <TableHead>וריאציה</TableHead>
+                        <TableHead>כמות</TableHead>
+                        <TableHead>מחיר עלות ליח׳</TableHead>
+                        <TableHead>סה״כ</TableHead>
+                        <TableHead className="w-12" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {items.map((item, idx) => (
+                        <TableRow key={item.variation_id}>
+                          <TableCell>{item.product_name}</TableCell>
+                          <TableCell>{item.variation_name}</TableCell>
+                          <TableCell>
+                            <Input type="number" min={1} value={item.quantity}
+                              onChange={(e) => updateItem(idx, "quantity", Number(e.target.value))}
+                              className="w-20 h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Input type="number" min={0} step={0.01} value={item.cost_price}
+                              onChange={(e) => updateItem(idx, "cost_price", Number(e.target.value))}
+                              className="w-24 h-8" />
+                          </TableCell>
+                          <TableCell className="font-medium">₪{(item.quantity * item.cost_price).toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => removeItem(idx)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={() => setStep(1)}>
+                    <ArrowRight className="h-4 w-4 ml-1" /> חזור
+                  </Button>
+                  <Button onClick={() => setStep(3)} disabled={items.length === 0}>
+                    המשך לסיכום <ArrowLeft className="h-4 w-4 mr-1" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {step === 3 && (
+            <Card>
+              <CardHeader><CardTitle>סיכום ואישור</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-muted p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground">מחסן</p>
+                    <p className="font-bold">{warehouses?.find((w) => w.id === warehouseId)?.name}</p>
+                  </div>
+                  {supplierName && (
+                    <div className="bg-muted p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground">ספק</p>
+                      <p className="font-bold">{supplierName}</p>
+                    </div>
+                  )}
+                  <div className="bg-muted p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground">פריטים</p>
+                    <p className="font-bold">{items.length} סוגים / {totalUnits} יחידות</p>
+                  </div>
+                  <div className="bg-muted p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground">סה״כ עלות</p>
+                    <p className="font-bold">₪{totalCost.toFixed(2)}</p>
+                  </div>
+                </div>
+
+                {referenceNumber && (
+                  <p className="text-sm text-muted-foreground">אסמכתא: {referenceNumber}</p>
+                )}
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>מוצר</TableHead>
+                      <TableHead>וריאציה</TableHead>
+                      <TableHead>כמות</TableHead>
+                      <TableHead>עלות ליח׳</TableHead>
+                      <TableHead>סה״כ</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((item) => (
+                      <TableRow key={item.variation_id}>
+                        <TableCell>{item.product_name}</TableCell>
+                        <TableCell>{item.variation_name}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>₪{item.cost_price.toFixed(2)}</TableCell>
+                        <TableCell className="font-medium">₪{(item.quantity * item.cost_price).toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={() => setStep(2)}>
+                    <ArrowRight className="h-4 w-4 ml-1" /> חזור
+                  </Button>
+                  <Button onClick={handleSubmit} disabled={submitting} size="lg">
+                    {submitting ? "מעבד..." : `אשר קליטת ${totalUnits} יחידות`}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="history">
+          <IntakeHistory />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
+
+function IntakeHistory() {
+  const { data: sessions, isLoading } = useIntakeSessions();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  if (isLoading) return <p className="text-muted-foreground text-center py-8">טוען...</p>;
+  if (!sessions?.length) return <p className="text-muted-foreground text-center py-8">אין קליטות עדיין</p>;
+
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10" />
+              <TableHead>תאריך</TableHead>
+              <TableHead>מחסן</TableHead>
+              <TableHead>ספק</TableHead>
+              <TableHead>אסמכתא</TableHead>
+              <TableHead>פריטים</TableHead>
+              <TableHead>סטטוס</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sessions.map((session) => (
+              <>
+                <TableRow
+                  key={session.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setExpandedId(expandedId === session.id ? null : session.id)}
+                >
+                  <TableCell>
+                    {expandedId === session.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </TableCell>
+                  <TableCell>{format(new Date(session.created_at), "dd/MM/yyyy HH:mm")}</TableCell>
+                  <TableCell>{(session.warehouses as any)?.name}</TableCell>
+                  <TableCell>{session.supplier_name || "—"}</TableCell>
+                  <TableCell>{session.reference_number || "—"}</TableCell>
+                  <TableCell>{session.total_items}</TableCell>
+                  <TableCell>
+                    <Badge variant={session.status === "completed" ? "default" : "secondary"}>
+                      {session.status === "completed" ? "הושלם" : "טיוטה"}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+                {expandedId === session.id && (
+                  <TableRow key={`${session.id}-details`}>
+                    <TableCell colSpan={7} className="p-0">
+                      <SessionDetails sessionId={session.id} notes={session.notes} />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SessionDetails({ sessionId, notes }: { sessionId: string; notes: string | null }) {
+  const { data: items, isLoading } = useIntakeSessionItems(sessionId);
+
+  if (isLoading) return <p className="p-4 text-muted-foreground">טוען פריטים...</p>;
+
+  return (
+    <div className="bg-muted/30 p-4 space-y-3">
+      {notes && <p className="text-sm text-muted-foreground">הערות: {notes}</p>}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>מוצר</TableHead>
+            <TableHead>וריאציה</TableHead>
+            <TableHead>כמות</TableHead>
+            <TableHead>עלות ליח׳</TableHead>
+            <TableHead>סה״כ</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items?.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell>{(item.product_variations as any)?.products?.name || "—"}</TableCell>
+              <TableCell>{(item.product_variations as any)?.name}</TableCell>
+              <TableCell>{item.quantity}</TableCell>
+              <TableCell>₪{Number(item.cost_price).toFixed(2)}</TableCell>
+              <TableCell className="font-medium">₪{(item.quantity * Number(item.cost_price)).toFixed(2)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {items && items.length > 0 && (
+        <p className="text-sm font-medium">
+          סה״כ עלות: ₪{items.reduce((s, i) => s + i.quantity * Number(i.cost_price), 0).toFixed(2)}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export default IntakePage;

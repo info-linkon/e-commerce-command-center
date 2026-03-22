@@ -5,9 +5,7 @@ import {
   Truck,
   ShoppingCart,
   CreditCard,
-  Wallet,
   Receipt,
-  FileText,
   BarChart3,
   Settings,
   LogOut,
@@ -35,13 +33,9 @@ import logo from "@/assets/logo.webp";
 const inventorySubItems = [
   { title: "תצוגת מלאי", url: "/inventory" },
   { title: "פריטים", url: "/inventory/products" },
-  { title: "מחסנים", url: "/inventory/warehouses" },
-  { title: "קטגוריות", url: "/inventory/categories" },
   { title: "מארזים", url: "/inventory/bundles" },
   { title: "קליטת מלאי", url: "/inventory/intake" },
-  { title: "היסטוריית קליטות", url: "/inventory/intake-history" },
   { title: "העברות", url: "/inventory/transfers" },
-  { title: "לוג תנועות", url: "/inventory/log" },
 ];
 
 const menuItems = [
@@ -50,9 +44,7 @@ const menuItems = [
   { title: "הזמנות", url: "/orders", icon: ShoppingCart },
   { title: "משלוחים", url: "/deliveries", icon: Truck },
   { title: "קופה", url: "/pos", icon: CreditCard },
-  { title: "קופות", url: "/cash-registers", icon: Wallet },
-  { title: "הוצאות", url: "/expenses", icon: Receipt },
-  { title: "מסמכים", url: "/documents", icon: FileText },
+  { title: "כספים", url: "/finance", icon: Receipt },
   { title: "דוחות", url: "/reports", icon: BarChart3 },
   { title: "הגדרות", url: "/settings", icon: Settings },
 ];
