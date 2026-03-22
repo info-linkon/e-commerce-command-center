@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { PackagePlus, Plus, Trash2, ArrowLeft, ArrowRight, Check, History } from "lucide-react";
+import { PackagePlus, Plus, Trash2, ArrowLeft, ArrowRight, Check, History, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
