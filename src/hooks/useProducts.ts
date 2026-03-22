@@ -63,9 +63,12 @@ export function useCreateProduct() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["products"] });
       toast.success("המוצר נוצר בהצלחה");
+      if (data.is_published) {
+        syncProductToWoo(data.id);
+      }
     },
     onError: () => toast.error("שגיאה ביצירת מוצר"),
   });
