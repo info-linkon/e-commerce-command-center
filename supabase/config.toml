@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.woo-webhook]
 verify_jwt = false
+
+[functions.woo-product-sync]
+verify_jwt = false
