@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { syncProductToWoo } from "@/lib/wooProductSync";
 
 type Product = Tables<"products">;
 type ProductVariation = Tables<"product_variations">;
