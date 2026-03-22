@@ -108,8 +108,28 @@ const ExpensesPage = () => {
                 </div>
               )}
               <div>
-                <Label>קישור למסמך (אופציונלי)</Label>
-                <Input value={docUrl} onChange={(e) => setDocUrl(e.target.value)} placeholder="URL" type="url" />
+                <Label>מסמך (אופציונלי)</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                />
+                {docFile ? (
+                  <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm truncate flex-1">{docFile.name}</span>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDocFile(null)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button" variant="outline" className="w-full gap-2" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="h-4 w-4" />
+                    העלה מסמך
+                  </Button>
+                )}
               </div>
               <Button
                 onClick={handleCreate}
