@@ -17,6 +17,7 @@ import BundlesPage from "./pages/inventory/BundlesPage";
 import BundleForm from "./pages/inventory/BundleForm";
 import InventoryLogPage from "./pages/inventory/InventoryLogPage";
 import IntakePage from "./pages/inventory/IntakePage";
+import IntakeHistoryPage from "./pages/inventory/IntakeHistoryPage";
 import TransfersPage from "./pages/inventory/TransfersPage";
 import OrdersPage from "./pages/orders/OrdersPage";
 import OrderForm from "./pages/orders/OrderForm";
