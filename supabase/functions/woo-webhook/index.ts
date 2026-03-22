@@ -50,6 +50,9 @@ serve(async (req) => {
         .eq("notes", `WooCommerce Order #${payload.number}`)
         .maybeSingle();
 
+      const shipping = payload.shipping || {};
+      const shippingAddress = [shipping.address_1, shipping.address_2].filter(Boolean).join(", ") || null;
+
       const orderData = {
         customer_name: `${payload.billing?.first_name || ""} ${payload.billing?.last_name || ""}`.trim() || null,
         customer_phone: payload.billing?.phone || null,
@@ -58,6 +61,10 @@ serve(async (req) => {
         status: statusMap[payload.status] || "pending",
         source: "website" as const,
         notes: `WooCommerce Order #${payload.number}`,
+        shipping_address: shippingAddress,
+        shipping_city: shipping.city || null,
+        shipping_country: shipping.country || null,
+        shipping_postcode: shipping.postcode || null,
       };
 
       let orderId: string;
