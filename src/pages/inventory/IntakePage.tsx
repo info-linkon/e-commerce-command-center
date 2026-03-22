@@ -238,21 +238,23 @@ const IntakePage = () => {
             <Card>
               <CardHeader><CardTitle>פריטים לקליטה</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Select value={selectedVariation} onValueChange={setSelectedVariation}>
-                    <SelectTrigger className="flex-1"><SelectValue placeholder="בחר פריט..." /></SelectTrigger>
-                    <SelectContent>
-                      {variations?.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
-                          {(v.products as any)?.name} — {v.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={addItem} disabled={!selectedVariation}>
-                    <Plus className="h-4 w-4 ml-1" />הוסף
-                  </Button>
-                </div>
+                <VariationSearch
+                  variations={variations || []}
+                  excludeIds={items.map((i) => i.variation_id)}
+                  onSelect={(v) => {
+                    if (items.find((i) => i.variation_id === v.id)) {
+                      toast.error("הפריט כבר ברשימה");
+                      return;
+                    }
+                    setItems([...items, {
+                      variation_id: v.id,
+                      variation_name: v.name,
+                      product_name: (v.products as any)?.name || "",
+                      quantity: 1,
+                      cost_price: Number(v.cost_price) || 0,
+                    }]);
+                  }}
+                />
 
                 {items.length > 0 && (
                   <Table>
