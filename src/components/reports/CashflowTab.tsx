@@ -91,11 +91,11 @@ export default function CashflowTab({ startDate }: Props) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">תאריך</TableHead>
-                  <TableHead className="text-right">מקופה</TableHead>
-                  <TableHead className="text-right">לקופה</TableHead>
-                  <TableHead className="text-right">סכום</TableHead>
-                  <TableHead className="text-right">הערות</TableHead>
+                  <TableHead>תאריך</TableHead>
+                  <TableHead>מקופה</TableHead>
+                  <TableHead>לקופה</TableHead>
+                  <TableHead>סכום</TableHead>
+                  <TableHead>הערות</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
