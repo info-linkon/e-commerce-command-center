@@ -314,6 +314,8 @@ export function useUpdateOrderStatus() {
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
       const { error } = await supabase.from("orders").update({ status }).eq("id", id);
       if (error) throw error;
+      // Sync status to WooCommerce
+      syncOrderStatusToWoo(id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
