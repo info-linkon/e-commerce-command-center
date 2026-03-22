@@ -90,7 +90,7 @@ export default function OverviewTab({ startDate }: Props) {
                 <s.icon className={`h-5 w-5 ${s.color}`} />
                 <p className="text-sm text-muted-foreground">{s.label}</p>
               </div>
-              <p className={`text-2xl font-bold mt-2 text-left ${s.color}`}>{s.value}</p>
+              <p className={`text-2xl font-bold mt-2 ${s.color}`}>{s.value}</p>
             </CardContent>
           </Card>
         ))}

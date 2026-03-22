@@ -71,11 +71,11 @@ export default function ExpensesTab({ startDate }: Props) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">תאריך</TableHead>
-                <TableHead className="text-right">תיאור</TableHead>
-                <TableHead className="text-right">מקור תשלום</TableHead>
-                <TableHead className="text-right">קופה</TableHead>
-                <TableHead className="text-right">סכום</TableHead>
+                <TableHead>תאריך</TableHead>
+                <TableHead>תיאור</TableHead>
+                <TableHead>מקור תשלום</TableHead>
+                <TableHead>קופה</TableHead>
+                <TableHead>סכום</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
