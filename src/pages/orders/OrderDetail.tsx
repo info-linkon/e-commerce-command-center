@@ -88,6 +88,14 @@ const OrderDetail = () => {
         {order.picking_status && isAssigned && !isCancelled && (
           <Badge variant="outline">{pickingLabels[order.picking_status] || order.picking_status}</Badge>
         )}
+        {/* WooCommerce Sync Indicator */}
+        {order.source === "website" && (
+          <WooSyncBadge 
+            syncStatus={(order as any).woo_sync_status} 
+            syncError={(order as any).woo_sync_error}
+            orderId={order.id}
+          />
+        )}
       </div>
 
       {/* Warehouse Assignment Card */}

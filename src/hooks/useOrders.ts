@@ -4,10 +4,26 @@ import { toast } from "sonner";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
 import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
 
-function syncOrderStatusToWoo(orderId: string) {
-  supabase.functions.invoke("woo-sync", {
-    body: { action: "update_order_status", order_id: orderId },
-  }).catch((err) => console.error("Woo status sync error:", err));
+async function syncOrderStatusToWoo(orderId: string) {
+  try {
+    // Mark as syncing
+    await supabase.from("orders").update({ woo_sync_status: "syncing", woo_sync_error: null }).eq("id", orderId);
+    
+    const { data, error } = await supabase.functions.invoke("woo-sync", {
+      body: { action: "update_order_status", order_id: orderId },
+    });
+    
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    
+    await supabase.from("orders").update({ woo_sync_status: "synced", woo_sync_error: null }).eq("id", orderId);
+  } catch (err: any) {
+    console.error("Woo status sync error:", err);
+    await supabase.from("orders").update({ 
+      woo_sync_status: "failed", 
+      woo_sync_error: err?.message || "שגיאה לא ידועה" 
+    }).eq("id", orderId);
+  }
 }
 
 export type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
