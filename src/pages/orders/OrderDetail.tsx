@@ -46,6 +46,57 @@ const pickingLabels: Record<string, string> = {
   completed: "הושלם",
 };
 
+const WooSyncBadge = ({ syncStatus, syncError, orderId }: { syncStatus: string | null; syncError: string | null; orderId: string }) => {
+  const [retrying, setRetrying] = useState(false);
+  const qc = useQueryClient();
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    try {
+      await supabase.from("orders").update({ woo_sync_status: "syncing", woo_sync_error: null }).eq("id", orderId);
+      const { error } = await supabase.functions.invoke("woo-sync", {
+        body: { action: "update_order_status", order_id: orderId },
+      });
+      if (error) throw error;
+      await supabase.from("orders").update({ woo_sync_status: "synced", woo_sync_error: null }).eq("id", orderId);
+    } catch (err: any) {
+      await supabase.from("orders").update({ woo_sync_status: "failed", woo_sync_error: err?.message || "שגיאה" }).eq("id", orderId);
+    } finally {
+      setRetrying(false);
+      qc.invalidateQueries({ queryKey: ["orders", orderId] });
+    }
+  };
+
+  if (!syncStatus) return null;
+
+  if (syncStatus === "syncing" || retrying) {
+    return <Badge variant="outline" className="gap-1 text-blue-600 border-blue-300 bg-blue-50"><Loader2 className="h-3 w-3 animate-spin" />מסנכרן...</Badge>;
+  }
+
+  if (syncStatus === "synced") {
+    return <Badge variant="outline" className="gap-1 text-green-600 border-green-300 bg-green-50"><CheckCircle2 className="h-3 w-3" />WooCommerce מסונכרן</Badge>;
+  }
+
+  if (syncStatus === "failed") {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="outline" className="gap-1 text-destructive border-destructive/30 bg-destructive/10 cursor-pointer" onClick={handleRetry}>
+              <AlertCircle className="h-3 w-3" />
+              סנכרון נכשל
+              <RefreshCw className="h-3 w-3 mr-1" />
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent><p>{syncError || "שגיאה בסנכרון"} — לחץ לניסיון חוזר</p></TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return null;
+};
+
 const OrderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
