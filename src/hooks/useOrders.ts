@@ -4,6 +4,12 @@ import { toast } from "sonner";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
 import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
 
+function syncOrderStatusToWoo(orderId: string) {
+  supabase.functions.invoke("woo-sync", {
+    body: { action: "update_order_status", order_id: orderId },
+  }).catch((err) => console.error("Woo status sync error:", err));
+}
+
 export type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
 
 export interface OrderItem {

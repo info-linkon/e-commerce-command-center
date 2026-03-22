@@ -312,6 +312,61 @@ serve(async (req) => {
       });
     }
 
+    if (action === "update_order_status") {
+      const { order_id } = await req.json().catch(() => ({}));
+      // Get order from Supabase
+      const { data: order, error: oErr } = await supabase
+        .from("orders")
+        .select("order_number, status, source, notes")
+        .eq("id", order_id)
+        .single();
+      if (oErr || !order) {
+        return new Response(JSON.stringify({ error: "Order not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Only sync website orders
+      if (order.source !== "website") {
+        return new Response(JSON.stringify({ success: true, skipped: true, reason: "Not a website order" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Extract WooCommerce order number from notes
+      const wooMatch = order.notes?.match(/WooCommerce Order #(\d+)/);
+      if (!wooMatch) {
+        return new Response(JSON.stringify({ success: true, skipped: true, reason: "No WooCommerce order number found" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const wooOrderNumber = wooMatch[1];
+      // Find WooCommerce order by number
+      const wooOrders = await wooGet(`/orders?number=${wooOrderNumber}`);
+      if (!wooOrders?.length) {
+        return new Response(JSON.stringify({ error: "WooCommerce order not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const statusMap: Record<string, string> = {
+        pending: "on-hold",
+        processing: "processing",
+        completed: "completed",
+        cancelled: "cancelled",
+      };
+
+      const wooStatus = statusMap[order.status] || "on-hold";
+      await wooPut(`/orders/${wooOrders[0].id}`, { status: wooStatus });
+
+      return new Response(JSON.stringify({ success: true, woo_status: wooStatus }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
