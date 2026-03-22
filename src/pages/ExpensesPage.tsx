@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Receipt, Plus } from "lucide-react";
+import { useState, useRef } from "react";
+import { Receipt, Plus, Upload, FileText, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
