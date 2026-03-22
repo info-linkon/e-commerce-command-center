@@ -793,6 +793,8 @@ export type Database = {
           status: Database["public"]["Enums"]["order_status"]
           total: number
           updated_at: string
+          woo_sync_error: string | null
+          woo_sync_status: string | null
         }
         Insert: {
           assigned_user_id?: string | null
@@ -810,6 +812,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
+          woo_sync_error?: string | null
+          woo_sync_status?: string | null
         }
         Update: {
           assigned_user_id?: string | null
@@ -827,6 +831,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
+          woo_sync_error?: string | null
+          woo_sync_status?: string | null
         }
         Relationships: [
           {
