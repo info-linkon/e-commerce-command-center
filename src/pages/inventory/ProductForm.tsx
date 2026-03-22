@@ -178,6 +178,12 @@ const ProductForm = () => {
           <Button className="w-full" onClick={handleSave} disabled={!form.name || createProduct.isPending || updateProduct.isPending}>
             {createProduct.isPending || updateProduct.isPending ? "שומר..." : "שמור"}
           </Button>
+          {isEditing && (
+            <Button variant="outline" className="w-full" onClick={handleManualSync} disabled={syncing}>
+              <RefreshCw className={`h-4 w-4 ml-1 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "מסנכרן..." : "סנכרן לוו"}
+            </Button>
+          )}
         </div>
       </div>
     </div>

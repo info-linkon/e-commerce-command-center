@@ -66,6 +66,7 @@ const App = () => (
             <Route path="/inventory/bundles/:id" element={<Protected><BundleForm /></Protected>} />
             <Route path="/inventory/log" element={<Protected><InventoryLogPage /></Protected>} />
             <Route path="/inventory/intake" element={<Protected><IntakePage /></Protected>} />
+            <Route path="/inventory/intake-history" element={<Protected><IntakeHistoryPage /></Protected>} />
             <Route path="/inventory/transfers" element={<Protected><TransfersPage /></Protected>} />
             <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
             <Route path="/orders/new" element={<Protected><OrderForm /></Protected>} />
