@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Warehouse, XCircle, AlertTriangle } from "lucide-react";
+import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import DeliveryAssignment from "@/components/orders/DeliveryAssignment";
 import PaymentSection from "@/components/orders/PaymentSection";
 import { useOrderDelivery } from "@/hooks/useDeliveries";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useOrder, useUpdateOrderStatus, useAssignWarehouse, useCancelOrder, type OrderStatus } from "@/hooks/useOrders";
+import { supabase } from "@/integrations/supabase/client";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useWarehouses } from "@/hooks/useWarehouses";
 import PickingChecklist from "@/components/orders/PickingChecklist";
 
@@ -42,6 +45,57 @@ const pickingLabels: Record<string, string> = {
   not_started: "טרם החל",
   in_progress: "בתהליך",
   completed: "הושלם",
+};
+
+const WooSyncBadge = ({ syncStatus, syncError, orderId }: { syncStatus: string | null; syncError: string | null; orderId: string }) => {
+  const [retrying, setRetrying] = useState(false);
+  const qc = useQueryClient();
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    try {
+      await supabase.from("orders").update({ woo_sync_status: "syncing", woo_sync_error: null }).eq("id", orderId);
+      const { error } = await supabase.functions.invoke("woo-sync", {
+        body: { action: "update_order_status", order_id: orderId },
+      });
+      if (error) throw error;
+      await supabase.from("orders").update({ woo_sync_status: "synced", woo_sync_error: null }).eq("id", orderId);
+    } catch (err: any) {
+      await supabase.from("orders").update({ woo_sync_status: "failed", woo_sync_error: err?.message || "שגיאה" }).eq("id", orderId);
+    } finally {
+      setRetrying(false);
+      qc.invalidateQueries({ queryKey: ["orders", orderId] });
+    }
+  };
+
+  if (!syncStatus) return null;
+
+  if (syncStatus === "syncing" || retrying) {
+    return <Badge variant="outline" className="gap-1 text-blue-600 border-blue-300 bg-blue-50"><Loader2 className="h-3 w-3 animate-spin" />מסנכרן...</Badge>;
+  }
+
+  if (syncStatus === "synced") {
+    return <Badge variant="outline" className="gap-1 text-green-600 border-green-300 bg-green-50"><CheckCircle2 className="h-3 w-3" />WooCommerce מסונכרן</Badge>;
+  }
+
+  if (syncStatus === "failed") {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="outline" className="gap-1 text-destructive border-destructive/30 bg-destructive/10 cursor-pointer" onClick={handleRetry}>
+              <AlertCircle className="h-3 w-3" />
+              סנכרון נכשל
+              <RefreshCw className="h-3 w-3 mr-1" />
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent><p>{syncError || "שגיאה בסנכרון"} — לחץ לניסיון חוזר</p></TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return null;
 };
 
 const OrderDetail = () => {
@@ -85,6 +139,14 @@ const OrderDetail = () => {
         <Badge className={`${statusColors[status]} border-0`}>{statusLabels[status]}</Badge>
         {order.picking_status && isAssigned && !isCancelled && (
           <Badge variant="outline">{pickingLabels[order.picking_status] || order.picking_status}</Badge>
+        )}
+        {/* WooCommerce Sync Indicator */}
+        {order.source === "website" && (
+          <WooSyncBadge 
+            syncStatus={(order as any).woo_sync_status} 
+            syncError={(order as any).woo_sync_error}
+            orderId={order.id}
+          />
         )}
       </div>
 
