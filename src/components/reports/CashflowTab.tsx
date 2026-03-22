@@ -64,7 +64,7 @@ export default function CashflowTab({ startDate }: Props) {
                 <Wallet className="h-4 w-4 text-primary" />
                 <p className="text-sm text-muted-foreground">{r.name}</p>
               </div>
-              <p className="text-xl font-bold mt-1 text-left">₪{Number(r.current_balance).toFixed(0)}</p>
+              <p className="text-xl font-bold mt-1">₪{Number(r.current_balance).toFixed(0)}</p>
             </CardContent>
           </Card>
         ))}
