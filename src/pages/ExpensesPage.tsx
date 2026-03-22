@@ -47,7 +47,7 @@ const ExpensesPage = () => {
           setAmount("");
           setSource("credit_card");
           setRegisterId("");
-          setDocUrl("");
+          setDocFile(null);
         },
       }
     );
