@@ -38,10 +38,13 @@ const PosPage = () => {
   const [cashRegisterId, setCashRegisterId] = useState<string>("");
   const [payments, setPayments] = useState<PaymentLine[]>([{ method: "cash", amount: 0 }]);
   const [customerName, setCustomerName] = useState("");
+  const [warehouseId, setWarehouseId] = useState<string>("");
 
   const createOrder = useCreateOrder();
+  const assignWarehouse = useAssignWarehouse();
   const { data: cashRegisters } = useCashRegisters();
   const { data: categories } = useCategories();
+  const { data: warehouses } = useWarehouses();
   const updateBalance = useUpdateCashRegisterBalance();
 
   const { data: variations } = useQuery({
