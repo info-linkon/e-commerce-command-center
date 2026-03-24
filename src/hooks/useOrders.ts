@@ -169,7 +169,7 @@ export function useAssignWarehouse() {
         });
       }
 
-      // Sync to WooCommerce
+      // Sync stock to WooCommerce (all sources — stock is global)
       syncMultipleStockToWoo(items.map((item: any) => item.variation_id));
 
       // 3. Update order with warehouse assignment + status to processing
@@ -195,8 +195,10 @@ export function useAssignWarehouse() {
         if (pickErr) throw pickErr;
       }
 
-      // 5. Sync status to WooCommerce
-      syncOrderStatusToWoo(orderId);
+      // 5. Sync status to WooCommerce only for website orders
+      if (order.source === "website") {
+        syncOrderStatusToWoo(orderId);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
@@ -273,8 +275,10 @@ export function useCancelOrder() {
         .eq("id", orderId);
       if (updateErr) throw updateErr;
 
-      // Sync cancelled status to WooCommerce
-      syncOrderStatusToWoo(orderId);
+      // Sync cancelled status to WooCommerce only for website orders
+      if (order.source === "website") {
+        syncOrderStatusToWoo(orderId);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
@@ -290,10 +294,13 @@ export function useUpdateOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
+      const { data: order } = await supabase.from("orders").select("source").eq("id", id).single();
       const { error } = await supabase.from("orders").update({ status }).eq("id", id);
       if (error) throw error;
-      // Sync status to WooCommerce
-      syncOrderStatusToWoo(id);
+      // Sync status to WooCommerce only for website orders
+      if (order?.source === "website") {
+        syncOrderStatusToWoo(id);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
