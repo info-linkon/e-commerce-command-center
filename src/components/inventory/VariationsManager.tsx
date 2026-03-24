@@ -113,7 +113,7 @@ export function VariationsManager({ productId }: VariationsManagerProps) {
                 <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
               </div>
               <div className="space-y-2">
-                <Label>מחיר עלות</Label>
+                <Label>מחיר עלות (ללא מע״מ)</Label>
                 <Input type="number" value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: Number(e.target.value) })} />
               </div>
             </div>
