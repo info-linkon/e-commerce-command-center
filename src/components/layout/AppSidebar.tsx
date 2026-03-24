@@ -10,6 +10,9 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Users,
+  ClipboardList,
+  PackageMinus,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,12 +39,19 @@ const inventorySubItems = [
   { title: "מארזים", url: "/inventory/bundles" },
   { title: "קליטת מלאי", url: "/inventory/intake" },
   { title: "העברות", url: "/inventory/transfers" },
+  { title: "פחת מלאי", url: "/inventory/write-off" },
+];
+
+const ordersSubItems = [
+  { title: "כל ההזמנות", url: "/orders" },
+  { title: "תור ליקוט", url: "/orders/picking" },
+  { title: "במשלוח", url: "/orders/in-delivery" },
 ];
 
 const menuItems = [
   { title: "דשבורד", url: "/dashboard", icon: LayoutDashboard },
   { title: "פריטי אתר", url: "/website-items", icon: Globe },
-  { title: "הזמנות", url: "/orders", icon: ShoppingCart },
+  { title: "לקוחות", url: "/customers", icon: Users },
   { title: "משלוחים", url: "/deliveries", icon: Truck },
   { title: "קופה", url: "/pos", icon: CreditCard },
   { title: "כספים", url: "/finance", icon: Receipt },
@@ -110,7 +120,40 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               </Collapsible>
 
-              {/* Rest of menu items */}
+              {/* Orders with submenu */}
+              <Collapsible defaultOpen className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className="hover:bg-sidebar-accent w-full justify-between">
+                      <span className="flex items-center">
+                        <ShoppingCart className="ml-2 h-4 w-4" />
+                        <span>הזמנות</span>
+                      </span>
+                      <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {ordersSubItems.map((item) => (
+                        <SidebarMenuSubItem key={item.url}>
+                          <SidebarMenuSubButton asChild>
+                            <NavLink
+                              to={item.url}
+                              end={item.url === "/orders"}
+                              className="hover:bg-sidebar-accent"
+                              activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                            >
+                              <span>{item.title}</span>
+                            </NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              {/* Rest of menu items (skip first 2: dashboard, website-items are already rendered) */}
               {menuItems.slice(1).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>

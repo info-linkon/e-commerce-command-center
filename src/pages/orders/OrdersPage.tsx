@@ -23,6 +23,12 @@ const statusColors: Record<OrderStatus, string> = {
   cancelled: "bg-red-100 text-red-800",
 };
 
+const sourceLabels: Record<string, string> = {
+  manual: "ידני",
+  pos: "POS",
+  website: "אתר",
+};
+
 const OrdersPage = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -74,6 +80,7 @@ const OrdersPage = () => {
               <TableHead className="text-right">לקוח</TableHead>
               <TableHead className="text-right">טלפון</TableHead>
               <TableHead className="text-right">סה״כ</TableHead>
+              <TableHead className="text-right">מקור</TableHead>
               <TableHead className="text-right">סטטוס</TableHead>
               <TableHead className="text-right">תאריך</TableHead>
               <TableHead className="text-right w-28">פעולות</TableHead>
@@ -81,9 +88,9 @@ const OrdersPage = () => {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">טוען...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">טוען...</TableCell></TableRow>
             ) : !filtered?.length ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">אין הזמנות</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">אין הזמנות</TableCell></TableRow>
             ) : (
               filtered.map((order) => {
                 const status = order.status as OrderStatus;
@@ -93,6 +100,11 @@ const OrdersPage = () => {
                     <TableCell>{order.customer_name || "—"}</TableCell>
                     <TableCell dir="ltr" className="text-right">{order.customer_phone || "—"}</TableCell>
                     <TableCell>₪{Number(order.total).toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {sourceLabels[order.source] || order.source}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                       <Select value={status} onValueChange={(v) => updateStatus.mutate({ id: order.id, status: v as OrderStatus })}>
                         <SelectTrigger className="w-28 h-7 text-xs">

@@ -1,15 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCreateOrder } from "@/hooks/useOrders";
-import { useProducts } from "@/hooks/useProducts";
+import { useCustomers, useCreateCustomer } from "@/hooks/useCustomers";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -24,9 +25,7 @@ interface OrderLine {
 const OrderForm = () => {
   const navigate = useNavigate();
   const createOrder = useCreateOrder();
-  const { data: products } = useProducts();
 
-  // Fetch all variations
   const { data: variations } = useQuery({
     queryKey: ["all-variations"],
     queryFn: async () => {
@@ -39,13 +38,33 @@ const OrderForm = () => {
     },
   });
 
+  const [customerSearch, setCustomerSearch] = useState("");
+  const { data: customers } = useCustomers(customerSearch || undefined);
+  const createCustomer = useCreateCustomer();
+
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingCity, setShippingCity] = useState("");
+  const [shippingPostcode, setShippingPostcode] = useState("");
+  const [shippingCountry, setShippingCountry] = useState("");
   const [notes, setNotes] = useState("");
+  const [includesVat, setIncludesVat] = useState(true);
   const [lines, setLines] = useState<OrderLine[]>([]);
 
   const total = useMemo(() => lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0), [lines]);
+
+  const selectCustomer = (cId: string) => {
+    const c = customers?.find((x) => x.id === cId);
+    if (!c) return;
+    setCustomerId(c.id);
+    setCustomerName(c.name);
+    setCustomerPhone(c.phone || "");
+    setCustomerEmail(c.email || "");
+    if (c.city) setShippingCity(c.city);
+  };
 
   const addLine = (variationId: string) => {
     const v = variations?.find((x) => x.id === variationId);
@@ -74,6 +93,25 @@ const OrderForm = () => {
 
   const handleSubmit = async () => {
     if (lines.length === 0) return;
+
+    // Get current user for created_by
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Create customer if new
+    let finalCustomerId = customerId;
+    if (!finalCustomerId && customerName) {
+      try {
+        const newCustomer = await createCustomer.mutateAsync({
+          name: customerName,
+          phone: customerPhone || null,
+          email: customerEmail || null,
+          city: shippingCity || null,
+          notes: null,
+        });
+        finalCustomerId = newCustomer.id;
+      } catch { /* ignore */ }
+    }
+
     await createOrder.mutateAsync({
       customer_name: customerName || undefined,
       customer_phone: customerPhone || undefined,
@@ -86,7 +124,14 @@ const OrderForm = () => {
         unit_price: l.unit_price,
         total_price: l.quantity * l.unit_price,
       })),
-    });
+      ...(shippingAddress && { shipping_address: shippingAddress }),
+      ...(shippingCity && { shipping_city: shippingCity }),
+      ...(shippingPostcode && { shipping_postcode: shippingPostcode }),
+      ...(shippingCountry && { shipping_country: shippingCountry }),
+      includes_vat: includesVat,
+      created_by: user?.id || undefined,
+      customer_id: finalCustomerId || undefined,
+    } as any);
     navigate("/orders");
   };
 
@@ -103,6 +148,22 @@ const OrderForm = () => {
         <Card>
           <CardHeader><CardTitle>פרטי לקוח</CardTitle></CardHeader>
           <CardContent className="space-y-4">
+            {/* Customer search */}
+            <div>
+              <Label>חיפוש לקוח קיים</Label>
+              <Select onValueChange={selectCustomer}>
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר לקוח קיים או הזן חדש..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} {c.phone ? `— ${c.phone}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>שם לקוח</Label>
               <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
@@ -122,18 +183,48 @@ const OrderForm = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>סיכום</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-3xl font-bold">₪{total.toFixed(2)}</div>
-            <div className="text-sm text-muted-foreground">{lines.length} פריטים</div>
-            <Button onClick={handleSubmit} disabled={lines.length === 0 || createOrder.isPending} className="w-full">
-              {createOrder.isPending ? "שומר..." : "צור הזמנה"}
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle>כתובת משלוח</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label>כתובת</Label>
+                <Input value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>עיר</Label>
+                  <Input value={shippingCity} onChange={(e) => setShippingCity(e.target.value)} />
+                </div>
+                <div>
+                  <Label>מיקוד</Label>
+                  <Input value={shippingPostcode} onChange={(e) => setShippingPostcode(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label>מדינה</Label>
+                <Input value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>סיכום</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-3xl font-bold">₪{total.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground">{lines.length} פריטים</div>
+              <div className="flex items-center justify-between">
+                <Label>כולל מע״מ</Label>
+                <Switch checked={includesVat} onCheckedChange={setIncludesVat} />
+              </div>
+              <Button onClick={handleSubmit} disabled={lines.length === 0 || createOrder.isPending} className="w-full">
+                {createOrder.isPending ? "שומר..." : "צור הזמנה"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Card>

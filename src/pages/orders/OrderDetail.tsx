@@ -47,6 +47,12 @@ const pickingLabels: Record<string, string> = {
   completed: "הושלם",
 };
 
+const sourceLabels: Record<string, string> = {
+  manual: "ידני",
+  pos: "POS",
+  website: "אתר",
+};
+
 const WooSyncBadge = ({ syncStatus, syncError, orderId }: { syncStatus: string | null; syncError: string | null; orderId: string }) => {
   const [retrying, setRetrying] = useState(false);
   const qc = useQueryClient();
@@ -140,7 +146,6 @@ const OrderDetail = () => {
         {order.picking_status && isAssigned && !isCancelled && (
           <Badge variant="outline">{pickingLabels[order.picking_status] || order.picking_status}</Badge>
         )}
-        {/* WooCommerce Sync Indicator */}
         {order.source === "website" && (
           <WooSyncBadge 
             syncStatus={(order as any).woo_sync_status} 
@@ -223,8 +228,12 @@ const OrderDetail = () => {
             <div className="text-sm text-muted-foreground">
               {new Date(order.created_at).toLocaleString("he-IL")}
             </div>
+            <div className="flex gap-2 items-center text-sm text-muted-foreground">
+              <span>מקור:</span>
+              <Badge variant="outline" className="text-xs">{sourceLabels[order.source] || order.source}</Badge>
+            </div>
             <div className="text-sm text-muted-foreground">
-              מקור: {order.source === "pos" ? "POS" : order.source === "website" ? "אתר" : "ידני"}
+              {(order as any).includes_vat === false ? "ללא מע״מ" : "כולל מע״מ"}
             </div>
           </CardContent>
         </Card>
