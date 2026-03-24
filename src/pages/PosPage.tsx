@@ -11,9 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCreateOrder } from "@/hooks/useOrders";
+import { useCreateOrder, useAssignWarehouse } from "@/hooks/useOrders";
 import { useCashRegisters, useUpdateCashRegisterBalance } from "@/hooks/useCashRegisters";
 import { useCategories } from "@/hooks/useCategories";
+import { useWarehouses } from "@/hooks/useWarehouses";
 import { toast } from "sonner";
 
 interface CartItem {
