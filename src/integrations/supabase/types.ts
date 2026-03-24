@@ -249,6 +249,36 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
       deliveries: {
         Row: {
           created_at: string
@@ -782,10 +812,13 @@ export type Database = {
           assigned_warehouse_id: string | null
           cash_register_id: string | null
           created_at: string
+          created_by: string | null
           customer_email: string | null
+          customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
           id: string
+          includes_vat: boolean | null
           notes: string | null
           order_number: number
           picking_status: Database["public"]["Enums"]["picking_status"] | null
@@ -805,10 +838,13 @@ export type Database = {
           assigned_warehouse_id?: string | null
           cash_register_id?: string | null
           created_at?: string
+          created_by?: string | null
           customer_email?: string | null
+          customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
           id?: string
+          includes_vat?: boolean | null
           notes?: string | null
           order_number?: number
           picking_status?: Database["public"]["Enums"]["picking_status"] | null
@@ -828,10 +864,13 @@ export type Database = {
           assigned_warehouse_id?: string | null
           cash_register_id?: string | null
           created_at?: string
+          created_by?: string | null
           customer_email?: string | null
+          customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
           id?: string
+          includes_vat?: boolean | null
           notes?: string | null
           order_number?: number
           picking_status?: Database["public"]["Enums"]["picking_status"] | null
@@ -859,6 +898,13 @@ export type Database = {
             columns: ["cash_register_id"]
             isOneToOne: false
             referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
@@ -915,6 +961,7 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          name_ar: string | null
           price: number
           product_id: string
           sku: string | null
@@ -927,6 +974,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          name_ar?: string | null
           price?: number
           product_id: string
           sku?: string | null
@@ -939,6 +987,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          name_ar?: string | null
           price?: number
           product_id?: string
           sku?: string | null
@@ -961,13 +1010,16 @@ export type Database = {
           cost_price: number
           created_at: string
           description: string | null
+          description_ar: string | null
           id: string
           image_url: string | null
           is_published: boolean
           name: string
+          name_ar: string | null
           product_type: Database["public"]["Enums"]["product_type"]
           sale_price: number
           short_description: string | null
+          short_description_ar: string | null
           sku: string | null
           updated_at: string
           woo_id: number | null
@@ -977,13 +1029,16 @@ export type Database = {
           cost_price?: number
           created_at?: string
           description?: string | null
+          description_ar?: string | null
           id?: string
           image_url?: string | null
           is_published?: boolean
           name: string
+          name_ar?: string | null
           product_type?: Database["public"]["Enums"]["product_type"]
           sale_price?: number
           short_description?: string | null
+          short_description_ar?: string | null
           sku?: string | null
           updated_at?: string
           woo_id?: number | null
@@ -993,13 +1048,16 @@ export type Database = {
           cost_price?: number
           created_at?: string
           description?: string | null
+          description_ar?: string | null
           id?: string
           image_url?: string | null
           is_published?: boolean
           name?: string
+          name_ar?: string | null
           product_type?: Database["public"]["Enums"]["product_type"]
           sale_price?: number
           short_description?: string | null
+          short_description_ar?: string | null
           sku?: string | null
           updated_at?: string
           woo_id?: number | null
@@ -1111,6 +1169,7 @@ export type Database = {
         | "transfer_in"
         | "transfer_out"
         | "adjustment"
+        | "write_off"
       order_source: "manual" | "pos" | "website"
       order_status: "pending" | "processing" | "completed" | "cancelled"
       payment_method: "cash" | "bit" | "credit"
@@ -1255,6 +1314,7 @@ export const Constants = {
         "transfer_in",
         "transfer_out",
         "adjustment",
+        "write_off",
       ],
       order_source: ["manual", "pos", "website"],
       order_status: ["pending", "processing", "completed", "cancelled"],
