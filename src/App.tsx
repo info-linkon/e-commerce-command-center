@@ -15,9 +15,12 @@ import BundlesPage from "./pages/inventory/BundlesPage";
 import BundleForm from "./pages/inventory/BundleForm";
 import IntakePage from "./pages/inventory/IntakePage";
 import TransfersPage from "./pages/inventory/TransfersPage";
+import InventoryWriteOffPage from "./pages/inventory/InventoryWriteOffPage";
 import OrdersPage from "./pages/orders/OrdersPage";
 import OrderForm from "./pages/orders/OrderForm";
 import OrderDetail from "./pages/orders/OrderDetail";
+import PickingQueuePage from "./pages/orders/PickingQueuePage";
+import InDeliveryPage from "./pages/orders/InDeliveryPage";
 import PosPage from "./pages/PosPage";
 import WooSyncPage from "./pages/WooSyncPage";
 import ReportsPage from "./pages/ReportsPage";
@@ -25,6 +28,7 @@ import FinancePage from "./pages/FinancePage";
 import DeliveriesPage from "./pages/deliveries/DeliveriesPage";
 import DeliveryCompaniesPage from "./pages/settings/DeliveryCompaniesPage";
 import CashRegistersPage from "./pages/CashRegistersPage";
+import CustomersPage from "./pages/customers/CustomersPage";
 import NotFound from "./pages/NotFound";
 import FlowsPage from "./pages/FlowsPage";
 import WebsiteItemsPage from "./pages/WebsiteItemsPage";
@@ -59,14 +63,18 @@ const App = () => (
             <Route path="/inventory/bundles/:id" element={<Protected><BundleForm /></Protected>} />
             <Route path="/inventory/intake" element={<Protected><IntakePage /></Protected>} />
             <Route path="/inventory/transfers" element={<Protected><TransfersPage /></Protected>} />
+            <Route path="/inventory/write-off" element={<Protected><InventoryWriteOffPage /></Protected>} />
             <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
             <Route path="/orders/new" element={<Protected><OrderForm /></Protected>} />
+            <Route path="/orders/picking" element={<Protected><PickingQueuePage /></Protected>} />
+            <Route path="/orders/in-delivery" element={<Protected><InDeliveryPage /></Protected>} />
             <Route path="/orders/:id" element={<Protected><OrderDetail /></Protected>} />
             <Route path="/pos" element={<Protected><PosPage /></Protected>} />
             <Route path="/deliveries" element={<Protected><DeliveriesPage /></Protected>} />
             <Route path="/settings/delivery-companies" element={<Protected><DeliveryCompaniesPage /></Protected>} />
             <Route path="/cash-registers" element={<Protected><CashRegistersPage /></Protected>} />
             <Route path="/finance" element={<Protected><FinancePage /></Protected>} />
+            <Route path="/customers" element={<Protected><CustomersPage /></Protected>} />
             <Route path="/woo-sync" element={<Protected><WooSyncPage /></Protected>} />
             <Route path="/website-items" element={<Protected><WebsiteItemsPage /></Protected>} />
             <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
