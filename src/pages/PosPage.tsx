@@ -96,11 +96,19 @@ const PosPage = () => {
   };
 
   const handleCreateOrder = async () => {
+    if (!customerName.trim()) { toast.error("שם לקוח הוא שדה חובה"); return; }
+    if (!customerPhone.trim()) { toast.error("טלפון הוא שדה חובה"); return; }
+    if (!shippingAddress.trim()) { toast.error("כתובת היא שדה חובה"); return; }
+    if (!shippingCity.trim()) { toast.error("עיר היא שדה חובה"); return; }
+
     const { data: { user } } = await supabase.auth.getUser();
 
     try {
       await createOrder.mutateAsync({
-        customer_name: customerName || undefined,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
+        shipping_address: shippingAddress.trim(),
+        shipping_city: shippingCity.trim(),
         total,
         status: "pending",
         source: "pos" as any,
@@ -116,6 +124,9 @@ const PosPage = () => {
       setCart([]);
       setShowCreateOrder(false);
       setCustomerName("");
+      setCustomerPhone("");
+      setShippingAddress("");
+      setShippingCity("");
       toast.success("ההזמנה נוצרה ונשלחה לתהליך ההזמנות");
       navigate("/orders");
     } catch {
