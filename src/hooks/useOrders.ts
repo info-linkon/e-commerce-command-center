@@ -195,8 +195,10 @@ export function useAssignWarehouse() {
         if (pickErr) throw pickErr;
       }
 
-      // 5. Sync status to WooCommerce
-      syncOrderStatusToWoo(orderId);
+      // 5. Sync status to WooCommerce only for website orders
+      if (order.source === "website") {
+        syncOrderStatusToWoo(orderId);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
