@@ -126,6 +126,9 @@ const PosPage = () => {
       return;
     }
 
+    // Get current user for created_by
+    const { data: { user } } = await supabase.auth.getUser();
+
     try {
       const order = await createOrder.mutateAsync({
         customer_name: customerName || undefined,
@@ -133,6 +136,7 @@ const PosPage = () => {
         status: "completed",
         source: "pos" as any,
         cash_register_id: cashRegisterId as any,
+        created_by: user?.id || undefined,
         items: cart.map((c) => ({
           variation_id: c.variation_id,
           quantity: c.quantity,
