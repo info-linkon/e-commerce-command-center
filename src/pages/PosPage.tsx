@@ -298,6 +298,18 @@ const PosPage = () => {
             </div>
 
             <div>
+              <Label>מחסן</Label>
+              <Select value={warehouseId} onValueChange={setWarehouseId}>
+                <SelectTrigger><SelectValue placeholder="בחר מחסן..." /></SelectTrigger>
+                <SelectContent>
+                  {warehouses?.filter((w) => w.is_active).map((w) => (
+                    <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
               <Label>קופה</Label>
               <Select value={cashRegisterId} onValueChange={setCashRegisterId}>
                 <SelectTrigger><SelectValue placeholder="בחר קופה..." /></SelectTrigger>

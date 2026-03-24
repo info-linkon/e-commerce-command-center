@@ -101,44 +101,6 @@ export function useCreateOrder() {
           .from("order_items")
           .insert(orderItems);
         if (itemsError) throw itemsError;
-
-        // For POS orders (completed immediately), deduct inventory + log
-        if (input.status === "completed") {
-          for (const item of items) {
-            const { data: invRecords } = await supabase
-              .from("inventory")
-              .select("*")
-              .eq("variation_id", item.variation_id);
-            
-            if (invRecords && invRecords.length > 0) {
-              let remaining = item.quantity;
-              for (const inv of invRecords) {
-                if (remaining <= 0) break;
-                const decrease = Math.min(remaining, inv.quantity);
-                const newQty = inv.quantity - decrease;
-                await supabase
-                  .from("inventory")
-                  .update({ quantity: newQty })
-                  .eq("id", inv.id);
-                
-                await logInventoryChange({
-                  variation_id: item.variation_id,
-                  warehouse_id: inv.warehouse_id,
-                  quantity_change: -decrease,
-                  quantity_after: newQty,
-                  action_type: "sale",
-                  reference_id: order.id,
-                  notes: `מכירה POS - הזמנה #${order.order_number}`,
-                });
-
-                remaining -= decrease;
-              }
-            }
-          }
-          // Sync POS items to WooCommerce
-          syncMultipleStockToWoo(items.map((i) => i.variation_id));
-        }
-        // For non-POS orders, inventory deduction happens at warehouse assignment
       }
 
       return order;
