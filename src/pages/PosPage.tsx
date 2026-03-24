@@ -30,6 +30,9 @@ const PosPage = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCreateOrder, setShowCreateOrder] = useState(false);
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingCity, setShippingCity] = useState("");
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
