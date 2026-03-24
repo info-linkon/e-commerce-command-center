@@ -236,8 +236,20 @@ const PosPage = () => {
 
           <div className="space-y-4">
             <div>
-              <Label>שם לקוח (אופציונלי)</Label>
+              <Label>שם לקוח *</Label>
               <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+            </div>
+            <div>
+              <Label>טלפון *</Label>
+              <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} type="tel" dir="ltr" />
+            </div>
+            <div>
+              <Label>כתובת *</Label>
+              <Input value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} placeholder="רחוב ומספר" />
+            </div>
+            <div>
+              <Label>עיר *</Label>
+              <Input value={shippingCity} onChange={(e) => setShippingCity(e.target.value)} />
             </div>
           </div>
 
