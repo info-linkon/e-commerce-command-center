@@ -294,10 +294,13 @@ export function useUpdateOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
+      const { data: order } = await supabase.from("orders").select("source").eq("id", id).single();
       const { error } = await supabase.from("orders").update({ status }).eq("id", id);
       if (error) throw error;
-      // Sync status to WooCommerce
-      syncOrderStatusToWoo(id);
+      // Sync status to WooCommerce only for website orders
+      if (order?.source === "website") {
+        syncOrderStatusToWoo(id);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
