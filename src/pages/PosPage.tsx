@@ -125,6 +125,10 @@ const PosPage = () => {
       toast.error("בחר קופה");
       return;
     }
+    if (!warehouseId) {
+      toast.error("בחר מחסן");
+      return;
+    }
     if (Math.abs(paymentsTotal - total) > 0.01) {
       toast.error("סכום התשלומים לא תואם את הסה״כ");
       return;
@@ -134,10 +138,11 @@ const PosPage = () => {
     const { data: { user } } = await supabase.auth.getUser();
 
     try {
+      // 1. Create order as pending (like website orders)
       const order = await createOrder.mutateAsync({
         customer_name: customerName || undefined,
         total,
-        status: "completed",
+        status: "pending",
         source: "pos" as any,
         cash_register_id: cashRegisterId as any,
         created_by: user?.id || undefined,
@@ -149,7 +154,10 @@ const PosPage = () => {
         })),
       } as any);
 
-      // Save payments
+      // 2. Assign warehouse — deducts stock, creates picking items, sets status to processing
+      await assignWarehouse.mutateAsync({ orderId: order.id, warehouseId });
+
+      // 3. Save payments
       for (const p of payments) {
         await supabase.from("payments").insert({
           order_id: order.id,
@@ -159,7 +167,7 @@ const PosPage = () => {
         });
       }
 
-      // Update cash register balance for cash payments
+      // 4. Update cash register balance for cash payments
       const cashAmount = payments.filter((p) => p.method === "cash").reduce((sum, p) => sum + p.amount, 0);
       if (cashAmount > 0) {
         await updateBalance.mutateAsync({ id: cashRegisterId, amount: cashAmount });
