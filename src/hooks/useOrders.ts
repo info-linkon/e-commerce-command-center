@@ -169,7 +169,7 @@ export function useAssignWarehouse() {
         });
       }
 
-      // Sync to WooCommerce
+      // Sync stock to WooCommerce (all sources — stock is global)
       syncMultipleStockToWoo(items.map((item: any) => item.variation_id));
 
       // 3. Update order with warehouse assignment + status to processing
