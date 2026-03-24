@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowRight, RefreshCw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { useProduct, useCreateProduct, useUpdateProduct } from "@/hooks/useProdu
 import { useCategories } from "@/hooks/useCategories";
 import { VariationsManager } from "@/components/inventory/VariationsManager";
 import { syncProductToWoo } from "@/lib/wooProductSync";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const ProductForm = () => {
@@ -26,31 +27,60 @@ const ProductForm = () => {
 
   const [form, setForm] = useState({
     name: "",
+    name_ar: "",
     sku: "",
     description: "",
+    description_ar: "",
     short_description: "",
+    short_description_ar: "",
     sale_price: 0,
     cost_price: 0,
     category_id: "" as string | null,
     product_type: "simple" as "simple" | "variable",
     is_published: false,
+    image_url: "" as string | null,
   });
+
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (product) {
       setForm({
         name: product.name,
+        name_ar: (product as any).name_ar || "",
         sku: product.sku || "",
         description: product.description || "",
+        description_ar: (product as any).description_ar || "",
         short_description: product.short_description || "",
+        short_description_ar: (product as any).short_description_ar || "",
         sale_price: Number(product.sale_price),
         cost_price: Number(product.cost_price),
         category_id: product.category_id,
         product_type: product.product_type,
         is_published: product.is_published,
+        image_url: product.image_url,
       });
     }
   }, [product]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("product-images").upload(path, file);
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(path);
+      setForm({ ...form, image_url: publicUrl });
+      toast.success("התמונה הועלתה");
+    } catch {
+      toast.error("שגיאה בהעלאת תמונה");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = () => {
     const data = {
@@ -58,9 +88,9 @@ const ProductForm = () => {
       category_id: form.category_id || null,
     };
     if (isEditing) {
-      updateProduct.mutate({ id, ...data }, { onSuccess: () => navigate("/inventory/products") });
+      updateProduct.mutate({ id, ...data } as any, { onSuccess: () => navigate("/inventory/products") });
     } else {
-      createProduct.mutate(data, { onSuccess: () => navigate("/inventory/products") });
+      createProduct.mutate(data as any, { onSuccess: () => navigate("/inventory/products") });
     }
   };
 
@@ -98,9 +128,15 @@ const ProductForm = () => {
           <Card>
             <CardHeader><CardTitle>פרטי הפריט</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>שם הפריט</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>שם הפריט (עברית)</Label>
+                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>اسم المنتج (ערבית)</Label>
+                  <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -120,13 +156,25 @@ const ProductForm = () => {
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>תיאור קצר</Label>
-                <Input value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>תיאור קצר (עברית)</Label>
+                  <Textarea value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} rows={3} />
+                </div>
+                <div className="space-y-2">
+                  <Label>وصف مختصر (ערבית)</Label>
+                  <Textarea value={form.short_description_ar} onChange={(e) => setForm({ ...form, short_description_ar: e.target.value })} rows={3} dir="rtl" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>תיאור מלא</Label>
-                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>תיאור מלא (עברית)</Label>
+                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={6} />
+                </div>
+                <div className="space-y-2">
+                  <Label>وصف كامل (ערבית)</Label>
+                  <Textarea value={form.description_ar} onChange={(e) => setForm({ ...form, description_ar: e.target.value })} rows={6} dir="rtl" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -141,6 +189,21 @@ const ProductForm = () => {
         </div>
 
         <div className="space-y-6">
+          {/* Image Upload */}
+          <Card>
+            <CardHeader><CardTitle>תמונה</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {form.image_url && (
+                <img src={form.image_url} alt="תמונת מוצר" className="w-full h-40 object-cover rounded-lg border" />
+              )}
+              <Label htmlFor="image-upload" className="flex items-center gap-2 cursor-pointer justify-center p-3 border-2 border-dashed rounded-lg hover:bg-accent transition-colors">
+                <Upload className="h-4 w-4" />
+                {uploading ? "מעלה..." : "העלה תמונה"}
+              </Label>
+              <input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle>מחירים</CardTitle></CardHeader>
             <CardContent className="space-y-4">
@@ -149,8 +212,9 @@ const ProductForm = () => {
                 <Input type="number" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: Number(e.target.value) })} />
               </div>
               <div className="space-y-2">
-                <Label>מחיר עלות</Label>
+                <Label>מחיר עלות (ללא מע״מ)</Label>
                 <Input type="number" value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: Number(e.target.value) })} />
+                <p className="text-xs text-muted-foreground">* מחיר העלות הוא תמיד ללא מע״מ</p>
               </div>
             </CardContent>
           </Card>
