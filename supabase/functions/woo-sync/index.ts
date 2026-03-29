@@ -314,7 +314,6 @@ serve(async (req) => {
     }
 
     if (action === "import_images") {
-      const body = await req.clone().json().catch(() => ({}));
       const offset = body.offset || 0;
       const limit = body.limit || 5;
 
