@@ -93,7 +93,7 @@ export default function WebAboutPage() {
             {content.title || "من نحن"}
           </h1>
           <p className="text-desert-foreground/80 max-w-xl mx-auto text-lg">
-            نسعى لتقديم أفضل المنتجات بأعلى جودة وأفضل الأسعار
+            وجهتكم الأولى لعالم الطبيعة والمغامرات
           </p>
         </div>
       </div>
