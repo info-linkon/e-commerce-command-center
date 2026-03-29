@@ -16,6 +16,21 @@ import {
   FileText,
   Image,
   Monitor,
+  Ticket,
+} from "lucide-react";
+  ShoppingCart,
+  CreditCard,
+  Receipt,
+  BarChart3,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Users,
+  ClipboardList,
+  PackageMinus,
+  FileText,
+  Image,
+  Monitor,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
