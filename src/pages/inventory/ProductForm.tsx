@@ -191,7 +191,7 @@ const ProductForm = () => {
         <div className="space-y-6">
           {/* Image Upload */}
           <Card>
-            <CardHeader><CardTitle>תמונה</CardTitle></CardHeader>
+            <CardHeader><CardTitle>תמונות</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {form.image_url && (
                 <img src={form.image_url} alt="תמונת מוצר" className="w-full h-40 object-cover rounded-lg border" />
@@ -201,6 +201,17 @@ const ProductForm = () => {
                 {uploading ? "מעלה..." : "העלה תמונה"}
               </Label>
               <input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+              {/* Gallery */}
+              {(product as any)?.gallery_images?.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">גלריה</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {((product as any).gallery_images as { src: string; woo_src: string }[]).map((img, i) => (
+                      <img key={i} src={img.src} alt={`גלריה ${i + 1}`} className="w-full h-20 object-cover rounded border" />
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
