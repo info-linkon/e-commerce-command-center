@@ -23,11 +23,11 @@ export function WebHeader() {
   return (
     <header className="bg-desert text-sand sticky top-0 z-50 shadow-lg" dir="rtl">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-24">
           {/* Logo */}
           <Link to="/web" className="flex items-center gap-3 group">
-            <img src={logo} alt="الوجهة" className="w-16 h-16 rounded-full shadow-md ring-2 ring-gold/30 group-hover:ring-gold/60 transition-all" />
-            <span className="text-xl font-bold web-text-gradient-gold">الوجهة</span>
+            <img src={logo} alt="الوجهة" className="w-24 h-24 rounded-full shadow-md ring-2 ring-gold/30 group-hover:ring-gold/60 transition-all" />
+            <span className="text-2xl font-bold web-text-gradient-gold">الوجهة</span>
           </Link>
 
           {/* Desktop Nav */}
