@@ -313,19 +313,29 @@ serve(async (req) => {
     }
 
     if (action === "import_images") {
-      // Import images from WooCommerce and store locally in Supabase Storage
-      // Skip products that already have local images (contain supabase storage URL)
+      const body = await req.clone().json().catch(() => ({}));
+      const offset = body.offset || 0;
+      const limit = body.limit || 5;
+
       const storageBase = Deno.env.get("SUPABASE_URL")! + "/storage/v1";
+      
+      // Get total count
+      const { count: totalCount } = await supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .not("woo_id", "is", null);
+
       const { data: products } = await supabase
         .from("products")
         .select("id, woo_id, image_url, product_type, gallery_images")
-        .not("woo_id", "is", null);
+        .not("woo_id", "is", null)
+        .order("created_at")
+        .range(offset, offset + limit - 1);
 
       let imported = 0;
       let skipped = 0;
 
       for (const p of products || []) {
-        // Skip if main image already points to local storage
         if (p.image_url?.includes(storageBase)) {
           skipped++;
           continue;
@@ -334,7 +344,7 @@ serve(async (req) => {
         try {
           const wooProd = await wooGet(`/products/${p.woo_id}`);
           const allImages = wooProd.images || [];
-          if (!allImages.length) continue;
+          if (!allImages.length) { skipped++; continue; }
           
           let mainUrl = p.image_url;
           const gallery: { src: string; woo_src: string }[] = [];
@@ -372,7 +382,6 @@ serve(async (req) => {
             gallery_images: gallery,
           }).eq("id", p.id);
 
-          // Also update variation images
           if (p.product_type === "variable") {
             const wooVars = await wooGet(`/products/${p.woo_id}/variations?per_page=100`);
             for (const v of wooVars) {
@@ -382,9 +391,7 @@ serve(async (req) => {
                 .select("id, image_url")
                 .eq("woo_id", v.id)
                 .maybeSingle();
-              if (!localVar) continue;
-              // Skip if already local
-              if (localVar.image_url?.includes(storageBase)) continue;
+              if (!localVar || localVar.image_url?.includes(storageBase)) continue;
 
               try {
                 const imgRes = await fetch(v.image.src, { signal: AbortSignal.timeout(15000) });
@@ -412,7 +419,14 @@ serve(async (req) => {
         }
       }
 
-      return new Response(JSON.stringify({ success: true, imported, skipped }), {
+      const hasMore = offset + limit < (totalCount || 0);
+      return new Response(JSON.stringify({ 
+        success: true, imported, skipped, 
+        total: totalCount || 0, 
+        processed: offset + (products?.length || 0),
+        hasMore,
+        nextOffset: offset + limit,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
