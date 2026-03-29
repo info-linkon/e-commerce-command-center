@@ -27,7 +27,7 @@ interface ImageProgress {
 const syncActions: { action: SyncAction; title: string; description: string; icon: typeof Download; direction: "import" | "export" }[] = [
   { action: "import_categories", title: "ייבוא קטגוריות", description: "ייבוא קטגוריות מ-WooCommerce למערכת", icon: Download, direction: "import" },
   { action: "import_products", title: "ייבוא מוצרים", description: "ייבוא מוצרים ווריאציות מ-WooCommerce", icon: Download, direction: "import" },
-  { action: "import_images", title: "משיכת תמונות", description: "הורדת תמונות מוצרים מווקומרס ושמירה מקומית", icon: Image, direction: "import" },
+  { action: "import_images", title: "משיכת תמונות", description: "הורדת תמונות ראשיות + גלריה מווקומרס ושמירה מקומית", icon: Image, direction: "import" },
   { action: "export_products", title: "ייצוא מוצרים", description: "ייצוא מוצרים מפורסמים ל-WooCommerce", icon: Upload, direction: "export" },
   { action: "import_orders", title: "ייבוא הזמנות", description: "ייבוא הזמנות אחרונות מ-WooCommerce", icon: Download, direction: "import" },
 ];
