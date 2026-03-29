@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { BannerSlider } from "@/components/web/BannerSlider";
 import { WebProductCard } from "@/components/web/WebProductCard";
 import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
-import { Truck, Shield, Headphones, ArrowLeft } from "lucide-react";
+import { Truck, Shield, ShoppingBag, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
 import catTeaCoffee from "@/assets/cat-tea-coffee.jpg";
