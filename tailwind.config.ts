@@ -57,6 +57,19 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        gold: {
+          DEFAULT: "hsl(36 56% 51%)",
+          foreground: "hsl(0 0% 100%)",
+          light: "hsl(42 70% 60%)",
+        },
+        desert: {
+          DEFAULT: "hsl(30 15% 12%)",
+          light: "hsl(30 15% 18%)",
+        },
+        sand: {
+          DEFAULT: "hsl(40 20% 97%)",
+          dark: "hsl(36 30% 93%)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
