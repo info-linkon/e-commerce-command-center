@@ -77,7 +77,7 @@ export default function WebHome() {
       {/* Features Strip */}
       <section className="bg-card border-b border-border">
         <div className="container py-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { icon: Shield, title: "رضاك مضمون", desc: "ضمان 100% على جميع المنتجات" },
               { icon: ShoppingBag, title: "سهولة الشراء", desc: "تجربة تسوق سهلة وسريعة" },
