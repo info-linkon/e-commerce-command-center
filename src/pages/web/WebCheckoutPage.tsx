@@ -6,11 +6,43 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { validateCoupon, calcDiscount, incrementCouponUsage, Coupon } from "@/hooks/useCoupons";
+import { Loader2, Tag, X } from "lucide-react";
 
 export default function WebCheckoutPage() {
   const { items, totalPrice, clearCart } = useCartStore();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+
+  const subtotal = totalPrice();
+  const discount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
+  const finalTotal = subtotal - discount;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError("");
+    const result = await validateCoupon(couponCode, subtotal);
+    if (result.valid && result.coupon) {
+      setAppliedCoupon(result.coupon);
+      toast.success("تم تطبيق الكوبون بنجاح!");
+    } else {
+      setCouponError(result.error || "קוד לא תקין");
+    }
+    setCouponLoading(false);
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,8 +64,11 @@ export default function WebCheckoutPage() {
           customer_phone: form.get("phone") as string,
           shipping_city: form.get("city") as string,
           shipping_address: form.get("address") as string,
-          notes: (form.get("notes") as string) || null,
-          total: totalPrice(),
+          notes: [
+            (form.get("notes") as string) || "",
+            appliedCoupon ? `קופון: ${appliedCoupon.code} (הנחה: ₪${discount.toFixed(2)})` : "",
+          ].filter(Boolean).join(" | ") || null,
+          total: finalTotal,
         })
         .select()
         .single();
@@ -51,6 +86,11 @@ export default function WebCheckoutPage() {
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
       if (itemsError) throw itemsError;
 
+      // Increment coupon usage
+      if (appliedCoupon) {
+        await incrementCouponUsage(appliedCoupon.id);
+      }
+
       clearCart();
       toast.success("تم إرسال الطلب بنجاح!");
       navigate(`/web/order-confirmation/${order.order_number}`);
@@ -66,8 +106,6 @@ export default function WebCheckoutPage() {
     navigate("/web/cart");
     return null;
   }
-
-  const subtotal = totalPrice();
 
   return (
     <div className="container py-8 md:py-12 max-w-4xl">
@@ -113,14 +151,51 @@ export default function WebCheckoutPage() {
                 </div>
               ))}
             </div>
+
+            {/* Coupon Section */}
+            <div className="border-t border-border pt-3 mb-3">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-primary/10 px-3 py-2 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">{appliedCoupon.code}</span>
+                    <span className="text-sm text-primary">-₪{discount.toFixed(2)}</span>
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={removeCoupon}>
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    value={couponCode}
+                    onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
+                    placeholder="كود الخصم"
+                    className="font-mono text-sm"
+                    dir="ltr"
+                  />
+                  <Button type="button" variant="outline" onClick={handleApplyCoupon} disabled={couponLoading} className="shrink-0">
+                    {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
+                  </Button>
+                </div>
+              )}
+              {couponError && <p className="text-destructive text-xs mt-1">{couponError}</p>}
+            </div>
+
             <div className="border-t border-border pt-3 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">المجموع الفرعي</span>
                 <span className="font-medium">₪{subtotal.toFixed(2)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-primary">
+                  <span>خصم</span>
+                  <span>-₪{discount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-lg font-black pt-2 border-t border-border">
                 <span>المجموع</span>
-                <span className="text-primary">₪{subtotal.toFixed(2)}</span>
+                <span className="text-primary">₪{finalTotal.toFixed(2)}</span>
               </div>
             </div>
             <Button
@@ -129,7 +204,7 @@ export default function WebCheckoutPage() {
               className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
               disabled={loading}
             >
-              {loading ? "جاري الإرسال..." : `تأكيد الطلب — ₪${subtotal.toFixed(2)}`}
+              {loading ? "جاري الإرسال..." : `تأكيد الطلب — ₪${finalTotal.toFixed(2)}`}
             </Button>
           </div>
         </div>

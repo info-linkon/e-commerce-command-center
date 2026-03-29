@@ -121,6 +121,7 @@ const App = () => (
             {/* Admin website management */}
             <Route path="/admin/web-content" element={<Protected><WebContentPage /></Protected>} />
             <Route path="/admin/web-banners" element={<Protected><WebBannersPage /></Protected>} />
+            <Route path="/admin/coupons" element={<Protected><AdminCouponsPage /></Protected>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
