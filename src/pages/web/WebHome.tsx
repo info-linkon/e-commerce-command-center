@@ -29,6 +29,13 @@ export default function WebHome() {
   const { data: products } = useWebProducts();
   const { data: categories } = useWebCategories();
 
+  const { data: heroData } = useSiteSection("home", "hero");
+  const hero = {
+    ...defaultContent.home.hero,
+    ...((heroData?.content as Record<string, any>) || {}),
+  };
+  const heroImage = hero.backgroundImage || heroBg;
+
   const featured = products?.slice(0, 8) || [];
 
   return (
@@ -37,8 +44,8 @@ export default function WebHome() {
       <section className="relative overflow-hidden min-h-[500px] md:min-h-[600px] flex items-center">
         <div className="absolute inset-0">
           <img
-            src={heroBg}
-            alt="خلفية الوجهة"
+            src={heroImage}
+            alt={hero.title || "خلفية الوجهة"}
             className="w-full h-full object-cover"
             width={1920}
             height={1080}
