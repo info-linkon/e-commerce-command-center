@@ -392,7 +392,7 @@ serve(async (req) => {
                 .select("id, image_url")
                 .eq("woo_id", v.id)
                 .maybeSingle();
-              if (!localVar || localVar.image_url?.includes(storageBase)) continue;
+              if (!localVar || (!forceRefresh && localVar.image_url?.includes(storageBase))) continue;
 
               try {
                 const imgRes = await fetch(v.image.src, { signal: AbortSignal.timeout(15000) });
