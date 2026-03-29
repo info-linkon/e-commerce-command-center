@@ -26,7 +26,7 @@ const DeliveryCompaniesPage = () => {
   const handleCreate = () => {
     if (!name.trim()) return;
     createCompany.mutate(
-      { name: name.trim(), is_internal: isInternal, cash_register_id: cashRegisterId || null },
+      { name: name.trim(), is_internal: isInternal, cash_register_id: cashRegisterId && cashRegisterId !== "none" ? cashRegisterId : null },
       {
         onSuccess: () => {
           setOpen(false);
