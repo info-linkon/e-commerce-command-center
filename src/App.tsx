@@ -52,6 +52,7 @@ import WebTrackOrderPage from "./pages/web/WebTrackOrderPage";
 // Admin website management
 import WebContentPage from "./pages/admin/WebContentPage";
 import WebBannersPage from "./pages/admin/WebBannersPage";
+import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,7 @@ const App = () => (
             {/* Admin website management */}
             <Route path="/admin/web-content" element={<Protected><WebContentPage /></Protected>} />
             <Route path="/admin/web-banners" element={<Protected><WebBannersPage /></Protected>} />
+            <Route path="/admin/coupons" element={<Protected><AdminCouponsPage /></Protected>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

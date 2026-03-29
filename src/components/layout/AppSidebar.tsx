@@ -16,6 +16,7 @@ import {
   FileText,
   Image,
   Monitor,
+  Ticket,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
@@ -54,6 +55,7 @@ const ordersSubItems = [
 const webManagementSubItems = [
   { title: "תוכן ודפים", url: "/admin/web-content" },
   { title: "באנרים", url: "/admin/web-banners" },
+  { title: "קופונים", url: "/admin/coupons" },
 ];
 
 const menuItems = [

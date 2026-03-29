@@ -288,6 +288,48 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          min_order: number
+          single_use: boolean
+          type: string
+          used_count: number
+          value: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order?: number
+          single_use?: boolean
+          type?: string
+          used_count?: number
+          value?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order?: number
+          single_use?: boolean
+          type?: string
+          used_count?: number
+          value?: number
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           city: string | null
