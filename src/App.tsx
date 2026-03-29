@@ -52,6 +52,7 @@ import WebTrackOrderPage from "./pages/web/WebTrackOrderPage";
 // Admin website management
 import WebContentPage from "./pages/admin/WebContentPage";
 import WebBannersPage from "./pages/admin/WebBannersPage";
+import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
 
 const queryClient = new QueryClient();
 
