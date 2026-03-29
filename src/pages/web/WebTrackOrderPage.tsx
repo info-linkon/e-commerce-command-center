@@ -7,7 +7,7 @@ const statusMap: Record<string, { label: string; icon: React.ReactNode; color: s
   pending: { label: "قيد الانتظار", icon: <Clock className="h-5 w-5" />, color: "text-yellow-500" },
   processing: { label: "قيد المعالجة", icon: <Package className="h-5 w-5" />, color: "text-blue-500" },
   completed: { label: "مكتمل", icon: <CheckCircle className="h-5 w-5" />, color: "text-green-500" },
-  cancelled: { label: "ملغي", icon: <Clock className="h-5 w-5" />, color: "text-red-500" },
+  cancelled: { label: "ملغي", icon: <Clock className="h-5 w-5" />, color: "text-destructive" },
 };
 
 export default function WebTrackOrderPage() {
@@ -45,8 +45,8 @@ export default function WebTrackOrderPage() {
   const status = order ? statusMap[order.status] || statusMap.pending : null;
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">تتبع الطلب</h1>
+    <div className="max-w-xl mx-auto px-4 py-12 animate-fade-in">
+      <h1 className="text-3xl font-bold text-foreground mb-8 text-center">تتبع الطلب</h1>
 
       <form onSubmit={handleSearch} className="space-y-4 mb-8">
         <input
@@ -54,7 +54,7 @@ export default function WebTrackOrderPage() {
           value={orderNumber}
           onChange={(e) => setOrderNumber(e.target.value)}
           placeholder="رقم الطلب"
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[hsl(36,56%,51%)]"
+          className="w-full px-4 py-3 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-gold transition-all"
           dir="ltr"
         />
         <input
@@ -62,13 +62,13 @@ export default function WebTrackOrderPage() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="رقم الهاتف"
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[hsl(36,56%,51%)]"
+          className="w-full px-4 py-3 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-gold transition-all"
           dir="ltr"
         />
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-[hsl(36,56%,51%)] text-white rounded-xl font-medium hover:bg-[hsl(36,56%,45%)] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3 web-gold-gradient text-white rounded-xl font-medium hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
         >
           <Search className="h-5 w-5" />
           {loading ? "جاري البحث..." : "بحث"}
@@ -76,30 +76,30 @@ export default function WebTrackOrderPage() {
       </form>
 
       {searched && order && status && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
-            <span className="text-gray-500">رقم الطلب</span>
+            <span className="text-muted-foreground">رقم الطلب</span>
             <span className="font-bold">#{order.order_number}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-500">الحالة</span>
+            <span className="text-muted-foreground">الحالة</span>
             <span className={`flex items-center gap-2 font-medium ${status.color}`}>
               {status.icon} {status.label}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-500">المجموع</span>
-            <span className="font-bold">₪{order.total?.toFixed(2)}</span>
+            <span className="text-muted-foreground">المجموع</span>
+            <span className="font-bold text-primary">₪{order.total?.toFixed(2)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-500">التاريخ</span>
-            <span className="text-gray-700">{new Date(order.created_at).toLocaleDateString("ar")}</span>
+            <span className="text-muted-foreground">التاريخ</span>
+            <span className="text-foreground">{new Date(order.created_at).toLocaleDateString("ar")}</span>
           </div>
         </div>
       )}
 
       {searched && !order && !loading && (
-        <p className="text-center text-gray-500">لم يتم العثور على طلب بهذه البيانات</p>
+        <p className="text-center text-muted-foreground">لم يتم العثور على طلب بهذه البيانات</p>
       )}
     </div>
   );

@@ -29,7 +29,6 @@ export default function WebCheckoutPage() {
 
     setLoading(true);
     try {
-      // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -47,7 +46,6 @@ export default function WebCheckoutPage() {
 
       if (orderError) throw orderError;
 
-      // Create order items
       const orderItems = items.map((item) => ({
         order_id: order.id,
         variation_id: item.variationId,
@@ -73,73 +71,50 @@ export default function WebCheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">السلة فارغة</h1>
-        <a href="/web/shop" className="text-[hsl(36,56%,51%)] underline">تصفح المنتجات</a>
+        <h1 className="text-2xl font-bold text-foreground mb-4">السلة فارغة</h1>
+        <a href="/web/shop" className="text-gold underline">تصفح المنتجات</a>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">إتمام الطلب</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8 animate-fade-in">
+      <h1 className="text-3xl font-bold text-foreground mb-8">إتمام الطلب</h1>
 
       <div className="grid md:grid-cols-5 gap-8">
         {/* Form */}
         <form onSubmit={handleSubmit} className="md:col-span-3 space-y-4">
+          {[
+            { label: "الاسم الكامل *", key: "name", type: "text" },
+            { label: "رقم الهاتف *", key: "phone", type: "tel", dir: "ltr" },
+            { label: "المدينة *", key: "city", type: "text" },
+            { label: "العنوان *", key: "address", type: "text" },
+          ].map(({ label, key, type, dir }) => (
+            <div key={key}>
+              <label className="block text-sm font-medium text-foreground mb-1">{label}</label>
+              <input
+                type={type}
+                required
+                value={(form as any)[key]}
+                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                className="w-full px-4 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-gold focus:border-transparent outline-none transition-all"
+                dir={dir}
+              />
+            </div>
+          ))}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">الاسم الكامل *</label>
-            <input
-              type="text"
-              required
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[hsl(36,56%,51%)] focus:border-transparent outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف *</label>
-            <input
-              type="tel"
-              required
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[hsl(36,56%,51%)] focus:border-transparent outline-none"
-              dir="ltr"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">المدينة *</label>
-            <input
-              type="text"
-              required
-              value={form.city}
-              onChange={(e) => setForm({ ...form, city: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[hsl(36,56%,51%)] focus:border-transparent outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">العنوان *</label>
-            <input
-              type="text"
-              required
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[hsl(36,56%,51%)] focus:border-transparent outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ملاحظات</label>
+            <label className="block text-sm font-medium text-foreground mb-1">ملاحظات</label>
             <textarea
               rows={3}
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[hsl(36,56%,51%)] focus:border-transparent outline-none resize-none"
+              className="w-full px-4 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-gold focus:border-transparent outline-none resize-none transition-all"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-[hsl(36,56%,51%)] text-white rounded-xl font-medium text-lg hover:bg-[hsl(36,56%,45%)] transition-colors disabled:opacity-50"
+            className="w-full py-4 web-gold-gradient text-white rounded-xl font-medium text-lg hover:opacity-90 transition-all disabled:opacity-50 shadow-md"
           >
             {loading ? "جاري الإرسال..." : "تأكيد الطلب"}
           </button>
@@ -147,21 +122,21 @@ export default function WebCheckoutPage() {
 
         {/* Summary */}
         <div className="md:col-span-2">
-          <div className="bg-gray-50 rounded-xl p-4 sticky top-20">
-            <h3 className="font-bold text-gray-900 mb-4">ملخص الطلب</h3>
+          <div className="bg-card rounded-xl p-5 sticky top-20 border border-border shadow-sm">
+            <h3 className="font-bold text-foreground mb-4">ملخص الطلب</h3>
             <div className="space-y-3 mb-4">
               {items.map((item) => (
                 <div key={item.variationId} className="flex justify-between text-sm">
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     {item.productName} {item.variationName && `(${item.variationName})`} × {item.quantity}
                   </span>
                   <span className="font-medium">₪{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
-            <div className="border-t border-gray-200 pt-3 flex justify-between">
+            <div className="border-t border-border pt-3 flex justify-between">
               <span className="font-bold">المجموع</span>
-              <span className="font-bold text-lg">₪{totalPrice().toFixed(2)}</span>
+              <span className="font-bold text-lg text-primary">₪{totalPrice().toFixed(2)}</span>
             </div>
           </div>
         </div>
