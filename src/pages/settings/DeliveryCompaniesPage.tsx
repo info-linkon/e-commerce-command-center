@@ -65,7 +65,7 @@ const DeliveryCompaniesPage = () => {
                 <Select value={cashRegisterId} onValueChange={setCashRegisterId}>
                   <SelectTrigger><SelectValue placeholder="ללא" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ללא</SelectItem>
+                    <SelectItem value="none">ללא</SelectItem>
                     {registers?.filter(r => r.is_active).map((r) => (
                       <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                     ))}
