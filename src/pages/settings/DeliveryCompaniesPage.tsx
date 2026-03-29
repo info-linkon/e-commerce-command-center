@@ -26,7 +26,7 @@ const DeliveryCompaniesPage = () => {
   const handleCreate = () => {
     if (!name.trim()) return;
     createCompany.mutate(
-      { name: name.trim(), is_internal: isInternal, cash_register_id: cashRegisterId || null },
+      { name: name.trim(), is_internal: isInternal, cash_register_id: cashRegisterId && cashRegisterId !== "none" ? cashRegisterId : null },
       {
         onSuccess: () => {
           setOpen(false);
@@ -65,7 +65,7 @@ const DeliveryCompaniesPage = () => {
                 <Select value={cashRegisterId} onValueChange={setCashRegisterId}>
                   <SelectTrigger><SelectValue placeholder="ללא" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ללא</SelectItem>
+                    <SelectItem value="none">ללא</SelectItem>
                     {registers?.filter(r => r.is_active).map((r) => (
                       <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                     ))}
