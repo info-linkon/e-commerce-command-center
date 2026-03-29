@@ -23,7 +23,8 @@ const categoryImageMap: Record<string, string> = {
 };
 
 export default function WebShopPage() {
-  const { data: products, isLoading } = useWebProducts();
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  const { data: products, isLoading } = useWebProducts(selectedCategory);
   const { data: categories } = useWebCategories();
   const [showAll, setShowAll] = useState(false);
 
