@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { BannerSlider } from "@/components/web/BannerSlider";
 import { WebProductCard } from "@/components/web/WebProductCard";
 import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
+import { useSiteSection } from "@/hooks/useSiteContent";
+import { defaultContent } from "@/lib/web-default-content";
 import { Truck, Shield, ShoppingBag, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
