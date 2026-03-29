@@ -140,7 +140,7 @@ const WooSyncPage = () => {
               </CardTitle>
               <CardDescription>{description}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               <Button
                 onClick={() => runSync(action)}
                 disabled={loading !== null}
@@ -153,6 +153,18 @@ const WooSyncPage = () => {
                   direction === "import" ? "ייבוא" : "ייצוא"
                 )}
               </Button>
+              {action === "import_images" && (
+                <Button
+                  onClick={() => runImageSync(true)}
+                  disabled={loading !== null}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  <RefreshCw className="h-3 w-3 ml-2" />
+                  משוך מחדש הכל (כולל שנמשכו)
+                </Button>
+              )}
             </CardContent>
           </Card>
         ))}

@@ -316,6 +316,7 @@ serve(async (req) => {
     if (action === "import_images") {
       const offset = body.offset || 0;
       const limit = body.limit || 5;
+      const forceRefresh = body.forceRefresh || false;
 
       const storageBase = Deno.env.get("SUPABASE_URL")! + "/storage/v1";
       
@@ -336,7 +337,7 @@ serve(async (req) => {
       let skipped = 0;
 
       for (const p of products || []) {
-        if (p.image_url?.includes(storageBase)) {
+        if (!forceRefresh && p.image_url?.includes(storageBase)) {
           skipped++;
           continue;
         }
