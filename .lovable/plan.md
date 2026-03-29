@@ -1,108 +1,71 @@
 
 
-# שדרוג עיצוב האתר הציבורי — בסגנון Alrahal מתקדם
+# שדרוג עיצוב האתר הציבורי — העתקה מדויקת מ-Alrahal
 
-## סיכום
-
-העיצוב הנוכחי בסיסי מדי — צבעים קשיחים בקוד (hardcoded HSL), ללא אנימציות, ללא CSS utilities מתקדמים. נייבא את מערכת העיצוב של Alrahal (צבעי desert/gold/sand/warm, גרדיאנטים, אנימציות) ונשדרג את כל הרכיבים כדי שיראו מקצועיים ומודרניים, תוך שמירה על המיתוג שלך (שחור + זהב).
+## הבעיה
+האתר הנוכחי חסר Hero Section אמיתי, הפונטים לא מספיק טובים, והעיצוב הכללי לא ברמה של Alrahal.
 
 ## שינויים
 
-### 1. מערכת עיצוב — `src/index.css` + `tailwind.config.ts`
+### 1. פונט Cairo — `index.html` + `tailwind.config.ts` + `src/index.css`
+- הוספת Google Fonts Cairo ל-`index.html`
+- הוספת `fontFamily: { cairo: ["Cairo", "sans-serif"] }` ל-tailwind
+- שינוי `body` ב-CSS ל-`font-cairo`
 
-הוספת CSS variables חדשים לאתר הציבורי (בתוך scope `.web`):
-- `--sand`, `--desert`, `--gold`, `--warm` — צבעי Alrahal מותאמים למיתוג שלך
-- Utility classes: `.text-gradient-gold`, `.bg-desert-gradient`, `.bg-sand-gradient`
-- Keyframes: `fade-in`, `slide-in-right` — אנימציות כניסה
+### 2. Hero Section בדף הבית — `WebHome.tsx`
+העתקת המבנה המדויק מ-Alrahal Index.tsx:
+- תמונת רקע מלאה עם gradient overlay (`from-[hsl(30,30%,15%)]/95`)
+- Badge אנימטיבי (`bg-gold/20 text-gold`)
+- כותרת עם `text-gradient-gold`
+- תיאור + 2 כפתורי CTA (ראשי זהב + שני outline שקוף)
+- אנימציות `animate-fade-in` עם `animationDelay`
+- מתחת ל-Hero: `BannerSlider` (Carousel עם embla-carousel כמו ב-Alrahal)
 
-ב-`tailwind.config.ts`:
-- הוספת צבעים: `sand`, `desert`, `gold`, `warm` (כמו ב-Alrahal)
-- הוספת אנימציות: `fade-in`, `slide-in-right`
+### 3. BannerSlider — `BannerSlider.tsx`
+שכתוב מלא בסגנון Alrahal — שימוש ב-Carousel של shadcn + embla-carousel-autoplay (כבר מותקן), במקום הקרוסלה הידנית הנוכחית.
 
-### 2. `WebHeader.tsx` — Header מתקדם
-- רקע `bg-desert` עם צל (`shadow-lg`)
-- לוגו גדול יותר עם drop-shadow
-- ניווט desktop עם אפקטי hover לזהב
-- אייקון עגלה עם badge `bg-gold`
-- תפריט מובייל עם חלוקה ברורה ואנימציה
+### 4. WebHeader — כבר טוב, התאמות קלות
+- הוספת `font-cairo`
+- לוגו עם `drop-shadow` ו-`brightness-110`
 
-### 3. `WebFooter.tsx` — Footer מקצועי בסגנון Alrahal
-- Grid 4 עמודות: מותג + קישורים + קטגוריות + צור קשר
-- אייקוני רשתות חברתיות בעיגולים זהב
-- קישורי מדיניות פרטיות/תנאי שימוש
-- copyright דינמי
+### 5. WebFooter — כבר טוב, התאמות קלות
+- הוספת `font-cairo`
 
-### 4. `WebHome.tsx` — דף בית מתקדם
-- **Hero section**: תמונת רקע מלאה עם gradient overlay, badge אנימטיבי, כפתורי CTA כפולים, אנימציות fade-in
-- **Features strip**: `bg-card` עם אייקונים בעיגולי `bg-gold/10`
-- **קטגוריות**: כרטיסים עם hover `-translate-y-1` ו-`border-gold/40`
-- **מוצרים מומלצים**: רקע `bg-sand-gradient` עם כפתור "ערض הكل"
-- **CTA section**: `bg-desert-gradient` עם כפתור זהב
+### 6. WebProductCard — התאמה לסגנון Alrahal
+- הוספת כפתור עגלה (`bg-primary/10 hover:bg-primary`)
+- אפקט hover על תמונה (`scale-105`)
 
-### 5. `WebProductCard.tsx` — כרטיס מוצר בסגנון Alrahal
-- אפקט hover: `shadow-xl`, `-translate-y-1`, scale על תמונה
-- badge קטגוריה
-- כפתור "הוסף לסלة" בעיגול `bg-primary/10`
-- מחיר בצבע primary
+### 7. דפי תוכן — העתקה מדויקת מ-Alrahal
+- **WebAboutPage**: Hero banner + Our Story + Stats + Values + FAQ + CTA (כמו AboutPage ב-Alrahal)
+- **WebContactPage**: Hero banner + Contact info cards + Form (כמו ContactPage ב-Alrahal)
+- **WebFAQPage**: Accordion (כמו FAQPage ב-Alrahal)
+- **WebTrackOrderPage**: Icon + form + order details (כמו TrackOrderPage ב-Alrahal)
 
-### 6. `WebProductPage.tsx` — דף מוצר משודרג
-- שימוש ב-`bg-card`, `border-border` במקום `bg-gray-*`
-- כפתורי וריאציות עם `border-primary` + `bg-primary`
-- כפתור הוספה `bg-gold text-gold-foreground`
-- quantity selector עם borders מתאימים
+### 8. WebShopPage + WebCategoryPage
+- הוספת פילטר/מיון כמו ב-Alrahal (Slider + Sort + Stock toggle)
 
-### 7. `WebCartPage.tsx` — עגלה בסגנון Alrahal
-- כרטיסי פריטים ב-`bg-card border-border rounded-xl`
-- כפתור "מעבר לתשלום" ב-`bg-gold`
-- סיכום הזמנה ב-sidebar sticky
-- כפתור ריקון עגלה עם hover לdestructive
+### 9. WebProductPage
+- כפתור הוספה `bg-gold text-gold-foreground hover:bg-gold/90` (כמו ב-Alrahal)
 
-### 8. `WebCheckoutPage.tsx` — צ'קאאוט מקצועי
-- שימוש ברכיבי shadcn (Input, Label, Button)
-- סיכום הזמנה ב-`bg-card border-border`
-- כפתור שליחה `bg-gold`
-
-### 9. `WebShopPage.tsx` + `WebCategoryPage.tsx`
-- כפתורי סינון קטגוריות: `bg-gold text-gold-foreground` כשפעיל, `bg-card` כשלא
-- שלדי טעינה עם `bg-card border-border`
-
-### 10. `BannerSlider.tsx` — קרוסלה בסגנון Alrahal
-- שימוש ב-embla-carousel-autoplay (כבר מותקן)
-- gradient overlay מלמטה עם כותרת ותת-כותרת
-- חצי ניווט `bg-background/80`
-
-### 11. דפי תוכן (About, FAQ, Contact, Track)
-- החלפת `text-gray-*` ב-`text-foreground`, `text-muted-foreground`
-- שימוש ב-`bg-card`, `border-border` לכרטיסים
-
-### 12. `WebLayout.tsx` — הוספת WhatsApp float
-- כפתור WhatsApp צף קבוע בפינה שמאלית תחתונה
+### 10. WebCartPage + WebCheckoutPage
+- שימוש באותו מבנה של Alrahal
 
 ## קבצים לשינוי
 
 | קובץ | שינוי |
 |---|---|
-| `src/index.css` | הוספת CSS variables (sand/desert/gold/warm) + utility classes (gradients, text-gradient-gold) |
-| `tailwind.config.ts` | הוספת צבעים + אנימציות (fade-in, slide-in-right) |
-| `src/components/web/WebHeader.tsx` | עיצוב מחודש בסגנון Alrahal |
-| `src/components/web/WebFooter.tsx` | Footer 4 עמודות מקצועי |
-| `src/components/web/WebLayout.tsx` | הוספת WhatsApp float |
-| `src/components/web/WebProductCard.tsx` | כרטיס מוצר מתקדם עם hover effects |
-| `src/components/web/BannerSlider.tsx` | קרוסלה עם autoplay + gradient overlay |
-| `src/pages/web/WebHome.tsx` | דף בית מלא: hero, features, categories, products, CTA |
-| `src/pages/web/WebProductPage.tsx` | דף מוצר עם semantic colors |
-| `src/pages/web/WebCartPage.tsx` | עגלה בסגנון Alrahal |
-| `src/pages/web/WebCheckoutPage.tsx` | צ'קאאוט מקצועי |
-| `src/pages/web/WebShopPage.tsx` | חנות עם semantic colors |
-| `src/pages/web/WebCategoryPage.tsx` | קטגוריה עם semantic colors |
-| `src/pages/web/WebSearchPage.tsx` | חיפוש עם semantic colors |
-| `src/pages/web/WebAboutPage.tsx` | אודות עם semantic colors |
-| `src/pages/web/WebContactPage.tsx` | צור קשר עם semantic colors |
-| `src/pages/web/WebFAQPage.tsx` | FAQ עם semantic colors |
-| `src/pages/web/WebTrackOrderPage.tsx` | מעקב הזמנה עם semantic colors |
-| `src/pages/web/WebOrderConfirmation.tsx` | אישור הזמנה עם semantic colors |
-
-## עקרון מנחה
-
-כל `text-gray-*`, `bg-gray-*`, `border-gray-*` מוחלפים ב-semantic tokens: `text-foreground`, `text-muted-foreground`, `bg-card`, `bg-muted`, `border-border`. הצבעים הקשיחים `hsl(36,56%,51%)` מוחלפים ב-`text-gold`, `bg-gold`. זה מבטיח עקביות ותמיכה בתמות.
+| `index.html` | הוספת Google Fonts Cairo |
+| `tailwind.config.ts` | הוספת `fontFamily: { cairo }` |
+| `src/index.css` | `body` → `font-cairo` |
+| `src/components/web/BannerSlider.tsx` | שכתוב — Carousel + autoplay |
+| `src/components/web/WebProductCard.tsx` | כפתור עגלה + hover effects |
+| `src/pages/web/WebHome.tsx` | Hero Section מלא כמו Alrahal |
+| `src/pages/web/WebAboutPage.tsx` | שכתוב מלא כמו Alrahal |
+| `src/pages/web/WebContactPage.tsx` | שכתוב מלא כמו Alrahal |
+| `src/pages/web/WebFAQPage.tsx` | שכתוב עם Accordion |
+| `src/pages/web/WebTrackOrderPage.tsx` | שכתוב כמו Alrahal |
+| `src/pages/web/WebShopPage.tsx` | הוספת פילטרים |
+| `src/pages/web/WebProductPage.tsx` | התאמת כפתורים |
+| `src/pages/web/WebCartPage.tsx` | התאמת סגנון |
+| `src/pages/web/WebCheckoutPage.tsx` | התאמת סגנון |
 
