@@ -1,188 +1,291 @@
-import { useSiteContent, useUpsertSiteContent } from "@/hooks/useSiteContent";
-import { defaultContent } from "@/lib/web-default-content";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Pencil, Plus, Trash2, Save, Loader2, ImagePlus } from 'lucide-react';
+import { useSiteContent, useUpsertSiteContent } from '@/hooks/useSiteContent';
+import { defaultContent, sectionLabels, pageLabels, sectionFields, FieldConfig } from '@/lib/web-default-content';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-const pages = [
-  { key: "home", label: "דף הבית", sections: [
-    { key: "hero", label: "Hero", fields: [
-      { name: "title", label: "כותרת", type: "text" },
-      { name: "subtitle", label: "תת כותרת", type: "text" },
-      { name: "cta_text", label: "טקסט כפתור", type: "text" },
-      { name: "cta_link", label: "קישור כפתור", type: "text" },
-    ]},
-  ]},
-  { key: "about", label: "אודות", sections: [
-    { key: "main", label: "תוכן ראשי", fields: [
-      { name: "title", label: "כותרת", type: "text" },
-      { name: "body", label: "תוכן", type: "textarea" },
-      { name: "image", label: "URL תמונה", type: "text" },
-    ]},
-  ]},
-  { key: "contact", label: "צור קשר", sections: [
-    { key: "info", label: "פרטי קשר", fields: [
-      { name: "phone", label: "טלפון", type: "text" },
-      { name: "email", label: "אימייל", type: "text" },
-      { name: "address", label: "כתובת", type: "text" },
-      { name: "whatsapp", label: "וואטסאפ", type: "text" },
-    ]},
-  ]},
-  { key: "faq", label: "שאלות נפוצות", sections: [] },
-  { key: "settings", label: "הגדרות כלליות", sections: [
-    { key: "general", label: "הגדרות", fields: [
-      { name: "store_name", label: "שם החנות (ערבית)", type: "text" },
-      { name: "store_name_he", label: "שם החנות (עברית)", type: "text" },
-      { name: "phone", label: "טלפון", type: "text" },
-      { name: "email", label: "אימייל", type: "text" },
-      { name: "whatsapp", label: "וואטסאפ", type: "text" },
-      { name: "instagram", label: "אינסטגרם", type: "text" },
-      { name: "facebook", label: "פייסבוק", type: "text" },
-      { name: "tiktok", label: "טיקטוק", type: "text" },
-    ]},
-  ]},
-];
-
-function SectionEditor({ page, sectionKey, fields, existingContent }: {
-  page: string;
-  sectionKey: string;
-  fields: { name: string; label: string; type: string }[];
-  existingContent: any;
-}) {
-  const defaults = (defaultContent as any)[page]?.[sectionKey] || {};
-  const [values, setValues] = useState<Record<string, string>>({});
-  const upsert = useUpsertSiteContent();
-
-  useEffect(() => {
-    const merged: Record<string, string> = {};
-    fields.forEach((f) => {
-      merged[f.name] = existingContent?.[f.name] || defaults[f.name] || "";
-    });
-    setValues(merged);
-  }, [existingContent]);
-
-  const handleSave = () => {
-    upsert.mutate({ page, section: sectionKey, content: values });
-  };
-
-  return (
-    <div className="space-y-4 bg-card p-4 rounded-lg border">
-      {fields.map((field) => (
-        <div key={field.name}>
-          <label className="text-sm font-medium text-foreground block mb-1">{field.label}</label>
-          {field.type === "textarea" ? (
-            <Textarea
-              value={values[field.name] || ""}
-              onChange={(e) => setValues({ ...values, [field.name]: e.target.value })}
-              rows={4}
-            />
-          ) : (
-            <Input
-              value={values[field.name] || ""}
-              onChange={(e) => setValues({ ...values, [field.name]: e.target.value })}
-            />
-          )}
-        </div>
-      ))}
-      <Button onClick={handleSave} disabled={upsert.isPending}>
-        {upsert.isPending ? "שומר..." : "שמור"}
-      </Button>
-    </div>
-  );
-}
-
-function FAQEditor({ existingContent }: { existingContent: any }) {
-  const defaults = defaultContent.faq.items;
-  const [questions, setQuestions] = useState<{ q: string; a: string }[]>([]);
-  const upsert = useUpsertSiteContent();
-
-  useEffect(() => {
-    setQuestions(existingContent?.questions || defaults.questions || []);
-  }, [existingContent]);
-
-  const handleSave = () => {
-    upsert.mutate({ page: "faq", section: "items", content: { questions } });
-  };
-
-  return (
-    <div className="space-y-4">
-      {questions.map((item, i) => (
-        <div key={i} className="bg-card p-4 rounded-lg border space-y-2">
-          <Input
-            placeholder="שאלה"
-            value={item.q}
-            onChange={(e) => {
-              const updated = [...questions];
-              updated[i] = { ...updated[i], q: e.target.value };
-              setQuestions(updated);
-            }}
-          />
-          <Textarea
-            placeholder="תשובה"
-            value={item.a}
-            rows={2}
-            onChange={(e) => {
-              const updated = [...questions];
-              updated[i] = { ...updated[i], a: e.target.value };
-              setQuestions(updated);
-            }}
-          />
-          <Button variant="destructive" size="sm" onClick={() => setQuestions(questions.filter((_, j) => j !== i))}>
-            מחק
-          </Button>
-        </div>
-      ))}
-      <div className="flex gap-2">
-        <Button variant="outline" onClick={() => setQuestions([...questions, { q: "", a: "" }])}>
-          הוסף שאלה
-        </Button>
-        <Button onClick={handleSave} disabled={upsert.isPending}>
-          {upsert.isPending ? "שומר..." : "שמור"}
-        </Button>
-      </div>
-    </div>
-  );
-}
+const pages = ['home', 'about', 'contact', 'faq', 'settings'];
 
 export default function WebContentPage() {
-  const { data: allContent } = useSiteContent();
+  const { data: allContent = [], isLoading } = useSiteContent();
+  const upsert = useUpsertSiteContent();
+  const [editDialog, setEditDialog] = useState<{ page: string; section: string } | null>(null);
+  const [editData, setEditData] = useState<Record<string, any>>({});
 
   const getContent = (page: string, section: string) => {
-    return allContent?.find((c) => c.page === page && c.section === section)?.content as any;
+    const row = allContent.find((r) => r.page === page && r.section === section);
+    return (row?.content as Record<string, any>) || defaultContent[page]?.[section] || {};
   };
 
+  const openEdit = (page: string, section: string) => {
+    setEditData(JSON.parse(JSON.stringify(getContent(page, section))));
+    setEditDialog({ page, section });
+  };
+
+  const handleSave = () => {
+    if (!editDialog) return;
+    upsert.mutate(
+      { page: editDialog.page, section: editDialog.section, content: editData },
+      { onSuccess: () => setEditDialog(null) }
+    );
+  };
+
+  const updateField = (key: string, value: any) => {
+    setEditData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateArrayItem = (arrayKey: string, index: number, fieldKey: string, value: any) => {
+    setEditData((prev) => {
+      const arr = [...(prev[arrayKey] || [])];
+      if (fieldKey === '_value') {
+        arr[index] = value;
+      } else {
+        arr[index] = { ...arr[index], [fieldKey]: value };
+      }
+      return { ...prev, [arrayKey]: arr };
+    });
+  };
+
+  const addArrayItem = (arrayKey: string, fields: FieldConfig[]) => {
+    setEditData((prev) => {
+      const arr = [...(prev[arrayKey] || [])];
+      if (fields.length === 1 && fields[0].key === '_value') {
+        arr.push('');
+      } else {
+        const newItem: Record<string, any> = {};
+        fields.forEach((f) => { newItem[f.key] = ''; });
+        arr.push(newItem);
+      }
+      return { ...prev, [arrayKey]: arr };
+    });
+  };
+
+  const removeArrayItem = (arrayKey: string, index: number) => {
+    setEditData((prev) => {
+      const arr = [...(prev[arrayKey] || [])];
+      arr.splice(index, 1);
+      return { ...prev, [arrayKey]: arr };
+    });
+  };
+
+  const handleImageUpload = async (key: string, file: File) => {
+    const ext = file.name.split('.').pop();
+    const path = `content/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: false });
+    if (error) {
+      toast.error('שגיאה בהעלאת התמונה');
+      return;
+    }
+    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
+    updateField(key, urlData.publicUrl);
+  };
+
+  const renderField = (field: FieldConfig) => {
+    if (field.type === 'text') {
+      return (
+        <div key={field.key} className="space-y-1.5">
+          <Label>{field.label}</Label>
+          <Input
+            value={editData[field.key] || ''}
+            onChange={(e) => updateField(field.key, e.target.value)}
+          />
+        </div>
+      );
+    }
+    if (field.type === 'textarea') {
+      return (
+        <div key={field.key} className="space-y-1.5">
+          <Label>{field.label}</Label>
+          <Textarea
+            value={editData[field.key] || ''}
+            onChange={(e) => updateField(field.key, e.target.value)}
+            className="min-h-[100px]"
+          />
+        </div>
+      );
+    }
+    if (field.type === 'image') {
+      return (
+        <div key={field.key} className="space-y-1.5">
+          <Label>{field.label}</Label>
+          <div className="flex items-center gap-3">
+            {editData[field.key] && (
+              <img src={editData[field.key]} alt="" className="w-20 h-20 object-cover rounded-lg border border-border" />
+            )}
+            <label className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border hover:border-primary/50 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <ImagePlus className="w-4 h-4" />
+              <span>העלה תמונה</span>
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleImageUpload(field.key, f);
+              }} />
+            </label>
+          </div>
+          <Input
+            value={editData[field.key] || ''}
+            onChange={(e) => updateField(field.key, e.target.value)}
+            placeholder="או הדבק כתובת URL"
+            className="mt-1"
+            dir="ltr"
+          />
+        </div>
+      );
+    }
+    if (field.type === 'array' && field.arrayFields) {
+      const items = editData[field.key] || [];
+      return (
+        <div key={field.key} className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-bold">{field.label}</Label>
+            <Button type="button" variant="outline" size="sm" onClick={() => addArrayItem(field.key, field.arrayFields!)}>
+              <Plus className="w-3 h-3 ml-1" />
+              הוסף
+            </Button>
+          </div>
+          {items.map((item: any, i: number) => (
+            <div key={i} className="border border-border rounded-lg p-3 space-y-2 bg-muted/30 relative">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute top-1 left-1 h-6 w-6 text-destructive hover:text-destructive"
+                onClick={() => removeArrayItem(field.key, i)}
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+              <span className="text-xs text-muted-foreground">#{i + 1}</span>
+              {field.arrayFields!.map((af) => (
+                <div key={af.key} className="space-y-1">
+                  <Label className="text-xs">{af.label}</Label>
+                  {af.type === 'textarea' ? (
+                    <Textarea
+                      value={af.key === '_value' ? item : (item?.[af.key] || '')}
+                      onChange={(e) => updateArrayItem(field.key, i, af.key, e.target.value)}
+                      className="min-h-[60px] text-sm"
+                    />
+                  ) : (
+                    <Input
+                      value={af.key === '_value' ? item : (item?.[af.key] || '')}
+                      onChange={(e) => updateArrayItem(field.key, i, af.key, e.target.value)}
+                      className="text-sm"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    if (field.type === 'color') {
+      return (
+        <div key={field.key} className="space-y-1.5">
+          <Label>{field.label}</Label>
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={editData[field.key] || '#000000'}
+              onChange={(e) => updateField(field.key, e.target.value)}
+              className="w-10 h-10 rounded-lg border border-border cursor-pointer p-0.5"
+            />
+            <Input
+              value={editData[field.key] || ''}
+              onChange={(e) => updateField(field.key, e.target.value)}
+              placeholder="#000000"
+              dir="ltr"
+              className="flex-1 font-mono text-sm"
+            />
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
-    <div dir="rtl">
-      <h1 className="text-2xl font-bold text-foreground mb-6">ניהול תוכן האתר</h1>
-      <Tabs defaultValue="home">
-        <TabsList className="flex-wrap h-auto">
-          {pages.map((p) => (
-            <TabsTrigger key={p.key} value={p.key}>{p.label}</TabsTrigger>
+    <div className="space-y-6" dir="rtl">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">תוכן האתר</h1>
+        <p className="text-muted-foreground text-sm mt-1">עריכת תוכן סטטי בדפי האתר</p>
+      </div>
+
+      <Tabs defaultValue="home" dir="rtl">
+        <TabsList className="w-full justify-start flex-wrap h-auto gap-1 p-1">
+          {pages.map((page) => (
+            <TabsTrigger key={page} value={page} className="text-sm">
+              {pageLabels[page]}
+            </TabsTrigger>
           ))}
         </TabsList>
-        {pages.map((p) => (
-          <TabsContent key={p.key} value={p.key} className="space-y-6 mt-4">
-            {p.key === "faq" ? (
-              <FAQEditor existingContent={getContent("faq", "items")} />
-            ) : (
-              p.sections.map((sec) => (
-                <div key={sec.key}>
-                  <h3 className="text-lg font-semibold text-foreground mb-3">{sec.label}</h3>
-                  <SectionEditor
-                    page={p.key}
-                    sectionKey={sec.key}
-                    fields={sec.fields}
-                    existingContent={getContent(p.key, sec.key)}
-                  />
-                </div>
-              ))
-            )}
+
+        {pages.map((page) => (
+          <TabsContent key={page} value={page} className="space-y-4 mt-4">
+            {Object.keys(sectionLabels[page] || {}).map((section) => {
+              const content = getContent(page, section);
+              return (
+                <Card key={section}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">{sectionLabels[page][section]}</CardTitle>
+                      <Button variant="outline" size="sm" onClick={() => openEdit(page, section)}>
+                        <Pencil className="w-3 h-3 ml-1" />
+                        ערוך
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      {Object.entries(content).slice(0, 3).map(([k, v]) => (
+                        <p key={k}>
+                          <span className="font-medium text-foreground">{k}:</span>{' '}
+                          {typeof v === 'string' ? v.substring(0, 80) + (v.length > 80 ? '...' : '') : Array.isArray(v) ? `${v.length} פריטים` : JSON.stringify(v).substring(0, 60)}
+                        </p>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editDialog} onOpenChange={(open) => !open && setEditDialog(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>
+              עריכת {editDialog ? sectionLabels[editDialog.page]?.[editDialog.section] : ''} — {editDialog ? pageLabels[editDialog.page] : ''}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {editDialog && sectionFields[editDialog.page]?.[editDialog.section]?.map(renderField)}
+          </div>
+          <div className="flex justify-end gap-2 pt-4 border-t border-border">
+            <Button variant="outline" onClick={() => setEditDialog(null)}>ביטול</Button>
+            <Button onClick={handleSave} disabled={upsert.isPending}>
+              {upsert.isPending ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Save className="w-4 h-4 ml-1" />}
+              שמור
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

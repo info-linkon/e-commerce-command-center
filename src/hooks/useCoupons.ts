@@ -119,11 +119,19 @@ export function calcDiscount(coupon: Coupon, total: number): number {
 }
 
 export async function incrementCouponUsage(couponId: string) {
-  await supabase.rpc("increment_coupon_usage" as any, { coupon_id: couponId }).catch(() => {
-    // fallback: manual update
-    supabase
+  try {
+    const { data: coupon } = await supabase
       .from("coupons" as any)
-      .update({ used_count: undefined } as any)
-      .eq("id", couponId);
-  });
+      .select("used_count")
+      .eq("id", couponId)
+      .single();
+    if (coupon) {
+      await supabase
+        .from("coupons" as any)
+        .update({ used_count: ((coupon as any).used_count || 0) + 1 } as any)
+        .eq("id", couponId);
+    }
+  } catch {
+    // silent fail
+  }
 }
