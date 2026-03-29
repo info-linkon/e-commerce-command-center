@@ -1011,6 +1011,7 @@ export type Database = {
           created_at: string
           description: string | null
           description_ar: string | null
+          gallery_images: Json | null
           id: string
           image_url: string | null
           is_published: boolean
@@ -1030,6 +1031,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           description_ar?: string | null
+          gallery_images?: Json | null
           id?: string
           image_url?: string | null
           is_published?: boolean
@@ -1049,6 +1051,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           description_ar?: string | null
+          gallery_images?: Json | null
           id?: string
           image_url?: string | null
           is_published?: boolean

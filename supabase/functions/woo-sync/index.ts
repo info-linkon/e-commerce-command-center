@@ -312,6 +312,99 @@ serve(async (req) => {
       });
     }
 
+    if (action === "import_images") {
+      // Import images from WooCommerce and store locally in Supabase Storage
+      const { data: products } = await supabase
+        .from("products")
+        .select("id, woo_id, image_url, product_type")
+        .not("woo_id", "is", null);
+
+      let imported = 0;
+
+      for (const p of products || []) {
+        try {
+          const wooProd = await wooGet(`/products/${p.woo_id}`);
+          const allImages = wooProd.images || [];
+          
+          let mainUrl = p.image_url;
+          const gallery: { src: string; woo_src: string }[] = [];
+
+          for (let i = 0; i < allImages.length; i++) {
+            const img = allImages[i];
+            if (!img.src) continue;
+            try {
+              const imgRes = await fetch(img.src);
+              if (!imgRes.ok) continue;
+              const blob = await imgRes.arrayBuffer();
+              const ext = img.src.split(".").pop()?.split("?")[0] || "jpg";
+              const path = `woo/${p.woo_id}/${i === 0 ? "main" : `gallery-${i}`}.${ext}`;
+              
+              await supabase.storage.from("product-images").upload(path, blob, {
+                contentType: imgRes.headers.get("content-type") || "image/jpeg",
+                upsert: true,
+              });
+
+              const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
+              const localUrl = urlData.publicUrl;
+
+              if (i === 0) {
+                mainUrl = localUrl;
+              } else {
+                gallery.push({ src: localUrl, woo_src: img.src });
+              }
+            } catch (imgErr) {
+              console.error(`Failed to download image ${img.src}:`, imgErr);
+            }
+          }
+
+          await supabase.from("products").update({
+            image_url: mainUrl,
+            gallery_images: gallery,
+          }).eq("id", p.id);
+
+          // Also update variation images
+          if (p.product_type === "variable") {
+            const wooVars = await wooGet(`/products/${p.woo_id}/variations?per_page=100`);
+            for (const v of wooVars) {
+              if (!v.image?.src) continue;
+              const { data: localVar } = await supabase
+                .from("product_variations")
+                .select("id")
+                .eq("woo_id", v.id)
+                .maybeSingle();
+              if (!localVar) continue;
+
+              try {
+                const imgRes = await fetch(v.image.src);
+                if (!imgRes.ok) continue;
+                const blob = await imgRes.arrayBuffer();
+                const ext = v.image.src.split(".").pop()?.split("?")[0] || "jpg";
+                const path = `woo/var-${v.id}/main.${ext}`;
+                
+                await supabase.storage.from("product-images").upload(path, blob, {
+                  contentType: imgRes.headers.get("content-type") || "image/jpeg",
+                  upsert: true,
+                });
+
+                const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
+                await supabase.from("product_variations").update({ image_url: urlData.publicUrl }).eq("id", localVar.id);
+              } catch (imgErr) {
+                console.error(`Failed to download variation image:`, imgErr);
+              }
+            }
+          }
+
+          imported++;
+        } catch (prodErr) {
+          console.error(`Failed to process product ${p.woo_id}:`, prodErr);
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true, imported }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "update_order_status") {
       const { order_id } = await req.json().catch(() => ({}));
       // Get order from Supabase
