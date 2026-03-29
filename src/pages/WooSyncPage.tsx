@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Download, Upload, RefreshCw, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Download, Upload, RefreshCw, CheckCircle, AlertCircle, Loader2, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type SyncAction = "import_categories" | "import_products" | "export_products" | "import_orders";
+type SyncAction = "import_categories" | "import_products" | "export_products" | "import_orders" | "import_images";
 
 interface SyncResult {
   action: SyncAction;
@@ -15,10 +15,6 @@ interface SyncResult {
   error?: string;
   timestamp: Date;
 }
-
-import { Image } from "lucide-react";
-
-type SyncAction = "import_categories" | "import_products" | "export_products" | "import_orders" | "import_images";
 
 const syncActions: { action: SyncAction; title: string; description: string; icon: typeof Download; direction: "import" | "export" }[] = [
   { action: "import_categories", title: "ייבוא קטגוריות", description: "ייבוא קטגוריות מ-WooCommerce למערכת", icon: Download, direction: "import" },
