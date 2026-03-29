@@ -3,42 +3,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function WebCheckoutPage() {
   const { items, totalPrice, clearCart } = useCartStore();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    city: "",
-    address: "",
-    notes: "",
-  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.address || !form.city) {
-      toast.error("الرجاء تعبئة جميع الحقول المطلوبة");
-      return;
-    }
     if (items.length === 0) {
       toast.error("السلة فارغة");
       return;
     }
 
     setLoading(true);
+    const form = new FormData(e.currentTarget);
+
     try {
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
           source: "website" as const,
           status: "pending" as const,
-          customer_name: form.name,
-          customer_phone: form.phone,
-          shipping_city: form.city,
-          shipping_address: form.address,
-          notes: form.notes || null,
+          customer_name: form.get("name") as string,
+          customer_phone: form.get("phone") as string,
+          shipping_city: form.get("city") as string,
+          shipping_address: form.get("address") as string,
+          notes: (form.get("notes") as string) || null,
           total: totalPrice(),
         })
         .select()
@@ -69,78 +63,77 @@ export default function WebCheckoutPage() {
   };
 
   if (items.length === 0) {
-    return (
-      <div className="max-w-xl mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-foreground mb-4">السلة فارغة</h1>
-        <a href="/web/shop" className="text-gold underline">تصفح المنتجات</a>
-      </div>
-    );
+    navigate("/web/cart");
+    return null;
   }
 
+  const subtotal = totalPrice();
+
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 animate-fade-in">
-      <h1 className="text-3xl font-bold text-foreground mb-8">إتمام الطلب</h1>
+    <div className="container py-8 md:py-12 max-w-4xl">
+      <h1 className="text-2xl md:text-3xl font-bold mb-8">إتمام الطلب</h1>
 
-      <div className="grid md:grid-cols-5 gap-8">
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="md:col-span-3 space-y-4">
-          {[
-            { label: "الاسم الكامل *", key: "name", type: "text" },
-            { label: "رقم الهاتف *", key: "phone", type: "tel", dir: "ltr" },
-            { label: "المدينة *", key: "city", type: "text" },
-            { label: "العنوان *", key: "address", type: "text" },
-          ].map(({ label, key, type, dir }) => (
-            <div key={key}>
-              <label className="block text-sm font-medium text-foreground mb-1">{label}</label>
-              <input
-                type={type}
-                required
-                value={(form as any)[key]}
-                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                className="w-full px-4 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-gold focus:border-transparent outline-none transition-all"
-                dir={dir}
-              />
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <h2 className="font-bold text-lg">معلومات التوصيل</h2>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">الاسم الكامل *</Label>
+                <Input id="name" name="name" required className="mt-1" placeholder="أدخل اسمك الكامل" />
+              </div>
+              <div>
+                <Label htmlFor="phone">رقم الهاتف *</Label>
+                <Input id="phone" name="phone" type="tel" required className="mt-1" placeholder="05X-XXX-XXXX" dir="ltr" />
+              </div>
+              <div>
+                <Label htmlFor="city">المدينة *</Label>
+                <Input id="city" name="city" required className="mt-1" placeholder="المدينة" />
+              </div>
+              <div>
+                <Label htmlFor="address">العنوان التفصيلي *</Label>
+                <Input id="address" name="address" required className="mt-1" placeholder="الشارع، رقم البيت، الطابق" />
+              </div>
+              <div>
+                <Label htmlFor="notes">ملاحظات</Label>
+                <Input id="notes" name="notes" className="mt-1" placeholder="ملاحظات إضافية" />
+              </div>
             </div>
-          ))}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">ملاحظات</label>
-            <textarea
-              rows={3}
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              className="w-full px-4 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-gold focus:border-transparent outline-none resize-none transition-all"
-            />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 web-gold-gradient text-white rounded-xl font-medium text-lg hover:opacity-90 transition-all disabled:opacity-50 shadow-md"
-          >
-            {loading ? "جاري الإرسال..." : "تأكيد الطلب"}
-          </button>
-        </form>
 
-        {/* Summary */}
-        <div className="md:col-span-2">
-          <div className="bg-card rounded-xl p-5 sticky top-20 border border-border shadow-sm">
-            <h3 className="font-bold text-foreground mb-4">ملخص الطلب</h3>
+          <div className="bg-card p-6 rounded-xl border border-border h-fit">
+            <h2 className="font-bold text-lg mb-4">ملخص الطلب</h2>
             <div className="space-y-3 mb-4">
               {items.map((item) => (
                 <div key={item.variationId} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
+                  <span className="text-muted-foreground truncate ml-4">
                     {item.productName} {item.variationName && `(${item.variationName})`} × {item.quantity}
                   </span>
-                  <span className="font-medium">₪{(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-medium shrink-0">₪{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
-            <div className="border-t border-border pt-3 flex justify-between">
-              <span className="font-bold">المجموع</span>
-              <span className="font-bold text-lg text-primary">₪{totalPrice().toFixed(2)}</span>
+            <div className="border-t border-border pt-3 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">المجموع الفرعي</span>
+                <span className="font-medium">₪{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-lg font-black pt-2 border-t border-border">
+                <span>المجموع</span>
+                <span className="text-primary">₪{subtotal.toFixed(2)}</span>
+              </div>
             </div>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
+              disabled={loading}
+            >
+              {loading ? "جاري الإرسال..." : `تأكيد الطلب — ₪${subtotal.toFixed(2)}`}
+            </Button>
           </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

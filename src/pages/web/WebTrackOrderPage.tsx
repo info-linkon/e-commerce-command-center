@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, Package, Truck, CheckCircle, Clock } from "lucide-react";
+import { Search, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-const statusMap: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  pending: { label: "قيد الانتظار", icon: <Clock className="h-5 w-5" />, color: "text-yellow-500" },
-  processing: { label: "قيد المعالجة", icon: <Package className="h-5 w-5" />, color: "text-blue-500" },
-  completed: { label: "مكتمل", icon: <CheckCircle className="h-5 w-5" />, color: "text-green-500" },
-  cancelled: { label: "ملغي", icon: <Clock className="h-5 w-5" />, color: "text-destructive" },
+const statusLabels: Record<string, string> = {
+  pending: "قيد الانتظار",
+  processing: "قيد المعالجة",
+  completed: "مكتمل",
+  cancelled: "ملغي",
 };
 
 export default function WebTrackOrderPage() {
@@ -15,91 +18,102 @@ export default function WebTrackOrderPage() {
   const [phone, setPhone] = useState("");
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderNumber || !phone) {
-      toast.error("الرجاء إدخال رقم الطلب ورقم الهاتف");
-      return;
-    }
     setLoading(true);
-    setSearched(true);
+    setError("");
+    setOrder(null);
+
     try {
-      const { data, error } = await supabase
+      const { data, error: err } = await supabase
         .from("orders")
         .select("*")
         .eq("order_number", parseInt(orderNumber))
         .eq("customer_phone", phone)
         .maybeSingle();
-      if (error) throw error;
-      setOrder(data);
-      if (!data) toast.error("لم يتم العثور على الطلب");
+
+      if (err) throw err;
+      if (!data) {
+        setError("لم يتم العثور على الطلب. تحقق من رقم الطلب ورقم الهاتف.");
+      } else {
+        setOrder(data);
+      }
     } catch {
-      toast.error("حدث خطأ أثناء البحث");
+      setError("حدث خطأ، حاول مرة أخرى");
     } finally {
       setLoading(false);
     }
   };
 
-  const status = order ? statusMap[order.status] || statusMap.pending : null;
-
   return (
-    <div className="max-w-xl mx-auto px-4 py-12 animate-fade-in">
-      <h1 className="text-3xl font-bold text-foreground mb-8 text-center">تتبع الطلب</h1>
+    <div className="container py-8 md:py-12 max-w-2xl">
+      <div className="text-center mb-8">
+        <Package className="w-12 h-12 mx-auto text-gold mb-4" />
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">تتبع الطلب</h1>
+        <p className="text-muted-foreground">أدخل رقم الطلب ورقم الهاتف لمتابعة حالة طلبك</p>
+      </div>
 
-      <form onSubmit={handleSearch} className="space-y-4 mb-8">
-        <input
-          type="number"
-          value={orderNumber}
-          onChange={(e) => setOrderNumber(e.target.value)}
-          placeholder="رقم الطلب"
-          className="w-full px-4 py-3 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-gold transition-all"
-          dir="ltr"
-        />
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="رقم الهاتف"
-          className="w-full px-4 py-3 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-gold transition-all"
-          dir="ltr"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 web-gold-gradient text-white rounded-xl font-medium hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
-        >
-          <Search className="h-5 w-5" />
-          {loading ? "جاري البحث..." : "بحث"}
-        </button>
+      <form onSubmit={handleSearch} className="bg-card border border-border rounded-xl p-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <Label htmlFor="orderNum">رقم الطلب</Label>
+            <Input
+              id="orderNum"
+              type="number"
+              value={orderNumber}
+              onChange={(e) => setOrderNumber(e.target.value)}
+              placeholder="أدخل رقم الطلب"
+              required
+              dir="ltr"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="phone">رقم الهاتف</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="05X-XXX-XXXX"
+              required
+              dir="ltr"
+              className="mt-1"
+            />
+          </div>
+        </div>
+        <Button type="submit" className="w-full bg-gold text-gold-foreground hover:bg-gold/90" disabled={loading}>
+          <Search className="w-4 h-4 ml-2" />
+          {loading ? "جاري البحث..." : "بحث عن الطلب"}
+        </Button>
+        {error && <p className="text-destructive text-sm mt-3 text-center">{error}</p>}
       </form>
 
-      {searched && order && status && (
-        <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4 animate-fade-in">
+      {order && (
+        <div className="bg-card border border-border rounded-xl p-6 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">رقم الطلب</span>
-            <span className="font-bold">#{order.order_number}</span>
+            <div>
+              <p className="text-sm text-muted-foreground">رقم الطلب</p>
+              <p className="font-bold text-lg">#{order.order_number}</p>
+            </div>
+            <span className="text-xl font-black text-primary">₪{order.total?.toFixed(2)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">الحالة</span>
-            <span className={`flex items-center gap-2 font-medium ${status.color}`}>
-              {status.icon} {status.label}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">المجموع</span>
-            <span className="font-bold text-primary">₪{order.total?.toFixed(2)}</span>
+            <span className="font-medium">{statusLabels[order.status] || order.status}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">التاريخ</span>
-            <span className="text-foreground">{new Date(order.created_at).toLocaleDateString("ar")}</span>
+            <span>{new Date(order.created_at).toLocaleDateString("ar")}</span>
           </div>
+          {order.shipping_city && (
+            <div className="text-sm pt-4 border-t border-border">
+              <span className="text-muted-foreground">التوصيل إلى:</span> {order.shipping_city} - {order.shipping_address}
+            </div>
+          )}
         </div>
-      )}
-
-      {searched && !order && !loading && (
-        <p className="text-center text-muted-foreground">لم يتم العثور على طلب بهذه البيانات</p>
       )}
     </div>
   );
