@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { BannerSlider } from "@/components/web/BannerSlider";
 import { WebProductCard } from "@/components/web/WebProductCard";
 import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
-import { Truck, Shield, Headphones, ArrowLeft } from "lucide-react";
+import { Truck, Shield, ShoppingBag, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
 import catTeaCoffee from "@/assets/cat-tea-coffee.jpg";
@@ -49,12 +49,12 @@ export default function WebHome() {
               ✨ أهلاً بك في الوجهة
             </span>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              منتجات أصلية
+              وجهتك الأولى
               <br />
-              <span className="text-gradient-gold">بأفضل الأسعار</span>
+              <span className="text-gradient-gold">لعالم الطبيعة والمغامرات</span>
             </h1>
             <p className="text-desert-foreground/70 text-lg md:text-xl mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              اكتشف مجموعتنا المتميزة من المنتجات الأصلية مع توصيل سريع لباب بيتك
+              مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق
             </p>
             <div className="flex flex-wrap gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
@@ -77,11 +77,12 @@ export default function WebHome() {
       {/* Features Strip */}
       <section className="bg-card border-b border-border">
         <div className="container py-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: Truck, title: "توصيل سريع", desc: "توصيل لجميع المناطق" },
-              { icon: Shield, title: "منتجات أصلية", desc: "ضمان الجودة والأصالة" },
-              { icon: Headphones, title: "خدمة عملاء", desc: "دعم على مدار الساعة" },
+              { icon: Shield, title: "رضاك مضمون", desc: "ضمان 100% على جميع المنتجات" },
+              { icon: ShoppingBag, title: "سهولة الشراء", desc: "تجربة تسوق سهلة وسريعة" },
+              { icon: Truck, title: "توصيل سريع", desc: "توصيل لكافة المناطق" },
+              { icon: RefreshCw, title: "إمكانية الإرجاع", desc: "إرجاع سهل ومريح" },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-center gap-3 justify-center">
                 <div className="p-2 bg-gold/10 rounded-lg">
