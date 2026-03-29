@@ -1,43 +1,42 @@
 
 
-# תיקון תהליך הזמנת POS — עובדת כמו הזמנת אתר
+# משיכת תמונות מוצרים מווקומרס ושמירה מקומית
 
-## הבעיה
-
-הזמנת POS נכנסת ישר כ-`completed` ומורידה מלאי אקראית. היא לא עוברת את התהליך הסדור: pending → שיוך מחסן → ליקוט → completed.
-
-## הפתרון
-
-הזמנת POS תיכנס כ-`pending` (כמו הזמנת אתר), עם שיוך מחסן מיידי. גריעת מלאי תתבצע דרך `useAssignWarehouse` הקיים — אותו תהליך בדיוק.
+## מצב נוכחי
+- שדה `image_url` קיים במוצרים ובווריאציות — מאחסן URL חיצוני מהאתר
+- אין שדה לגלריה (תמונות נוספות)
+- Bucket `product-images` קיים ב-Supabase Storage
 
 ## שינויים
 
-### 1. `src/pages/PosPage.tsx`
-- הוספת בחירת **מחסן** (חובה) בדיאלוג התשלום
-- שימוש ב-`useWarehouses()` ו-`useAssignWarehouse()`
-- שינוי הזרימה:
-  1. יצירת הזמנה בסטטוס `pending` (במקום `completed`)
-  2. קריאה ל-`assignWarehouse` עם המחסן שנבחר — זה מוריד מלאי, יוצר פריטי ליקוט, ומעביר ל-`processing`
-  3. רישום תשלומים כרגיל
-- הסרת הלוגיקה הישנה שמעדכנת מלאי ידנית
+### 1. מיגרציה — הוספת שדה גלריה
+- הוספת עמודה `gallery_images JSONB DEFAULT '[]'` לטבלת `products`
+- מערך של אובייקטים: `[{ "src": "url_local", "woo_src": "url_original" }]`
 
-### 2. `src/hooks/useOrders.ts` — `useCreateOrder`
-- הסרת הבלוק שמוריד מלאי עבור `status === "completed"` (שורות 106-136)
-- גריעת מלאי POS תעבור דרך `useAssignWarehouse` בלבד — מקור אמת אחד
+### 2. Edge Function — action חדש `import_images` ב-`woo-sync/index.ts`
+- עובר על כל המוצרים שיש להם `woo_id`
+- שולף את המוצר מ-WooCommerce API (כולל `images[]`)
+- לכל תמונה (ראשית + גלריה):
+  - מוריד את הקובץ מה-URL של ווקומרס
+  - מעלה ל-Supabase Storage (`product-images` bucket)
+  - שומר את ה-URL המקומי
+- מעדכן `image_url` (תמונה ראשית) ו-`gallery_images` (שאר התמונות) בטבלה
+- עושה את אותו הדבר לווריאציות (תמונה ראשית בלבד)
 
-### סיכום הזרימה החדשה
+### 3. עדכון `ProductForm.tsx` — הצגת גלריה
+- הצגת כל תמונות הגלריה מתחת לתמונה הראשית ב-grid
+- אפשרות מחיקת תמונה מהגלריה
 
-```text
-POS:  יצירת הזמנה (pending) → שיוך מחסן (processing + גריעת מלאי) → תשלום
-אתר: webhook (pending) → שיוך מחסן (processing + גריעת מלאי) → תשלום
-```
-
-שתי הזרימות זהות מרגע יצירת ההזמנה.
+### 4. כפתור הפעלה ב-`WooSyncPage.tsx`
+- כפתור "משוך תמונות מווקומרס" שמפעיל את ה-action החדש
+- מציג התקדמות
 
 ## קבצים לשינוי
 
 | קובץ | שינוי |
 |---|---|
-| `src/pages/PosPage.tsx` | הוספת בחירת מחסן, שינוי ל-pending + assignWarehouse |
-| `src/hooks/useOrders.ts` | הסרת גריעת מלאי מ-useCreateOrder |
+| מיגרציה SQL | הוספת `gallery_images` לטבלת `products` |
+| `supabase/functions/woo-sync/index.ts` | action `import_images` — הורדה מוו → העלאה ל-Storage |
+| `src/pages/inventory/ProductForm.tsx` | הצגת גלריית תמונות |
+| `src/pages/WooSyncPage.tsx` | כפתור "משוך תמונות" |
 
