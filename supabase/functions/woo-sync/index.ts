@@ -314,17 +314,27 @@ serve(async (req) => {
 
     if (action === "import_images") {
       // Import images from WooCommerce and store locally in Supabase Storage
+      // Skip products that already have local images (contain supabase storage URL)
+      const storageBase = Deno.env.get("SUPABASE_URL")! + "/storage/v1";
       const { data: products } = await supabase
         .from("products")
-        .select("id, woo_id, image_url, product_type")
+        .select("id, woo_id, image_url, product_type, gallery_images")
         .not("woo_id", "is", null);
 
       let imported = 0;
+      let skipped = 0;
 
       for (const p of products || []) {
+        // Skip if main image already points to local storage
+        if (p.image_url?.includes(storageBase)) {
+          skipped++;
+          continue;
+        }
+
         try {
           const wooProd = await wooGet(`/products/${p.woo_id}`);
           const allImages = wooProd.images || [];
+          if (!allImages.length) continue;
           
           let mainUrl = p.image_url;
           const gallery: { src: string; woo_src: string }[] = [];
@@ -333,7 +343,7 @@ serve(async (req) => {
             const img = allImages[i];
             if (!img.src) continue;
             try {
-              const imgRes = await fetch(img.src);
+              const imgRes = await fetch(img.src, { signal: AbortSignal.timeout(15000) });
               if (!imgRes.ok) continue;
               const blob = await imgRes.arrayBuffer();
               const ext = img.src.split(".").pop()?.split("?")[0] || "jpg";
@@ -369,13 +379,15 @@ serve(async (req) => {
               if (!v.image?.src) continue;
               const { data: localVar } = await supabase
                 .from("product_variations")
-                .select("id")
+                .select("id, image_url")
                 .eq("woo_id", v.id)
                 .maybeSingle();
               if (!localVar) continue;
+              // Skip if already local
+              if (localVar.image_url?.includes(storageBase)) continue;
 
               try {
-                const imgRes = await fetch(v.image.src);
+                const imgRes = await fetch(v.image.src, { signal: AbortSignal.timeout(15000) });
                 if (!imgRes.ok) continue;
                 const blob = await imgRes.arrayBuffer();
                 const ext = v.image.src.split(".").pop()?.split("?")[0] || "jpg";
@@ -400,7 +412,7 @@ serve(async (req) => {
         }
       }
 
-      return new Response(JSON.stringify({ success: true, imported }), {
+      return new Response(JSON.stringify({ success: true, imported, skipped }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
