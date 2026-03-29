@@ -37,7 +37,7 @@ const WooSyncPage = () => {
   const [results, setResults] = useState<SyncResult[]>([]);
   const [imageProgress, setImageProgress] = useState<ImageProgress | null>(null);
 
-  const runImageSync = async () => {
+  const runImageSync = async (forceRefresh = false) => {
     setLoading("import_images");
     let offset = 0;
     const limit = 5;
@@ -47,7 +47,7 @@ const WooSyncPage = () => {
     try {
       while (true) {
         const { data, error } = await supabase.functions.invoke("woo-sync", {
-          body: { action: "import_images", offset, limit },
+          body: { action: "import_images", offset, limit, forceRefresh },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
