@@ -13,6 +13,9 @@ import {
   Users,
   ClipboardList,
   PackageMinus,
+  FileText,
+  Image,
+  Monitor,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,6 +49,11 @@ const ordersSubItems = [
   { title: "כל ההזמנות", url: "/orders" },
   { title: "תור ליקוט", url: "/orders/picking" },
   { title: "במשלוח", url: "/orders/in-delivery" },
+];
+
+const webManagementSubItems = [
+  { title: "תוכן ודפים", url: "/admin/web-content" },
+  { title: "באנרים", url: "/admin/web-banners" },
 ];
 
 const menuItems = [
@@ -153,7 +161,52 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               </Collapsible>
 
-              {/* Rest of menu items (skip first 2: dashboard, website-items are already rendered) */}
+              {/* Web Management submenu */}
+              <Collapsible className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className="hover:bg-sidebar-accent w-full justify-between">
+                      <span className="flex items-center">
+                        <Monitor className="ml-2 h-4 w-4" />
+                        <span>ניהול אתר</span>
+                      </span>
+                      <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {webManagementSubItems.map((item) => (
+                        <SidebarMenuSubItem key={item.url}>
+                          <SidebarMenuSubButton asChild>
+                            <NavLink
+                              to={item.url}
+                              className="hover:bg-sidebar-accent"
+                              activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                            >
+                              <span>{item.title}</span>
+                            </NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <a
+                            href="/web"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:bg-sidebar-accent flex items-center"
+                          >
+                            <Globe className="ml-2 h-3 w-3" />
+                            <span>צפה באתר</span>
+                          </a>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              {/* Rest of menu items */}
               {menuItems.slice(1).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
