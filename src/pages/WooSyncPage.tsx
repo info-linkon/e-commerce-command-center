@@ -27,7 +27,7 @@ interface ImageProgress {
 const syncActions: { action: SyncAction; title: string; description: string; icon: typeof Download; direction: "import" | "export" }[] = [
   { action: "import_categories", title: "ייבוא קטגוריות", description: "ייבוא קטגוריות מ-WooCommerce למערכת", icon: Download, direction: "import" },
   { action: "import_products", title: "ייבוא מוצרים", description: "ייבוא מוצרים ווריאציות מ-WooCommerce", icon: Download, direction: "import" },
-  { action: "import_images", title: "משיכת תמונות", description: "הורדת תמונות מוצרים מווקומרס ושמירה מקומית", icon: Image, direction: "import" },
+  { action: "import_images", title: "משיכת תמונות", description: "הורדת תמונות ראשיות + גלריה מווקומרס ושמירה מקומית", icon: Image, direction: "import" },
   { action: "export_products", title: "ייצוא מוצרים", description: "ייצוא מוצרים מפורסמים ל-WooCommerce", icon: Upload, direction: "export" },
   { action: "import_orders", title: "ייבוא הזמנות", description: "ייבוא הזמנות אחרונות מ-WooCommerce", icon: Download, direction: "import" },
 ];
@@ -37,7 +37,7 @@ const WooSyncPage = () => {
   const [results, setResults] = useState<SyncResult[]>([]);
   const [imageProgress, setImageProgress] = useState<ImageProgress | null>(null);
 
-  const runImageSync = async () => {
+  const runImageSync = async (forceRefresh = false) => {
     setLoading("import_images");
     let offset = 0;
     const limit = 5;
@@ -47,7 +47,7 @@ const WooSyncPage = () => {
     try {
       while (true) {
         const { data, error } = await supabase.functions.invoke("woo-sync", {
-          body: { action: "import_images", offset, limit },
+          body: { action: "import_images", offset, limit, forceRefresh },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
@@ -140,7 +140,7 @@ const WooSyncPage = () => {
               </CardTitle>
               <CardDescription>{description}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               <Button
                 onClick={() => runSync(action)}
                 disabled={loading !== null}
@@ -153,6 +153,18 @@ const WooSyncPage = () => {
                   direction === "import" ? "ייבוא" : "ייצוא"
                 )}
               </Button>
+              {action === "import_images" && (
+                <Button
+                  onClick={() => runImageSync(true)}
+                  disabled={loading !== null}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  <RefreshCw className="h-3 w-3 ml-2" />
+                  משוך מחדש הכל (כולל שנמשכו)
+                </Button>
+              )}
             </CardContent>
           </Card>
         ))}
