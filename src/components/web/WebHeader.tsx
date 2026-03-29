@@ -26,7 +26,7 @@ export function WebHeader() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/web" className="flex items-center gap-3 group">
-            <img src={logo} alt="الوجهة" className="w-11 h-11 rounded-full shadow-md ring-2 ring-gold/30 group-hover:ring-gold/60 transition-all" />
+            <img src={logo} alt="الوجهة" className="w-16 h-16 rounded-full shadow-md ring-2 ring-gold/30 group-hover:ring-gold/60 transition-all" />
             <span className="text-xl font-bold web-text-gradient-gold">الوجهة</span>
           </Link>
 
