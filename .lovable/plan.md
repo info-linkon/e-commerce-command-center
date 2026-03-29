@@ -1,96 +1,108 @@
 
 
-# תוכנית: אתר אינטרנט ציבורי + ממשק ניהול אתר
+# שדרוג עיצוב האתר הציבורי — בסגנון Alrahal מתקדם
 
 ## סיכום
 
-בניית אתר חנות ציבורי ב-`/web` (ללא צורך בהתחברות) שקורא מוצרים מאותם טבלאות קיימות (`products`, `categories`, `product_variations`) עם `is_published=true`, בתוספת ממשק ניהול תוכן, באנרים ודפים סטטיים בפאנל הניהול הקיים.
+העיצוב הנוכחי בסיסי מדי — צבעים קשיחים בקוד (hardcoded HSL), ללא אנימציות, ללא CSS utilities מתקדמים. נייבא את מערכת העיצוב של Alrahal (צבעי desert/gold/sand/warm, גרדיאנטים, אנימציות) ונשדרג את כל הרכיבים כדי שיראו מקצועיים ומודרניים, תוך שמירה על המיתוג שלך (שחור + זהב).
 
-## מבנה DB חדש
+## שינויים
 
-### טבלאות חדשות
-1. **`site_content`** — תוכן דינמי לדפי האתר (כמו ב-Alrahal)
-   - `id`, `page` (text), `section` (text), `content` (jsonb), `updated_at`
-   - unique constraint על `(page, section)`
-   - RLS: select לכולם (public), insert/update/delete ל-authenticated
+### 1. מערכת עיצוב — `src/index.css` + `tailwind.config.ts`
 
-2. **`banners`** — באנרים לסליידר
-   - `id`, `title`, `subtitle`, `image_url`, `link`, `sort_order`, `active`, `created_at`
-   - RLS: select לכולם, manage ל-authenticated
+הוספת CSS variables חדשים לאתר הציבורי (בתוך scope `.web`):
+- `--sand`, `--desert`, `--gold`, `--warm` — צבעי Alrahal מותאמים למיתוג שלך
+- Utility classes: `.text-gradient-gold`, `.bg-desert-gradient`, `.bg-sand-gradient`
+- Keyframes: `fade-in`, `slide-in-right` — אנימציות כניסה
 
-### שינויים בטבלאות קיימות
-- הוספת `slug` לטבלת `categories` (text, nullable) — לניווט URL-friendly
+ב-`tailwind.config.ts`:
+- הוספת צבעים: `sand`, `desert`, `gold`, `warm` (כמו ב-Alrahal)
+- הוספת אנימציות: `fade-in`, `slide-in-right`
 
-## קבצים חדשים — אתר ציבורי
+### 2. `WebHeader.tsx` — Header מתקדם
+- רקע `bg-desert` עם צל (`shadow-lg`)
+- לוגו גדול יותר עם drop-shadow
+- ניווט desktop עם אפקטי hover לזהב
+- אייקון עגלה עם badge `bg-gold`
+- תפריט מובייל עם חלוקה ברורה ואנימציה
 
-כל דפי האתר הציבורי יהיו תחת `/web/*` ויעבדו ללא אימות.
+### 3. `WebFooter.tsx` — Footer מקצועי בסגנון Alrahal
+- Grid 4 עמודות: מותג + קישורים + קטגוריות + צור קשר
+- אייקוני רשתות חברתיות בעיגולים זהב
+- קישורי מדיניות פרטיות/תנאי שימוש
+- copyright דינמי
 
-### Layout ציבורי
-- `src/components/web/WebLayout.tsx` — Header + Footer + WhatsApp float
-- `src/components/web/WebHeader.tsx` — לוגו, ניווט, עגלה, חיפוש (מותאם למותג שלך — שחור/זהב)
-- `src/components/web/WebFooter.tsx` — קישורים, פרטי קשר, רשתות חברתיות
-- `src/components/web/WebProductCard.tsx` — כרטיס מוצר ציבורי
-- `src/components/web/BannerSlider.tsx` — קרוסלת באנרים
+### 4. `WebHome.tsx` — דף בית מתקדם
+- **Hero section**: תמונת רקע מלאה עם gradient overlay, badge אנימטיבי, כפתורי CTA כפולים, אנימציות fade-in
+- **Features strip**: `bg-card` עם אייקונים בעיגולי `bg-gold/10`
+- **קטגוריות**: כרטיסים עם hover `-translate-y-1` ו-`border-gold/40`
+- **מוצרים מומלצים**: רקע `bg-sand-gradient` עם כפתור "ערض הكل"
+- **CTA section**: `bg-desert-gradient` עם כפתור זהב
 
-### דפי חנות
-- `src/pages/web/WebHome.tsx` — דף ראשי: hero, באנרים, קטגוריות, מוצרים מומלצים, CTA
-- `src/pages/web/WebCategoryPage.tsx` — תצוגת מוצרים בקטגוריה עם סינון ומיון
-- `src/pages/web/WebProductPage.tsx` — דף מוצר בודד עם גלריה, בחירת וריאציה, הוספה לעגלה
-- `src/pages/web/WebCartPage.tsx` — עגלת קניות
-- `src/pages/web/WebCheckoutPage.tsx` — השלמת הזמנה (שם, טלפון, כתובת → insert to orders)
-- `src/pages/web/WebSearchPage.tsx` — חיפוש מוצרים
+### 5. `WebProductCard.tsx` — כרטיס מוצר בסגנון Alrahal
+- אפקט hover: `shadow-xl`, `-translate-y-1`, scale על תמונה
+- badge קטגוריה
+- כפתור "הוסף לסלة" בעיגול `bg-primary/10`
+- מחיר בצבע primary
 
-### דפי תוכן
-- `src/pages/web/WebAboutPage.tsx` — אודות (תוכן מ-site_content)
-- `src/pages/web/WebContactPage.tsx` — צור קשר + טופס
-- `src/pages/web/WebFAQPage.tsx` — שאלות נפוצות
-- `src/pages/web/WebTrackOrderPage.tsx` — מעקב הזמנה (מספר הזמנה + טלפון)
+### 6. `WebProductPage.tsx` — דף מוצר משודרג
+- שימוש ב-`bg-card`, `border-border` במקום `bg-gray-*`
+- כפתורי וריאציות עם `border-primary` + `bg-primary`
+- כפתור הוספה `bg-gold text-gold-foreground`
+- quantity selector עם borders מתאימים
 
-### תשתית
-- `src/lib/web-cart-store.ts` — zustand cart store (persist)
-- `src/lib/web-default-content.ts` — תוכן ברירת מחדל + הגדרות שדות לעריכה (כמו Alrahal)
-- `src/hooks/useWebProducts.ts` — שאילתות מוצרים ציבוריות (רק `is_published=true`, ללא auth)
-- `src/hooks/useSiteContent.ts` — קריאת/כתיבת תוכן אתר
-- `src/hooks/useBannersPublic.ts` — שאילתת באנרים פעילים
+### 7. `WebCartPage.tsx` — עגלה בסגנון Alrahal
+- כרטיסי פריטים ב-`bg-card border-border rounded-xl`
+- כפתור "מעבר לתשלום" ב-`bg-gold`
+- סיכום הזמנה ב-sidebar sticky
+- כפתור ריקון עגלה עם hover לdestructive
 
-## קבצים חדשים — ממשק ניהול אתר
+### 8. `WebCheckoutPage.tsx` — צ'קאאוט מקצועי
+- שימוש ברכיבי shadcn (Input, Label, Button)
+- סיכום הזמנה ב-`bg-card border-border`
+- כפתור שליחה `bg-gold`
 
-בפאנל הניהול הקיים (Protected), תחת תפריט "ניהול אתר":
+### 9. `WebShopPage.tsx` + `WebCategoryPage.tsx`
+- כפתורי סינון קטגוריות: `bg-gold text-gold-foreground` כשפעיל, `bg-card` כשלא
+- שלדי טעינה עם `bg-card border-border`
 
-- `src/pages/admin/WebContentPage.tsx` — עריכת תוכן דפים (כמו AdminContent ב-Alrahal): tabs לכל דף, עריכת כל סקשן
-- `src/pages/admin/WebBannersPage.tsx` — ניהול באנרים (CRUD, העלאת תמונה, סדר, הפעלה/כיבוי)
-- `src/pages/admin/WebSettingsPage.tsx` — הגדרות אתר (לוגו, שם חנות, פרטי קשר, רשתות חברתיות, משלוח, ניווט)
+### 10. `BannerSlider.tsx` — קרוסלה בסגנון Alrahal
+- שימוש ב-embla-carousel-autoplay (כבר מותקן)
+- gradient overlay מלמטה עם כותרת ותת-כותרת
+- חצי ניווט `bg-background/80`
 
-## שינויים בקבצים קיימים
+### 11. דפי תוכן (About, FAQ, Contact, Track)
+- החלפת `text-gray-*` ב-`text-foreground`, `text-muted-foreground`
+- שימוש ב-`bg-card`, `border-border` לכרטיסים
+
+### 12. `WebLayout.tsx` — הוספת WhatsApp float
+- כפתור WhatsApp צף קבוע בפינה שמאלית תחתונה
+
+## קבצים לשינוי
 
 | קובץ | שינוי |
 |---|---|
-| `src/App.tsx` | הוספת routes ציבוריים `/web/*` (ללא Protected) + routes ניהול אתר |
-| `src/components/layout/AppSidebar.tsx` | הוספת קבוצת "ניהול אתר" בתפריט: תוכן, באנרים, הגדרות |
-| `src/index.css` | הוספת CSS variables למותג האתר (gold, desert gradients) |
-| מיגרציה SQL | יצירת טבלאות `site_content`, `banners`, הוספת `slug` ל-`categories` |
+| `src/index.css` | הוספת CSS variables (sand/desert/gold/warm) + utility classes (gradients, text-gradient-gold) |
+| `tailwind.config.ts` | הוספת צבעים + אנימציות (fade-in, slide-in-right) |
+| `src/components/web/WebHeader.tsx` | עיצוב מחודש בסגנון Alrahal |
+| `src/components/web/WebFooter.tsx` | Footer 4 עמודות מקצועי |
+| `src/components/web/WebLayout.tsx` | הוספת WhatsApp float |
+| `src/components/web/WebProductCard.tsx` | כרטיס מוצר מתקדם עם hover effects |
+| `src/components/web/BannerSlider.tsx` | קרוסלה עם autoplay + gradient overlay |
+| `src/pages/web/WebHome.tsx` | דף בית מלא: hero, features, categories, products, CTA |
+| `src/pages/web/WebProductPage.tsx` | דף מוצר עם semantic colors |
+| `src/pages/web/WebCartPage.tsx` | עגלה בסגנון Alrahal |
+| `src/pages/web/WebCheckoutPage.tsx` | צ'קאאוט מקצועי |
+| `src/pages/web/WebShopPage.tsx` | חנות עם semantic colors |
+| `src/pages/web/WebCategoryPage.tsx` | קטגוריה עם semantic colors |
+| `src/pages/web/WebSearchPage.tsx` | חיפוש עם semantic colors |
+| `src/pages/web/WebAboutPage.tsx` | אודות עם semantic colors |
+| `src/pages/web/WebContactPage.tsx` | צור קשר עם semantic colors |
+| `src/pages/web/WebFAQPage.tsx` | FAQ עם semantic colors |
+| `src/pages/web/WebTrackOrderPage.tsx` | מעקב הזמנה עם semantic colors |
+| `src/pages/web/WebOrderConfirmation.tsx` | אישור הזמנה עם semantic colors |
 
-## עיצוב
+## עקרון מנחה
 
-האתר הציבורי ישתמש בצבעי המותג ELWEJHA (שחור + זהב) שכבר מוגדרים ב-CSS variables. ה-Header וה-Footer יהיו כהים (dark theme) עם זהב כצבע הדגשה. גוף האתר בהיר.
-
-## זרימת הזמנה מהאתר
-
-```text
-לקוח בוחר מוצרים → עגלה → צ'קאאוט (שם, טלפון, כתובת) 
-→ INSERT to orders (source='website', status='pending') + order_items 
-→ דף אישור + לינק למעקב
-```
-
-ההזמנה נכנסת למערכת כ-pending ועוברת את אותו תהליך (שיוך מחסן → ליקוט → משלוח).
-
-## סדר ביצוע
-
-1. מיגרציה: `site_content`, `banners`, `slug` ל-categories
-2. תשתית: hooks, cart store, default content
-3. Layout ציבורי (Header, Footer)
-4. דפי חנות (Home, Category, Product, Cart, Checkout)
-5. דפי תוכן (About, Contact, FAQ, Track Order)
-6. ממשק ניהול (Content, Banners, Settings)
-7. עדכון App.tsx routes + Sidebar
+כל `text-gray-*`, `bg-gray-*`, `border-gray-*` מוחלפים ב-semantic tokens: `text-foreground`, `text-muted-foreground`, `bg-card`, `bg-muted`, `border-border`. הצבעים הקשיחים `hsl(36,56%,51%)` מוחלפים ב-`text-gold`, `bg-gold`. זה מבטיח עקביות ותמיכה בתמות.
 
