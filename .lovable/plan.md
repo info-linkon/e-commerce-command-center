@@ -1,59 +1,32 @@
 
 
-# השלמת מידע מהאתר הנוכחי — elwejha.co.il
+# העשרת דף אודות עם תמונות AI
 
-## מידע שנאסף מהאתר
+## סיכום
+ייצור 4 תמונות AI בסגנון יוקרתי desert/gold שמתאימות למותג, והטמעתן בסקשנים השונים של דף ה-About.
 
-| שדה | ערך |
-|---|---|
-| טלפון | 0526213999 |
-| אימייל | info@elwejha.co.il |
-| וואטסאפ | 972526573185 |
-| פייסבוק | https://www.facebook.com/1094362587370591 |
-| אינסטגרם | https://www.instagram.com/elwejha.outdoors |
-| מיקום | זיمר — עבודה אונליין, ביקור במחסנים בתיאום מראש |
+## תמונות שיווצרו
 
-**תוכן "מי אנחנו":** סיפור המותג — קבוצת חברים שאוהבים טבע ומחנאות, הקימו את "הוג'הא" כדי לספק ציוד איכותי בסגנון מזרחי מסורתי.
-
-**פיצ'רים (features bar):** רضاك مضمون (ضمان 100%), سهولة الشراء, توصيل سريع لكافة المناطق, امكانية الإرجاع
+1. **Hero About** — תמונת רקע: ציוד קמפינג מסורתי על רקע מדברי שקיעה זהובה
+2. **Our Story** — תמונה ליד הטקסט: קבוצת חברים ליד אוהל ערבי מסורתי עם ציוד קמפינג
+3. **Values section** — 3 תמונות קטנות (אחת לכל ערך): ציוד איכותי / שירות לקוחות / משלוח
 
 ## שינויים
 
-### 1. `src/lib/web-default-content.ts`
-- עדכון כל פרטי הקשר: phone, email, whatsapp
-- עדכון סושיאל: facebook, instagram
-- עדכון תוכן About עם הטקסט האמיתי מהאתר
-- עדכון features ל-4 פריטים (רضا, שראء, توصيل, إرجاع)
+### 1. סקריפט AI — ייצור 4 תמונות
+- ייצור באמצעות `lovable_ai.py --image`
+- שמירה ב-`src/assets/` (about-hero.jpg, about-story.jpg, about-value-1/2/3.jpg)
 
-### 2. `src/components/web/WebLayout.tsx`
-- עדכון לינק וואטסאפ מ-`972000000000` ל-`972526573185`
-
-### 3. `src/components/web/WebFooter.tsx`
-- הוספת לינקים לפייסבוק ואינסטגרם (אייקונים)
-- עדכון טקסט התיאור עם המידע האמיתי
-- הוספת טלפון ואימייל
-
-### 4. `src/pages/web/WebAboutPage.tsx`
-- החלפת הטקסט הגנרי בתוכן האמיתי מהאתר (סיפור המותג)
-- עדכון ה-values ל-4 ערכים אמיתיים
-
-### 5. `src/pages/web/WebContactPage.tsx`
-- הפרטים כבר נקראים מ-default content — יתעדכנו אוטומטית
-
-### 6. `src/pages/web/WebHome.tsx`
-- עדכון features bar ל-4 פריטים אמיתיים (רצוי + שיי + توصيל + إرجاع)
-- עדכון טקסט Hero
-
-### 7. `src/components/web/WebHeader.tsx`
-- אין שינוי נדרש
+### 2. `src/pages/web/WebAboutPage.tsx`
+- **Hero**: הוספת תמונת רקע AI מאחורי ה-overlay (כמו ב-WebHome Hero)
+- **Our Story**: שינוי ל-layout של 2 עמודות — טקסט משמאל, תמונה מימין (RTL: טקסט מימין, תמונה משמאל) עם rounded corners ו-shadow
+- **Values**: החלפת האייקונים בתמונות AI עגולות/מרובעות מעוגלות מעל הכותרת
 
 ## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| `src/lib/web-default-content.ts` | עדכון כל הפרטים והתוכן |
-| `src/components/web/WebLayout.tsx` | WhatsApp link → 972526573185 |
-| `src/components/web/WebFooter.tsx` | הוספת סושיאל + פרטי קשר |
-| `src/pages/web/WebAboutPage.tsx` | תוכן אמיתי מהאתר |
-| `src/pages/web/WebHome.tsx` | features bar + Hero text |
+| סקריפט AI חד-פעמי | ייצור 4-5 תמונות |
+| `src/assets/about-*.jpg` | תמונות חדשות |
+| `src/pages/web/WebAboutPage.tsx` | הטמעת תמונות בכל הסקשנים |
 
