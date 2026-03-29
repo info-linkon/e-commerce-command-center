@@ -12,18 +12,17 @@ export default function WebShopPage() {
     : products;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">جميع المنتجات</h1>
+    <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+      <h1 className="text-3xl font-bold text-foreground mb-8">جميع المنتجات</h1>
 
-      {/* Category filter */}
       {categories && categories.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-8">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
               !selectedCategory
-                ? "bg-[hsl(36,56%,51%)] text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                ? "bg-gold text-gold-foreground shadow-md"
+                : "bg-card text-muted-foreground border border-border hover:border-gold/40"
             }`}
           >
             الكل
@@ -32,10 +31,10 @@ export default function WebShopPage() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                 selectedCategory === cat.id
-                  ? "bg-[hsl(36,56%,51%)] text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-gold text-gold-foreground shadow-md"
+                  : "bg-card text-muted-foreground border border-border hover:border-gold/40"
               }`}
             >
               {cat.name}
@@ -47,7 +46,7 @@ export default function WebShopPage() {
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-gray-100 rounded-xl aspect-square animate-pulse" />
+            <div key={i} className="bg-card rounded-xl aspect-square animate-pulse border border-border" />
           ))}
         </div>
       ) : filtered?.length ? (
@@ -65,7 +64,7 @@ export default function WebShopPage() {
           ))}
         </div>
       ) : (
-        <p className="text-gray-500 text-center py-12">لا توجد منتجات</p>
+        <p className="text-muted-foreground text-center py-12">لا توجد منتجات</p>
       )}
     </div>
   );

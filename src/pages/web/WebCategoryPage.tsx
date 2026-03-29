@@ -9,15 +9,15 @@ export default function WebCategoryPage() {
   const category = categories?.find((c) => c.id === id);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+      <h1 className="text-3xl font-bold text-foreground mb-8">
         {category?.name || "المنتجات"}
       </h1>
 
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-gray-100 rounded-xl aspect-square animate-pulse" />
+            <div key={i} className="bg-card rounded-xl aspect-square animate-pulse border border-border" />
           ))}
         </div>
       ) : products?.length ? (
@@ -35,7 +35,7 @@ export default function WebCategoryPage() {
           ))}
         </div>
       ) : (
-        <p className="text-gray-500 text-center py-12">لا توجد منتجات في هذا القسم</p>
+        <p className="text-muted-foreground text-center py-12">لا توجد منتجات في هذا القسم</p>
       )}
     </div>
   );

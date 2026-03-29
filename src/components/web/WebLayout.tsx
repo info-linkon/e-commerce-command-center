@@ -1,15 +1,27 @@
 import { Outlet } from "react-router-dom";
 import { WebHeader } from "./WebHeader";
 import { WebFooter } from "./WebFooter";
+import { MessageCircle } from "lucide-react";
 
 export function WebLayout() {
   return (
-    <div className="min-h-screen flex flex-col bg-white" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-sand" dir="rtl">
       <WebHeader />
       <main className="flex-1">
         <Outlet />
       </main>
       <WebFooter />
+
+      {/* WhatsApp float */}
+      <a
+        href="https://wa.me/972000000000"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 hover:scale-110 transition-all duration-200"
+        aria-label="WhatsApp"
+      >
+        <MessageCircle className="h-7 w-7" />
+      </a>
     </div>
   );
 }
