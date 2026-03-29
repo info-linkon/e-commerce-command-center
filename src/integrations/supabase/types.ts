@@ -263,6 +263,7 @@ export type Database = {
           created_at: string
           display_order: number
           id: string
+          image_url: string | null
           name: string
           slug: string | null
           woo_id: number | null
@@ -271,6 +272,7 @@ export type Database = {
           created_at?: string
           display_order?: number
           id?: string
+          image_url?: string | null
           name: string
           slug?: string | null
           woo_id?: number | null
@@ -279,6 +281,7 @@ export type Database = {
           created_at?: string
           display_order?: number
           id?: string
+          image_url?: string | null
           name?: string
           slug?: string | null
           woo_id?: number | null
