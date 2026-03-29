@@ -4,7 +4,24 @@ import { WebProductCard } from "@/components/web/WebProductCard";
 import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
 import { Truck, Shield, Headphones, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo.webp";
+import heroBg from "@/assets/hero-bg.jpg";
+import catTeaCoffee from "@/assets/cat-tea-coffee.jpg";
+import catSeating from "@/assets/cat-seating.jpg";
+import catEquipment from "@/assets/cat-equipment.jpg";
+import catTents from "@/assets/cat-tents.jpg";
+import catPackages from "@/assets/cat-packages.jpg";
+import catStoves from "@/assets/cat-stoves.jpg";
+import catCampingGear from "@/assets/cat-camping-gear.jpg";
+
+const categoryImageMap: Record<string, string> = {
+  "1e7e7bc7-16e4-40b4-a8be-679c5831f8aa": catTeaCoffee,
+  "12810207-4acf-4832-80ef-7b9647f72447": catSeating,
+  "aa84fa63-af44-45d1-a3fc-c78b96231084": catEquipment,
+  "7da81997-1aec-48fa-9098-e725043ee875": catTents,
+  "03aa2ad2-ece8-4a4a-83b5-79776d7f3b5a": catPackages,
+  "0b71a53a-8729-4773-8a39-87dabce93171": catStoves,
+  "684b6a05-c8f9-4199-b7d2-09cf8005dcc3": catCampingGear,
+};
 
 export default function WebHome() {
   const { data: products } = useWebProducts();
@@ -17,8 +34,14 @@ export default function WebHome() {
       {/* Hero Banner */}
       <section className="relative overflow-hidden min-h-[500px] md:min-h-[600px] flex items-center">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-desert" />
-          <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/95 via-[hsl(30,30%,15%)]/70 to-transparent" />
+          <img
+            src={heroBg}
+            alt="خلفية الوجهة"
+            className="w-full h-full object-cover"
+            width={1920}
+            height={1080}
+          />
+          <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/95 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/40" />
         </div>
         <div className="container py-16 md:py-28 relative z-10 text-desert-foreground">
           <div className="max-w-2xl">
@@ -74,7 +97,7 @@ export default function WebHome() {
         </div>
       </section>
 
-      {/* Categories */}
+      {/* Categories with Images */}
       {categories && categories.length > 0 && (
         <section className="container py-12 md:py-16">
           <div className="flex items-center justify-between mb-8">
@@ -84,15 +107,33 @@ export default function WebHome() {
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/web/category/${cat.id}`}
-                className="bg-card rounded-xl p-6 text-center border border-border hover:shadow-lg hover:-translate-y-1 hover:border-gold/40 transition-all duration-300"
-              >
-                <h3 className="font-medium text-card-foreground">{cat.name}</h3>
-              </Link>
-            ))}
+            {categories.map((cat) => {
+              const imgSrc = categoryImageMap[cat.id] || (cat as any).image_url;
+              return (
+                <Link
+                  key={cat.id}
+                  to={`/web/category/${cat.id}`}
+                  className="group relative rounded-xl overflow-hidden aspect-square border border-border hover:shadow-xl transition-all duration-300"
+                >
+                  {imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={cat.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
+                      width={800}
+                      height={800}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-muted" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="font-bold text-white text-lg drop-shadow-lg">{cat.name}</h3>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
