@@ -1,71 +1,56 @@
 
 
-# שדרוג עיצוב האתר הציבורי — העתקה מדויקת מ-Alrahal
+# שיפור נראות האתר — תמונות AI להירו וקטגוריות + דף חנות חדש
 
-## הבעיה
-האתר הנוכחי חסר Hero Section אמיתי, הפונטים לא מספיק טובים, והעיצוב הכללי לא ברמה של Alrahal.
+## סיכום
+שלושה שיפורים מרכזיים:
+1. **תמונת Hero** — ייצור תמונת רקע AI יוקרתית לדף הבית
+2. **תמונות קטגוריות** — ייצור תמונות AI לכל קטגוריה + הוספת עמודת `image_url` לטבלת categories
+3. **דף חנות חדש** — במקום רשימת מוצרים ישירה, מציג קודם כרטיסי קטגוריות עם תמונות, לחיצה על קטגוריה → דף המוצרים שלה
 
 ## שינויים
 
-### 1. פונט Cairo — `index.html` + `tailwind.config.ts` + `src/index.css`
-- הוספת Google Fonts Cairo ל-`index.html`
-- הוספת `fontFamily: { cairo: ["Cairo", "sans-serif"] }` ל-tailwind
-- שינוי `body` ב-CSS ל-`font-cairo`
+### 1. מיגרציה — הוספת `image_url` לטבלת `categories`
+```sql
+ALTER TABLE categories ADD COLUMN image_url text;
+```
 
-### 2. Hero Section בדף הבית — `WebHome.tsx`
-העתקת המבנה המדויק מ-Alrahal Index.tsx:
-- תמונת רקע מלאה עם gradient overlay (`from-[hsl(30,30%,15%)]/95`)
-- Badge אנימטיבי (`bg-gold/20 text-gold`)
-- כותרת עם `text-gradient-gold`
-- תיאור + 2 כפתורי CTA (ראשי זהב + שני outline שקוף)
-- אנימציות `animate-fade-in` עם `animationDelay`
-- מתחת ל-Hero: `BannerSlider` (Carousel עם embla-carousel כמו ב-Alrahal)
+### 2. ייצור תמונות AI (סקריפט חד-פעמי)
+- **תמונת Hero**: תמונה יוקרתית בסגנון desert/gold — מוצרי טיפוח/בשמים על רקע חולי מדברי
+- **תמונות קטגוריות**: תמונה ייצוגית לכל קטגוריה (לפי שם הקטגוריה) בסגנון אחיד
+- כל התמונות יועלו ל-Supabase Storage (bucket `product-images`)
+- תמונות הקטגוריות יישמרו בעמודת `image_url` של כל קטגוריה
 
-### 3. BannerSlider — `BannerSlider.tsx`
-שכתוב מלא בסגנון Alrahal — שימוש ב-Carousel של shadcn + embla-carousel-autoplay (כבר מותקן), במקום הקרוסלה הידנית הנוכחית.
+### 3. `WebHome.tsx` — Hero עם תמונת רקע
+- הוספת תמונת הרקע שיוצרה ב-AI כ-`<img>` מוחלט מאחורי ה-gradient overlay
+- שמירת אותו מבנה (badge, כותרת, CTA) — רק הוספת תמונה
 
-### 4. WebHeader — כבר טוב, התאמות קלות
-- הוספת `font-cairo`
-- לוגו עם `drop-shadow` ו-`brightness-110`
+### 4. `WebHome.tsx` — קטגוריות עם תמונות
+- במקום כרטיסי טקסט פשוטים — כרטיסים עם תמונת רקע מהקטגוריה
+- overlay כהה + שם הקטגוריה בלבן/זהב
+- aspect-ratio מרובע, hover effect עם scale
 
-### 5. WebFooter — כבר טוב, התאמות קלות
-- הוספת `font-cairo`
+### 5. `WebShopPage.tsx` — דף חנות מבוסס קטגוריות
+- **מצב ברירת מחדל** (ללא קטגוריה נבחרת): מציג grid של כרטיסי קטגוריות עם תמונות, כמו דף הבית
+- **לחיצה על קטגוריה**: מנווט ל-`/web/category/:id` (דף קיים שמציג מוצרים)
+- כפתור "الكل" מציג את כל המוצרים ב-grid רגיל
 
-### 6. WebProductCard — התאמה לסגנון Alrahal
-- הוספת כפתור עגלה (`bg-primary/10 hover:bg-primary`)
-- אפקט hover על תמונה (`scale-105`)
+### 6. עדכון types — הוספת `image_url` לטיפוס categories
 
-### 7. דפי תוכן — העתקה מדויקת מ-Alrahal
-- **WebAboutPage**: Hero banner + Our Story + Stats + Values + FAQ + CTA (כמו AboutPage ב-Alrahal)
-- **WebContactPage**: Hero banner + Contact info cards + Form (כמו ContactPage ב-Alrahal)
-- **WebFAQPage**: Accordion (כמו FAQPage ב-Alrahal)
-- **WebTrackOrderPage**: Icon + form + order details (כמו TrackOrderPage ב-Alrahal)
-
-### 8. WebShopPage + WebCategoryPage
-- הוספת פילטר/מיון כמו ב-Alrahal (Slider + Sort + Stock toggle)
-
-### 9. WebProductPage
-- כפתור הוספה `bg-gold text-gold-foreground hover:bg-gold/90` (כמו ב-Alrahal)
-
-### 10. WebCartPage + WebCheckoutPage
-- שימוש באותו מבנה של Alrahal
-
-## קבצים לשינוי
+## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| `index.html` | הוספת Google Fonts Cairo |
-| `tailwind.config.ts` | הוספת `fontFamily: { cairo }` |
-| `src/index.css` | `body` → `font-cairo` |
-| `src/components/web/BannerSlider.tsx` | שכתוב — Carousel + autoplay |
-| `src/components/web/WebProductCard.tsx` | כפתור עגלה + hover effects |
-| `src/pages/web/WebHome.tsx` | Hero Section מלא כמו Alrahal |
-| `src/pages/web/WebAboutPage.tsx` | שכתוב מלא כמו Alrahal |
-| `src/pages/web/WebContactPage.tsx` | שכתוב מלא כמו Alrahal |
-| `src/pages/web/WebFAQPage.tsx` | שכתוב עם Accordion |
-| `src/pages/web/WebTrackOrderPage.tsx` | שכתוב כמו Alrahal |
-| `src/pages/web/WebShopPage.tsx` | הוספת פילטרים |
-| `src/pages/web/WebProductPage.tsx` | התאמת כפתורים |
-| `src/pages/web/WebCartPage.tsx` | התאמת סגנון |
-| `src/pages/web/WebCheckoutPage.tsx` | התאמת סגנון |
+| מיגרציה SQL | `ALTER TABLE categories ADD COLUMN image_url text` |
+| `src/integrations/supabase/types.ts` | הוספת `image_url` ל-categories |
+| סקריפט AI חד-פעמי | ייצור ~6 תמונות (1 hero + קטגוריות), העלאה ל-Storage, עדכון DB |
+| `src/pages/web/WebHome.tsx` | Hero עם תמונת רקע + קטגוריות עם תמונות |
+| `src/pages/web/WebShopPage.tsx` | הצגת קטגוריות עם תמונות כברירת מחדל, לחיצה → navigate לדף קטגוריה |
+| `src/hooks/useWebProducts.ts` | הוספת `image_url` ל-select של categories |
+
+## סדר ביצוע
+1. מיגרציה + types
+2. ייצור תמונות AI (hero + קטגוריות) → העלאה ל-Storage → עדכון DB
+3. עדכון WebHome (hero + קטגוריות ויזואליות)
+4. עדכון WebShopPage (grid קטגוריות ראשוני)
 
