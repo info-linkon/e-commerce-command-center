@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { BannerSlider } from "@/components/web/BannerSlider";
 import { WebProductCard } from "@/components/web/WebProductCard";
 import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
+import { useSiteSection } from "@/hooks/useSiteContent";
+import { defaultContent } from "@/lib/web-default-content";
 import { Truck, Shield, ShoppingBag, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -27,6 +29,13 @@ export default function WebHome() {
   const { data: products } = useWebProducts();
   const { data: categories } = useWebCategories();
 
+  const { data: heroData } = useSiteSection("home", "hero");
+  const hero = {
+    ...defaultContent.home.hero,
+    ...((heroData?.content as Record<string, any>) || {}),
+  };
+  const heroImage = hero.backgroundImage || heroBg;
+
   const featured = products?.slice(0, 8) || [];
 
   return (
@@ -35,8 +44,8 @@ export default function WebHome() {
       <section className="relative overflow-hidden min-h-[500px] md:min-h-[600px] flex items-center">
         <div className="absolute inset-0">
           <img
-            src={heroBg}
-            alt="خلفية الوجهة"
+            src={heroImage}
+            alt={hero.title || "خلفية الوجهة"}
             className="w-full h-full object-cover"
             width={1920}
             height={1080}
@@ -49,17 +58,17 @@ export default function WebHome() {
               ✨ أهلاً بك في الوجهة
             </span>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              وجهتك الأولى
+              {hero.title || "وجهتك الأولى"}
               <br />
-              <span className="text-gradient-gold">لعالم الطبيعة والمغامرات</span>
+              <span className="text-gradient-gold">{hero.subtitle || "لعالم الطبيعة والمغامرات"}</span>
             </h1>
             <p className="text-desert-foreground/70 text-lg md:text-xl mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
               مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق
             </p>
             <div className="flex flex-wrap gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
-                <Link to="/web/shop">
-                  تسوق الآن
+                <Link to={hero.cta_link || "/web/shop"}>
+                  {hero.cta_text || "تسوق الآن"}
                   <ArrowLeft className="w-4 h-4 mr-2" />
                 </Link>
               </Button>
