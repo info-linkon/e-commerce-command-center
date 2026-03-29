@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
     --background: 40 20% 97%;
@@ -37,6 +33,15 @@ All colors MUST be HSL.
     --ring: 36 56% 51%;
 
     --radius: 0.5rem;
+
+    --sand: 38 45% 78%;
+    --sand-foreground: 25 30% 15%;
+    --desert: 25 60% 18%;
+    --desert-foreground: 40 40% 95%;
+    --gold: 42 75% 55%;
+    --gold-foreground: 25 40% 10%;
+    --warm: 20 35% 35%;
+    --warm-foreground: 40 40% 95%;
 
     --sidebar-background: 30 15% 12%;
     --sidebar-foreground: 36 30% 90%;
@@ -76,6 +81,16 @@ All colors MUST be HSL.
     --border: 30 10% 20%;
     --input: 30 10% 20%;
     --ring: 36 56% 51%;
+
+    --sand: 30 20% 22%;
+    --sand-foreground: 35 25% 90%;
+    --desert: 25 40% 14%;
+    --desert-foreground: 40 40% 95%;
+    --gold: 42 75% 55%;
+    --gold-foreground: 25 25% 8%;
+    --warm: 20 20% 25%;
+    --warm-foreground: 40 40% 95%;
+
     --sidebar-background: 30 15% 8%;
     --sidebar-foreground: 36 30% 90%;
     --sidebar-primary: 36 56% 51%;
@@ -93,27 +108,23 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Hebrew", sans-serif;
+    @apply bg-background text-foreground font-cairo;
   }
 }
 
-/* Web storefront design tokens */
-.web-gold-gradient {
-  background: linear-gradient(135deg, hsl(36 56% 51%), hsl(42 70% 60%));
-}
+@layer utilities {
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(42 75% 55%), hsl(30 55% 28%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-.web-desert-gradient {
-  background: linear-gradient(135deg, hsl(30 15% 12%), hsl(30 15% 6%));
-}
+  .bg-desert-gradient {
+    background: linear-gradient(135deg, hsl(var(--desert)), hsl(30 55% 28%));
+  }
 
-.web-sand-gradient {
-  background: linear-gradient(180deg, hsl(40 20% 97%), hsl(36 30% 93%));
-}
-
-.web-text-gradient-gold {
-  background: linear-gradient(135deg, hsl(36 56% 51%), hsl(42 70% 60%));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  .bg-sand-gradient {
+    background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--sand) / 0.3));
+  }
 }
