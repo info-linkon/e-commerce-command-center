@@ -1,56 +1,59 @@
 
 
-# שיפור נראות האתר — תמונות AI להירו וקטגוריות + דף חנות חדש
+# השלמת מידע מהאתר הנוכחי — elwejha.co.il
 
-## סיכום
-שלושה שיפורים מרכזיים:
-1. **תמונת Hero** — ייצור תמונת רקע AI יוקרתית לדף הבית
-2. **תמונות קטגוריות** — ייצור תמונות AI לכל קטגוריה + הוספת עמודת `image_url` לטבלת categories
-3. **דף חנות חדש** — במקום רשימת מוצרים ישירה, מציג קודם כרטיסי קטגוריות עם תמונות, לחיצה על קטגוריה → דף המוצרים שלה
+## מידע שנאסף מהאתר
+
+| שדה | ערך |
+|---|---|
+| טלפון | 0526213999 |
+| אימייל | info@elwejha.co.il |
+| וואטסאפ | 972526573185 |
+| פייסבוק | https://www.facebook.com/1094362587370591 |
+| אינסטגרם | https://www.instagram.com/elwejha.outdoors |
+| מיקום | זיمר — עבודה אונליין, ביקור במחסנים בתיאום מראש |
+
+**תוכן "מי אנחנו":** סיפור המותג — קבוצת חברים שאוהבים טבע ומחנאות, הקימו את "הוג'הא" כדי לספק ציוד איכותי בסגנון מזרחי מסורתי.
+
+**פיצ'רים (features bar):** רضاك مضمون (ضمان 100%), سهولة الشراء, توصيل سريع لكافة المناطق, امكانية الإرجاع
 
 ## שינויים
 
-### 1. מיגרציה — הוספת `image_url` לטבלת `categories`
-```sql
-ALTER TABLE categories ADD COLUMN image_url text;
-```
+### 1. `src/lib/web-default-content.ts`
+- עדכון כל פרטי הקשר: phone, email, whatsapp
+- עדכון סושיאל: facebook, instagram
+- עדכון תוכן About עם הטקסט האמיתי מהאתר
+- עדכון features ל-4 פריטים (רضا, שראء, توصيل, إرجاع)
 
-### 2. ייצור תמונות AI (סקריפט חד-פעמי)
-- **תמונת Hero**: תמונה יוקרתית בסגנון desert/gold — מוצרי טיפוח/בשמים על רקע חולי מדברי
-- **תמונות קטגוריות**: תמונה ייצוגית לכל קטגוריה (לפי שם הקטגוריה) בסגנון אחיד
-- כל התמונות יועלו ל-Supabase Storage (bucket `product-images`)
-- תמונות הקטגוריות יישמרו בעמודת `image_url` של כל קטגוריה
+### 2. `src/components/web/WebLayout.tsx`
+- עדכון לינק וואטסאפ מ-`972000000000` ל-`972526573185`
 
-### 3. `WebHome.tsx` — Hero עם תמונת רקע
-- הוספת תמונת הרקע שיוצרה ב-AI כ-`<img>` מוחלט מאחורי ה-gradient overlay
-- שמירת אותו מבנה (badge, כותרת, CTA) — רק הוספת תמונה
+### 3. `src/components/web/WebFooter.tsx`
+- הוספת לינקים לפייסבוק ואינסטגרם (אייקונים)
+- עדכון טקסט התיאור עם המידע האמיתי
+- הוספת טלפון ואימייל
 
-### 4. `WebHome.tsx` — קטגוריות עם תמונות
-- במקום כרטיסי טקסט פשוטים — כרטיסים עם תמונת רקע מהקטגוריה
-- overlay כהה + שם הקטגוריה בלבן/זהב
-- aspect-ratio מרובע, hover effect עם scale
+### 4. `src/pages/web/WebAboutPage.tsx`
+- החלפת הטקסט הגנרי בתוכן האמיתי מהאתר (סיפור המותג)
+- עדכון ה-values ל-4 ערכים אמיתיים
 
-### 5. `WebShopPage.tsx` — דף חנות מבוסס קטגוריות
-- **מצב ברירת מחדל** (ללא קטגוריה נבחרת): מציג grid של כרטיסי קטגוריות עם תמונות, כמו דף הבית
-- **לחיצה על קטגוריה**: מנווט ל-`/web/category/:id` (דף קיים שמציג מוצרים)
-- כפתור "الكل" מציג את כל המוצרים ב-grid רגיל
+### 5. `src/pages/web/WebContactPage.tsx`
+- הפרטים כבר נקראים מ-default content — יתעדכנו אוטומטית
 
-### 6. עדכון types — הוספת `image_url` לטיפוס categories
+### 6. `src/pages/web/WebHome.tsx`
+- עדכון features bar ל-4 פריטים אמיתיים (רצוי + שיי + توصيל + إرجاع)
+- עדכון טקסט Hero
+
+### 7. `src/components/web/WebHeader.tsx`
+- אין שינוי נדרש
 
 ## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| מיגרציה SQL | `ALTER TABLE categories ADD COLUMN image_url text` |
-| `src/integrations/supabase/types.ts` | הוספת `image_url` ל-categories |
-| סקריפט AI חד-פעמי | ייצור ~6 תמונות (1 hero + קטגוריות), העלאה ל-Storage, עדכון DB |
-| `src/pages/web/WebHome.tsx` | Hero עם תמונת רקע + קטגוריות עם תמונות |
-| `src/pages/web/WebShopPage.tsx` | הצגת קטגוריות עם תמונות כברירת מחדל, לחיצה → navigate לדף קטגוריה |
-| `src/hooks/useWebProducts.ts` | הוספת `image_url` ל-select של categories |
-
-## סדר ביצוע
-1. מיגרציה + types
-2. ייצור תמונות AI (hero + קטגוריות) → העלאה ל-Storage → עדכון DB
-3. עדכון WebHome (hero + קטגוריות ויזואליות)
-4. עדכון WebShopPage (grid קטגוריות ראשוני)
+| `src/lib/web-default-content.ts` | עדכון כל הפרטים והתוכן |
+| `src/components/web/WebLayout.tsx` | WhatsApp link → 972526573185 |
+| `src/components/web/WebFooter.tsx` | הוספת סושיאל + פרטי קשר |
+| `src/pages/web/WebAboutPage.tsx` | תוכן אמיתי מהאתר |
+| `src/pages/web/WebHome.tsx` | features bar + Hero text |
 
