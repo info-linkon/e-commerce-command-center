@@ -65,7 +65,8 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { action } = await req.json();
+    const body = await req.json();
+    const action = body.action;
 
     if (action === "import_categories") {
       // Import categories from WooCommerce
