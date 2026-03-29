@@ -34,6 +34,25 @@ import FlowsPage from "./pages/FlowsPage";
 import WebsiteItemsPage from "./pages/WebsiteItemsPage";
 import SettingsPage from "./pages/SettingsPage";
 
+// Public website
+import { WebLayout } from "@/components/web/WebLayout";
+import WebHome from "./pages/web/WebHome";
+import WebShopPage from "./pages/web/WebShopPage";
+import WebCategoryPage from "./pages/web/WebCategoryPage";
+import WebProductPage from "./pages/web/WebProductPage";
+import WebCartPage from "./pages/web/WebCartPage";
+import WebCheckoutPage from "./pages/web/WebCheckoutPage";
+import WebOrderConfirmation from "./pages/web/WebOrderConfirmation";
+import WebSearchPage from "./pages/web/WebSearchPage";
+import WebAboutPage from "./pages/web/WebAboutPage";
+import WebContactPage from "./pages/web/WebContactPage";
+import WebFAQPage from "./pages/web/WebFAQPage";
+import WebTrackOrderPage from "./pages/web/WebTrackOrderPage";
+
+// Admin website management
+import WebContentPage from "./pages/admin/WebContentPage";
+import WebBannersPage from "./pages/admin/WebBannersPage";
+
 const queryClient = new QueryClient();
 
 const Protected = ({ children }: { children: React.ReactNode }) => (
@@ -51,6 +70,24 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+
+            {/* Public Website */}
+            <Route path="/web" element={<WebLayout />}>
+              <Route index element={<WebHome />} />
+              <Route path="shop" element={<WebShopPage />} />
+              <Route path="category/:id" element={<WebCategoryPage />} />
+              <Route path="product/:id" element={<WebProductPage />} />
+              <Route path="cart" element={<WebCartPage />} />
+              <Route path="checkout" element={<WebCheckoutPage />} />
+              <Route path="order-confirmation/:orderNumber" element={<WebOrderConfirmation />} />
+              <Route path="search" element={<WebSearchPage />} />
+              <Route path="about" element={<WebAboutPage />} />
+              <Route path="contact" element={<WebContactPage />} />
+              <Route path="faq" element={<WebFAQPage />} />
+              <Route path="track" element={<WebTrackOrderPage />} />
+            </Route>
+
+            {/* Admin Panel */}
             <Route path="/" element={<Protected><Dashboard /></Protected>} />
             <Route path="/flows" element={<Protected><FlowsPage /></Protected>} />
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
@@ -79,6 +116,11 @@ const App = () => (
             <Route path="/website-items" element={<Protected><WebsiteItemsPage /></Protected>} />
             <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
             <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
+
+            {/* Admin website management */}
+            <Route path="/admin/web-content" element={<Protected><WebContentPage /></Protected>} />
+            <Route path="/admin/web-banners" element={<Protected><WebBannersPage /></Protected>} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
