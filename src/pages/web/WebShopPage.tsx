@@ -82,11 +82,38 @@ export default function WebShopPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold text-foreground">جميع المنتجات</h1>
-        <Button variant="ghost" onClick={() => setShowAll(false)} className="text-muted-foreground">
+        <Button variant="ghost" onClick={() => { setShowAll(false); setSelectedCategory(undefined); }} className="text-muted-foreground">
           العودة للأقسام
         </Button>
+      </div>
+
+      {/* Category filter chips */}
+      <div className="flex flex-wrap gap-2 mb-8">
+        <button
+          onClick={() => setSelectedCategory(undefined)}
+          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+            !selectedCategory
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-card text-muted-foreground border-border hover:border-primary/50"
+          }`}
+        >
+          الكل
+        </button>
+        {categories?.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setSelectedCategory(cat.id)}
+            className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+              selectedCategory === cat.id
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-muted-foreground border-border hover:border-primary/50"
+            }`}
+          >
+            {cat.name}
+          </button>
+        ))}
       </div>
 
       {isLoading ? (
