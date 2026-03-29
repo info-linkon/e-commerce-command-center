@@ -2,9 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Users, Award, Heart, Shield, Headphones, Star, Package } from "lucide-react";
+import { Users, Award, Heart, Package } from "lucide-react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { defaultContent } from "@/lib/web-default-content";
+import aboutHero from "@/assets/about-hero.jpg";
+import aboutStory from "@/assets/about-story.jpg";
+import aboutValue1 from "@/assets/about-value-1.jpg";
+import aboutValue2 from "@/assets/about-value-2.jpg";
+import aboutValue3 from "@/assets/about-value-3.jpg";
 
 const useCountUp = (end: number, duration = 2000) => {
   const [count, setCount] = useState(0);
@@ -41,12 +46,6 @@ const statIcons = [
   <Heart className="w-7 h-7" />,
 ];
 
-const valueIcons = [
-  <Shield className="w-10 h-10 text-gold" />,
-  <Headphones className="w-10 h-10 text-gold" />,
-  <Star className="w-10 h-10 text-gold" />,
-];
-
 const StatCard = ({ end, suffix, desc, iconIndex }: { end: number; suffix: string; desc: string; iconIndex: number }) => {
   const { count, ref } = useCountUp(end);
   return (
@@ -72,9 +71,9 @@ export default function WebAboutPage() {
   ];
 
   const values = [
-    { title: "رضاك مضمون", desc: "ضمان 100% على جميع المنتجات — رضاك هو أولويتنا" },
-    { title: "أصالة وتراث", desc: "منتجات بأسلوب شرقي تقليدي أصيل تجمع بين الجودة والتراث" },
-    { title: "توصيل سريع", desc: "نوصل لجميع المناطق بسرعة وأمان" },
+    { title: "رضاك مضمون", desc: "ضمان 100% على جميع المنتجات — رضاك هو أولويتنا", image: aboutValue1 },
+    { title: "أصالة وتراث", desc: "منتجات بأسلوب شرقي تقليدي أصيل تجمع بين الجودة والتراث", image: aboutValue2 },
+    { title: "توصيل سريع", desc: "نوصل لجميع المناطق بسرعة وأمان", image: aboutValue3 },
   ];
 
   const faqs = [
@@ -85,26 +84,47 @@ export default function WebAboutPage() {
 
   return (
     <div>
-      {/* Hero */}
-      <div className="relative h-[350px] md:h-[420px] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-desert/80" />
+      {/* Hero with background image */}
+      <div className="relative h-[350px] md:h-[450px] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src={aboutHero}
+            alt="خلفية من نحن"
+            className="w-full h-full object-cover"
+            width={1920}
+            height={800}
+          />
+          <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/90 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/50" />
+        </div>
         <div className="relative z-10 text-center px-4">
-          <h1 className="text-4xl md:text-5xl font-black text-desert-foreground mb-4">
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-4">
             {content.title || "من نحن"}
           </h1>
-          <p className="text-desert-foreground/80 max-w-xl mx-auto text-lg">
+          <p className="text-white/80 max-w-xl mx-auto text-lg">
             وجهتكم الأولى لعالم الطبيعة والمغامرات
           </p>
         </div>
       </div>
 
-      {/* Our Story */}
+      {/* Our Story — 2 columns */}
       <section className="container py-14 md:py-20">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">قصتنا</h2>
-          <div className="w-16 h-1 bg-gold rounded-full mb-6" />
-          <div className="prose prose-lg max-w-none text-muted-foreground leading-relaxed whitespace-pre-line">
-            {content.body || "نحن مجموعة من الأصدقاء الذين يعشقون الطبيعة والتخييم، قررنا أن نجمع شغفنا بحب الطبيعة مع التراث والأصالة العربية.\n\nأسسنا \"الوجهة\" لنوفر لكم أفضل مستلزمات التخييم والرحلات بأسلوب شرقي تقليدي أصيل — من الخيام والمجالس إلى أدوات الطبخ والشاي.\n\nهدفنا هو أن نكون وجهتكم الأولى لكل ما يخص عالم البر والمغامرات، مع الحفاظ على الجودة العالية والأسعار المنافسة."}
+        <div className="grid md:grid-cols-2 gap-10 items-center">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">قصتنا</h2>
+            <div className="w-16 h-1 bg-gold rounded-full mb-6" />
+            <div className="prose prose-lg max-w-none text-muted-foreground leading-relaxed whitespace-pre-line">
+              {content.body || "نحن مجموعة من الأصدقاء الذين يعشقون الطبيعة والتخييم، قررنا أن نجمع شغفنا بحب الطبيعة مع التراث والأصالة العربية.\n\nأسسنا \"الوجهة\" لنوفر لكم أفضل مستلزمات التخييم والرحلات بأسلوب شرقي تقليدي أصيل — من الخيام والمجالس إلى أدوات الطبخ والشاي.\n\nهدفنا هو أن نكون وجهتكم الأولى لكل ما يخص عالم البر والمغامرات، مع الحفاظ على الجودة العالية والأسعار المنافسة."}
+            </div>
+          </div>
+          <div className="order-first md:order-last">
+            <img
+              src={aboutStory}
+              alt="قصتنا"
+              className="w-full rounded-2xl shadow-xl object-cover aspect-square"
+              loading="lazy"
+              width={800}
+              height={800}
+            />
           </div>
         </div>
       </section>
@@ -120,16 +140,25 @@ export default function WebAboutPage() {
         </div>
       </section>
 
-      {/* Values */}
+      {/* Values with images */}
       <section className="container py-14 md:py-20">
         <h2 className="text-2xl md:text-3xl font-black text-foreground text-center mb-2">الأسس والقيم</h2>
         <div className="w-16 h-1 bg-gold rounded-full mx-auto mb-10" />
         <div className="grid md:grid-cols-3 gap-6">
           {values.map((v, i) => (
-            <div key={i} className="bg-card border border-border rounded-2xl p-8 text-center hover:shadow-lg transition-shadow">
-              <div className="flex justify-center mb-4">{valueIcons[i] || valueIcons[0]}</div>
-              <h3 className="text-xl font-bold text-foreground mb-3">{v.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{v.desc}</p>
+            <div key={i} className="bg-card border border-border rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
+              <img
+                src={v.image}
+                alt={v.title}
+                className="w-full h-48 object-cover"
+                loading="lazy"
+                width={640}
+                height={640}
+              />
+              <div className="p-6 text-center">
+                <h3 className="text-xl font-bold text-foreground mb-3">{v.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{v.desc}</p>
+              </div>
             </div>
           ))}
         </div>
