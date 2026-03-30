@@ -93,7 +93,7 @@ export default function WebShopPage() {
       <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide flex-nowrap">
         <button
           onClick={() => setSelectedCategory(undefined)}
-          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors whitespace-nowrap shrink-0 ${
             !selectedCategory
               ? "bg-primary text-primary-foreground border-primary"
               : "bg-card text-muted-foreground border-border hover:border-primary/50"
