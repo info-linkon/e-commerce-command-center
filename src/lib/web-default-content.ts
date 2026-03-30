@@ -79,7 +79,7 @@ export const sectionLabels: Record<string, Record<string, string>> = {
   home: { hero: 'באנר ראשי', features: 'פיצ\'רים', categories: 'סקשן קטגוריות', featured: 'סקשן מוצרים מומלצים' },
   about: { hero: 'באנר ראשי', story: 'הסיפור שלנו', values: 'ערכים' },
   contact: { hero: 'באנר ראשי', info: 'פרטי התקשרות' },
-  faq: { content: 'שאלות ותשובות' },
+  
   settings: { general: 'הגדרות כלליות' },
 };
 
