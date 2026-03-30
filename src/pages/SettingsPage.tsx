@@ -54,6 +54,9 @@ const SettingsPage = () => {
           </Card>
         ))}
       </div>
+
+      {/* כלי המרת תמונות */}
+      <ImageWebpConverter />
     </div>
   );
 };
