@@ -83,7 +83,7 @@ export default function WebShopPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold text-foreground">جميع المنتجات</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">جميع المنتجات</h1>
         <Button variant="ghost" onClick={() => { setShowAll(false); setSelectedCategory(undefined); }} className="text-muted-foreground">
           العودة للأقسام
         </Button>
