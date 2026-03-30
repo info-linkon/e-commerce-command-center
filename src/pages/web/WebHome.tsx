@@ -41,7 +41,7 @@ export default function WebHome() {
   return (
     <div>
       {/* Hero Banner */}
-      <section className="relative overflow-hidden min-h-[500px] md:min-h-[600px] flex items-center">
+      <section className="relative overflow-hidden min-h-[350px] md:min-h-[600px] flex items-center">
         <div className="absolute inset-0">
           <img
             src={heroImage}
