@@ -1,12 +1,13 @@
 import { useParams } from "react-router-dom";
-import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
+import { useWebProductsByCategoryNumber } from "@/hooks/useWebProducts";
 import { WebProductCard } from "@/components/web/WebProductCard";
 
 export default function WebCategoryPage() {
   const { id } = useParams();
-  const { data: products, isLoading } = useWebProducts(id);
-  const { data: categories } = useWebCategories();
-  const category = categories?.find((c) => c.id === id);
+  const categoryNumber = parseInt(id || "", 10);
+  const { data, isLoading } = useWebProductsByCategoryNumber(isNaN(categoryNumber) ? undefined : categoryNumber);
+  const products = data?.products || [];
+  const category = data?.category;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
@@ -20,17 +21,18 @@ export default function WebCategoryPage() {
             <div key={i} className="bg-card rounded-xl aspect-square animate-pulse border border-border" />
           ))}
         </div>
-      ) : products?.length ? (
+      ) : products.length ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {products.map((product) => (
+          {products.map((product: any) => (
             <WebProductCard
               key={product.id}
               id={product.id}
+              productNumber={product.product_number}
               name={product.name}
               nameAr={product.name_ar}
               price={product.sale_price}
               imageUrl={product.image_url}
-              categoryName={(product as any).categories?.name}
+              categoryName={product.categories?.name}
             />
           ))}
         </div>
