@@ -32,7 +32,7 @@ export default function WebShopPage() {
   if (!showAll) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
-        <h1 className="text-3xl font-bold text-foreground mb-2">المتجر</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">المتجر</h1>
         <p className="text-muted-foreground mb-8">اختر القسم المطلوب</p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
