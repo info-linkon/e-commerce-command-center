@@ -98,8 +98,8 @@ export default function WebHome() {
                   <Icon className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm">{title}</h4>
-                  <p className="text-xs text-muted-foreground">{desc}</p>
+                  <h4 className="font-bold text-xs md:text-sm">{title}</h4>
+                  <p className="text-xs text-muted-foreground hidden md:block">{desc}</p>
                 </div>
               </div>
             ))}
