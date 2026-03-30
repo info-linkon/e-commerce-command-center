@@ -64,8 +64,8 @@ export default function WebProductPage() {
   };
 
   return (
-    <div className="container py-8 md:py-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div className="container py-6 md:py-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
         {/* Image */}
         <div>
           <div className="aspect-square bg-card rounded-xl border border-border overflow-hidden mb-4">
