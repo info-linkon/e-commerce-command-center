@@ -120,7 +120,7 @@ export default function WebAboutPage() {
             <img
               src={aboutStory}
               alt="قصتنا"
-              className="w-full rounded-2xl shadow-xl object-cover aspect-square"
+              className="w-full rounded-2xl shadow-xl object-cover aspect-[4/3] md:aspect-square"
               loading="lazy"
               width={800}
               height={800}
