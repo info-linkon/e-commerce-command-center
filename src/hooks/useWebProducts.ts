@@ -24,10 +24,10 @@ export function useWebProductsByCategoryNumber(categoryNumber: number | undefine
     enabled: !!categoryNumber,
     queryFn: async () => {
       // First find category by number
-      const { data: cat } = await supabase
+      const { data: cat } = await (supabase
         .from("categories")
-        .select("id, name")
-        .eq("category_number" as any, categoryNumber!)
+        .select("id, name") as any)
+        .eq("category_number", categoryNumber!)
         .single();
       if (!cat) return { products: [], category: null };
       const { data, error } = await supabase
