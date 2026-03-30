@@ -291,8 +291,16 @@ const BundleForm = () => {
           {/* Variations Manager for variable bundles */}
           {isEditing && form.bundle_type === "variable_bundle" && bundle && (
             <Card>
-              <CardContent className="pt-6">
+              <CardHeader><CardTitle>וריאציות מארז</CardTitle></CardHeader>
+              <CardContent>
                 <VariationsManager productId={bundle.product_id} />
+              </CardContent>
+            </Card>
+          )}
+          {!isEditing && form.bundle_type === "variable_bundle" && (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-sm text-muted-foreground text-center py-4">שמור את המארז תחילה כדי להוסיף וריאציות</p>
               </CardContent>
             </Card>
           )}
