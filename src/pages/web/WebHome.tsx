@@ -168,6 +168,7 @@ export default function WebHome() {
               <WebProductCard
                 key={product.id}
                 id={product.id}
+                productNumber={(product as any).product_number}
                 name={product.name}
                 nameAr={product.name_ar}
                 price={product.sale_price}
