@@ -99,10 +99,12 @@ export default function WebProductPage() {
         <div className="flex flex-col justify-center">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">{displayName}</h1>
           {product.description_ar && (
-            <p className="text-muted-foreground leading-relaxed mb-6">{product.description_ar}</p>
+            <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: product.description_ar }} />
           )}
           {!product.description_ar && product.description && (
-            <p className="text-muted-foreground leading-relaxed mb-6">{product.description}</p>
+            <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: product.description }} />
           )}
 
           <div className="flex items-center gap-3 mb-6">
