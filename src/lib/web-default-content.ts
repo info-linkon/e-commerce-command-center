@@ -87,7 +87,7 @@ export const pageLabels: Record<string, string> = {
   home: 'דף ראשי',
   about: 'אודות',
   contact: 'צור קשר',
-  faq: 'שאלות נפוצות',
+  
   settings: 'הגדרות',
 };
 
