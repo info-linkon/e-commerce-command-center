@@ -150,10 +150,10 @@ export default function WebHome() {
 
       {/* Featured Products */}
       <section className="bg-sand-gradient">
-        <div className="container py-12 md:py-16">
-          <div className="flex items-center justify-between mb-8">
+        <div className="container py-8 md:py-16">
+          <div className="flex items-center justify-between mb-6 md:mb-8">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold">منتجات مميزة</h2>
+              <h2 className="text-xl md:text-3xl font-bold">منتجات مميزة</h2>
               <p className="text-muted-foreground text-sm mt-1">أحدث المنتجات في متجرنا</p>
             </div>
             <Button asChild variant="ghost" className="text-primary hover:text-gold">
