@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 export default function WebProductPage() {
   const { id } = useParams();
   const { data: product, isLoading } = useWebProduct(id);
-  const { data: variations } = useWebProductVariations(id);
+  const productId = product?.id;
+  const { data: variations } = useWebProductVariations(productId);
   const addItem = useCartStore((s) => s.addItem);
 
   const [selectedVariation, setSelectedVariation] = useState<string | null>(null);

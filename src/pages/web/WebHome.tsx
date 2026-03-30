@@ -122,7 +122,7 @@ export default function WebHome() {
               return (
                 <Link
                   key={cat.id}
-                  to={`/web/category/${cat.id}`}
+                  to={`/web/category/${(cat as any).category_number || cat.id}`}
                   className="group relative rounded-xl overflow-hidden aspect-square border border-border hover:shadow-xl transition-all duration-300"
                 >
                   {imgSrc ? (
@@ -168,6 +168,7 @@ export default function WebHome() {
               <WebProductCard
                 key={product.id}
                 id={product.id}
+                productNumber={(product as any).product_number}
                 name={product.name}
                 nameAr={product.name_ar}
                 price={product.sale_price}

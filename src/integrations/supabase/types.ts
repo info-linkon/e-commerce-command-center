@@ -260,6 +260,7 @@ export type Database = {
       }
       categories: {
         Row: {
+          category_number: number
           created_at: string
           display_order: number
           id: string
@@ -269,6 +270,7 @@ export type Database = {
           woo_id: number | null
         }
         Insert: {
+          category_number?: number
           created_at?: string
           display_order?: number
           id?: string
@@ -278,6 +280,7 @@ export type Database = {
           woo_id?: number | null
         }
         Update: {
+          category_number?: number
           created_at?: string
           display_order?: number
           id?: string
@@ -1098,6 +1101,7 @@ export type Database = {
           is_published: boolean
           name: string
           name_ar: string | null
+          product_number: number
           product_type: Database["public"]["Enums"]["product_type"]
           sale_price: number
           short_description: string | null
@@ -1118,6 +1122,7 @@ export type Database = {
           is_published?: boolean
           name: string
           name_ar?: string | null
+          product_number?: number
           product_type?: Database["public"]["Enums"]["product_type"]
           sale_price?: number
           short_description?: string | null
@@ -1138,6 +1143,7 @@ export type Database = {
           is_published?: boolean
           name?: string
           name_ar?: string | null
+          product_number?: number
           product_type?: Database["public"]["Enums"]["product_type"]
           sale_price?: number
           short_description?: string | null

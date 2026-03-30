@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 
 interface WebProductCardProps {
   id: string;
+  productNumber?: number | null;
   name: string;
   nameAr?: string | null;
   price: number;
@@ -11,12 +12,13 @@ interface WebProductCardProps {
   categoryName?: string | null;
 }
 
-export function WebProductCard({ id, name, nameAr, price, imageUrl, categoryName }: WebProductCardProps) {
+export function WebProductCard({ id, productNumber, name, nameAr, price, imageUrl, categoryName }: WebProductCardProps) {
   const displayName = nameAr || name;
+  const linkId = productNumber || id;
 
   return (
     <div className="group relative bg-card rounded-xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-      <Link to={`/web/product/${id}`} className="block relative overflow-hidden">
+      <Link to={`/web/product/${linkId}`} className="block relative overflow-hidden">
         <div className="aspect-square bg-muted flex items-center justify-center">
           {imageUrl ? (
             <img
@@ -37,7 +39,7 @@ export function WebProductCard({ id, name, nameAr, price, imageUrl, categoryName
         {categoryName && (
           <p className="text-xs text-gold font-medium mb-1">{categoryName}</p>
         )}
-        <Link to={`/web/product/${id}`}>
+        <Link to={`/web/product/${linkId}`}>
           <h3 className="font-semibold text-sm leading-snug mb-2 line-clamp-2 hover:text-primary transition-colors">
             {displayName}
           </h3>
@@ -50,7 +52,7 @@ export function WebProductCard({ id, name, nameAr, price, imageUrl, categoryName
             className="h-9 w-9 bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary"
             asChild
           >
-            <Link to={`/web/product/${id}`}>
+            <Link to={`/web/product/${linkId}`}>
               <ShoppingCart className="w-4 h-4" />
             </Link>
           </Button>

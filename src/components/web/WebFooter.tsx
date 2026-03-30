@@ -47,7 +47,7 @@ export function WebFooter() {
               <h3 className="text-gold font-semibold mb-4 text-sm uppercase tracking-wider">الأقسام</h3>
               <div className="flex flex-col gap-2.5">
                 {categories.slice(0, 6).map((cat) => (
-                  <Link key={cat.id} to={`/web/category/${cat.id}`} className="text-sm text-sand/70 hover:text-gold transition-colors">
+                  <Link key={cat.id} to={`/web/category/${(cat as any).category_number || cat.id}`} className="text-sm text-sand/70 hover:text-gold transition-colors">
                     {cat.name}
                   </Link>
                 ))}
