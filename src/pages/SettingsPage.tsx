@@ -2,7 +2,7 @@ import { Truck, Wallet, Globe, Users, Settings as SettingsIcon } from "lucide-re
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-
+import ImageWebpConverter from "@/components/admin/ImageWebpConverter";
 const settingsSections = [
   {
     title: "חברות משלוח",
