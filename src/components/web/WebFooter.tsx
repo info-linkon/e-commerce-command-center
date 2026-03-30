@@ -37,7 +37,6 @@ export function WebFooter() {
               <Link to="/web/shop" className="text-sm text-sand/70 hover:text-gold transition-colors">المتجر</Link>
               <Link to="/web/about" className="text-sm text-sand/70 hover:text-gold transition-colors">من نحن</Link>
               <Link to="/web/contact" className="text-sm text-sand/70 hover:text-gold transition-colors">تواصل معنا</Link>
-              <Link to="/web/track" className="text-sm text-sand/70 hover:text-gold transition-colors">تتبع الطلب</Link>
             </div>
           </div>
 

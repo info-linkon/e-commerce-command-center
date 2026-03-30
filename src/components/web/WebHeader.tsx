@@ -16,8 +16,6 @@ export function WebHeader() {
     { label: "المتجر", to: "/web/shop" },
     { label: "من نحن", to: "/web/about" },
     { label: "تواصل معنا", to: "/web/contact" },
-    { label: "الأسئلة الشائعة", to: "/web/faq" },
-    { label: "تتبع الطلب", to: "/web/track" },
   ];
 
   return (
