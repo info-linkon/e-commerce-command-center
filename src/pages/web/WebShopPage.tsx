@@ -90,7 +90,7 @@ export default function WebShopPage() {
       </div>
 
       {/* Category filter chips */}
-      <div className="flex flex-wrap gap-2 mb-8">
+      <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide flex-nowrap">
         <button
           onClick={() => setSelectedCategory(undefined)}
           className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
