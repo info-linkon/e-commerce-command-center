@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { TablesInsert } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
 export function useBundles() {
@@ -9,7 +9,7 @@ export function useBundles() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bundles")
-        .select("*, products(name, image_url), bundle_items(*, product_variations(name, sku))")
+        .select("*, products(name, name_ar, image_url, sale_price, cost_price, category_id, sku, is_published, categories(name)), bundle_items(*, product_variations(name, sku))")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -24,7 +24,7 @@ export function useBundle(id: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bundles")
-        .select("*, products(name, image_url, sale_price), bundle_items(*, product_variations(name, sku, price))")
+        .select("*, products(name, name_ar, image_url, sale_price, cost_price, category_id, sku, description, description_ar, short_description, short_description_ar, is_published, product_type, gallery_images, categories(name)), bundle_items(*, product_variations(name, sku, price))")
         .eq("id", id!)
         .single();
       if (error) throw error;
@@ -45,7 +45,6 @@ export function useCreateBundle() {
       bundleType: "simple_bundle" | "variable_bundle";
       items: { variation_id: string; quantity: number }[];
     }) => {
-      // Create product first
       const { data: product, error: pErr } = await supabase
         .from("products")
         .insert(productData)
@@ -53,7 +52,6 @@ export function useCreateBundle() {
         .single();
       if (pErr) throw pErr;
 
-      // Create bundle
       const { data: bundle, error: bErr } = await supabase
         .from("bundles")
         .insert({ product_id: product.id, bundle_type: bundleType })
@@ -61,7 +59,6 @@ export function useCreateBundle() {
         .single();
       if (bErr) throw bErr;
 
-      // Create bundle items
       if (items.length > 0) {
         const { error: iErr } = await supabase
           .from("bundle_items")
@@ -80,15 +77,60 @@ export function useCreateBundle() {
   });
 }
 
+export function useUpdateBundle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      bundleId,
+      productId,
+      productData,
+      bundleType,
+      items,
+    }: {
+      bundleId: string;
+      productId: string;
+      productData: Partial<TablesInsert<"products">>;
+      bundleType: "simple_bundle" | "variable_bundle";
+      items: { variation_id: string; quantity: number }[];
+    }) => {
+      // Update product
+      const { error: pErr } = await supabase
+        .from("products")
+        .update(productData)
+        .eq("id", productId);
+      if (pErr) throw pErr;
+
+      // Update bundle type
+      const { error: bErr } = await supabase
+        .from("bundles")
+        .update({ bundle_type: bundleType })
+        .eq("id", bundleId);
+      if (bErr) throw bErr;
+
+      // Replace bundle items
+      await supabase.from("bundle_items").delete().eq("bundle_id", bundleId);
+      if (items.length > 0) {
+        const { error: iErr } = await supabase
+          .from("bundle_items")
+          .insert(items.map((item) => ({ ...item, bundle_id: bundleId })));
+        if (iErr) throw iErr;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bundles"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      toast.success("המארז עודכן בהצלחה");
+    },
+    onError: () => toast.error("שגיאה בעדכון מארז"),
+  });
+}
+
 export function useDeleteBundle() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ bundleId, productId }: { bundleId: string; productId: string }) => {
-      // Delete bundle items first
       await supabase.from("bundle_items").delete().eq("bundle_id", bundleId);
-      // Delete bundle
       await supabase.from("bundles").delete().eq("id", bundleId);
-      // Delete associated product
       const { error } = await supabase.from("products").delete().eq("id", productId);
       if (error) throw error;
     },
