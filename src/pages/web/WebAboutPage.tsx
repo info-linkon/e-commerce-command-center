@@ -97,7 +97,7 @@ export default function WebAboutPage() {
           <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/90 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/50" />
         </div>
         <div className="relative z-10 text-center px-4">
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-4">
+          <h1 className="text-3xl md:text-5xl font-black text-white mb-4">
             {content.title || "من نحن"}
           </h1>
           <p className="text-white/80 max-w-xl mx-auto text-lg">
