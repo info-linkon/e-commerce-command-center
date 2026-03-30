@@ -145,7 +145,7 @@ const BundleForm = () => {
       category_id: form.category_id || null,
       is_published: form.is_published,
       image_url: form.image_url || null,
-      product_type: "simple" as const,
+      product_type: form.bundle_type === "variable_bundle" ? "variable" as const : "simple" as const,
     };
 
     const bundleItems = items.map(({ variation_id, quantity }) => ({ variation_id, quantity }));
@@ -291,8 +291,16 @@ const BundleForm = () => {
           {/* Variations Manager for variable bundles */}
           {isEditing && form.bundle_type === "variable_bundle" && bundle && (
             <Card>
-              <CardContent className="pt-6">
+              <CardHeader><CardTitle>וריאציות מארז</CardTitle></CardHeader>
+              <CardContent>
                 <VariationsManager productId={bundle.product_id} />
+              </CardContent>
+            </Card>
+          )}
+          {!isEditing && form.bundle_type === "variable_bundle" && (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-sm text-muted-foreground text-center py-4">שמור את המארז תחילה כדי להוסיף וריאציות</p>
               </CardContent>
             </Card>
           )}
