@@ -60,8 +60,8 @@ const StatCard = ({ end, suffix, desc, iconIndex }: { end: number; suffix: strin
 };
 
 export default function WebAboutPage() {
-  const { data: section } = useSiteSection("about", "main");
-  const content = (section?.content as any) || defaultContent.about.main;
+  const { data: section } = useSiteSection("about", "hero");
+  const content = (section?.content as any) || defaultContent.about.hero || {};
 
   const stats = [
     { end: 500, suffix: "+", desc: "منتج متوفر" },

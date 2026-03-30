@@ -3,9 +3,9 @@ import { defaultContent } from "@/lib/web-default-content";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function WebFAQPage() {
-  const { data: section } = useSiteSection("faq", "items");
-  const content = (section?.content as any) || defaultContent.faq.items;
-  const questions = content.questions || [];
+  const { data: section } = useSiteSection("faq", "content");
+  const content = (section?.content as any) || defaultContent.faq.content || {};
+  const questions = content.items || [];
 
   return (
     <div className="container py-8 md:py-12 max-w-3xl">
