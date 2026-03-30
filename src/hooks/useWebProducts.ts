@@ -49,10 +49,10 @@ export function useWebProduct(productNumber: string | undefined) {
     queryFn: async () => {
       const num = parseInt(productNumber!, 10);
       if (isNaN(num)) return null;
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from("products")
-        .select("*, categories(name, slug)")
-        .eq("product_number" as any, num)
+        .select("*, categories(name, slug)") as any)
+        .eq("product_number", num)
         .eq("is_published", true)
         .single();
       if (error) throw error;
