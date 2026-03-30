@@ -156,16 +156,6 @@ export const sectionFields: Record<string, Record<string, FieldConfig[]>> = {
       { key: 'whatsapp', label: 'מספר וואטסאפ', type: 'text' },
     ],
   },
-  faq: {
-    content: [
-      { key: 'title', label: 'כותרת', type: 'text' },
-      { key: 'subtitle', label: 'תת-כותרת', type: 'text' },
-      { key: 'items', label: 'שאלות ותשובות', type: 'array', arrayFields: [
-        { key: 'q', label: 'שאלה', type: 'text' },
-        { key: 'a', label: 'תשובה', type: 'textarea' },
-      ]},
-    ],
-  },
   settings: {
     general: [
       { key: 'store_name', label: 'שם החנות (ערבית)', type: 'text' },
