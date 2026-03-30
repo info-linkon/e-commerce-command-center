@@ -85,7 +85,7 @@ export default function WebAboutPage() {
   return (
     <div>
       {/* Hero with background image */}
-      <div className="relative h-[350px] md:h-[450px] flex items-center justify-center overflow-hidden">
+      <div className="relative h-[250px] md:h-[450px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
             src={aboutHero}
