@@ -52,20 +52,20 @@ export default function WebHome() {
           />
           <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/95 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/40" />
         </div>
-        <div className="container py-16 md:py-28 relative z-10 text-desert-foreground">
+        <div className="container py-10 md:py-28 relative z-10 text-desert-foreground">
           <div className="max-w-2xl">
-            <span className="inline-block bg-gold/20 text-gold px-4 py-1.5 rounded-full text-sm font-medium mb-6 animate-fade-in">
+            <span className="inline-block bg-gold/20 text-gold px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 md:mb-6 animate-fade-in">
               ✨ أهلاً بك في الوجهة
             </span>
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-tight mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
               {hero.title || "وجهتك الأولى"}
               <br />
               <span className="text-gradient-gold">{hero.subtitle || "لعالم الطبيعة والمغامرات"}</span>
             </h1>
-            <p className="text-desert-foreground/70 text-lg md:text-xl mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
               مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق
             </p>
-            <div className="flex flex-wrap gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
                 <Link to={hero.cta_link || "/web/shop"}>
                   {hero.cta_text || "تسوق الآن"}
