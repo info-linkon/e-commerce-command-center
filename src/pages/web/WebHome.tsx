@@ -109,10 +109,10 @@ export default function WebHome() {
 
       {/* Categories with Images */}
       {categories && categories.length > 0 && (
-        <section className="container py-12 md:py-16">
-          <div className="flex items-center justify-between mb-8">
+        <section className="container py-8 md:py-16">
+          <div className="flex items-center justify-between mb-6 md:mb-8">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold">الأقسام</h2>
+              <h2 className="text-xl md:text-3xl font-bold">الأقسام</h2>
               <p className="text-muted-foreground text-sm mt-1">تصفح حسب القسم</p>
             </div>
           </div>
