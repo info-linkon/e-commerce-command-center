@@ -145,7 +145,7 @@ const BundleForm = () => {
       category_id: form.category_id || null,
       is_published: form.is_published,
       image_url: form.image_url || null,
-      product_type: "simple" as const,
+      product_type: form.bundle_type === "variable_bundle" ? "variable" as const : "simple" as const,
     };
 
     const bundleItems = items.map(({ variation_id, quantity }) => ({ variation_id, quantity }));
