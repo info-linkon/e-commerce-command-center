@@ -18,15 +18,41 @@ export function useWebProducts(categoryId?: string) {
   });
 }
 
-export function useWebProduct(id: string | undefined) {
+export function useWebProductsByCategoryNumber(categoryNumber: number | undefined) {
   return useQuery({
-    queryKey: ["web-product", id],
-    enabled: !!id,
+    queryKey: ["web-products-by-cat-num", categoryNumber],
+    enabled: !!categoryNumber,
     queryFn: async () => {
+      // First find category by number
+      const { data: cat } = await supabase
+        .from("categories")
+        .select("id, name")
+        .eq("category_number" as any, categoryNumber!)
+        .single();
+      if (!cat) return { products: [], category: null };
       const { data, error } = await supabase
         .from("products")
         .select("*, categories(name, slug)")
-        .eq("id", id!)
+        .eq("is_published", true)
+        .eq("category_id", cat.id)
+        .order("name");
+      if (error) throw error;
+      return { products: data || [], category: cat };
+    },
+  });
+}
+
+export function useWebProduct(productNumber: string | undefined) {
+  return useQuery({
+    queryKey: ["web-product", productNumber],
+    enabled: !!productNumber,
+    queryFn: async () => {
+      const num = parseInt(productNumber!, 10);
+      if (isNaN(num)) return null;
+      const { data, error } = await supabase
+        .from("products")
+        .select("*, categories(name, slug)")
+        .eq("product_number" as any, num)
         .eq("is_published", true)
         .single();
       if (error) throw error;
