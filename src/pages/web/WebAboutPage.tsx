@@ -49,9 +49,9 @@ const statIcons = [
 const StatCard = ({ end, suffix, desc, iconIndex }: { end: number; suffix: string; desc: string; iconIndex: number }) => {
   const { count, ref } = useCountUp(end);
   return (
-    <div ref={ref} className="text-center p-6">
-      <div className="flex justify-center mb-3 text-gold">{statIcons[iconIndex] || statIcons[0]}</div>
-      <div className="text-3xl md:text-4xl font-black text-primary-foreground">
+    <div ref={ref} className="text-center p-4 md:p-6">
+      <div className="flex justify-center mb-2 md:mb-3 text-gold">{statIcons[iconIndex] || statIcons[0]}</div>
+      <div className="text-2xl md:text-4xl font-black text-primary-foreground">
         {count.toLocaleString()}{suffix}
       </div>
       <div className="text-sm text-primary-foreground/70 mt-1">{desc}</div>
