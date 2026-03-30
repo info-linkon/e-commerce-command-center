@@ -59,18 +59,6 @@ export const defaultContent: Record<string, Record<string, Record<string, any>>>
       whatsapp: "972526573185",
     },
   },
-  faq: {
-    content: {
-      title: "أسئلة شائعة",
-      subtitle: "إجابات على الأسئلة الأكثر شيوعاً",
-      items: [
-        { q: "كيف أتتبع طلبي؟", a: "يمكنك تتبع طلبك من خلال صفحة تتبع الطلب باستخدام رقم الطلب ورقم الهاتف." },
-        { q: "ما هي طرق الدفع المتاحة؟", a: "نقبل الدفع نقداً عند الاستلام، بت، وبطاقات ائتمان." },
-        { q: "كم يستغرق التوصيل؟", a: "يتم التوصيل خلال 1-5 أيام عمل لجميع المناطق." },
-        { q: "هل يمكنني إرجاع المنتج؟", a: "نعم، يمكنك إرجاع المنتج خلال 14 يوم من تاريخ الاستلام بشرط أن يكون بحالته الأصلية." },
-      ],
-    },
-  },
   settings: {
     general: {
       store_name: "الوجهة",
@@ -91,7 +79,7 @@ export const sectionLabels: Record<string, Record<string, string>> = {
   home: { hero: 'באנר ראשי', features: 'פיצ\'רים', categories: 'סקשן קטגוריות', featured: 'סקשן מוצרים מומלצים' },
   about: { hero: 'באנר ראשי', story: 'הסיפור שלנו', values: 'ערכים' },
   contact: { hero: 'באנר ראשי', info: 'פרטי התקשרות' },
-  faq: { content: 'שאלות ותשובות' },
+  
   settings: { general: 'הגדרות כלליות' },
 };
 
@@ -99,7 +87,7 @@ export const pageLabels: Record<string, string> = {
   home: 'דף ראשי',
   about: 'אודות',
   contact: 'צור קשר',
-  faq: 'שאלות נפוצות',
+  
   settings: 'הגדרות',
 };
 
@@ -166,16 +154,6 @@ export const sectionFields: Record<string, Record<string, FieldConfig[]>> = {
       { key: 'email', label: 'אימייל', type: 'text' },
       { key: 'address', label: 'כתובת', type: 'text' },
       { key: 'whatsapp', label: 'מספר וואטסאפ', type: 'text' },
-    ],
-  },
-  faq: {
-    content: [
-      { key: 'title', label: 'כותרת', type: 'text' },
-      { key: 'subtitle', label: 'תת-כותרת', type: 'text' },
-      { key: 'items', label: 'שאלות ותשובות', type: 'array', arrayFields: [
-        { key: 'q', label: 'שאלה', type: 'text' },
-        { key: 'a', label: 'תשובה', type: 'textarea' },
-      ]},
     ],
   },
   settings: {

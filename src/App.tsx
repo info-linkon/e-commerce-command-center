@@ -46,8 +46,6 @@ import WebOrderConfirmation from "./pages/web/WebOrderConfirmation";
 import WebSearchPage from "./pages/web/WebSearchPage";
 import WebAboutPage from "./pages/web/WebAboutPage";
 import WebContactPage from "./pages/web/WebContactPage";
-import WebFAQPage from "./pages/web/WebFAQPage";
-import WebTrackOrderPage from "./pages/web/WebTrackOrderPage";
 
 // Admin website management
 import WebContentPage from "./pages/admin/WebContentPage";
@@ -84,8 +82,6 @@ const App = () => (
               <Route path="search" element={<WebSearchPage />} />
               <Route path="about" element={<WebAboutPage />} />
               <Route path="contact" element={<WebContactPage />} />
-              <Route path="faq" element={<WebFAQPage />} />
-              <Route path="track" element={<WebTrackOrderPage />} />
             </Route>
 
             {/* Admin Panel */}

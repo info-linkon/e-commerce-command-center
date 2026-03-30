@@ -12,7 +12,7 @@ import { defaultContent, sectionLabels, pageLabels, sectionFields, FieldConfig }
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const pages = ['home', 'about', 'contact', 'faq', 'settings'];
+const pages = ['home', 'about', 'contact', 'settings'];
 
 export default function WebContentPage() {
   const { data: allContent = [], isLoading } = useSiteContent();
