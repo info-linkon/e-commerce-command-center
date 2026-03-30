@@ -134,8 +134,8 @@ export default function WebProductPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex items-center border border-border rounded-lg">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-6">
+            <div className="flex items-center border border-border rounded-lg self-start">
               <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 hover:bg-muted transition-colors">
                 <Minus className="w-4 h-4" />
               </button>
@@ -146,7 +146,7 @@ export default function WebProductPage() {
             </div>
             <Button
               size="lg"
-              className="flex-1 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
+              className="w-full sm:flex-1 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
               onClick={handleAddToCart}
             >
               <ShoppingCart className="w-4 h-4 ml-2" />

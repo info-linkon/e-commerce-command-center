@@ -105,7 +105,7 @@ export default function WebShopPage() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors whitespace-nowrap shrink-0 ${
               selectedCategory === cat.id
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-card text-muted-foreground border-border hover:border-primary/50"

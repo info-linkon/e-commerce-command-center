@@ -150,7 +150,7 @@ export default function WebAboutPage() {
               <img
                 src={v.image}
                 alt={v.title}
-                className="w-full h-48 object-cover"
+                className="w-full h-40 md:h-48 object-cover"
                 loading="lazy"
                 width={640}
                 height={640}

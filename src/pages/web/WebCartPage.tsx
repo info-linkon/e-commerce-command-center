@@ -60,7 +60,7 @@ export default function WebCartPage() {
           ))}
         </div>
 
-        <div className="bg-card p-6 rounded-xl border border-border h-fit sticky top-24">
+        <div className="bg-card p-4 md:p-6 rounded-xl border border-border h-fit lg:sticky lg:top-24">
           <h2 className="font-bold text-lg mb-4">ملخص الطلب</h2>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">

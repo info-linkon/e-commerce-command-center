@@ -45,7 +45,7 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, imageUr
           </h3>
         </Link>
         <div className="flex items-center justify-between mt-3">
-          <span className="text-primary font-bold text-lg">₪{price.toFixed(2)}</span>
+          <span className="text-primary font-bold text-base md:text-lg">₪{price.toFixed(2)}</span>
           <Button
             size="icon"
             variant="ghost"

@@ -44,7 +44,7 @@ export function WebHeader() {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 md:gap-1">
             <Link to="/web/search" className="p-2.5 rounded-lg hover:text-gold hover:bg-desert-light transition-all">
               <Search className="h-5 w-5" />
             </Link>
