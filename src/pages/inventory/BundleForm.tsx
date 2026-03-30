@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateBundle, useUpdateBundle, useBundle } from "@/hooks/useBundles";
 import { useProducts, useProductVariations } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
-import { VariationsManager } from "@/components/inventory/VariationsManager";
+import { BundleVariationsManager } from "@/components/inventory/BundleVariationsManager";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -241,63 +241,65 @@ const BundleForm = () => {
             </CardContent>
           </Card>
 
-          {/* Bundle Items */}
-          <Card>
-            <CardHeader><CardTitle>פריטים במארז</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-3">
-                <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                  <SelectTrigger className="flex-1"><SelectValue placeholder="בחר מוצר" /></SelectTrigger>
-                  <SelectContent>
-                    {variableProducts.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {variations && variations.length > 0 && (
-                  <Select onValueChange={addItem}>
-                    <SelectTrigger className="flex-1"><SelectValue placeholder="בחר וריאציה" /></SelectTrigger>
+          {/* Bundle Items — only for simple bundles */}
+          {form.bundle_type === "simple_bundle" && (
+            <Card>
+              <CardHeader><CardTitle>פריטים במארז</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-3">
+                  <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                    <SelectTrigger className="flex-1"><SelectValue placeholder="בחר מוצר" /></SelectTrigger>
                     <SelectContent>
-                      {variations.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                      {variableProducts.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                )}
-              </div>
-
-              {items.length > 0 && (
-                <div className="space-y-2">
-                  {items.map((item) => (
-                    <div key={item.variation_id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                      <span className="flex-1 font-medium text-sm">{item.label}</span>
-                      <Input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => updateQuantity(item.variation_id, Number(e.target.value))}
-                        className="w-20"
-                        min={1}
-                      />
-                      <Button variant="ghost" size="icon" onClick={() => removeItem(item.variation_id)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                  {variations && variations.length > 0 && (
+                    <Select onValueChange={addItem}>
+                      <SelectTrigger className="flex-1"><SelectValue placeholder="בחר וריאציה" /></SelectTrigger>
+                      <SelectContent>
+                        {variations.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Variations Manager for variable bundles */}
-          {isEditing && form.bundle_type === "variable_bundle" && bundle && (
-            <Card>
-              <CardHeader><CardTitle>וריאציות מארז</CardTitle></CardHeader>
-              <CardContent>
-                <VariationsManager productId={bundle.product_id} />
+                {items.length > 0 && (
+                  <div className="space-y-2">
+                    {items.map((item) => (
+                      <div key={item.variation_id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                        <span className="flex-1 font-medium text-sm">{item.label}</span>
+                        <Input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateQuantity(item.variation_id, Number(e.target.value))}
+                          className="w-20"
+                          min={1}
+                        />
+                        <Button variant="ghost" size="icon" onClick={() => removeItem(item.variation_id)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
-          {!isEditing && form.bundle_type === "variable_bundle" && (
+
+          {/* Bundle Variations — for variable bundles */}
+          {form.bundle_type === "variable_bundle" && isEditing && bundle && (
+            <Card>
+              <CardHeader><CardTitle>וריאציות מארז</CardTitle></CardHeader>
+              <CardContent>
+                <BundleVariationsManager bundleId={bundle.id} />
+              </CardContent>
+            </Card>
+          )}
+          {form.bundle_type === "variable_bundle" && !isEditing && (
             <Card>
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground text-center py-4">שמור את המארז תחילה כדי להוסיף וריאציות</p>
