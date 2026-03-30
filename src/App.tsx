@@ -84,8 +84,6 @@ const App = () => (
               <Route path="search" element={<WebSearchPage />} />
               <Route path="about" element={<WebAboutPage />} />
               <Route path="contact" element={<WebContactPage />} />
-              <Route path="faq" element={<WebFAQPage />} />
-              <Route path="track" element={<WebTrackOrderPage />} />
             </Route>
 
             {/* Admin Panel */}
