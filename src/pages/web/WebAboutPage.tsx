@@ -107,8 +107,8 @@ export default function WebAboutPage() {
       </div>
 
       {/* Our Story — 2 columns */}
-      <section className="container py-14 md:py-20">
-        <div className="grid md:grid-cols-2 gap-10 items-center">
+      <section className="container py-10 md:py-20">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
           <div>
             <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">قصتنا</h2>
             <div className="w-16 h-1 bg-gold rounded-full mb-6" />
