@@ -1,41 +1,51 @@
 
 
-# שדרוג מארזים — אותם שדות כמו מוצרים
+# תיקון וריאציות מארז — שילוב פריטים לכל וריאציה
 
-## סיכום
-המארזים כבר יוצרים רשומת `products` מאחורי הקלעים, אז המבנה בDB תומך בכל השדות. הבעיה היא שטופס המארז (`BundleForm`) מציג רק שם ומחיר. צריך להעשיר אותו עם כל השדות שיש בטופס מוצר רגיל.
+## הבעיה
+כרגע וריאציות המארז משתמשות ב-`VariationsManager` שיוצר `product_variations` — שזה לא קשור לפריטים במארז. הלוגיקה הנכונה: כל וריאציה של מארז היא **שילוב שונה של פריטים** עם מחיר משלה.
+
+## המבנה בDB (כבר קיים!)
+- `bundle_variations` — שם + מחיר + bundle_id
+- `bundle_variation_items` — variation_id (של מוצר) + quantity + bundle_variation_id
 
 ## שינויים
 
-### 1. `src/pages/inventory/BundleForm.tsx` — שכתוב מלא
-הפיכת הטופס לעשיר כמו `ProductForm`:
-- **שמות בשתי שפות**: name (עברית) + name_ar (ערבית)
-- **תיאור קצר**: short_description + short_description_ar
-- **תיאור מלא**: description + description_ar
-- **מק"ט** (SKU)
-- **קטגוריה** — בחירה מרשימת הקטגוריות הקיימות
-- **תמונה ראשית** — העלאה ל-Storage כמו במוצרים
-- **מחיר מכירה + מחיר עלות**
-- **סוג מארז** — פשוט/משתנה
-- **מפורסם באתר** — Switch
-- **וריאציות** — אם סוג = משתנה, הצגת `VariationsManager` (כמו במוצרים)
-- שמירת כל השדות ל-`products` בעת יצירה/עדכון
-- תמיכה בעריכה מלאה (כרגע עריכה לא שומרת)
+### 1. `src/components/inventory/BundleVariationsManager.tsx` — קומפוננטה חדשה
+מחליפה את `VariationsManager` עבור מארזים:
+- רשימת וריאציות מארז קיימות (שם + מחיר + מספר פריטים)
+- דיאלוג יצירה/עריכה:
+  - שם הוריאציה (עברית)
+  - מחיר
+  - **בחירת פריטים**: אותו ממשק בחירת מוצר → וריאציה → כמות שקיים היום ב-BundleForm
+- CRUD מלא: הוספה, עריכה, מחיקה
 
-### 2. `src/hooks/useBundles.ts` — הרחבת mutations
-- `useCreateBundle`: שמירת כל שדות המוצר (תיאורים, קטגוריה, תמונה, ערבית)
-- הוספת `useUpdateBundle`: עדכון שדות המוצר + פריטי המארז
-- `useBundles`: הרחבת ה-select לכלול `products(name, name_ar, image_url, sale_price, category_id, categories(name))`
+### 2. `src/hooks/useBundleVariations.ts` — hook חדש
+- `useBundleVariations(bundleId)` — שליפת וריאציות + פריטים שלהן
+- `useCreateBundleVariation` — יצירת וריאציה + פריטים
+- `useUpdateBundleVariation` — עדכון
+- `useDeleteBundleVariation` — מחיקה
 
-### 3. `src/pages/inventory/BundlesPage.tsx` — העשרת הטבלה
-- הוספת עמודות: תמונה, קטגוריה, מחיר
-- הצגת שם בערבית אם קיים
+### 3. `src/pages/inventory/BundleForm.tsx` — החלפת VariationsManager
+- הסרת `VariationsManager` + import
+- הצגת `BundleVariationsManager` כשסוג = "עם וריאציות"
+- כשסוג = "פשוט" — הצגת פריטים כרגיל (bundle_items)
+- כשסוג = "עם וריאציות" — הסתרת קטע "פריטים במארז" (כי הפריטים מוגדרים בכל וריאציה בנפרד)
+
+## זרימה למשתמש
+
+**מארז פשוט:** בוחרים פריטים + כמויות → מחיר אחד
+
+**מארז עם וריאציות:**
+- אין בחירת פריטים ברמת המארז
+- יוצרים וריאציות, לכל אחת: שם, מחיר, ורשימת פריטים משלה
+- דוגמה: "מארז קטן" = 2 כיסאות + שולחן ₪500, "מארז גדול" = 4 כיסאות + 2 שולחנות ₪900
 
 ## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| `src/pages/inventory/BundleForm.tsx` | שכתוב — טופס עשיר כמו ProductForm |
-| `src/hooks/useBundles.ts` | הוספת useUpdateBundle + הרחבת select |
-| `src/pages/inventory/BundlesPage.tsx` | הוספת עמודות תמונה/קטגוריה/מחיר |
+| `src/components/inventory/BundleVariationsManager.tsx` | חדש — ניהול וריאציות מארז עם פריטים |
+| `src/hooks/useBundleVariations.ts` | חדש — CRUD לוריאציות מארז |
+| `src/pages/inventory/BundleForm.tsx` | החלפת VariationsManager, הסתרת פריטים כשמשתנה |
 
