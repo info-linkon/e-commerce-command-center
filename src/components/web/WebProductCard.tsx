@@ -35,17 +35,17 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, imageUr
         </div>
       </Link>
 
-      <div className="p-4">
+      <div className="p-3 md:p-4">
         {categoryName && (
           <p className="text-xs text-gold font-medium mb-1">{categoryName}</p>
         )}
         <Link to={`/web/product/${linkId}`}>
-          <h3 className="font-semibold text-sm leading-snug mb-2 line-clamp-2 hover:text-primary transition-colors">
+          <h3 className="font-semibold text-xs md:text-sm leading-snug mb-2 line-clamp-2 hover:text-primary transition-colors">
             {displayName}
           </h3>
         </Link>
         <div className="flex items-center justify-between mt-3">
-          <span className="text-primary font-bold text-lg">₪{price.toFixed(2)}</span>
+          <span className="text-primary font-bold text-base md:text-lg">₪{price.toFixed(2)}</span>
           <Button
             size="icon"
             variant="ghost"

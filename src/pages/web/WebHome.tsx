@@ -41,7 +41,7 @@ export default function WebHome() {
   return (
     <div>
       {/* Hero Banner */}
-      <section className="relative overflow-hidden min-h-[500px] md:min-h-[600px] flex items-center">
+      <section className="relative overflow-hidden min-h-[350px] md:min-h-[600px] flex items-center">
         <div className="absolute inset-0">
           <img
             src={heroImage}
@@ -52,20 +52,20 @@ export default function WebHome() {
           />
           <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/95 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/40" />
         </div>
-        <div className="container py-16 md:py-28 relative z-10 text-desert-foreground">
+        <div className="container py-10 md:py-28 relative z-10 text-desert-foreground">
           <div className="max-w-2xl">
-            <span className="inline-block bg-gold/20 text-gold px-4 py-1.5 rounded-full text-sm font-medium mb-6 animate-fade-in">
+            <span className="inline-block bg-gold/20 text-gold px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 md:mb-6 animate-fade-in">
               ✨ أهلاً بك في الوجهة
             </span>
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-tight mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
               {hero.title || "وجهتك الأولى"}
               <br />
               <span className="text-gradient-gold">{hero.subtitle || "لعالم الطبيعة والمغامرات"}</span>
             </h1>
-            <p className="text-desert-foreground/70 text-lg md:text-xl mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
               مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق
             </p>
-            <div className="flex flex-wrap gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
                 <Link to={hero.cta_link || "/web/shop"}>
                   {hero.cta_text || "تسوق الآن"}
@@ -85,8 +85,8 @@ export default function WebHome() {
 
       {/* Features Strip */}
       <section className="bg-card border-b border-border">
-        <div className="container py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="container py-4 md:py-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {[
               { icon: Shield, title: "رضاك مضمون", desc: "ضمان 100% على جميع المنتجات" },
               { icon: ShoppingBag, title: "سهولة الشراء", desc: "تجربة تسوق سهلة وسريعة" },
@@ -98,8 +98,8 @@ export default function WebHome() {
                   <Icon className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm">{title}</h4>
-                  <p className="text-xs text-muted-foreground">{desc}</p>
+                  <h4 className="font-bold text-xs md:text-sm">{title}</h4>
+                  <p className="text-xs text-muted-foreground hidden md:block">{desc}</p>
                 </div>
               </div>
             ))}
@@ -109,14 +109,14 @@ export default function WebHome() {
 
       {/* Categories with Images */}
       {categories && categories.length > 0 && (
-        <section className="container py-12 md:py-16">
-          <div className="flex items-center justify-between mb-8">
+        <section className="container py-8 md:py-16">
+          <div className="flex items-center justify-between mb-6 md:mb-8">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold">الأقسام</h2>
+              <h2 className="text-xl md:text-3xl font-bold">الأقسام</h2>
               <p className="text-muted-foreground text-sm mt-1">تصفح حسب القسم</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
             {categories.map((cat) => {
               const imgSrc = categoryImageMap[cat.id] || (cat as any).image_url;
               return (
@@ -150,10 +150,10 @@ export default function WebHome() {
 
       {/* Featured Products */}
       <section className="bg-sand-gradient">
-        <div className="container py-12 md:py-16">
-          <div className="flex items-center justify-between mb-8">
+        <div className="container py-8 md:py-16">
+          <div className="flex items-center justify-between mb-6 md:mb-8">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold">منتجات مميزة</h2>
+              <h2 className="text-xl md:text-3xl font-bold">منتجات مميزة</h2>
               <p className="text-muted-foreground text-sm mt-1">أحدث المنتجات في متجرنا</p>
             </div>
             <Button asChild variant="ghost" className="text-primary hover:text-gold">
@@ -163,7 +163,7 @@ export default function WebHome() {
               </Link>
             </Button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
             {featured.map((product) => (
               <WebProductCard
                 key={product.id}

@@ -64,8 +64,8 @@ export default function WebProductPage() {
   };
 
   return (
-    <div className="container py-8 md:py-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div className="container py-6 md:py-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
         {/* Image */}
         <div>
           <div className="aspect-square bg-card rounded-xl border border-border overflow-hidden mb-4">
@@ -80,7 +80,7 @@ export default function WebProductPage() {
             )}
           </div>
           {allImages.length > 1 && (
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-4 md:grid-cols-5 gap-2">
               {allImages.map((img, i) => (
                 <button
                   key={i}
@@ -134,8 +134,8 @@ export default function WebProductPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex items-center border border-border rounded-lg">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-6">
+            <div className="flex items-center border border-border rounded-lg self-start">
               <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 hover:bg-muted transition-colors">
                 <Minus className="w-4 h-4" />
               </button>
@@ -146,7 +146,7 @@ export default function WebProductPage() {
             </div>
             <Button
               size="lg"
-              className="flex-1 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
+              className="w-full sm:flex-1 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
               onClick={handleAddToCart}
             >
               <ShoppingCart className="w-4 h-4 ml-2" />

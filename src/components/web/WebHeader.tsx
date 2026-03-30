@@ -21,11 +21,11 @@ export function WebHeader() {
   return (
     <header className="bg-desert text-sand sticky top-0 z-50 shadow-lg" dir="rtl">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-24">
+        <div className="flex items-center justify-between h-16 md:h-24">
           {/* Logo */}
-          <Link to="/web" className="flex items-center gap-3 group">
-            <img src={logo} alt="الوجهة" className="w-24 h-24 rounded-full shadow-md ring-2 ring-gold/30 group-hover:ring-gold/60 transition-all" />
-            <span className="text-2xl font-bold web-text-gradient-gold">الوجهة</span>
+          <Link to="/web" className="flex items-center gap-2 md:gap-3 group">
+            <img src={logo} alt="الوجهة" className="w-14 h-14 md:w-24 md:h-24 rounded-full shadow-md ring-2 ring-gold/30 group-hover:ring-gold/60 transition-all" />
+            <span className="text-lg md:text-2xl font-bold web-text-gradient-gold">الوجهة</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -44,7 +44,7 @@ export function WebHeader() {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 md:gap-1">
             <Link to="/web/search" className="p-2.5 rounded-lg hover:text-gold hover:bg-desert-light transition-all">
               <Search className="h-5 w-5" />
             </Link>

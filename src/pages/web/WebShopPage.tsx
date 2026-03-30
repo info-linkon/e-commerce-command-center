@@ -32,7 +32,7 @@ export default function WebShopPage() {
   if (!showAll) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
-        <h1 className="text-3xl font-bold text-foreground mb-2">المتجر</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">المتجر</h1>
         <p className="text-muted-foreground mb-8">اختر القسم المطلوب</p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
@@ -83,17 +83,17 @@ export default function WebShopPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold text-foreground">جميع المنتجات</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">جميع المنتجات</h1>
         <Button variant="ghost" onClick={() => { setShowAll(false); setSelectedCategory(undefined); }} className="text-muted-foreground">
           العودة للأقسام
         </Button>
       </div>
 
       {/* Category filter chips */}
-      <div className="flex flex-wrap gap-2 mb-8">
+      <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide flex-nowrap">
         <button
           onClick={() => setSelectedCategory(undefined)}
-          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors whitespace-nowrap shrink-0 ${
             !selectedCategory
               ? "bg-primary text-primary-foreground border-primary"
               : "bg-card text-muted-foreground border-border hover:border-primary/50"
@@ -105,7 +105,7 @@ export default function WebShopPage() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors whitespace-nowrap shrink-0 ${
               selectedCategory === cat.id
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-card text-muted-foreground border-border hover:border-primary/50"

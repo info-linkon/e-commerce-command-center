@@ -27,7 +27,7 @@ export default function WebCartPage() {
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
             <div key={item.variationId} className="flex gap-4 bg-card p-4 rounded-xl border border-border">
-              <div className="w-20 h-20 bg-muted rounded-lg overflow-hidden shrink-0">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-muted rounded-lg overflow-hidden shrink-0">
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
                 ) : (
@@ -60,7 +60,7 @@ export default function WebCartPage() {
           ))}
         </div>
 
-        <div className="bg-card p-6 rounded-xl border border-border h-fit sticky top-24">
+        <div className="bg-card p-4 md:p-6 rounded-xl border border-border h-fit lg:sticky lg:top-24">
           <h2 className="font-bold text-lg mb-4">ملخص الطلب</h2>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">

@@ -18,7 +18,7 @@ export default function WebContactPage() {
 
   return (
     <div>
-      <div className="bg-desert-gradient text-desert-foreground py-16">
+      <div className="bg-desert-gradient text-desert-foreground py-10 md:py-16">
         <div className="container text-center">
           <h1 className="text-3xl md:text-4xl font-black mb-4">تواصل معنا</h1>
           <p className="text-desert-foreground/70 max-w-2xl mx-auto text-lg">

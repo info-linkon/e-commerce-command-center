@@ -49,9 +49,9 @@ const statIcons = [
 const StatCard = ({ end, suffix, desc, iconIndex }: { end: number; suffix: string; desc: string; iconIndex: number }) => {
   const { count, ref } = useCountUp(end);
   return (
-    <div ref={ref} className="text-center p-6">
-      <div className="flex justify-center mb-3 text-gold">{statIcons[iconIndex] || statIcons[0]}</div>
-      <div className="text-3xl md:text-4xl font-black text-primary-foreground">
+    <div ref={ref} className="text-center p-4 md:p-6">
+      <div className="flex justify-center mb-2 md:mb-3 text-gold">{statIcons[iconIndex] || statIcons[0]}</div>
+      <div className="text-2xl md:text-4xl font-black text-primary-foreground">
         {count.toLocaleString()}{suffix}
       </div>
       <div className="text-sm text-primary-foreground/70 mt-1">{desc}</div>
@@ -85,7 +85,7 @@ export default function WebAboutPage() {
   return (
     <div>
       {/* Hero with background image */}
-      <div className="relative h-[350px] md:h-[450px] flex items-center justify-center overflow-hidden">
+      <div className="relative h-[250px] md:h-[450px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
             src={aboutHero}
@@ -97,7 +97,7 @@ export default function WebAboutPage() {
           <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/90 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/50" />
         </div>
         <div className="relative z-10 text-center px-4">
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-4">
+          <h1 className="text-3xl md:text-5xl font-black text-white mb-4">
             {content.title || "من نحن"}
           </h1>
           <p className="text-white/80 max-w-xl mx-auto text-lg">
@@ -107,8 +107,8 @@ export default function WebAboutPage() {
       </div>
 
       {/* Our Story — 2 columns */}
-      <section className="container py-14 md:py-20">
-        <div className="grid md:grid-cols-2 gap-10 items-center">
+      <section className="container py-10 md:py-20">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
           <div>
             <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">قصتنا</h2>
             <div className="w-16 h-1 bg-gold rounded-full mb-6" />
@@ -120,7 +120,7 @@ export default function WebAboutPage() {
             <img
               src={aboutStory}
               alt="قصتنا"
-              className="w-full rounded-2xl shadow-xl object-cover aspect-square"
+              className="w-full rounded-2xl shadow-xl object-cover aspect-[4/3] md:aspect-square"
               loading="lazy"
               width={800}
               height={800}
@@ -150,7 +150,7 @@ export default function WebAboutPage() {
               <img
                 src={v.image}
                 alt={v.title}
-                className="w-full h-48 object-cover"
+                className="w-full h-40 md:h-48 object-cover"
                 loading="lazy"
                 width={640}
                 height={640}

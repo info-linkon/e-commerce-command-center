@@ -8,10 +8,10 @@ export function WebFooter() {
 
   return (
     <footer className="bg-desert text-sand border-t border-desert-light" dir="rtl">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {/* Brand */}
-          <div className="flex flex-col items-start gap-4">
+          <div className="flex flex-col items-start gap-3 col-span-2 md:col-span-1">
             <Link to="/web" className="flex items-center gap-3">
               <img src={logo} alt="الوجهة" className="w-11 h-11 rounded-full ring-2 ring-gold/30" />
               <span className="text-xl font-bold web-text-gradient-gold">الوجهة</span>
