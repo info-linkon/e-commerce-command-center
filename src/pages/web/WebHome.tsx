@@ -116,7 +116,7 @@ export default function WebHome() {
               <p className="text-muted-foreground text-sm mt-1">تصفح حسب القسم</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
             {categories.map((cat) => {
               const imgSrc = categoryImageMap[cat.id] || (cat as any).image_url;
               return (
