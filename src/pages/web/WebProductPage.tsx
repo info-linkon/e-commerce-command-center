@@ -86,6 +86,19 @@ export default function WebProductPage() {
 
   const displayName = product.name_ar || product.name;
 
+  // Meta Pixel: ViewContent
+  useEffect(() => {
+    if (product) {
+      fbq("ViewContent", {
+        content_ids: [product.id],
+        content_name: displayName,
+        content_type: "product",
+        value: product.sale_price,
+        currency: "ILS",
+      });
+    }
+  }, [product?.id]);
+
   // Bundle stock check
   const isBundleOutOfStock = (() => {
     if (!bundleData || !bundleStockResult) return false;
