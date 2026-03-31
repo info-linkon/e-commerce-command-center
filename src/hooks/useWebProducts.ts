@@ -91,6 +91,22 @@ export function useWebCategories() {
   });
 }
 
+export function useWebBundleVariations(bundleId: string | undefined) {
+  return useQuery({
+    queryKey: ["web-bundle-variations", bundleId],
+    enabled: !!bundleId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bundle_variations")
+        .select("*")
+        .eq("bundle_id", bundleId!)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 export function useWebSearch(query: string) {
   return useQuery({
     queryKey: ["web-search", query],
