@@ -4,7 +4,7 @@ import { Trash2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function WebCartPage() {
-  const { items, removeItem, updateQuantity, clearCart, totalPrice } = useCartStore();
+  const { items, removeItem, updateQuantity, clearCart, totalPrice, shippingCost } = useCartStore();
 
   if (items.length === 0) {
     return (
