@@ -135,6 +135,14 @@ export default function WebProductPage() {
         shippingPrice: Number((product as any).shipping_price || 0),
       }, 1);
     }
+    // Meta Pixel: AddToCart
+    fbq("AddToCart", {
+      content_ids: [variationId],
+      content_name: displayName,
+      content_type: "product",
+      value: price * quantity,
+      currency: "ILS",
+    });
     toast.success("تمت الإضافة إلى السلة");
   };
 

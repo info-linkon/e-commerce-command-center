@@ -3,8 +3,22 @@ import { WebHeader } from "./WebHeader";
 import { WebFooter } from "./WebFooter";
 import { WebBottomNav } from "./WebBottomNav";
 import { MessageCircle } from "lucide-react";
+import { useEffect } from "react";
+import { useSiteSection } from "@/hooks/useSiteContent";
+import { fbqPageView } from "@/lib/meta-pixel";
 
 export function WebLayout() {
+  // Load Pixel ID from site_content and initialize
+  const { data: pixelSettings } = useSiteSection("settings", "meta_pixel");
+
+  useEffect(() => {
+    const pixelId = (pixelSettings?.content as any)?.pixel_id;
+    if (pixelId && typeof window !== "undefined" && window.fbq) {
+      window.fbq("init", pixelId);
+      fbqPageView();
+    }
+  }, [pixelSettings]);
+
   return (
     <div className="min-h-screen flex flex-col bg-sand" dir="rtl">
       <WebHeader />

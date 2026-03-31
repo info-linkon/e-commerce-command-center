@@ -120,6 +120,8 @@ const App = () => (
             <Route path="/admin/web-content" element={<Protected><WebContentPage /></Protected>} />
             <Route path="/admin/web-banners" element={<Protected><WebBannersPage /></Protected>} />
             <Route path="/admin/coupons" element={<Protected><AdminCouponsPage /></Protected>} />
+            <Route path="/admin/sms-templates" element={<Protected><SmsTemplatesPage /></Protected>} />
+            <Route path="/admin/meta-pixel" element={<Protected><MetaPixelSettingsPage /></Protected>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

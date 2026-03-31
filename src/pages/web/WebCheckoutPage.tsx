@@ -106,7 +106,8 @@ export default function WebCheckoutPage() {
 
       clearCart();
       toast.success("تم إرسال الطلب بنجاح!");
-      navigate(`/web/order-confirmation/${order.order_number}`);
+      const contentIds = items.map(i => i.variationId).join(",");
+      navigate(`/web/order-confirmation/${order.order_number}?total=${finalTotal.toFixed(2)}&ids=${contentIds}`);
     } catch (err) {
       console.error(err);
       toast.error("حدث خطأ أثناء إرسال الطلب");

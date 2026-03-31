@@ -1,8 +1,25 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
+import { useEffect } from "react";
+import { fbq } from "@/lib/meta-pixel";
 
 export default function WebOrderConfirmation() {
   const { orderNumber } = useParams();
+  const [searchParams] = useSearchParams();
+
+  // Meta Pixel: Purchase event
+  useEffect(() => {
+    const total = searchParams.get("total");
+    const ids = searchParams.get("ids");
+    if (total) {
+      fbq("Purchase", {
+        content_ids: ids ? ids.split(",") : [],
+        value: parseFloat(total),
+        currency: "ILS",
+        content_type: "product",
+      });
+    }
+  }, []);
 
   return (
     <div className="max-w-xl mx-auto px-4 py-16 text-center animate-fade-in">

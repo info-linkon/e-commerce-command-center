@@ -22,6 +22,18 @@ const settingsSections = [
     icon: Globe,
     url: "/woo-sync",
   },
+  {
+    title: "תבניות SMS",
+    description: "ניהול הודעות SMS אוטומטיות ללקוחות",
+    icon: MessageSquare,
+    url: "/admin/sms-templates",
+  },
+  {
+    title: "Meta Pixel",
+    description: "הגדרת Pixel ID למעקב המרות",
+    icon: BarChart3,
+    url: "/admin/meta-pixel",
+  },
 ];
 
 const SettingsPage = () => {
