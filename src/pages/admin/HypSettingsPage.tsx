@@ -23,7 +23,7 @@ const HypSettingsPage = () => {
       setMasof(c.masof || "");
       setApiKey(c.api_key || "");
       setPassP(c.passp || "");
-      setSiteUrl(c.site_url || "");
+      
     }
   }, [hypConfig]);
 
