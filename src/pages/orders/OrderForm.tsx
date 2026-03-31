@@ -136,7 +136,7 @@ const OrderForm = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl" dir="rtl">
+    <div className="space-y-6 max-w-4xl mx-auto" dir="rtl">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/orders")}>
           <ArrowRight className="h-4 w-4" />
@@ -144,7 +144,7 @@ const OrderForm = () => {
         <h1 className="text-2xl font-bold">הזמנה חדשה</h1>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader><CardTitle>פרטי לקוח</CardTitle></CardHeader>
           <CardContent className="space-y-4">

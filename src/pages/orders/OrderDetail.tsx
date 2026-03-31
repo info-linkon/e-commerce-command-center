@@ -135,7 +135,7 @@ const OrderDetail = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl" dir="rtl">
+    <div className="space-y-6 max-w-4xl mx-auto" dir="rtl">
       {/* Header */}
       <div className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="icon" onClick={() => navigate("/orders")}>
@@ -197,7 +197,7 @@ const OrderDetail = () => {
       )}
 
       {/* Customer + Summary */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader><CardTitle>פרטי לקוח</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
@@ -302,7 +302,7 @@ const OrderDetail = () => {
 
       {/* Actions */}
       {!isCancelled && !isCompleted && (
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           {!isAssigned && (
             <Select value={status} onValueChange={(v) => {
               updateStatus.mutate({ id: order.id, status: v as OrderStatus });

@@ -199,7 +199,7 @@ const BundleForm = () => {
           <Card>
             <CardHeader><CardTitle>פרטי המארז</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>שם המארז (עברית)</Label>
                   <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -209,7 +209,7 @@ const BundleForm = () => {
                   <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>מק״ט</Label>
                   <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
@@ -227,7 +227,7 @@ const BundleForm = () => {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>תיאור קצר (עברית)</Label>
                   <RichTextEditor value={form.short_description} onChange={(v) => setForm({ ...form, short_description: v })} rows={3} />
@@ -237,7 +237,7 @@ const BundleForm = () => {
                   <RichTextEditor value={form.short_description_ar} onChange={(v) => setForm({ ...form, short_description_ar: v })} rows={3} dir="rtl" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>תיאור מלא (עברית)</Label>
                   <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={6} />

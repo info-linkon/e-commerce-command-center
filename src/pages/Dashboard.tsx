@@ -6,7 +6,7 @@ import LowStockAlerts from "@/components/dashboard/LowStockAlerts";
 const Dashboard = () => {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">דשבורד</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold">דשבורד</h1>
       <StatsCards />
       <div className="grid gap-6 lg:grid-cols-2">
         <SalesChart />

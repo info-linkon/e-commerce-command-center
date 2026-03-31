@@ -4,9 +4,9 @@ import { Plus, Search, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
 import { useOrders, useDeleteOrder, useUpdateOrderStatus, type OrderStatus } from "@/hooks/useOrders";
 
 const statusLabels: Record<OrderStatus, string> = {
@@ -44,11 +44,38 @@ const OrdersPage = () => {
       o.customer_phone?.includes(s) ||
       String(o.order_number).includes(s)
     );
-  });
+  }) || [];
+
+  const columns: ColumnDef<any>[] = [
+    { label: "מס׳", render: (o) => <span className="font-medium">#{o.order_number}</span> },
+    { label: "לקוח", render: (o) => o.customer_name || "—" },
+    { label: "טלפון", render: (o) => <span dir="ltr" className="text-right">{o.customer_phone || "—"}</span>, hideOnMobile: true },
+    { label: "סה״כ", render: (o) => `₪${Number(o.total).toFixed(2)}` },
+    { label: "מקור", render: (o) => <Badge variant="outline" className="text-xs">{sourceLabels[o.source] || o.source}</Badge>, hideOnMobile: true },
+    {
+      label: "סטטוס",
+      render: (o) => {
+        const status = o.status as OrderStatus;
+        return (
+          <Select value={status} onValueChange={(v) => updateStatus.mutate({ id: o.id, status: v as OrderStatus })}>
+            <SelectTrigger className="w-28 h-7 text-xs">
+              <Badge className={`${statusColors[status]} border-0`}>{statusLabels[status]}</Badge>
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(statusLabels).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      },
+    },
+    { label: "תאריך", render: (o) => new Date(o.created_at).toLocaleDateString("he-IL"), hideOnMobile: true },
+  ];
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h1 className="text-2xl font-bold">הזמנות</h1>
         <Button asChild>
           <Link to="/orders/new"><Plus className="ml-2 h-4 w-4" />הזמנה חדשה</Link>
@@ -61,7 +88,7 @@ const OrdersPage = () => {
           <Input placeholder="חיפוש לפי שם, טלפון או מספר..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-9" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="כל הסטטוסים" /></SelectTrigger>
+          <SelectTrigger className="w-32 sm:w-40"><SelectValue placeholder="כל הסטטוסים" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">הכל</SelectItem>
             <SelectItem value="pending">ממתינה</SelectItem>
@@ -72,81 +99,73 @@ const OrdersPage = () => {
         </Select>
       </div>
 
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-right">מס׳</TableHead>
-              <TableHead className="text-right">לקוח</TableHead>
-              <TableHead className="text-right">טלפון</TableHead>
-              <TableHead className="text-right">סה״כ</TableHead>
-              <TableHead className="text-right">מקור</TableHead>
-              <TableHead className="text-right">סטטוס</TableHead>
-              <TableHead className="text-right">תאריך</TableHead>
-              <TableHead className="text-right w-28">פעולות</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">טוען...</TableCell></TableRow>
-            ) : !filtered?.length ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">אין הזמנות</TableCell></TableRow>
-            ) : (
-              filtered.map((order) => {
-                const status = order.status as OrderStatus;
-                return (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">#{order.order_number}</TableCell>
-                    <TableCell>{order.customer_name || "—"}</TableCell>
-                    <TableCell dir="ltr" className="text-right">{order.customer_phone || "—"}</TableCell>
-                    <TableCell>₪{Number(order.total).toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {sourceLabels[order.source] || order.source}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Select value={status} onValueChange={(v) => updateStatus.mutate({ id: order.id, status: v as OrderStatus })}>
-                        <SelectTrigger className="w-28 h-7 text-xs">
-                          <Badge className={`${statusColors[status]} border-0`}>{statusLabels[status]}</Badge>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(statusLabels).map(([k, v]) => (
-                            <SelectItem key={k} value={k}>{v}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>{new Date(order.created_at).toLocaleDateString("he-IL")}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link to={`/orders/${order.id}`}><Eye className="h-4 w-4" /></Link>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>מחיקת הזמנה</AlertDialogTitle>
-                              <AlertDialogDescription>האם אתה בטוח שברצונך למחוק את הזמנה #{order.order_number}?</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>ביטול</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteOrder.mutate(order.id)}>מחק</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <MobileCardList
+        data={filtered}
+        columns={columns}
+        keyExtractor={(o) => o.id}
+        isLoading={isLoading}
+        emptyMessage="אין הזמנות"
+        mobileCard={(order) => {
+          const status = order.status as OrderStatus;
+          return (
+            <Link to={`/orders/${order.id}`} className="block">
+              <div className="flex justify-between items-start">
+                <Badge className={`${statusColors[status]} border-0 text-xs`}>{statusLabels[status]}</Badge>
+                <span className="font-bold">#{order.order_number}</span>
+              </div>
+              <div className="flex justify-between items-center mt-2 text-sm">
+                <span className="text-muted-foreground">{new Date(order.created_at).toLocaleDateString("he-IL")}</span>
+                <span>{order.customer_name || "—"}</span>
+              </div>
+              <div className="flex justify-between items-center mt-1">
+                <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                    <Link to={`/orders/${order.id}`}><Eye className="h-3.5 w-3.5" /></Link>
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent dir="rtl">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>מחיקת הזמנה</AlertDialogTitle>
+                        <AlertDialogDescription>האם אתה בטוח שברצונך למחוק את הזמנה #{order.order_number}?</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>ביטול</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteOrder.mutate(order.id)}>מחק</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+                <span className="font-bold">₪{Number(order.total).toFixed(2)}</span>
+              </div>
+            </Link>
+          );
+        }}
+        actions={(order) => (
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon" asChild>
+              <Link to={`/orders/${order.id}`}><Eye className="h-4 w-4" /></Link>
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent dir="rtl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>מחיקת הזמנה</AlertDialogTitle>
+                  <AlertDialogDescription>האם אתה בטוח שברצונך למחוק את הזמנה #{order.order_number}?</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>ביטול</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => deleteOrder.mutate(order.id)}>מחק</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
+      />
     </div>
   );
 };

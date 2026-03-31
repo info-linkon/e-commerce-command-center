@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Pencil, Trash2, Search, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
 import { useProducts, useDeleteProduct } from "@/hooks/useProducts";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/useCategories";
 import { CategoryDialog } from "@/components/inventory/CategoryDialog";
@@ -22,7 +23,6 @@ const ProductsPage = () => {
   const { data: categories } = useCategories();
   const deleteProduct = useDeleteProduct();
 
-  // Categories management state
   const [catManagerOpen, setCatManagerOpen] = useState(false);
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
@@ -41,38 +41,42 @@ const ProductsPage = () => {
   const filtered = products?.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.sku?.toLowerCase().includes(search.toLowerCase())
-  );
+  ) || [];
+
+  const columns: ColumnDef<any>[] = [
+    { label: "שם", render: (p) => <span className="font-medium">{p.name}</span> },
+    { label: "מק״ט", render: (p) => p.sku || "—", hideOnMobile: true },
+    { label: "קטגוריה", render: (p) => (p as any).categories?.name || "—", hideOnMobile: true },
+    { label: "סוג", render: (p) => <Badge variant="secondary">{p.product_type === "simple" ? "פשוט" : "עם וריאציות"}</Badge> },
+    { label: "מחיר", render: (p) => `₪${Number(p.sale_price).toFixed(2)}` },
+    { label: "עלות", render: (p) => `₪${Number(p.cost_price).toFixed(2)}`, hideOnMobile: true },
+  ];
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-bold">ניהול פריטים</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setCatManagerOpen(true)}>
             <FolderOpen className="ml-2 h-4 w-4" />
-            ניהול קטגוריות
+            <span className="hidden sm:inline">ניהול קטגוריות</span>
+            <span className="sm:hidden">קטגוריות</span>
           </Button>
           <Button onClick={() => navigate("/inventory/products/new")}>
             <Plus className="ml-2 h-4 w-4" />
-            הוסף פריט
+            <span className="hidden sm:inline">הוסף פריט</span>
+            <span className="sm:hidden">חדש</span>
           </Button>
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <div className="relative flex-1">
+      <div className="flex gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-48">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="חיפוש לפי שם או מק״ט..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pr-9"
-          />
+          <Input placeholder="חיפוש לפי שם או מק״ט..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-9" />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="כל הקטגוריות" />
-          </SelectTrigger>
+          <SelectTrigger className="w-36 sm:w-48"><SelectValue placeholder="כל הקטגוריות" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">כל הקטגוריות</SelectItem>
             {categories?.map((c) => (
@@ -82,57 +86,40 @@ const ProductsPage = () => {
         </Select>
       </div>
 
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>שם</TableHead>
-              <TableHead>מק״ט</TableHead>
-              <TableHead>קטגוריה</TableHead>
-              <TableHead>סוג</TableHead>
-              <TableHead>מחיר מכירה</TableHead>
-              <TableHead>עלות</TableHead>
-              <TableHead className="w-24">פעולות</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">טוען...</TableCell></TableRow>
-            ) : !filtered?.length ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">אין פריטים</TableCell></TableRow>
-            ) : (
-              filtered.map((p) => (
-                <TableRow key={p.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/inventory/products/${p.id}`)}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell>{p.sku || "—"}</TableCell>
-                  <TableCell>{(p as any).categories?.name || "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {p.product_type === "simple" ? "פשוט" : "עם וריאציות"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>₪{Number(p.sale_price).toFixed(2)}</TableCell>
-                  <TableCell>₪{Number(p.cost_price).toFixed(2)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" onClick={() => navigate(`/inventory/products/${p.id}`)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteProduct.mutate(p.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <MobileCardList
+        data={filtered}
+        columns={columns}
+        keyExtractor={(p) => p.id}
+        isLoading={isLoading}
+        emptyMessage="אין פריטים"
+        onRowClick={(p) => navigate(`/inventory/products/${p.id}`)}
+        mobileCard={(p) => (
+          <div>
+            <div className="flex justify-between items-start">
+              <Badge variant="secondary" className="text-xs">{p.product_type === "simple" ? "פשוט" : "וריאציות"}</Badge>
+              <span className="font-medium">{p.name}</span>
+            </div>
+            <div className="flex justify-between items-center mt-2 text-sm">
+              <span className="font-bold">₪{Number(p.sale_price).toFixed(2)}</span>
+              <span className="text-muted-foreground">{(p as any).categories?.name || "ללא קטגוריה"}</span>
+            </div>
+          </div>
+        )}
+        actions={(p) => (
+          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(`/inventory/products/${p.id}`)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => deleteProduct.mutate(p.id)}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        )}
+      />
 
       {/* Categories Manager Dialog */}
       <Dialog open={catManagerOpen} onOpenChange={setCatManagerOpen}>
-        <DialogContent className="sm:max-w-xl" dir="rtl">
+        <DialogContent className="sm:max-w-xl w-[95vw]" dir="rtl">
           <DialogHeader>
             <DialogTitle>ניהול קטגוריות</DialogTitle>
           </DialogHeader>

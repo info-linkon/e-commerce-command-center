@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
 import { useCustomers, useCreateCustomer, useCustomer, useCustomerOrders } from "@/hooks/useCustomers";
 
 const CustomersPage = () => {
@@ -33,9 +34,18 @@ const CustomersPage = () => {
     );
   };
 
+  const data = customers || [];
+
+  const columns: ColumnDef<any>[] = [
+    { label: "שם", render: (c) => <span className="font-medium">{c.name}</span> },
+    { label: "טלפון", render: (c) => <span dir="ltr" className="text-right">{c.phone || "—"}</span> },
+    { label: "אימייל", render: (c) => c.email || "—", hideOnMobile: true },
+    { label: "עיר", render: (c) => c.city || "—", hideOnMobile: true },
+  ];
+
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <Users className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">לקוחות</h1>
@@ -45,49 +55,37 @@ const CustomersPage = () => {
         </Button>
       </div>
 
-      <div className="relative max-w-md">
+      <div className="relative">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="חיפוש לפי שם, טלפון או אימייל..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-9" />
       </div>
 
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-right">שם</TableHead>
-              <TableHead className="text-right">טלפון</TableHead>
-              <TableHead className="text-right">אימייל</TableHead>
-              <TableHead className="text-right">עיר</TableHead>
-              <TableHead className="w-20"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">טוען...</TableCell></TableRow>
-            ) : !customers?.length ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">אין לקוחות</TableCell></TableRow>
-            ) : (
-              customers.map((c) => (
-                <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDetailId(c.id)}>
-                  <TableCell className="font-medium">{c.name}</TableCell>
-                  <TableCell dir="ltr" className="text-right">{c.phone || "—"}</TableCell>
-                  <TableCell>{c.email || "—"}</TableCell>
-                  <TableCell>{c.city || "—"}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => setDetailId(c.id)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <MobileCardList
+        data={data}
+        columns={columns}
+        keyExtractor={(c) => c.id}
+        isLoading={isLoading}
+        emptyMessage="אין לקוחות"
+        onRowClick={(c) => setDetailId(c.id)}
+        mobileCard={(c) => (
+          <div>
+            <div className="font-medium">{c.name}</div>
+            <div className="flex justify-between items-center mt-1 text-sm text-muted-foreground">
+              <span>{c.city || ""}</span>
+              <span dir="ltr">{c.phone || "—"}</span>
+            </div>
+          </div>
+        )}
+        actions={(c) => (
+          <Button variant="ghost" size="icon" onClick={() => setDetailId(c.id)}>
+            <Eye className="h-4 w-4" />
+          </Button>
+        )}
+      />
 
       {/* New Customer Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md" dir="rtl">
+        <DialogContent className="sm:max-w-md w-[95vw]" dir="rtl">
           <DialogHeader><DialogTitle>לקוח חדש</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>שם *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
@@ -106,11 +104,11 @@ const CustomersPage = () => {
 
       {/* Customer Detail Dialog */}
       <Dialog open={!!detailId} onOpenChange={(open) => !open && setDetailId(null)}>
-        <DialogContent className="sm:max-w-2xl" dir="rtl">
+        <DialogContent className="sm:max-w-2xl w-[95vw]" dir="rtl">
           <DialogHeader><DialogTitle>כרטיס לקוח — {selectedCustomer?.name}</DialogTitle></DialogHeader>
           {selectedCustomer && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div><span className="text-muted-foreground">טלפון:</span> {selectedCustomer.phone || "—"}</div>
                 <div><span className="text-muted-foreground">אימייל:</span> {selectedCustomer.email || "—"}</div>
                 <div><span className="text-muted-foreground">עיר:</span> {selectedCustomer.city || "—"}</div>
@@ -120,19 +118,19 @@ const CustomersPage = () => {
                 <div className="grid grid-cols-3 gap-3">
                   <Card>
                     <CardContent className="pt-4 text-center">
-                      <div className="text-2xl font-bold">₪{stats.ltv.toFixed(0)}</div>
+                      <div className="text-xl sm:text-2xl font-bold">₪{stats.ltv.toFixed(0)}</div>
                       <div className="text-xs text-muted-foreground">LTV</div>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-4 text-center">
-                      <div className="text-2xl font-bold">{stats.totalOrders}</div>
+                      <div className="text-xl sm:text-2xl font-bold">{stats.totalOrders}</div>
                       <div className="text-xs text-muted-foreground">הזמנות</div>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-4 text-center">
-                      <div className="text-2xl font-bold">₪{stats.avgOrder.toFixed(0)}</div>
+                      <div className="text-xl sm:text-2xl font-bold">₪{stats.avgOrder.toFixed(0)}</div>
                       <div className="text-xs text-muted-foreground">ממוצע</div>
                     </CardContent>
                   </Card>

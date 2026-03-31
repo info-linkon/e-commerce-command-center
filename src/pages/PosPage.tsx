@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateOrder } from "@/hooks/useOrders";
@@ -17,6 +18,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useDeliveryCompanies } from "@/hooks/useDeliveryCompanies";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
 import { useBundlesStockBatch } from "@/hooks/useBundleStock";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 interface CartItem {
@@ -37,10 +39,12 @@ interface GroupedProduct {
 
 const PosPage = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCreateOrder, setShowCreateOrder] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
@@ -53,7 +57,6 @@ const PosPage = () => {
   const { data: deliveryCompanies } = useDeliveryCompanies(true);
   const { data: cashRegisters } = useCashRegisters();
 
-  // Regular product variations
   const { data: variations } = useQuery({
     queryKey: ["pos-variations"],
     queryFn: async () => {
@@ -66,7 +69,6 @@ const PosPage = () => {
     },
   });
 
-  // Fetch bundles with their product info and bundle_variations
   const { data: allBundles } = useQuery({
     queryKey: ["pos-bundles"],
     queryFn: async () => {
@@ -74,7 +76,6 @@ const PosPage = () => {
         .from("bundles")
         .select("id, bundle_type, product_id, products(name, category_id, sale_price, is_published)");
       if (error) throw error;
-      // Fetch bundle_variations for variable bundles
       const variableBundleIds = (data || []).filter(b => b.bundle_type === "variable_bundle").map(b => b.id);
       let bundleVars: any[] = [];
       if (variableBundleIds.length > 0) {
@@ -92,56 +93,37 @@ const PosPage = () => {
   const bundleIds = useMemo(() => (allBundles?.bundles || []).map(b => b.id), [allBundles]);
   const { data: bundleStockData } = useBundlesStockBatch(bundleIds);
 
-  // Group variations by product, then merge bundles
   const groupedProducts = useMemo(() => {
     const map = new Map<string, GroupedProduct>();
-
-    // Regular products from product_variations
     if (variations) {
       for (const v of variations) {
         const product = v.products as any;
         if (!product) continue;
         const pid = v.product_id;
-        // Skip products that are bundles (they'll be added separately)
         const isBundleProduct = allBundles?.bundles.some(b => b.product_id === pid);
         if (isBundleProduct) continue;
-
         if (!map.has(pid)) {
-          map.set(pid, {
-            product_id: pid,
-            product_name: product.name,
-            category_id: product.category_id,
-            variations: [],
-          });
+          map.set(pid, { product_id: pid, product_name: product.name, category_id: product.category_id, variations: [] });
         }
         map.get(pid)!.variations.push({ id: v.id, name: v.name, price: Number(v.price) });
       }
     }
-
-    // Add bundles
     if (allBundles) {
       for (const bundle of allBundles.bundles) {
         const product = bundle.products as any;
         if (!product || !product.is_published) continue;
         const pid = bundle.product_id;
-
         if (bundle.bundle_type === "simple_bundle") {
-          // Simple bundle: one "variation" with the product's sale_price
           map.set(pid, {
-            product_id: pid,
-            product_name: product.name,
-            category_id: product.category_id,
+            product_id: pid, product_name: product.name, category_id: product.category_id,
             variations: [{ id: bundle.id, name: product.name, price: Number(product.sale_price) }],
             isBundle: true,
           });
         } else {
-          // Variable bundle: use bundle_variations
           const bvs = allBundles.bundleVars.filter(bv => bv.bundle_id === bundle.id);
           if (bvs.length > 0) {
             map.set(pid, {
-              product_id: pid,
-              product_name: product.name,
-              category_id: product.category_id,
+              product_id: pid, product_name: product.name, category_id: product.category_id,
               variations: bvs.map(bv => ({ id: bv.id, name: bv.name, price: Number(bv.price) })),
               isBundle: true,
             });
@@ -149,21 +131,17 @@ const PosPage = () => {
         }
       }
     }
-
     return Array.from(map.values());
   }, [variations, allBundles]);
 
   const filtered = useMemo(() => {
     return groupedProducts.filter((p) => {
-      const matchSearch = !search ||
-        p.product_name.toLowerCase().includes(search.toLowerCase()) ||
-        p.variations.some(v => v.name.toLowerCase().includes(search.toLowerCase()));
+      const matchSearch = !search || p.product_name.toLowerCase().includes(search.toLowerCase()) || p.variations.some(v => v.name.toLowerCase().includes(search.toLowerCase()));
       const matchCategory = categoryFilter === "all" || p.category_id === categoryFilter;
       return matchSearch && matchCategory;
     });
   }, [groupedProducts, search, categoryFilter]);
 
-  // Helper: check if product is a bundle and get its stock
   const getBundleInfo = (productId: string) => {
     const bundle = allBundles?.bundles.find(b => b.product_id === productId);
     if (!bundle || !bundleStockData) return null;
@@ -183,13 +161,7 @@ const PosPage = () => {
     if (existing) {
       setCart(cart.map((c) => c.variation_id === variation.id ? { ...c, quantity: c.quantity + 1 } : c));
     } else {
-      setCart([...cart, {
-        variation_id: variation.id,
-        variation_name: variation.name,
-        product_name: productName,
-        quantity: 1,
-        unit_price: variation.price,
-      }]);
+      setCart([...cart, { variation_id: variation.id, variation_name: variation.name, product_name: productName, quantity: 1, unit_price: variation.price }]);
     }
   };
 
@@ -222,6 +194,7 @@ const PosPage = () => {
 
   const openCreateOrder = () => {
     if (cart.length === 0) return;
+    setCartDrawerOpen(false);
     setShowCreateOrder(true);
   };
 
@@ -273,8 +246,57 @@ const PosPage = () => {
     return `₪${min.toFixed(2)} - ₪${max.toFixed(2)}`;
   };
 
+  // Cart content (shared between desktop panel and mobile drawer)
+  const cartContent = (
+    <>
+      <ScrollArea className="flex-1">
+        {cart.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12 text-sm">העגלה ריקה</div>
+        ) : (
+          <div className="space-y-2">
+            {cart.map((item) => (
+              <div key={item.variation_id} className="rounded-md border p-2 text-sm">
+                <div className="flex justify-between items-start">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFromCart(item.variation_id)}>
+                    <Trash2 className="h-3 w-3 text-destructive" />
+                  </Button>
+                  <div className="text-right flex-1">
+                    <div className="font-medium">{item.product_name}</div>
+                    <div className="text-xs text-muted-foreground">{item.variation_name}</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="font-bold">₪{(item.quantity * item.unit_price).toFixed(2)}</div>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.variation_id, -1)}>
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="w-8 text-center text-sm">{item.quantity}</span>
+                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.variation_id, 1)}>
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+      <Separator className="my-3" />
+      <div className="space-y-3">
+        <div className="flex justify-between text-lg font-bold">
+          <span>₪{total.toFixed(2)}</span>
+          <span>סה״כ</span>
+        </div>
+        <Button className="w-full" size="lg" onClick={openCreateOrder} disabled={cart.length === 0}>
+          צור הזמנה
+        </Button>
+      </div>
+    </>
+  );
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4" dir="rtl">
+    <div className={`flex ${isMobile ? "flex-col" : ""} h-[calc(100vh-4rem)] gap-4`} dir="rtl">
       {/* Products Panel */}
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex gap-2 mb-3">
@@ -283,7 +305,7 @@ const PosPage = () => {
             <Input placeholder="חיפוש מוצר..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-9" />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-36"><SelectValue placeholder="קטגוריה" /></SelectTrigger>
+            <SelectTrigger className="w-28 sm:w-36"><SelectValue placeholder="קטגוריה" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">הכל</SelectItem>
               {categories?.map((c) => (
@@ -299,118 +321,104 @@ const PosPage = () => {
               const bundleInfo = getBundleInfo(product.product_id);
               const outOfStock = bundleInfo ? !bundleInfo.inStock : false;
               return (
-              <button
-                key={product.product_id}
-                onClick={() => !outOfStock && handleProductClick(product)}
-                disabled={outOfStock}
-                className={`rounded-lg border bg-card p-3 text-right transition-colors text-sm relative ${outOfStock ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"}`}
-              >
-                {product.isBundle && (
-                  <Badge variant="secondary" className="absolute top-1 right-1 text-[10px] px-1.5 py-0 gap-0.5">
-                    <Package className="h-2.5 w-2.5" />
-                    מארז
-                  </Badge>
-                )}
-                {outOfStock && (
-                  <Badge variant="destructive" className="absolute top-1 left-1 text-[10px] px-1.5 py-0">אזל</Badge>
-                )}
-                <div className="font-medium truncate mt-4">{product.product_name}</div>
-                {product.variations.length === 1 ? (
-                  <div className="text-xs text-muted-foreground truncate">{product.variations[0].name}</div>
-                ) : (
-                  <div className="text-xs text-primary font-medium">{product.variations.length} וריאציות</div>
-                )}
-                <div className="font-bold mt-1">{priceDisplay(product.variations)}</div>
-              </button>
+                <button
+                  key={product.product_id}
+                  onClick={() => !outOfStock && handleProductClick(product)}
+                  disabled={outOfStock}
+                  className={`rounded-lg border bg-card p-3 text-right transition-colors text-sm relative ${outOfStock ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"}`}
+                >
+                  {product.isBundle && (
+                    <Badge variant="secondary" className="absolute top-1 right-1 text-[10px] px-1.5 py-0 gap-0.5">
+                      <Package className="h-2.5 w-2.5" />
+                      מארז
+                    </Badge>
+                  )}
+                  {outOfStock && (
+                    <Badge variant="destructive" className="absolute top-1 left-1 text-[10px] px-1.5 py-0">אזל</Badge>
+                  )}
+                  <div className="font-medium truncate mt-4">{product.product_name}</div>
+                  {product.variations.length === 1 ? (
+                    <div className="text-xs text-muted-foreground truncate">{product.variations[0].name}</div>
+                  ) : (
+                    <div className="text-xs text-primary font-medium">{product.variations.length} וריאציות</div>
+                  )}
+                  <div className="font-bold mt-1">{priceDisplay(product.variations)}</div>
+                </button>
               );
             })}
           </div>
         </ScrollArea>
       </div>
 
-      {/* Cart Panel */}
-      <Card className="w-80 flex flex-col shrink-0">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
+      {/* Desktop: Cart Panel */}
+      {!isMobile && (
+        <Card className="w-80 flex flex-col shrink-0">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <ShoppingCart className="h-5 w-5" />
+              עגלה ({cart.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col p-3 pt-0">
+            {cartContent}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Mobile: FAB + Drawer */}
+      {isMobile && (
+        <>
+          <Button
+            className="fixed bottom-6 left-6 z-40 rounded-full h-14 w-14 shadow-lg"
+            onClick={() => setCartDrawerOpen(true)}
+          >
             <ShoppingCart className="h-5 w-5" />
-            עגלה ({cart.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col p-3 pt-0">
-          <ScrollArea className="flex-1">
-            {cart.length === 0 ? (
-              <div className="text-center text-muted-foreground py-12 text-sm">העגלה ריקה</div>
-            ) : (
-              <div className="space-y-2">
-                {cart.map((item) => (
-                  <div key={item.variation_id} className="rounded-md border p-2 text-sm">
-                    <div className="flex justify-between items-start">
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFromCart(item.variation_id)}>
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </Button>
-                      <div className="text-right flex-1">
-                        <div className="font-medium">{item.product_name}</div>
-                        <div className="text-xs text-muted-foreground">{item.variation_name}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="font-bold">₪{(item.quantity * item.unit_price).toFixed(2)}</div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.variation_id, -1)}>
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-8 text-center text-sm">{item.quantity}</span>
-                        <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.variation_id, 1)}>
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {cart.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-5 w-5 text-xs flex items-center justify-center">
+                {cart.length}
+              </span>
             )}
-          </ScrollArea>
+          </Button>
+          <Drawer open={cartDrawerOpen} onOpenChange={setCartDrawerOpen}>
+            <DrawerContent className="max-h-[85vh]" dir="rtl">
+              <DrawerHeader>
+                <DrawerTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  עגלה ({cart.length})
+                </DrawerTitle>
+              </DrawerHeader>
+              <div className="flex-1 flex flex-col px-4 pb-4 overflow-auto max-h-[60vh]">
+                {cartContent}
+              </div>
+            </DrawerContent>
+          </Drawer>
+        </>
+      )}
 
-          <Separator className="my-3" />
-
-          <div className="space-y-3">
-            <div className="flex justify-between text-lg font-bold">
-              <span>₪{total.toFixed(2)}</span>
-              <span>סה״כ</span>
-            </div>
-            <Button className="w-full" size="lg" onClick={openCreateOrder} disabled={cart.length === 0}>
-              צור הזמנה
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Variation Picker Popup */}
+      {/* Variation Picker */}
       <Dialog open={!!variationPicker} onOpenChange={(open) => !open && setVariationPicker(null)}>
-        <DialogContent className="max-w-sm" dir="rtl">
+        <DialogContent className="max-w-sm sm:max-w-sm" dir="rtl">
           <DialogHeader>
             <DialogTitle>{variationPicker?.product_name} — בחר וריאציה</DialogTitle>
           </DialogHeader>
           <div className="grid gap-2 max-h-[60vh] overflow-y-auto">
             {variationPicker?.variations.map((v) => {
-              // For variable bundles, check per-variation stock
               const bundleInfo = variationPicker ? getBundleInfo(variationPicker.product_id) : null;
               const varStock = bundleInfo?.type === "variable_bundle" && (bundleInfo as any).variationStock;
               const isVarOutOfStock = varStock ? !(varStock.get(v.id)?.inStock ?? true) : false;
-
               return (
-              <button
-                key={v.id}
-                onClick={() => !isVarOutOfStock && handleVariationSelect(v)}
-                disabled={isVarOutOfStock}
-                className={`flex items-center justify-between p-3 rounded-lg border text-sm transition-colors ${isVarOutOfStock ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"}`}
-              >
-                <span className="font-bold">₪{v.price.toFixed(2)}</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{v.name}</span>
-                  {isVarOutOfStock && <Badge variant="destructive" className="text-[10px] px-1 py-0">אזל</Badge>}
-                </div>
-              </button>
+                <button
+                  key={v.id}
+                  onClick={() => !isVarOutOfStock && handleVariationSelect(v)}
+                  disabled={isVarOutOfStock}
+                  className={`flex items-center justify-between p-3 rounded-lg border text-sm transition-colors ${isVarOutOfStock ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"}`}
+                >
+                  <span className="font-bold">₪{v.price.toFixed(2)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{v.name}</span>
+                    {isVarOutOfStock && <Badge variant="destructive" className="text-[10px] px-1 py-0">אזל</Badge>}
+                  </div>
+                </button>
               );
             })}
           </div>
@@ -419,11 +427,10 @@ const PosPage = () => {
 
       {/* Create Order Dialog */}
       <Dialog open={showCreateOrder} onOpenChange={setShowCreateOrder}>
-        <DialogContent className="max-w-md" dir="rtl">
+        <DialogContent className="max-w-md w-[95vw] sm:w-full" dir="rtl">
           <DialogHeader>
             <DialogTitle>יצירת הזמנה - ₪{total.toFixed(2)}</DialogTitle>
           </DialogHeader>
-
           <div className="space-y-4">
             <div>
               <Label>שם לקוח *</Label>
@@ -433,9 +440,7 @@ const PosPage = () => {
               <Label>טלפון *</Label>
               <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} type="tel" dir="ltr" />
             </div>
-
             <Separator />
-
             <div>
               <Label>שיטת משלוח *</Label>
               <Select value={deliveryMethod} onValueChange={setDeliveryMethod}>
@@ -448,7 +453,6 @@ const PosPage = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <Label>שיטת תשלום *</Label>
               <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (v !== "cash") setCashRegisterId(""); }}>
@@ -460,7 +464,6 @@ const PosPage = () => {
                 </SelectContent>
               </Select>
             </div>
-
             {paymentMethod === "cash" && (
               <div>
                 <Label>קופה *</Label>
@@ -475,7 +478,6 @@ const PosPage = () => {
               </div>
             )}
           </div>
-
           <DialogFooter>
             <Button onClick={handleCreateOrder} disabled={createOrder.isPending} className="w-full">
               {createOrder.isPending ? "מעבד..." : "צור ושלח להזמנות"}
