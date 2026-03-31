@@ -232,6 +232,17 @@ const OrderDetail = () => {
               <span>מקור:</span>
               <Badge variant="outline" className="text-xs">{sourceLabels[order.source] || order.source}</Badge>
             </div>
+            {(order as any).payment_method && (
+              <div className="flex gap-2 items-center text-sm">
+                <span className="text-muted-foreground">תשלום:</span>
+                <Badge variant="outline" className="text-xs">
+                  {{ cash: "מזומן", credit: "אשראי", bit: "ביט" }[(order as any).payment_method] || (order as any).payment_method}
+                </Badge>
+                {((order as any).payment_method === "credit" || (order as any).payment_method === "bit") && (
+                  <Badge className="bg-green-100 text-green-800 border-0 text-xs">שולם</Badge>
+                )}
+              </div>
+            )}
             <div className="text-sm text-muted-foreground">
               {(order as any).includes_vat === false ? "ללא מע״מ" : "כולל מע״מ"}
             </div>
