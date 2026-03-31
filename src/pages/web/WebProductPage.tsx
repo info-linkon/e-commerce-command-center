@@ -89,8 +89,8 @@ export default function WebProductPage() {
     if (!bundleData || !bundleStockResult) return false;
     if (bundleStockResult.simple) return !bundleStockResult.simple.inStock;
     // For variable bundles, check the selected variation
-    if (isVariableBundle && bundleStockResult.variable && activeBundleVariation) {
-      const varStock = bundleStockResult.variable.get(activeBundleVariation.id);
+    if (isVariableBundle && bundleStockResult.variations && activeBundleVariation) {
+      const varStock = bundleStockResult.variations.get(activeBundleVariation.id);
       return varStock ? !varStock.inStock : false;
     }
     return false;
