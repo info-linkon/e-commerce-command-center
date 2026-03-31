@@ -135,7 +135,7 @@ const OrderDetail = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl" dir="rtl">
+    <div className="space-y-6 max-w-4xl mx-auto" dir="rtl">
       {/* Header */}
       <div className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="icon" onClick={() => navigate("/orders")}>
