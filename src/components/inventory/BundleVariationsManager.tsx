@@ -196,13 +196,19 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
 
             <div className="space-y-2">
               <Label>הוסף פריטים</Label>
+              <Input
+                placeholder="חפש מוצר..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                className="mb-2"
+              />
               <div className="flex gap-2">
                 <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="בחר מוצר" />
                   </SelectTrigger>
                   <SelectContent>
-                    {variableProducts.map((p) => (
+                    {availableProducts.map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
                   </SelectContent>

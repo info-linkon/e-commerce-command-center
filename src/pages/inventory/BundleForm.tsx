@@ -255,11 +255,18 @@ const BundleForm = () => {
             <Card>
               <CardHeader><CardTitle>פריטים במארז</CardTitle></CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Input
+                    placeholder="חפש מוצר..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                  />
+                </div>
                 <div className="flex gap-3">
                   <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                     <SelectTrigger className="flex-1"><SelectValue placeholder="בחר מוצר" /></SelectTrigger>
                     <SelectContent>
-                      {variableProducts.map((p) => (
+                      {availableProducts.map((p) => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
                     </SelectContent>
