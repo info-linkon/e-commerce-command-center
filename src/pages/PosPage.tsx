@@ -64,6 +64,21 @@ const PosPage = () => {
     },
   });
 
+  // Fetch bundles to know which products are bundles
+  const { data: allBundles } = useQuery({
+    queryKey: ["pos-bundles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bundles")
+        .select("id, bundle_type, product_id");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const bundleIds = useMemo(() => (allBundles || []).map(b => b.id), [allBundles]);
+  const { data: bundleStockData } = useBundlesStockBatch(bundleIds);
+
   // Group variations by product
   const groupedProducts = useMemo(() => {
     if (!variations) return [];
