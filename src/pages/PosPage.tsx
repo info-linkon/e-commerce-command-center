@@ -110,6 +110,20 @@ const PosPage = () => {
     });
   }, [groupedProducts, search, categoryFilter]);
 
+  // Helper: check if product is a bundle and get its stock
+  const getBundleInfo = (productId: string) => {
+    const bundle = allBundles?.find(b => b.product_id === productId);
+    if (!bundle || !bundleStockData) return null;
+    if (bundle.bundle_type === "simple_bundle") {
+      const stock = bundleStockData.simpleStock?.get(bundle.id);
+      return { bundleId: bundle.id, type: bundle.bundle_type, inStock: stock?.inStock ?? true, maxQuantity: stock?.maxQuantity ?? 0 };
+    }
+    // variable bundle — check if ANY variation is in stock
+    const varStock = bundleStockData.variableStock?.get(bundle.id);
+    const anyInStock = varStock ? [...varStock.values()].some(s => s.inStock) : true;
+    return { bundleId: bundle.id, type: bundle.bundle_type, inStock: anyInStock, variationStock: varStock };
+  };
+
   const total = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unit_price, 0), [cart]);
 
   const addToCart = (variation: { id: string; name: string; price: number }, productName: string) => {
