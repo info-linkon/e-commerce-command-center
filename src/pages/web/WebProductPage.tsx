@@ -5,6 +5,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ShoppingCart, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useBundleStock } from "@/hooks/useBundleStock";
 
 export default function WebProductPage() {
   const { id } = useParams();
