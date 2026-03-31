@@ -1,38 +1,53 @@
 
 
-# הצגת מארזים באתר ובקופה
+# הוספת מחיר משלוח למוצרים וחישוב בסל
 
-## מצב נוכחי — הבעיות
+## סיכום
+הוספת עמודת `shipping_price` לטבלת `products`, הצגתה בטפסי מוצר ומארז, שמירת מחיר המשלוח בסל, וחישוב עלות משלוח = המקסימום מבין כל הפריטים בסל.
 
-**קופה (POS):** שולפת רק `product_variations` ומקבצת לפי מוצר. מארזים לא יוצרים `product_variations` — מארז פשוט משתמש ב-`bundle_items`, מארז עם וריאציות משתמש ב-`bundle_variations`. לכן **מארזים לא מופיעים בכלל בקופה**.
-
-**אתר (Web Product Page):** המוצר כן מופיע (כי הוא ב-`products` עם `is_published`), אבל עבור מארז עם וריאציות — הדף מחפש `product_variations` שלא קיימות, ולכן לא מציג אפשרויות בחירה. מארז פשוט מופיע אבל בלי וריאציות (נכון).
+## לוגיקה
+- כל מוצר/מארז יכול להגדיר מחיר משלוח (ברירת מחדל 0)
+- בסל הקניות: עלות המשלוח = `Math.max(...items.map(i => i.shippingPrice || 0))`
+- עלות המשלוח מוצגת בסיכום הסל ובצ'קאאוט, ונוספת לסה"כ
 
 ## שינויים
 
-### 1. `src/pages/PosPage.tsx` — הוספת מארזים לרשימת המוצרים
-- שליפה נוספת: `bundles` עם `products(name, category_id, sale_price)` + `bundle_variations(id, name, price)`
-- מיזוג לתוך `groupedProducts`:
-  - **מארז פשוט**: כרטיס אחד עם "וריאציה" אחת (מחיר = `sale_price` מהמוצר)
-  - **מארז עם וריאציות**: כרטיס אחד, לחיצה פותחת פופאפ עם `bundle_variations` (שם + מחיר)
-- סימון מארזים עם badge "מארז" על הכרטיס
-- שילוב בדיקת מלאי קיימת (`useBundlesStockBatch`)
+### 1. מיגרציה — עמודת `shipping_price`
+```sql
+ALTER TABLE products ADD COLUMN shipping_price numeric NOT NULL DEFAULT 0;
+```
 
-### 2. `src/pages/web/WebProductPage.tsx` — תמיכה בוריאציות מארז
-- כאשר המוצר הוא מארז עם וריאציות (`variable_bundle`):
-  - שליפת `bundle_variations` במקום `product_variations`
-  - הצגת כפתורי בחירה מ-`bundle_variations` (שם + מחיר)
-  - בדיקת מלאי לכל וריאציית מארז בנפרד
-  - הוספה לסל עם `bundleVariationId`
+### 2. `ProductForm.tsx` + `BundleForm.tsx` — שדה מחיר משלוח
+הוספת Input מספרי "מחיר משלוח" ליד שדות המחיר הקיימים
 
-### 3. `src/hooks/useWebProducts.ts` — hook חדש לוריאציות מארז
-- הוספת `useWebBundleVariations(bundleId)` — שולף `bundle_variations` עם שם ומחיר
+### 3. `web-cart-store.ts` — שמירת shippingPrice בסל
+- הוספת `shippingPrice: number` ל-`CartItem`
+- הוספת פונקציה `shippingCost()` שמחזירה את המקסימום
+
+### 4. `WebProductPage.tsx` — העברת shippingPrice בהוספה לסל
+בעת `addItem` — להעביר את `shipping_price` מהמוצר
+
+### 5. `WebCartPage.tsx` — הצגת עלות משלוח בסיכום
+שורה נוספת "تكلفة التوصيل" עם הערך, וסה"כ כולל משלוח
+
+### 6. `WebCheckoutPage.tsx` — הצגה + שליחה עם משלוח
+- הצגת שורת משלוח בסיכום
+- `finalTotal` כולל משלוח
+- שמירה ב-`total` של ההזמנה כולל משלוח
+
+### 7. `PosPage.tsx` — העברת shippingPrice בקופה
+בעת הוספה לעגלת POS, להעביר את מחיר המשלוח
 
 ## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| `src/pages/PosPage.tsx` | שליפת מארזים + מיזוג לגריד + badge |
-| `src/pages/web/WebProductPage.tsx` | תמיכה בוריאציות מארז + מלאי |
-| `src/hooks/useWebProducts.ts` | הוספת `useWebBundleVariations` |
+| מיגרציה SQL | `shipping_price` ב-products |
+| `src/pages/inventory/ProductForm.tsx` | שדה מחיר משלוח |
+| `src/pages/inventory/BundleForm.tsx` | שדה מחיר משלוח |
+| `src/lib/web-cart-store.ts` | `shippingPrice` + `shippingCost()` |
+| `src/pages/web/WebProductPage.tsx` | העברת shippingPrice |
+| `src/pages/web/WebCartPage.tsx` | הצגת עלות משלוח |
+| `src/pages/web/WebCheckoutPage.tsx` | סה"כ כולל משלוח |
+| `src/pages/PosPage.tsx` | העברת shippingPrice |
 
