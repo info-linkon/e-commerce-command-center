@@ -21,8 +21,9 @@ export default function WebCheckoutPage() {
   const [couponError, setCouponError] = useState("");
 
   const subtotal = totalPrice();
+  const shipping = shippingCost();
   const discount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
-  const finalTotal = subtotal - discount;
+  const finalTotal = subtotal - discount + shipping;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
