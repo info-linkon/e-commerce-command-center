@@ -230,6 +230,11 @@ const ProductForm = () => {
                 <Input type="number" value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: Number(e.target.value) })} />
                 <p className="text-xs text-muted-foreground">* מחיר העלות הוא תמיד ללא מע״מ</p>
               </div>
+              <div className="space-y-2">
+                <Label>מחיר משלוח</Label>
+                <Input type="number" value={form.shipping_price} onChange={(e) => setForm({ ...form, shipping_price: Number(e.target.value) })} />
+                <p className="text-xs text-muted-foreground">* עלות המשלוח = המקסימום מבין כל הפריטים בסל</p>
+              </div>
             </CardContent>
           </Card>
 

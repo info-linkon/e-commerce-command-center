@@ -194,6 +194,12 @@ export default function WebCheckoutPage() {
                   <span>-₪{discount.toFixed(2)}</span>
                 </div>
               )}
+              {shipping > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">تكلفة التوصيل</span>
+                  <span className="font-medium">₪{shipping.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-lg font-black pt-2 border-t border-border">
                 <span>المجموع</span>
                 <span className="text-primary">₪{finalTotal.toFixed(2)}</span>

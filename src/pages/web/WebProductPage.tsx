@@ -117,6 +117,7 @@ export default function WebProductPage() {
         variationName,
         price,
         imageUrl: activeVariation?.image_url || product.image_url,
+        shippingPrice: Number((product as any).shipping_price || 0),
       }, 1);
     }
     toast.success("تمت الإضافة إلى السلة");
