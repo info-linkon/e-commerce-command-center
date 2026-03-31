@@ -34,6 +34,12 @@ const settingsSections = [
     icon: BarChart3,
     url: "/admin/meta-pixel",
   },
+  {
+    title: "הגדרות סליקה",
+    description: "הגדרת חשבון HYP CreditGuard לתשלומי אשראי",
+    icon: CreditCard,
+    url: "/admin/hyp-settings",
+  },
 ];
 
 const SettingsPage = () => {
