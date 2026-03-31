@@ -36,6 +36,7 @@ const ProductForm = () => {
     short_description_ar: "",
     sale_price: 0,
     cost_price: 0,
+    shipping_price: 0,
     category_id: "" as string | null,
     product_type: "simple" as "simple" | "variable",
     is_published: false,
