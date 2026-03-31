@@ -152,7 +152,25 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
           ) : !expenses?.length ? (
             <div className="py-12 text-center text-muted-foreground">אין הוצאות</div>
           ) : (
-            <Table>
+            <div className="block sm:hidden space-y-3 p-3">
+              {expenses.map((e: any) => (
+                <Card key={e.id} className="p-3">
+                  <div className="flex justify-between items-start">
+                    <Badge variant="outline" className="text-xs">
+                      {sourceLabels[e.payment_source] || e.payment_source}
+                    </Badge>
+                    <span className="font-medium">{e.description}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-2 text-sm">
+                    <span className="text-muted-foreground text-xs">{new Date(e.created_at).toLocaleDateString("he-IL")}</span>
+                    <span className="font-bold">₪{Number(e.amount).toFixed(2)}</span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+          <div className="hidden sm:block">
+            {!isLoading && expenses?.length ? (
               <TableHeader>
                 <TableRow>
                   <TableHead>תיאור</TableHead>
