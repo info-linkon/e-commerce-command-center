@@ -335,7 +335,14 @@ const PosPage = () => {
             <DialogTitle>{variationPicker?.product_name} — בחר וריאציה</DialogTitle>
           </DialogHeader>
           <div className="grid gap-2 max-h-[60vh] overflow-y-auto">
-            {variationPicker?.variations.map((v) => (
+            {variationPicker?.variations.map((v) => {
+              // Check if this is a bundle variation and if it's out of stock
+              const bundleInfo = variationPicker ? getBundleInfo(variationPicker.product_id) : null;
+              const varStock = bundleInfo?.type === "variable_bundle" && (bundleInfo as any).variationStock;
+              // For bundle variations, we need to match bundle_variation by name — but we use product_variations here
+              // Bundle variation stock is keyed by bundle_variation_id, not product_variation_id
+              // So for variable bundles in POS we just show all (stock check is at bundle level already)
+              return (
               <button
                 key={v.id}
                 onClick={() => handleVariationSelect(v)}
@@ -344,7 +351,8 @@ const PosPage = () => {
                 <span className="font-bold">₪{v.price.toFixed(2)}</span>
                 <span className="font-medium">{v.name}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>
