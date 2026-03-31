@@ -11,11 +11,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Read HYP config from site_content table
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Read HYP config
     const { data: configRow, error: configError } = await supabase
       .from("site_content")
       .select("content")
@@ -31,19 +31,16 @@ Deno.serve(async (req) => {
     }
 
     const config = configRow.content as Record<string, string>;
-    const HYP_TERMINAL = config.terminal_number;
-    const HYP_API_URL = config.api_url;
-    const HYP_USER = config.user;
-    const HYP_PASSWORD = config.password;
+    const { masof, api_key, passp } = config;
 
-    if (!HYP_TERMINAL || !HYP_API_URL || !HYP_USER || !HYP_PASSWORD) {
-      return new Response(JSON.stringify({ error: "HYP credentials incomplete" }), {
+    if (!masof || !api_key || !passp) {
+      return new Response(JSON.stringify({ error: "HYP credentials incomplete (masof, api_key, passp required)" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { order_id, total, customer_name, customer_phone, success_url, error_url } = await req.json();
+    const { order_id, order_number, total, customer_name, customer_phone, customer_email, success_url, error_url, info } = await req.json();
 
     if (!order_id || !total || !success_url || !error_url) {
       return new Response(JSON.stringify({ error: "Missing required fields: order_id, total, success_url, error_url" }), {
@@ -52,68 +49,59 @@ Deno.serve(async (req) => {
       });
     }
 
-    const amountInAgorot = Math.round(total * 100);
-
-    const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
-<ashrait>
-  <request>
-    <command>doDeal</command>
-    <requestId>${order_id}</requestId>
-    <version>2000</version>
-    <language>HE</language>
-    <mayBeDuplicate>0</mayBeDuplicate>
-    <doDeal>
-      <terminalNumber>${HYP_TERMINAL}</terminalNumber>
-      <cardNo>CGMPI</cardNo>
-      <total>${amountInAgorot}</total>
-      <transactionType>Debit</transactionType>
-      <creditType>RegularCredit</creditType>
-      <currency>ILS</currency>
-      <transactionCode>Phone</transactionCode>
-      <authNumber></authNumber>
-      <numberOfPayments>1</numberOfPayments>
-      <validation>TxnSetup</validation>
-      <mid>${HYP_TERMINAL}</mid>
-      <uniqueid>${Date.now()}</uniqueid>
-      <mpiValidation>autoComm</mpiValidation>
-      <userData1>${order_id}</userData1>
-      <userData2>${customer_name || ""}</userData2>
-      <userData3>${customer_phone || ""}</userData3>
-      <successUrl>${success_url}</successUrl>
-      <errorUrl>${error_url}</errorUrl>
-      <cancelUrl>${error_url}</cancelUrl>
-      <customerData>
-        <userData1>${customer_name || ""}</userData1>
-        <userData2>${customer_phone || ""}</userData2>
-      </customerData>
-    </doDeal>
-  </request>
-</ashrait>`;
-
-    const response = await fetch(`${HYP_API_URL}/xpo/Relay`, {
-      method: "POST",
-      headers: { "Content-Type": "application/xml; charset=utf-8" },
-      body: xmlPayload,
+    // Step 1: APISign — get signature
+    const signParams = new URLSearchParams({
+      action: "APISign",
+      What: "SIGN",
+      Masof: masof,
+      KEY: api_key,
+      PassP: passp,
+      Amount: String(total),
+      Order: String(order_number || order_id),
+      Info: info || `Order ${order_number || order_id}`,
+      ClientName: customer_name || "",
+      phone: customer_phone || "",
+      email: customer_email || "",
+      UTF8: "True",
+      UTF8out: "True",
+      Sign: "True",
+      MoreData: "True",
+      Coin: "1",
+      PageLang: "HEB",
+      tmp: "1",
+      sendemail: customer_email ? "True" : "False",
+      FixTash: "False",
+      J5: "False",
+      Postpone: "False",
     });
 
-    const result = await response.text();
-    console.log("HYP response:", result);
+    const signUrl = `https://pay.hyp.co.il/p/?${signParams.toString()}`;
+    console.log("HYP APISign request URL:", signUrl);
 
-    const urlMatch = result.match(/<mpiHostedPageUrl>(.*?)<\/mpiHostedPageUrl>/);
-    if (urlMatch && urlMatch[1]) {
-      return new Response(JSON.stringify({ 
-        success: true, 
-        payment_url: urlMatch[1],
-        raw: result,
+    const signResponse = await fetch(signUrl);
+    const signResult = await signResponse.text();
+    console.log("HYP APISign response:", signResult);
+
+    // The response is URL-encoded params including signature
+    // Build payment URL from the response
+    if (signResult.includes("signature=")) {
+      // The response IS the query string for the payment page
+      const paymentUrl = `https://pay.hyp.co.il/p/?${signResult}`;
+
+      // Update success/error URLs — HYP redirects to the URLs configured in the portal,
+      // but we pass Order param so we can identify the order on return
+      return new Response(JSON.stringify({
+        success: true,
+        payment_url: paymentUrl,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const errorMatch = result.match(/<userMessage>(.*?)<\/userMessage>/);
-    return new Response(JSON.stringify({ 
-      error: errorMatch?.[1] || "Failed to create payment",
-      raw: result,
+    // Error — no signature returned
+    return new Response(JSON.stringify({
+      error: "Failed to get payment signature from HYP",
+      raw: signResult,
     }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

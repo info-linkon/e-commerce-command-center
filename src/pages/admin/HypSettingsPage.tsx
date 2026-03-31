@@ -11,24 +11,22 @@ const HypSettingsPage = () => {
   const { data: hypConfig, isLoading } = useSiteSection("settings", "hyp");
   const upsert = useUpsertSiteContent();
 
-  const [terminalNumber, setTerminalNumber] = useState("");
-  const [apiUrl, setApiUrl] = useState("https://meshulam.creditguard.co.il");
-  const [hypUser, setHypUser] = useState("");
-  const [hypPassword, setHypPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [masof, setMasof] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [passP, setPassP] = useState("");
+  const [showPassP, setShowPassP] = useState(false);
 
   useEffect(() => {
     if (hypConfig?.content) {
       const c = hypConfig.content as Record<string, string>;
-      setTerminalNumber(c.terminal_number || "");
-      setApiUrl(c.api_url || "https://meshulam.creditguard.co.il");
-      setHypUser(c.user || "");
-      setHypPassword(c.password || "");
+      setMasof(c.masof || "");
+      setApiKey(c.api_key || "");
+      setPassP(c.passp || "");
     }
   }, [hypConfig]);
 
   const handleSave = () => {
-    if (!terminalNumber || !apiUrl || !hypUser || !hypPassword) {
+    if (!masof || !apiKey || !passP) {
       toast.error("יש למלא את כל השדות");
       return;
     }
@@ -36,15 +34,14 @@ const HypSettingsPage = () => {
       page: "settings",
       section: "hyp",
       content: {
-        terminal_number: terminalNumber,
-        api_url: apiUrl,
-        user: hypUser,
-        password: hypPassword,
+        masof,
+        api_key: apiKey,
+        passp: passP,
       },
     });
   };
 
-  const isConfigured = !!(hypConfig?.content as Record<string, string>)?.terminal_number;
+  const isConfigured = !!(hypConfig?.content as Record<string, string>)?.masof;
 
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">טוען...</div>;
 
@@ -52,7 +49,7 @@ const HypSettingsPage = () => {
     <div className="space-y-6" dir="rtl">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <CreditCard className="h-6 w-6" />
-        הגדרות סליקה — HYP
+        הגדרות סליקה — HYP Pay
       </h1>
 
       <Card>
@@ -66,52 +63,50 @@ const HypSettingsPage = () => {
             {isConfigured ? "הסליקה מוגדרת" : "הסליקה לא מוגדרת"}
           </CardTitle>
           <CardDescription>
-            הזן את פרטי חשבון HYP CreditGuard לתשלומי אשראי באתר
+            הזן את פרטי חשבון HYP Pay לתשלומי אשראי באתר. ניתן למצוא את הפרטים בהגדרות → הגדרות מסוף בפורטל HYP.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>מספר טרמינל</Label>
+              <Label>מספר מסוף (Masof)</Label>
               <Input
-                value={terminalNumber}
-                onChange={(e) => setTerminalNumber(e.target.value)}
-                placeholder="לדוגמה: 0962XXX"
+                value={masof}
+                onChange={(e) => setMasof(e.target.value)}
+                placeholder="לדוגמה: 0010131918"
+                dir="ltr"
               />
+              <p className="text-xs text-muted-foreground">10 ספרות — ניתן למצוא בהגדרות מסוף</p>
             </div>
             <div className="space-y-2">
-              <Label>כתובת API</Label>
+              <Label>API Key</Label>
               <Input
-                value={apiUrl}
-                onChange={(e) => setApiUrl(e.target.value)}
-                placeholder="https://meshulam.creditguard.co.il"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="מפתח API מדף ההגדרות"
+                dir="ltr"
               />
+              <p className="text-xs text-muted-foreground">מופיע בהגדרות → הגדרות מסוף</p>
             </div>
-            <div className="space-y-2">
-              <Label>שם משתמש</Label>
-              <Input
-                value={hypUser}
-                onChange={(e) => setHypUser(e.target.value)}
-                placeholder="שם המשתמש ב-HYP"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>סיסמה</Label>
-              <div className="relative">
+            <div className="space-y-2 sm:col-span-2">
+              <Label>PassP (סיסמת אימות)</Label>
+              <div className="relative max-w-md">
                 <Input
-                  type={showPassword ? "text" : "password"}
-                  value={hypPassword}
-                  onChange={(e) => setHypPassword(e.target.value)}
-                  placeholder="סיסמת HYP"
+                  type={showPassP ? "text" : "password"}
+                  value={passP}
+                  onChange={(e) => setPassP(e.target.value)}
+                  placeholder="סיסמת PassP"
+                  dir="ltr"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassP(!showPassP)}
                   className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassP ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <p className="text-xs text-muted-foreground">נוצר אוטומטית בפורטל HYP — לא ניתן לעריכה ידנית</p>
             </div>
           </div>
 
