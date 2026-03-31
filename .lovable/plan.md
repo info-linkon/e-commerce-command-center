@@ -1,49 +1,53 @@
 
 
-# שדרוג תהליך הקופה (POS) — שיטת משלוח ותשלום
+# חישוב מלאי מארזים לפי מרכיבים
 
 ## סיכום
-הוספת שדות שיטת משלוח ושיטת תשלום לדיאלוג יצירת הזמנה בקופה. הזמנת אשראי תסומן כשולמה אוטומטית, הזמנת מזומן תדרוש רישום תקבול ושיוך לקופה בתהליך הרגיל.
+המארז לא מנוהל במלאי באופן ישיר — המלאי שלו נגזר ממרכיביו. צריך ליצור פונקציית חישוב שבודקת את המלאי של כל מרכיב ומחזירה את הכמות המקסימלית האפשרית למארז/וריאציה.
+
+## לוגיקה
+
+**מארז פשוט (simple_bundle):**
+- שולפים את `bundle_items` (variation_id + quantity)
+- לכל מרכיב בודקים סה"כ מלאי (סכום מכל המחסנים)
+- כמות מארזים אפשרית = `Math.floor(min(stock[i] / required[i]))` 
+- אם 0 → "אזל מהמלאי"
+
+**מארז עם וריאציות (variable_bundle):**
+- לכל `bundle_variation` שולפים את `bundle_variation_items`
+- אותו חישוב לכל וריאציה בנפרד
+- וריאציה שמרכיב שלה חסר → מסומנת כלא זמינה
 
 ## שינויים
 
-### 1. DB — הוספת עמודת `payment_method` להזמנה
-מיגרציה: הוספת עמודה `payment_method text` לטבלת `orders` (nullable) — לתיעוד שיטת התשלום שנבחרה ביצירה (cash/credit/bit).
-
-### 2. `src/pages/PosPage.tsx` — שדרוג הדיאלוג
-- הסרת שדות כתובת ועיר (לא חובה ב-POS)
-- הוספת **שיטת משלוח**: Select עם חברות המשלוח הפעילות (`useDeliveryCompanies`) + אופציית "איסוף עצמי"
-- הוספת **שיטת תשלום**: בחירה בין מזומן / אשראי / ביט
-- אם מזומן — הצגת Select לבחירת קופה (`useCashRegisters`)
-- שמירת `payment_method` ו-`delivery_company_id` (אם רלוונטי) בהזמנה
-
-### 3. `src/hooks/useOrders.ts` — הרחבת `useCreateOrder`
-- הוספת `payment_method` ל-input ולשמירה
-- אם שיטת תשלום = אשראי/ביט → לאחר יצירת ההזמנה, יצירת רשומת `payment` אוטומטית על מלא הסכום עם הסטטוס המתאים
-- אם מזומן + בחרו קופה → יצירת רשומת `payment` עם שיוך לקופה
-
-### 4. `src/pages/orders/OrderDetail.tsx` — חיווי תשלום
-- הצגת שיטת התשלום שנבחרה בכרטיס הסיכום
-- אם הזמנה שולמה באשראי/ביט → badge "שולם" יופיע גם אם ההזמנה לא completed עדיין
-- ה-PaymentSection יזהה שכבר שולם ולא יציג כפתור תשלום נוסף
-
-## זרימה מעודכנת
-
-```text
-POS: בחירת מוצרים → דיאלוג (שם, טלפון, משלוח, תשלום) → יצירת הזמנה
-  ↓
-  אם אשראי/ביט: רשומת payment נוצרת אוטומטית
-  אם מזומן + קופה: רשומת payment נוצרת עם שיוך קופה
-  ↓
-הזמנות: שיוך מחסן → ליקוט → משלוח → (תשלום כבר רשום) → השלמה
+### 1. `src/hooks/useBundleStock.ts` — hook חדש
+```typescript
+function useBundleStock(bundleId: string, bundleType: string)
 ```
+- שולף `bundle_items` (למארז פשוט) או `bundle_variations` + `bundle_variation_items` (למשתנה)
+- שולף `inventory` מצטבר לכל variation_id רלוונטי
+- מחשב כמות אפשרית לכל מארז/וריאציה
+- מחזיר: `{ inStock: boolean, maxQuantity: number }` למארז פשוט, או `Map<variationId, { inStock, maxQuantity }>` למשתנה
+
+### 2. `src/pages/PosPage.tsx` — סינון מארזים חסרים
+- שימוש ב-hook החדש או שילוב הלוגיקה בשליפת ה-POS
+- מארז פשוט שאזל → כרטיס מעומעם + "אזל"
+- מארז עם וריאציות → וריאציה חסרה מעומעמת בפופאפ הבחירה
+
+### 3. `src/pages/web/WebProductPage.tsx` — הצגת זמינות באתר
+- עבור מוצרי מארז: שימוש ב-`useBundleStock` 
+- כפתור "הוסף לסל" מושבת אם אזל
+- וריאציה לא זמינה מסומנת
+
+### 4. `src/components/web/WebProductCard.tsx` — badge "אזל מהמלאי"
+- אם המוצר הוא מארז ואזל → הצגת badge
 
 ## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| מיגרציה SQL | הוספת `payment_method` ל-orders |
-| `src/pages/PosPage.tsx` | שדרוג דיאלוג: משלוח + תשלום + קופה |
-| `src/hooks/useOrders.ts` | יצירת payment אוטומטי ב-POS |
-| `src/pages/orders/OrderDetail.tsx` | הצגת שיטת תשלום + חיווי |
+| `src/hooks/useBundleStock.ts` | חדש — חישוב מלאי מארז מתוך מרכיבים |
+| `src/pages/PosPage.tsx` | עימעום מארזים חסרים + חסימה בווריאציות |
+| `src/pages/web/WebProductPage.tsx` | הצגת זמינות + חסימת הוספה |
+| `src/components/web/WebProductCard.tsx` | badge אזל מהמלאי |
 
