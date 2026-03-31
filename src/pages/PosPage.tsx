@@ -244,12 +244,19 @@ const PosPage = () => {
 
         <ScrollArea className="flex-1">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {filtered.map((product) => (
+            {filtered.map((product) => {
+              const bundleInfo = getBundleInfo(product.product_id);
+              const outOfStock = bundleInfo ? !bundleInfo.inStock : false;
+              return (
               <button
                 key={product.product_id}
-                onClick={() => handleProductClick(product)}
-                className="rounded-lg border bg-card p-3 text-right hover:bg-accent transition-colors text-sm relative"
+                onClick={() => !outOfStock && handleProductClick(product)}
+                disabled={outOfStock}
+                className={`rounded-lg border bg-card p-3 text-right transition-colors text-sm relative ${outOfStock ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"}`}
               >
+                {outOfStock && (
+                  <Badge variant="destructive" className="absolute top-1 left-1 text-[10px] px-1.5 py-0">אזל</Badge>
+                )}
                 <div className="font-medium truncate">{product.product_name}</div>
                 {product.variations.length === 1 ? (
                   <div className="text-xs text-muted-foreground truncate">{product.variations[0].name}</div>
@@ -258,7 +265,8 @@ const PosPage = () => {
                 )}
                 <div className="font-bold mt-1">{priceDisplay(product.variations)}</div>
               </button>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       </div>
