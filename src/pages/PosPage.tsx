@@ -9,12 +9,14 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCategories } from "@/hooks/useCategories";
 import { useDeliveryCompanies } from "@/hooks/useDeliveryCompanies";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
+import { useBundlesStockBatch } from "@/hooks/useBundleStock";
 import { toast } from "sonner";
 
 interface CartItem {
