@@ -40,6 +40,7 @@ const HypSettingsPage = () => {
         masof,
         api_key: apiKey,
         passp: passP,
+        site_url: siteUrl,
       },
     });
   };
