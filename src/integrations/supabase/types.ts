@@ -1107,6 +1107,7 @@ export type Database = {
           product_number: number
           product_type: Database["public"]["Enums"]["product_type"]
           sale_price: number
+          shipping_price: number
           short_description: string | null
           short_description_ar: string | null
           sku: string | null
@@ -1128,6 +1129,7 @@ export type Database = {
           product_number?: number
           product_type?: Database["public"]["Enums"]["product_type"]
           sale_price?: number
+          shipping_price?: number
           short_description?: string | null
           short_description_ar?: string | null
           sku?: string | null
@@ -1149,6 +1151,7 @@ export type Database = {
           product_number?: number
           product_type?: Database["public"]["Enums"]["product_type"]
           sale_price?: number
+          shipping_price?: number
           short_description?: string | null
           short_description_ar?: string | null
           sku?: string | null
