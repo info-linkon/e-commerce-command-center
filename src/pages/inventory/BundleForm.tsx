@@ -60,7 +60,12 @@ const BundleForm = () => {
     },
   });
 
-  const variableProducts = products?.filter((p) => p.product_type === "variable") || [];
+  const [productSearch, setProductSearch] = useState("");
+  const availableProducts = (products || []).filter((p) => {
+    if (!productSearch) return true;
+    const q = productSearch.toLowerCase();
+    return p.name.toLowerCase().includes(q) || (p.name_ar || "").toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q);
+  });
   const { data: variations } = useProductVariations(selectedProduct || undefined);
 
   // Load existing bundle data
@@ -250,11 +255,18 @@ const BundleForm = () => {
             <Card>
               <CardHeader><CardTitle>פריטים במארז</CardTitle></CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Input
+                    placeholder="חפש מוצר..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                  />
+                </div>
                 <div className="flex gap-3">
                   <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                     <SelectTrigger className="flex-1"><SelectValue placeholder="בחר מוצר" /></SelectTrigger>
                     <SelectContent>
-                      {variableProducts.map((p) => (
+                      {availableProducts.map((p) => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
                     </SelectContent>

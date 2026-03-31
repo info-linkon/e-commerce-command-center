@@ -41,7 +41,12 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
   const [items, setItems] = useState<VariationItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
 
-  const variableProducts = products?.filter((p) => p.product_type === "variable") || [];
+  const [productSearch, setProductSearch] = useState("");
+  const availableProducts = (products || []).filter((p) => {
+    if (!productSearch) return true;
+    const q = productSearch.toLowerCase();
+    return p.name.toLowerCase().includes(q) || (p.name_ar || "").toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q);
+  });
   const { data: productVariations } = useProductVariations(selectedProduct || undefined);
 
   const { data: allVariations } = useQuery({
@@ -191,13 +196,19 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
 
             <div className="space-y-2">
               <Label>הוסף פריטים</Label>
+              <Input
+                placeholder="חפש מוצר..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                className="mb-2"
+              />
               <div className="flex gap-2">
                 <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="בחר מוצר" />
                   </SelectTrigger>
                   <SelectContent>
-                    {variableProducts.map((p) => (
+                    {availableProducts.map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
                   </SelectContent>
