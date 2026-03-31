@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { validateCoupon, calcDiscount, incrementCouponUsage, Coupon } from "@/hooks/useCoupons";
 import { Loader2, Tag, X } from "lucide-react";
+import { fbq } from "@/lib/meta-pixel";
+import { useEffect } from "react";
 
 export default function WebCheckoutPage() {
   const { items, totalPrice, clearCart, shippingCost } = useCartStore();
