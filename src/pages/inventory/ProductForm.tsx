@@ -141,7 +141,7 @@ const ProductForm = () => {
                   <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>מק״ט</Label>
                   <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
