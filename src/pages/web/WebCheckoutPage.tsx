@@ -1,6 +1,6 @@
 import { useCartStore } from "@/lib/web-cart-store";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { validateCoupon, calcDiscount, incrementCouponUsage, Coupon } from "@/hooks/useCoupons";
 import { Loader2, Tag, X } from "lucide-react";
 import { fbq } from "@/lib/meta-pixel";
-import { useEffect } from "react";
 
 export default function WebCheckoutPage() {
   const { items, totalPrice, clearCart, shippingCost } = useCartStore();
@@ -66,15 +65,20 @@ export default function WebCheckoutPage() {
 
     setLoading(true);
     const form = new FormData(e.currentTarget);
+    const customerName = form.get("name") as string;
+    const customerPhone = form.get("phone") as string;
+    const customerEmail = (form.get("email") as string) || "";
 
     try {
+      // Create order with pending_payment status
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
           source: "website" as const,
-          status: "pending" as const,
-          customer_name: form.get("name") as string,
-          customer_phone: form.get("phone") as string,
+          status: "pending_payment" as const,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          customer_email: customerEmail || null,
           shipping_city: form.get("city") as string,
           shipping_address: form.get("address") as string,
           notes: [
@@ -104,10 +108,42 @@ export default function WebCheckoutPage() {
         await incrementCouponUsage(appliedCoupon.id);
       }
 
+      // Call HYP payment edge function
+      const successUrl = `${window.location.origin}/web/order-confirmation/${order.order_number}`;
+      const errorUrl = `${window.location.origin}/web/checkout?payment_error=true`;
+
+      const { data: hypData, error: hypError } = await supabase.functions.invoke("hyp-create-payment", {
+        body: {
+          order_id: order.id,
+          order_number: order.order_number,
+          total: finalTotal,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          customer_email: customerEmail,
+          success_url: successUrl,
+          error_url: errorUrl,
+          info: `הזמנה #${order.order_number}`,
+        },
+      });
+
+      if (hypError || !hypData?.success) {
+        // If HYP fails, still save order but notify
+        console.error("HYP payment error:", hypError || hypData?.error);
+        toast.error("שגיאה ביצירת דף תשלום — ההזמנה נשמרה ונציג יצור קשר");
+        clearCart();
+        navigate(`/web/order-confirmation/${order.order_number}?payment=pending`);
+        return;
+      }
+
+      // Store order info before redirect
+      sessionStorage.setItem("hyp_order_id", order.id);
+      sessionStorage.setItem("hyp_order_number", String(order.order_number));
+
+      // Clear cart before redirect
       clearCart();
-      toast.success("تم إرسال الطلب بنجاح!");
-      const contentIds = items.map(i => i.variationId).join(",");
-      navigate(`/web/order-confirmation/${order.order_number}?total=${finalTotal.toFixed(2)}&ids=${contentIds}`);
+
+      // Redirect to HYP payment page
+      window.location.href = hypData.payment_url;
     } catch (err) {
       console.error(err);
       toast.error("حدث خطأ أثناء إرسال الطلب");
@@ -137,6 +173,10 @@ export default function WebCheckoutPage() {
               <div>
                 <Label htmlFor="phone">رقم الهاتف *</Label>
                 <Input id="phone" name="phone" type="tel" required className="mt-1" placeholder="05X-XXX-XXXX" dir="ltr" />
+              </div>
+              <div>
+                <Label htmlFor="email">البريد الإلكتروني</Label>
+                <Input id="email" name="email" type="email" className="mt-1" placeholder="email@example.com" dir="ltr" />
               </div>
               <div>
                 <Label htmlFor="city">المدينة *</Label>
@@ -224,8 +264,18 @@ export default function WebCheckoutPage() {
               className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
               disabled={loading}
             >
-              {loading ? "جاري الإرسال..." : `تأكيد الطلب — ₪${finalTotal.toFixed(2)}`}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  جاري التحويل للدفع...
+                </span>
+              ) : (
+                `ادفع الآن — ₪${finalTotal.toFixed(2)}`
+              )}
             </Button>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              سيتم تحويلك لصفحة الدفع الآمنة
+            </p>
           </div>
         </div>
       </form>
