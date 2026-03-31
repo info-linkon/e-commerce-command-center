@@ -20,6 +20,22 @@ export default function WebProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState<string | null>(null);
 
+  // Check if product is a bundle
+  const { data: bundleData } = useQuery({
+    queryKey: ["product-bundle", productId],
+    enabled: !!productId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("bundles")
+        .select("id, bundle_type")
+        .eq("product_id", productId!)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const { data: bundleStockResult } = useBundleStock(bundleData?.id, bundleData?.bundle_type);
+
   if (isLoading) {
     return (
       <div className="container py-16 text-center text-muted-foreground">جاري التحميل...</div>
