@@ -79,12 +79,17 @@ export function useCreateOrder() {
       status?: OrderStatus;
       source?: string;
       cash_register_id?: string;
+      payment_method?: string;
+      delivery_method?: string;
+      created_by?: string;
       items: OrderItem[];
     }) => {
-      const { items, source, cash_register_id, ...rest } = input;
+      const { items, source, cash_register_id, payment_method, delivery_method, created_by, ...rest } = input;
       const orderPayload: any = { ...rest };
       if (source) orderPayload.source = source;
       if (cash_register_id) orderPayload.cash_register_id = cash_register_id;
+      if (payment_method) orderPayload.payment_method = payment_method;
+      if (created_by) orderPayload.created_by = created_by;
       const { data: order, error } = await supabase
         .from("orders")
         .insert(orderPayload)
@@ -103,12 +108,42 @@ export function useCreateOrder() {
         if (itemsError) throw itemsError;
       }
 
+      // Auto-create payment record for POS orders
+      if (source === "pos" && payment_method) {
+        const paymentRecord: any = {
+          order_id: order.id,
+          amount: input.total,
+          payment_method: payment_method as any,
+        };
+        if (payment_method === "cash" && cash_register_id) {
+          paymentRecord.cash_register_id = cash_register_id;
+        }
+        await supabase.from("payments").insert(paymentRecord);
+
+        // Update cash register balance for cash payments
+        if (payment_method === "cash" && cash_register_id) {
+          const { data: reg } = await supabase
+            .from("cash_registers")
+            .select("current_balance")
+            .eq("id", cash_register_id)
+            .single();
+          if (reg) {
+            await supabase
+              .from("cash_registers")
+              .update({ current_balance: Number(reg.current_balance) + input.total })
+              .eq("id", cash_register_id);
+          }
+        }
+      }
+
       return order;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
       qc.invalidateQueries({ queryKey: ["inventory_log"] });
+      qc.invalidateQueries({ queryKey: ["cash_registers"] });
+      qc.invalidateQueries({ queryKey: ["payments"] });
       toast.success("ההזמנה נוצרה בהצלחה");
     },
     onError: () => toast.error("שגיאה ביצירת הזמנה"),

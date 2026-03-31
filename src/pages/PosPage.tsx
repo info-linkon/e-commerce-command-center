@@ -13,6 +13,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCategories } from "@/hooks/useCategories";
+import { useDeliveryCompanies } from "@/hooks/useDeliveryCompanies";
+import { useCashRegisters } from "@/hooks/useCashRegisters";
 import { toast } from "sonner";
 
 interface CartItem {
@@ -31,11 +33,14 @@ const PosPage = () => {
   const [showCreateOrder, setShowCreateOrder] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [shippingAddress, setShippingAddress] = useState("");
-  const [shippingCity, setShippingCity] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [cashRegisterId, setCashRegisterId] = useState<string>("");
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
+  const { data: deliveryCompanies } = useDeliveryCompanies(true);
+  const { data: cashRegisters } = useCashRegisters();
 
   const { data: variations } = useQuery({
     queryKey: ["pos-variations"],
@@ -98,8 +103,7 @@ const PosPage = () => {
   const handleCreateOrder = async () => {
     if (!customerName.trim()) { toast.error("שם לקוח הוא שדה חובה"); return; }
     if (!customerPhone.trim()) { toast.error("טלפון הוא שדה חובה"); return; }
-    if (!shippingAddress.trim()) { toast.error("כתובת היא שדה חובה"); return; }
-    if (!shippingCity.trim()) { toast.error("עיר היא שדה חובה"); return; }
+    if (paymentMethod === "cash" && !cashRegisterId) { toast.error("בחר קופה לתשלום במזומן"); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -107,12 +111,13 @@ const PosPage = () => {
       await createOrder.mutateAsync({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
-        shipping_address: shippingAddress.trim(),
-        shipping_city: shippingCity.trim(),
         total,
         status: "pending",
         source: "pos" as any,
         created_by: user?.id || undefined,
+        payment_method: paymentMethod,
+        cash_register_id: paymentMethod === "cash" ? cashRegisterId : undefined,
+        delivery_method: deliveryMethod,
         items: cart.map((c) => ({
           variation_id: c.variation_id,
           quantity: c.quantity,
@@ -125,13 +130,20 @@ const PosPage = () => {
       setShowCreateOrder(false);
       setCustomerName("");
       setCustomerPhone("");
-      setShippingAddress("");
-      setShippingCity("");
+      setDeliveryMethod("pickup");
+      setPaymentMethod("cash");
+      setCashRegisterId("");
       toast.success("ההזמנה נוצרה ונשלחה לתהליך ההזמנות");
       navigate("/orders");
     } catch {
       toast.error("שגיאה ביצירת הזמנה");
     }
+  };
+
+  const paymentMethodLabels: Record<string, string> = {
+    cash: "מזומן",
+    credit: "אשראי",
+    bit: "ביט",
   };
 
   return (
@@ -243,14 +255,50 @@ const PosPage = () => {
               <Label>טלפון *</Label>
               <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} type="tel" dir="ltr" />
             </div>
+
+            <Separator />
+
+            {/* Delivery Method */}
             <div>
-              <Label>כתובת *</Label>
-              <Input value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} placeholder="רחוב ומספר" />
+              <Label>שיטת משלוח *</Label>
+              <Select value={deliveryMethod} onValueChange={setDeliveryMethod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pickup">איסוף עצמי</SelectItem>
+                  {deliveryCompanies?.map((dc) => (
+                    <SelectItem key={dc.id} value={dc.id}>{dc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* Payment Method */}
             <div>
-              <Label>עיר *</Label>
-              <Input value={shippingCity} onChange={(e) => setShippingCity(e.target.value)} />
+              <Label>שיטת תשלום *</Label>
+              <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (v !== "cash") setCashRegisterId(""); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">מזומן</SelectItem>
+                  <SelectItem value="credit">אשראי</SelectItem>
+                  <SelectItem value="bit">ביט</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* Cash Register (only for cash) */}
+            {paymentMethod === "cash" && (
+              <div>
+                <Label>קופה *</Label>
+                <Select value={cashRegisterId} onValueChange={setCashRegisterId}>
+                  <SelectTrigger><SelectValue placeholder="בחר קופה..." /></SelectTrigger>
+                  <SelectContent>
+                    {cashRegisters?.filter(r => r.is_active).map((r) => (
+                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
