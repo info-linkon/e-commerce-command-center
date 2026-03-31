@@ -81,7 +81,7 @@ const App = () => (
               <Route path="product/:id" element={<WebProductPage />} />
               <Route path="cart" element={<WebCartPage />} />
               <Route path="checkout" element={<WebCheckoutPage />} />
-              <Route path="order-confirmation/:orderNumber" element={<WebOrderConfirmation />} />
+              <Route path="order-confirmation/:orderNumber?" element={<WebOrderConfirmation />} />
               <Route path="search" element={<WebSearchPage />} />
               <Route path="about" element={<WebAboutPage />} />
               <Route path="contact" element={<WebContactPage />} />

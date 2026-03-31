@@ -5,8 +5,9 @@ import { fbq } from "@/lib/meta-pixel";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function WebOrderConfirmation() {
-  const { orderNumber } = useParams();
+  const { orderNumber: routeOrderNumber } = useParams();
   const [searchParams] = useSearchParams();
+  const orderNumber = routeOrderNumber || searchParams.get("Order");
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState<boolean | null>(null);
   const [paymentPending, setPaymentPending] = useState(false);
