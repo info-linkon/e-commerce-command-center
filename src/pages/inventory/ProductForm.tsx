@@ -36,6 +36,7 @@ const ProductForm = () => {
     short_description_ar: "",
     sale_price: 0,
     cost_price: 0,
+    shipping_price: 0,
     category_id: "" as string | null,
     product_type: "simple" as "simple" | "variable",
     is_published: false,
@@ -56,6 +57,7 @@ const ProductForm = () => {
         short_description_ar: (product as any).short_description_ar || "",
         sale_price: Number(product.sale_price),
         cost_price: Number(product.cost_price),
+        shipping_price: Number((product as any).shipping_price || 0),
         category_id: product.category_id,
         product_type: product.product_type,
         is_published: product.is_published,
@@ -227,6 +229,11 @@ const ProductForm = () => {
                 <Label>מחיר עלות (ללא מע״מ)</Label>
                 <Input type="number" value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: Number(e.target.value) })} />
                 <p className="text-xs text-muted-foreground">* מחיר העלות הוא תמיד ללא מע״מ</p>
+              </div>
+              <div className="space-y-2">
+                <Label>מחיר משלוח</Label>
+                <Input type="number" value={form.shipping_price} onChange={(e) => setForm({ ...form, shipping_price: Number(e.target.value) })} />
+                <p className="text-xs text-muted-foreground">* עלות המשלוח = המקסימום מבין כל הפריטים בסל</p>
               </div>
             </CardContent>
           </Card>

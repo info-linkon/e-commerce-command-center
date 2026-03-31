@@ -4,7 +4,7 @@ import { Trash2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function WebCartPage() {
-  const { items, removeItem, updateQuantity, clearCart, totalPrice } = useCartStore();
+  const { items, removeItem, updateQuantity, clearCart, totalPrice, shippingCost } = useCartStore();
 
   if (items.length === 0) {
     return (
@@ -67,9 +67,15 @@ export default function WebCartPage() {
               <span className="text-muted-foreground">المجموع الفرعي</span>
               <span className="font-medium">₪{totalPrice().toFixed(2)}</span>
             </div>
+            {shippingCost() > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">تكلفة التوصيل</span>
+                <span className="font-medium">₪{shippingCost().toFixed(2)}</span>
+              </div>
+            )}
             <div className="border-t border-border pt-3 flex justify-between">
               <span className="font-bold">المجموع</span>
-              <span className="font-black text-lg text-primary">₪{totalPrice().toFixed(2)}</span>
+              <span className="font-black text-lg text-primary">₪{(totalPrice() + shippingCost()).toFixed(2)}</span>
             </div>
           </div>
           <Button asChild size="lg" className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold">

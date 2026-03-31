@@ -37,6 +37,7 @@ const BundleForm = () => {
     short_description_ar: "",
     sale_price: 0,
     cost_price: 0,
+    shipping_price: 0,
     category_id: "" as string | null,
     is_published: false,
     image_url: "" as string | null,
@@ -76,6 +77,7 @@ const BundleForm = () => {
         short_description_ar: product?.short_description_ar || "",
         sale_price: Number(product?.sale_price || 0),
         cost_price: Number(product?.cost_price || 0),
+        shipping_price: Number(product?.shipping_price || 0),
         category_id: product?.category_id || null,
         is_published: product?.is_published || false,
         image_url: product?.image_url || null,
@@ -143,6 +145,7 @@ const BundleForm = () => {
       short_description_ar: form.short_description_ar || null,
       sale_price: form.sale_price,
       cost_price: form.cost_price,
+      shipping_price: form.shipping_price,
       category_id: form.category_id || null,
       is_published: form.is_published,
       image_url: form.image_url || null,
@@ -337,6 +340,10 @@ const BundleForm = () => {
               <div className="space-y-2">
                 <Label>מחיר עלות (ללא מע״מ)</Label>
                 <Input type="number" value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-2">
+                <Label>מחיר משלוח</Label>
+                <Input type="number" value={form.shipping_price} onChange={(e) => setForm({ ...form, shipping_price: Number(e.target.value) })} />
               </div>
             </CardContent>
           </Card>

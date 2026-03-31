@@ -10,7 +10,7 @@ import { validateCoupon, calcDiscount, incrementCouponUsage, Coupon } from "@/ho
 import { Loader2, Tag, X } from "lucide-react";
 
 export default function WebCheckoutPage() {
-  const { items, totalPrice, clearCart } = useCartStore();
+  const { items, totalPrice, clearCart, shippingCost } = useCartStore();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -21,8 +21,9 @@ export default function WebCheckoutPage() {
   const [couponError, setCouponError] = useState("");
 
   const subtotal = totalPrice();
+  const shipping = shippingCost();
   const discount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
-  const finalTotal = subtotal - discount;
+  const finalTotal = subtotal - discount + shipping;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -191,6 +192,12 @@ export default function WebCheckoutPage() {
                 <div className="flex justify-between text-primary">
                   <span>خصم</span>
                   <span>-₪{discount.toFixed(2)}</span>
+                </div>
+              )}
+              {shipping > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">تكلفة التوصيل</span>
+                  <span className="font-medium">₪{shipping.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-lg font-black pt-2 border-t border-border">

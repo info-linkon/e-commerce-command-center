@@ -9,6 +9,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   imageUrl?: string | null;
+  shippingPrice?: number;
 }
 
 interface CartStore {
@@ -19,6 +20,7 @@ interface CartStore {
   clearCart: () => void;
   totalItems: () => number;
   totalPrice: () => number;
+  shippingCost: () => number;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -55,6 +57,11 @@ export const useCartStore = create<CartStore>()(
       clearCart: () => set({ items: [] }),
       totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
       totalPrice: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      shippingCost: () => {
+        const items = get().items;
+        if (items.length === 0) return 0;
+        return Math.max(...items.map(i => i.shippingPrice || 0));
+      },
     }),
     { name: "elwejha-cart" }
   )

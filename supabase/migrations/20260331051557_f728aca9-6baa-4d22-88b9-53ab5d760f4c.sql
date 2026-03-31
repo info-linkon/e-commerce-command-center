@@ -1,0 +1,1 @@
+ALTER TABLE products ADD COLUMN shipping_price numeric NOT NULL DEFAULT 0;
