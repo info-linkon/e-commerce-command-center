@@ -60,7 +60,12 @@ const BundleForm = () => {
     },
   });
 
-  const variableProducts = products?.filter((p) => p.product_type === "variable") || [];
+  const [productSearch, setProductSearch] = useState("");
+  const availableProducts = (products || []).filter((p) => {
+    if (!productSearch) return true;
+    const q = productSearch.toLowerCase();
+    return p.name.toLowerCase().includes(q) || (p.name_ar || "").toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q);
+  });
   const { data: variations } = useProductVariations(selectedProduct || undefined);
 
   // Load existing bundle data
