@@ -57,6 +57,7 @@ const ProductForm = () => {
         short_description_ar: (product as any).short_description_ar || "",
         sale_price: Number(product.sale_price),
         cost_price: Number(product.cost_price),
+        shipping_price: Number((product as any).shipping_price || 0),
         category_id: product.category_id,
         product_type: product.product_type,
         is_published: product.is_published,
