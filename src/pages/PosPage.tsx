@@ -9,12 +9,14 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useCategories } from "@/hooks/useCategories";
 import { useDeliveryCompanies } from "@/hooks/useDeliveryCompanies";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
+import { useBundlesStockBatch } from "@/hooks/useBundleStock";
 import { toast } from "sonner";
 
 interface CartItem {
@@ -62,6 +64,21 @@ const PosPage = () => {
     },
   });
 
+  // Fetch bundles to know which products are bundles
+  const { data: allBundles } = useQuery({
+    queryKey: ["pos-bundles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bundles")
+        .select("id, bundle_type, product_id");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const bundleIds = useMemo(() => (allBundles || []).map(b => b.id), [allBundles]);
+  const { data: bundleStockData } = useBundlesStockBatch(bundleIds);
+
   // Group variations by product
   const groupedProducts = useMemo(() => {
     if (!variations) return [];
@@ -92,6 +109,20 @@ const PosPage = () => {
       return matchSearch && matchCategory;
     });
   }, [groupedProducts, search, categoryFilter]);
+
+  // Helper: check if product is a bundle and get its stock
+  const getBundleInfo = (productId: string) => {
+    const bundle = allBundles?.find(b => b.product_id === productId);
+    if (!bundle || !bundleStockData) return null;
+    if (bundle.bundle_type === "simple_bundle") {
+      const stock = bundleStockData.simpleStock?.get(bundle.id);
+      return { bundleId: bundle.id, type: bundle.bundle_type, inStock: stock?.inStock ?? true, maxQuantity: stock?.maxQuantity ?? 0 };
+    }
+    // variable bundle — check if ANY variation is in stock
+    const varStock = bundleStockData.variableStock?.get(bundle.id);
+    const anyInStock = varStock ? [...varStock.values()].some(s => s.inStock) : true;
+    return { bundleId: bundle.id, type: bundle.bundle_type, inStock: anyInStock, variationStock: varStock };
+  };
 
   const total = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unit_price, 0), [cart]);
 
@@ -213,12 +244,19 @@ const PosPage = () => {
 
         <ScrollArea className="flex-1">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {filtered.map((product) => (
+            {filtered.map((product) => {
+              const bundleInfo = getBundleInfo(product.product_id);
+              const outOfStock = bundleInfo ? !bundleInfo.inStock : false;
+              return (
               <button
                 key={product.product_id}
-                onClick={() => handleProductClick(product)}
-                className="rounded-lg border bg-card p-3 text-right hover:bg-accent transition-colors text-sm relative"
+                onClick={() => !outOfStock && handleProductClick(product)}
+                disabled={outOfStock}
+                className={`rounded-lg border bg-card p-3 text-right transition-colors text-sm relative ${outOfStock ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"}`}
               >
+                {outOfStock && (
+                  <Badge variant="destructive" className="absolute top-1 left-1 text-[10px] px-1.5 py-0">אזל</Badge>
+                )}
                 <div className="font-medium truncate">{product.product_name}</div>
                 {product.variations.length === 1 ? (
                   <div className="text-xs text-muted-foreground truncate">{product.variations[0].name}</div>
@@ -227,7 +265,8 @@ const PosPage = () => {
                 )}
                 <div className="font-bold mt-1">{priceDisplay(product.variations)}</div>
               </button>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       </div>
@@ -296,7 +335,14 @@ const PosPage = () => {
             <DialogTitle>{variationPicker?.product_name} — בחר וריאציה</DialogTitle>
           </DialogHeader>
           <div className="grid gap-2 max-h-[60vh] overflow-y-auto">
-            {variationPicker?.variations.map((v) => (
+            {variationPicker?.variations.map((v) => {
+              // Check if this is a bundle variation and if it's out of stock
+              const bundleInfo = variationPicker ? getBundleInfo(variationPicker.product_id) : null;
+              const varStock = bundleInfo?.type === "variable_bundle" && (bundleInfo as any).variationStock;
+              // For bundle variations, we need to match bundle_variation by name — but we use product_variations here
+              // Bundle variation stock is keyed by bundle_variation_id, not product_variation_id
+              // So for variable bundles in POS we just show all (stock check is at bundle level already)
+              return (
               <button
                 key={v.id}
                 onClick={() => handleVariationSelect(v)}
@@ -305,7 +351,8 @@ const PosPage = () => {
                 <span className="font-bold">₪{v.price.toFixed(2)}</span>
                 <span className="font-medium">{v.name}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>

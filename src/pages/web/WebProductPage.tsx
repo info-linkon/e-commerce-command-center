@@ -5,6 +5,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ShoppingCart, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useBundleStock } from "@/hooks/useBundleStock";
 
 export default function WebProductPage() {
   const { id } = useParams();
@@ -16,6 +19,22 @@ export default function WebProductPage() {
   const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState<string | null>(null);
+
+  // Check if product is a bundle
+  const { data: bundleData } = useQuery({
+    queryKey: ["product-bundle", productId],
+    enabled: !!productId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("bundles")
+        .select("id, bundle_type")
+        .eq("product_id", productId!)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const { data: bundleStockResult } = useBundleStock(bundleData?.id, bundleData?.bundle_type);
 
   if (isLoading) {
     return (
@@ -44,6 +63,13 @@ export default function WebProductPage() {
     : null;
   const price = activeVariation ? activeVariation.price : product.sale_price;
   const displayName = product.name_ar || product.name;
+
+  // Bundle stock check
+  const isBundleOutOfStock = (() => {
+    if (!bundleData || !bundleStockResult) return false;
+    if (bundleStockResult.simple) return !bundleStockResult.simple.inStock;
+    return false;
+  })();
 
   const handleAddToCart = () => {
     if (isVariable && !activeVariation) {
@@ -148,9 +174,10 @@ export default function WebProductPage() {
               size="lg"
               className="w-full sm:flex-1 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
               onClick={handleAddToCart}
+              disabled={isBundleOutOfStock}
             >
               <ShoppingCart className="w-4 h-4 ml-2" />
-              أضف إلى السلة
+              {isBundleOutOfStock ? "غير متوفر" : "أضف إلى السلة"}
             </Button>
           </div>
         </div>
