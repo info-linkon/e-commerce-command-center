@@ -159,7 +159,7 @@ const ProductForm = () => {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>תיאור קצר (עברית)</Label>
                   <RichTextEditor value={form.short_description} onChange={(v) => setForm({ ...form, short_description: v })} rows={3} />
