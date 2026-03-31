@@ -145,6 +145,7 @@ const BundleForm = () => {
       short_description_ar: form.short_description_ar || null,
       sale_price: form.sale_price,
       cost_price: form.cost_price,
+      shipping_price: form.shipping_price,
       category_id: form.category_id || null,
       is_published: form.is_published,
       image_url: form.image_url || null,
