@@ -64,6 +64,13 @@ export default function WebProductPage() {
   const price = activeVariation ? activeVariation.price : product.sale_price;
   const displayName = product.name_ar || product.name;
 
+  // Bundle stock check
+  const isBundleOutOfStock = (() => {
+    if (!bundleData || !bundleStockResult) return false;
+    if (bundleStockResult.simple) return !bundleStockResult.simple.inStock;
+    return false;
+  })();
+
   const handleAddToCart = () => {
     if (isVariable && !activeVariation) {
       toast.error("الرجاء اختيار نوع المنتج");
