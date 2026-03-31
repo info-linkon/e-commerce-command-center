@@ -25,6 +25,13 @@ interface CartItem {
   unit_price: number;
 }
 
+interface GroupedProduct {
+  product_id: string;
+  product_name: string;
+  category_id: string | null;
+  variations: { id: string; name: string; price: number }[];
+}
+
 const PosPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -36,6 +43,7 @@ const PosPage = () => {
   const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [cashRegisterId, setCashRegisterId] = useState<string>("");
+  const [variationPicker, setVariationPicker] = useState<GroupedProduct | null>(null);
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
@@ -54,32 +62,66 @@ const PosPage = () => {
     },
   });
 
-  const filtered = useMemo(() => {
+  // Group variations by product
+  const groupedProducts = useMemo(() => {
     if (!variations) return [];
-    return variations.filter((v) => {
+    const map = new Map<string, GroupedProduct>();
+    for (const v of variations) {
       const product = v.products as any;
+      if (!product) continue;
+      const pid = v.product_id;
+      if (!map.has(pid)) {
+        map.set(pid, {
+          product_id: pid,
+          product_name: product.name,
+          category_id: product.category_id,
+          variations: [],
+        });
+      }
+      map.get(pid)!.variations.push({ id: v.id, name: v.name, price: Number(v.price) });
+    }
+    return Array.from(map.values());
+  }, [variations]);
+
+  const filtered = useMemo(() => {
+    return groupedProducts.filter((p) => {
       const matchSearch = !search ||
-        v.name.toLowerCase().includes(search.toLowerCase()) ||
-        product?.name?.toLowerCase().includes(search.toLowerCase());
-      const matchCategory = categoryFilter === "all" || product?.category_id === categoryFilter;
+        p.product_name.toLowerCase().includes(search.toLowerCase()) ||
+        p.variations.some(v => v.name.toLowerCase().includes(search.toLowerCase()));
+      const matchCategory = categoryFilter === "all" || p.category_id === categoryFilter;
       return matchSearch && matchCategory;
     });
-  }, [variations, search, categoryFilter]);
+  }, [groupedProducts, search, categoryFilter]);
 
   const total = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unit_price, 0), [cart]);
 
-  const addToCart = (v: any) => {
-    const existing = cart.find((c) => c.variation_id === v.id);
+  const addToCart = (variation: { id: string; name: string; price: number }, productName: string) => {
+    const existing = cart.find((c) => c.variation_id === variation.id);
     if (existing) {
-      setCart(cart.map((c) => c.variation_id === v.id ? { ...c, quantity: c.quantity + 1 } : c));
+      setCart(cart.map((c) => c.variation_id === variation.id ? { ...c, quantity: c.quantity + 1 } : c));
     } else {
       setCart([...cart, {
-        variation_id: v.id,
-        variation_name: v.name,
-        product_name: (v.products as any)?.name || "",
+        variation_id: variation.id,
+        variation_name: variation.name,
+        product_name: productName,
         quantity: 1,
-        unit_price: Number(v.price),
+        unit_price: variation.price,
       }]);
+    }
+  };
+
+  const handleProductClick = (product: GroupedProduct) => {
+    if (product.variations.length === 1) {
+      addToCart(product.variations[0], product.product_name);
+    } else {
+      setVariationPicker(product);
+    }
+  };
+
+  const handleVariationSelect = (variation: { id: string; name: string; price: number }) => {
+    if (variationPicker) {
+      addToCart(variation, variationPicker.product_name);
+      setVariationPicker(null);
     }
   };
 
@@ -140,10 +182,13 @@ const PosPage = () => {
     }
   };
 
-  const paymentMethodLabels: Record<string, string> = {
-    cash: "מזומן",
-    credit: "אשראי",
-    bit: "ביט",
+  // Price range display for multi-variation products
+  const priceDisplay = (vars: { price: number }[]) => {
+    const prices = vars.map(v => v.price);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    if (min === max) return `₪${min.toFixed(2)}`;
+    return `₪${min.toFixed(2)} - ₪${max.toFixed(2)}`;
   };
 
   return (
@@ -168,15 +213,19 @@ const PosPage = () => {
 
         <ScrollArea className="flex-1">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {filtered.map((v) => (
+            {filtered.map((product) => (
               <button
-                key={v.id}
-                onClick={() => addToCart(v)}
-                className="rounded-lg border bg-card p-3 text-right hover:bg-accent transition-colors text-sm"
+                key={product.product_id}
+                onClick={() => handleProductClick(product)}
+                className="rounded-lg border bg-card p-3 text-right hover:bg-accent transition-colors text-sm relative"
               >
-                <div className="font-medium truncate">{(v.products as any)?.name}</div>
-                <div className="text-xs text-muted-foreground truncate">{v.name}</div>
-                <div className="font-bold mt-1">₪{Number(v.price).toFixed(2)}</div>
+                <div className="font-medium truncate">{product.product_name}</div>
+                {product.variations.length === 1 ? (
+                  <div className="text-xs text-muted-foreground truncate">{product.variations[0].name}</div>
+                ) : (
+                  <div className="text-xs text-primary font-medium">{product.variations.length} וריאציות</div>
+                )}
+                <div className="font-bold mt-1">{priceDisplay(product.variations)}</div>
               </button>
             ))}
           </div>
@@ -240,6 +289,28 @@ const PosPage = () => {
         </CardContent>
       </Card>
 
+      {/* Variation Picker Popup */}
+      <Dialog open={!!variationPicker} onOpenChange={(open) => !open && setVariationPicker(null)}>
+        <DialogContent className="max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>{variationPicker?.product_name} — בחר וריאציה</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-2 max-h-[60vh] overflow-y-auto">
+            {variationPicker?.variations.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => handleVariationSelect(v)}
+                className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors text-sm"
+              >
+                <span className="font-bold">₪{v.price.toFixed(2)}</span>
+                <span className="font-medium">{v.name}</span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Order Dialog */}
       <Dialog open={showCreateOrder} onOpenChange={setShowCreateOrder}>
         <DialogContent className="max-w-md" dir="rtl">
           <DialogHeader>
@@ -258,7 +329,6 @@ const PosPage = () => {
 
             <Separator />
 
-            {/* Delivery Method */}
             <div>
               <Label>שיטת משלוח *</Label>
               <Select value={deliveryMethod} onValueChange={setDeliveryMethod}>
@@ -272,7 +342,6 @@ const PosPage = () => {
               </Select>
             </div>
 
-            {/* Payment Method */}
             <div>
               <Label>שיטת תשלום *</Label>
               <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (v !== "cash") setCashRegisterId(""); }}>
@@ -285,7 +354,6 @@ const PosPage = () => {
               </Select>
             </div>
 
-            {/* Cash Register (only for cash) */}
             {paymentMethod === "cash" && (
               <div>
                 <Label>קופה *</Label>
