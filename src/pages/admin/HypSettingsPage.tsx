@@ -115,6 +115,67 @@ const HypSettingsPage = () => {
           </Button>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">כתובות להגדרה בפורטל HYP</CardTitle>
+          <CardDescription>
+            יש להעתיק את הכתובות הבאות ולהזין אותן בהגדרות המסוף בפורטל HYP (הגדרות → דף הצלחה / כישלון).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>דף הצלחה (Success URL)</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                readOnly
+                value={`${window.location.origin}/web/order-confirmation/{order_number}`}
+                dir="ltr"
+                className="font-mono text-sm bg-muted"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/web/order-confirmation/`);
+                  toast.success("הועתק!");
+                }}
+              >
+                העתק
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              HYP יפנה לכתובת זו לאחר תשלום מוצלח. מספר ההזמנה יתווסף אוטומטית.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>דף כישלון (Error URL)</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                readOnly
+                value={`${window.location.origin}/web/checkout?payment_error=true`}
+                dir="ltr"
+                className="font-mono text-sm bg-muted"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/web/checkout?payment_error=true`);
+                  toast.success("הועתק!");
+                }}
+              >
+                העתק
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              HYP יפנה לכתובת זו אם התשלום נכשל או בוטל.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
