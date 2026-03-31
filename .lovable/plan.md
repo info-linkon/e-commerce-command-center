@@ -1,73 +1,135 @@
 
 
-# תיקון אינטגרציית HYP — מעבר מ-CreditGuard ל-HYP Pay Protocol
+# תוכנית רספונסיביות מלאה למערכת הניהול (Admin)
 
-## הבעיה
-המימוש הנוכחי משתמש ב-CreditGuard XML API (שליחת XML ל-`/xpo/Relay`). זה **לא** HYP Pay.
-HYP Pay משתמש ב-Pay Protocol — API פשוט מבוסס GET/POST עם redirect לדף תשלום מאובטח.
+## סיכום
+המערכת כרגע בנויה לדסקטופ — טבלאות רחבות, layout קבוע בקופה, וסיידבר שלא מותאם למובייל. התוכנית הופכת את כל הדפים לרספונסיביים עם גישת mobile-first.
 
-## תהליך HYP Pay הנכון
+## עקרונות
 
+- **טבלאות** → במובייל הופכות לכרטיסיות (cards) מוערמות
+- **קופה (POS)** → העגלה עוברת ל-Drawer תחתון במקום פאנל צד
+- **סיידבר** → כבר `offcanvas` במובייל (shadcn sidebar), רק לוודא שה-trigger נגיש
+- **טפסים** → עמודות הופכות ל-stack
+- **כותרות + כפתורים** → stack אנכי במובייל
+
+---
+
+## שלבים
+
+### 1. AppLayout — header מובייל
+- הוספת שם הדף ב-header
+- וידוא ש-`SidebarTrigger` בולט במובייל (hamburger)
+- הוספת padding תחתון (`pb-20`) במובייל למניעת חפיפה עם תוכן
+
+### 2. רכיב `MobileCardList` — תחליף טבלה במובייל
+- רכיב חדש שמקבל data + field definitions
+- בדסקטופ מציג `Table`, במובייל מציג כרטיסיות
+- ישמש בכל הדפים: הזמנות, מוצרים, לקוחות, מחסנים, משלוחים, הוצאות, מארזים
+
+### 3. דפי רשימה — התאמה למובייל
+כל הדפים הבאים יקבלו:
+- כותרת + כפתורים: `flex-wrap` עם stack במובייל
+- שורת חיפוש + פילטרים: `flex-col` במובייל
+- טבלה → כרטיסיות במובייל דרך `MobileCardList`
+
+**דפים:**
+- `OrdersPage` (8 עמודות → כרטיס עם שדות מרכזיים)
+- `ProductsPage` (7 עמודות → כרטיס)
+- `BundlesPage`
+- `CustomersPage`
+- `DeliveriesPage`
+- `WarehousesPage`
+- `ExpensesPage`
+- `InventoryIndex` (תצוגת מלאי)
+- `TransfersPage`
+- `InventoryLogPage`
+
+### 4. קופה (POS) — רספונסיבית
+הדף הכי קריטי — כרגע `flex` אופקי עם עגלה קבועה בצד:
+- במובייל: הסתרת פאנל העגלה → כפתור FAB צף "עגלה (N)" שפותח `Drawer` תחתון
+- גריד מוצרים: `grid-cols-2` במובייל (כבר קיים חלקית)
+- דיאלוג יצירת הזמנה: `max-w-full` במובייל
+
+### 5. טפסים — stack אנכי
+- `ProductForm` — שדות ב-grid שהופך ל-1 עמודה
+- `BundleForm` — אותו דבר
+- `OrderForm` — שדות לקוח + שורות הזמנה
+- `OrderDetail` — סיכום + פעולות
+
+### 6. דשבורד
+- `StatsCards` — כבר grid רספונסיבי, לוודא `grid-cols-2` במובייל
+- `SalesChart` — `min-h` מתאים במובייל
+- כותרת קטנה יותר במובייל
+
+### 7. דפי הגדרות ואדמין
+- `SettingsPage`, `HypSettingsPage`, `MetaPixelSettingsPage`, `SmsTemplatesPage`
+- בעיקר טפסים — stack אנכי + `max-w-full`
+
+---
+
+## פירוט טכני
+
+### רכיב `MobileCardList`
 ```text
-1. Edge Function → GET https://pay.hyp.co.il/p/?action=APISign&What=SIGN
-   עם: Masof, KEY, PassP, Amount, Order, ClientName, phone, etc.
-   ← מקבלים חזרה: פרמטרים חתומים + signature
+Props:
+- data: T[]
+- columns: { label: string, render: (item: T) => ReactNode, hideOnMobile?: boolean }[]
+- onRowClick?: (item: T) => void
+- actions?: (item: T) => ReactNode
 
-2. Redirect לקוח → https://pay.hyp.co.il/p/?action=pay&...&signature=...
-
-3. לקוח משלם → redirect ל-success URL עם:
-   Id, CCode, Amount, ACode, Order, Sign, etc.
-
-4. אימות → GET https://pay.hyp.co.il/p/?action=APISign&What=VERIFY
-   עם: Masof, KEY, PassP + פרמטרים מה-success
-   ← CCode=0 = אומת בהצלחה
+Desktop: renders <Table>
+Mobile: renders stacked <Card> list
+Switch via useIsMobile()
 ```
 
-## Credentials נדרשים (שונה מהנוכחי!)
+### POS Drawer (מובייל)
+```text
+Desktop: flex gap-4 → products panel + cart panel side by side
+Mobile:  
+  - products panel full width
+  - FAB button fixed bottom-right: "עגלה (3)"
+  - Click → Drawer from bottom with cart items + checkout button
+```
 
-| נוכחי (שגוי) | נכון |
-|---|---|
-| terminal_number | **Masof** — מספר מסוף (10 ספרות) |
-| api_url | לא נדרש — תמיד `https://pay.hyp.co.il/p/` |
-| user | **KEY** — API Key מדף ההגדרות |
-| password | **PassP** — סיסמת אימות |
+### טבלאות → כרטיסיות
+```text
+Desktop:
+┌──────┬────────┬────────┬───────┐
+│ מס׳  │ לקוח   │ סה״כ   │ פעולות│
+├──────┼────────┼────────┼───────┤
+│ #101 │ אחמד   │ ₪150   │ 👁 🗑 │
+└──────┴────────┴────────┴───────┘
 
-## שינויים
-
-### 1. `src/pages/admin/HypSettingsPage.tsx` — עדכון שדות
-- הסרת שדות `api_url` ו-`user`
-- שינוי לשדות: **Masof** (מספר מסוף), **API Key**, **PassP** (סיסמה)
-- שמירה ב-`site_content` כ: `{ masof, api_key, passp }`
-
-### 2. `supabase/functions/hyp-create-payment/index.ts` — שכתוב מלא
-- הסרת כל לוגיקת CreditGuard XML
-- **Step 1**: שליחת GET ל-`https://pay.hyp.co.il/p/?action=APISign&What=SIGN` עם כל הפרמטרים
-- פרמטרים: `Masof`, `KEY`, `PassP`, `Amount`, `Order`, `ClientName`, `phone`, `Info`, `UTF8=True`, `UTF8out=True`, `Sign=True`, `MoreData=True`, `Coin=1`, `PageLang=HEB`, `tmp=1`, `sendemail=True`
-- פענוח התשובה — חילוץ ה-`signature`
-- בניית URL לדף התשלום: `https://pay.hyp.co.il/p/?action=pay&...&signature=...`
-- החזרת ה-URL ללקוח
-
-### 3. `src/pages/web/WebCheckoutPage.tsx` — שילוב תשלום HYP
-- אחרי יצירת הזמנה בסטטוס `pending_payment`:
-  - קריאה ל-edge function `hyp-create-payment`
-  - redirect ל-URL של דף התשלום
-- Success URL = `/web/order-confirmation/{order_number}?...`
-
-### 4. `src/pages/web/WebOrderConfirmation.tsx` — טיפול בחזרה מ-HYP
-- קריאת פרמטרים מה-URL: `Id`, `CCode`, `ACode`, `Amount`
-- אם `CCode=0` → עדכון הזמנה ל-`pending` + רישום payment
-- אם `CCode≠0` → הצגת הודעת שגיאה
-
-### 5. (אופציונלי) Edge Function `hyp-verify-payment` — אימות
-- שליחת GET עם `action=APISign&What=VERIFY` + פרמטרים מה-success
-- אימות שה-`CCode=0`
+Mobile:
+┌─────────────────────────┐
+│ #101          ● ממתינה  │
+│ אחמד  •  050-1234567    │
+│ ₪150.00      👁 🗑       │
+└─────────────────────────┘
+```
 
 ## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| `src/pages/admin/HypSettingsPage.tsx` | עדכון שדות ל-Masof, API Key, PassP |
-| `supabase/functions/hyp-create-payment/index.ts` | שכתוב — HYP Pay Protocol במקום CreditGuard |
-| `src/pages/web/WebCheckoutPage.tsx` | שילוב redirect לתשלום HYP |
-| `src/pages/web/WebOrderConfirmation.tsx` | טיפול בחזרה מ-HYP + אימות |
+| `src/components/ui/mobile-card-list.tsx` | חדש — רכיב רשימת כרטיסיות |
+| `src/components/layout/AppLayout.tsx` | header רספונסיבי |
+| `src/pages/PosPage.tsx` | Drawer עגלה במובייל |
+| `src/pages/orders/OrdersPage.tsx` | כרטיסיות במובייל |
+| `src/pages/orders/OrderForm.tsx` | טופס רספונסיבי |
+| `src/pages/orders/OrderDetail.tsx` | layout רספונסיבי |
+| `src/pages/inventory/ProductsPage.tsx` | כרטיסיות במובייל |
+| `src/pages/inventory/BundlesPage.tsx` | כרטיסיות במובייל |
+| `src/pages/inventory/ProductForm.tsx` | טופס רספונסיבי |
+| `src/pages/inventory/BundleForm.tsx` | טופס רספונסיבי |
+| `src/pages/inventory/InventoryIndex.tsx` | כרטיסיות במובייל |
+| `src/pages/inventory/TransfersPage.tsx` | כרטיסיות במובייל |
+| `src/pages/customers/CustomersPage.tsx` | כרטיסיות במובייל |
+| `src/pages/deliveries/DeliveriesPage.tsx` | כרטיסיות במובייל |
+| `src/pages/FinancePage.tsx` | tabs רספונסיביים |
+| `src/pages/ExpensesPage.tsx` | כרטיסיות במובייל |
+| `src/pages/Dashboard.tsx` | התאמות קטנות |
+| `src/pages/SettingsPage.tsx` | layout רספונסיבי |
+| `src/pages/ReportsPage.tsx` | tabs + charts רספונסיביים |
 
