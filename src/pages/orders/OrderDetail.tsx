@@ -302,7 +302,7 @@ const OrderDetail = () => {
 
       {/* Actions */}
       {!isCancelled && !isCompleted && (
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           {!isAssigned && (
             <Select value={status} onValueChange={(v) => {
               updateStatus.mutate({ id: order.id, status: v as OrderStatus });

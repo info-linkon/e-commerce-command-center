@@ -33,7 +33,7 @@ const ReportsPage = () => {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full flex flex-wrap h-auto gap-1">
+        <TabsList className="w-full flex flex-wrap h-auto gap-1 justify-start">
           <TabsTrigger value="overview">סקירה כללית</TabsTrigger>
           <TabsTrigger value="sales">מכירות ומוצרים</TabsTrigger>
           <TabsTrigger value="inventory-log">תנועות מלאי</TabsTrigger>
