@@ -122,62 +122,77 @@ const HypSettingsPage = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">כתובות להגדרה בפורטל HYP</CardTitle>
+          <CardTitle className="text-lg">כתובת האתר + כתובות להגדרה בפורטל HYP</CardTitle>
           <CardDescription>
-            יש להעתיק את הכתובות הבאות ולהזין אותן בהגדרות המסוף בפורטל HYP (הגדרות → דף הצלחה / כישלון).
+            הזן את כתובת האתר המפורסם שלך, ולאחר מכן העתק את כתובות ההצלחה והכישלון לפורטל HYP (הגדרות → הגדרות מסוף → דף הצלחה / כישלון).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>דף הצלחה (Success URL)</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                readOnly
-                value={`${window.location.origin}/web/order-confirmation/{order_number}`}
-                dir="ltr"
-                className="font-mono text-sm bg-muted"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/web/order-confirmation/`);
-                  toast.success("הועתק!");
-                }}
-              >
-                העתק
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              HYP יפנה לכתובת זו לאחר תשלום מוצלח. מספר ההזמנה יתווסף אוטומטית.
-            </p>
+            <Label>כתובת האתר (Site URL)</Label>
+            <Input
+              value={siteUrl}
+              onChange={(e) => setSiteUrl(e.target.value.replace(/\/$/, ""))}
+              placeholder="https://www.example.com"
+              dir="ltr"
+            />
+            <p className="text-xs text-muted-foreground">כתובת האתר המפורסם (ללא / בסוף). לדוגמה: https://www.myshop.com</p>
           </div>
-          <div className="space-y-2">
-            <Label>דף כישלון (Error URL)</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                readOnly
-                value={`${window.location.origin}/web/checkout?payment_error=true`}
-                dir="ltr"
-                className="font-mono text-sm bg-muted"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/web/checkout?payment_error=true`);
-                  toast.success("הועתק!");
-                }}
-              >
-                העתק
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              HYP יפנה לכתובת זו אם התשלום נכשל או בוטל.
-            </p>
-          </div>
+
+          {siteUrl && (
+            <>
+              <div className="space-y-2">
+                <Label>דף הצלחה (Good URL) — להגדרה בפורטל HYP</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    readOnly
+                    value={`${siteUrl}/web/order-confirmation`}
+                    dir="ltr"
+                    className="font-mono text-sm bg-muted"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${siteUrl}/web/order-confirmation`);
+                      toast.success("הועתק!");
+                    }}
+                  >
+                    העתק
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  HYP יפנה לכתובת זו לאחר תשלום מוצלח ויוסיף פרמטרים כמו ?Id=...&CCode=0&Order=...
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>דף כישלון (Bad URL) — להגדרה בפורטל HYP</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    readOnly
+                    value={`${siteUrl}/web/checkout?payment_error=true`}
+                    dir="ltr"
+                    className="font-mono text-sm bg-muted"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${siteUrl}/web/checkout?payment_error=true`);
+                      toast.success("הועתק!");
+                    }}
+                  >
+                    העתק
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  HYP יפנה לכתובת זו אם התשלום נכשל או בוטל.
+                </p>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
