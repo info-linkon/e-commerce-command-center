@@ -77,6 +77,7 @@ const BundleForm = () => {
         short_description_ar: product?.short_description_ar || "",
         sale_price: Number(product?.sale_price || 0),
         cost_price: Number(product?.cost_price || 0),
+        shipping_price: Number(product?.shipping_price || 0),
         category_id: product?.category_id || null,
         is_published: product?.is_published || false,
         image_url: product?.image_url || null,
