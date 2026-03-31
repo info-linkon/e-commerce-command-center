@@ -123,6 +123,7 @@ const App = () => (
             <Route path="/admin/coupons" element={<Protected><AdminCouponsPage /></Protected>} />
             <Route path="/admin/sms-templates" element={<Protected><SmsTemplatesPage /></Protected>} />
             <Route path="/admin/meta-pixel" element={<Protected><MetaPixelSettingsPage /></Protected>} />
+            <Route path="/admin/hyp-settings" element={<Protected><HypSettingsPage /></Protected>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
