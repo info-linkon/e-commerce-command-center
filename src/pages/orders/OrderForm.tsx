@@ -136,7 +136,7 @@ const OrderForm = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl" dir="rtl">
+    <div className="space-y-6 max-w-4xl mx-auto" dir="rtl">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/orders")}>
           <ArrowRight className="h-4 w-4" />
