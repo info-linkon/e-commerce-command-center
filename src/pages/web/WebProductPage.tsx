@@ -199,7 +199,7 @@ export default function WebProductPage() {
               <span className="text-sm font-medium mb-2 block">اختر الطقم:</span>
               <div className="flex flex-wrap gap-2">
                 {bundleVariations.map((bv) => {
-                  const bvStock = bundleStockResult?.variable?.get(bv.id);
+                  const bvStock = bundleStockResult?.variations?.get(bv.id);
                   const bvOutOfStock = bvStock ? !bvStock.inStock : false;
                   return (
                     <button
