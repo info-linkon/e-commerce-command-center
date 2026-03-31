@@ -51,6 +51,8 @@ import WebContactPage from "./pages/web/WebContactPage";
 import WebContentPage from "./pages/admin/WebContentPage";
 import WebBannersPage from "./pages/admin/WebBannersPage";
 import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
+import SmsTemplatesPage from "./pages/admin/SmsTemplatesPage";
+import MetaPixelSettingsPage from "./pages/admin/MetaPixelSettingsPage";
 
 const queryClient = new QueryClient();
 
