@@ -10,6 +10,7 @@ interface WebProductCardProps {
   price: number;
   imageUrl?: string | null;
   categoryName?: string | null;
+  outOfStock?: boolean;
 }
 
 export function WebProductCard({ id, productNumber, name, nameAr, price, imageUrl, categoryName }: WebProductCardProps) {

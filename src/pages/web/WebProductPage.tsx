@@ -174,9 +174,10 @@ export default function WebProductPage() {
               size="lg"
               className="w-full sm:flex-1 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
               onClick={handleAddToCart}
+              disabled={isBundleOutOfStock}
             >
               <ShoppingCart className="w-4 h-4 ml-2" />
-              أضف إلى السلة
+              {isBundleOutOfStock ? "غير متوفر" : "أضف إلى السلة"}
             </Button>
           </div>
         </div>
