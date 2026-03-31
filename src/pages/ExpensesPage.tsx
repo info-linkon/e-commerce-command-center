@@ -145,32 +145,39 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
         </Dialog>
       </div>
 
-      <Card>
+      {/* Mobile cards */}
+      <div className="block sm:hidden space-y-3">
+        {isLoading ? (
+          <div className="py-12 text-center text-muted-foreground">טוען...</div>
+        ) : !expenses?.length ? (
+          <div className="py-12 text-center text-muted-foreground">אין הוצאות</div>
+        ) : (
+          expenses.map((e: any) => (
+            <Card key={e.id} className="p-3">
+              <div className="flex justify-between items-start">
+                <Badge variant="outline" className="text-xs">
+                  {sourceLabels[e.payment_source] || e.payment_source}
+                </Badge>
+                <span className="font-medium">{e.description}</span>
+              </div>
+              <div className="flex justify-between items-center mt-2 text-sm">
+                <span className="text-muted-foreground text-xs">{new Date(e.created_at).toLocaleDateString("he-IL")}</span>
+                <span className="font-bold">₪{Number(e.amount).toFixed(2)}</span>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <Card className="hidden sm:block">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="py-12 text-center text-muted-foreground">טוען...</div>
           ) : !expenses?.length ? (
             <div className="py-12 text-center text-muted-foreground">אין הוצאות</div>
           ) : (
-            <div className="block sm:hidden space-y-3 p-3">
-              {expenses.map((e: any) => (
-                <Card key={e.id} className="p-3">
-                  <div className="flex justify-between items-start">
-                    <Badge variant="outline" className="text-xs">
-                      {sourceLabels[e.payment_source] || e.payment_source}
-                    </Badge>
-                    <span className="font-medium">{e.description}</span>
-                  </div>
-                  <div className="flex justify-between items-center mt-2 text-sm">
-                    <span className="text-muted-foreground text-xs">{new Date(e.created_at).toLocaleDateString("he-IL")}</span>
-                    <span className="font-bold">₪{Number(e.amount).toFixed(2)}</span>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-          <div className="hidden sm:block">
-            {!isLoading && expenses?.length ? (
+            <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>תיאור</TableHead>
@@ -205,8 +212,7 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
                 ))}
               </TableBody>
             </Table>
-            ) : null}
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
