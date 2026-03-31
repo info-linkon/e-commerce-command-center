@@ -205,7 +205,8 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
                 ))}
               </TableBody>
             </Table>
-          )}
+            ) : null}
+          </div>
         </CardContent>
       </Card>
     </div>

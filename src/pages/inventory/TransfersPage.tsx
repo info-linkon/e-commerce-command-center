@@ -92,10 +92,10 @@ const TransfersPage = () => {
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 ml-1" />העברה חדשה</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl" dir="rtl">
+           <DialogContent className="max-w-2xl w-[95vw]" dir="rtl">
             <DialogHeader><DialogTitle>העברת מלאי</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">ממחסן</label>
                   <Select value={fromWarehouse} onValueChange={setFromWarehouse}>
