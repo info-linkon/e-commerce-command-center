@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useWebProduct, useWebProductVariations } from "@/hooks/useWebProducts";
+import { useWebProduct, useWebProductVariations, useWebBundleVariations } from "@/hooks/useWebProducts";
 import { useCartStore } from "@/lib/web-cart-store";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -34,6 +34,11 @@ export default function WebProductPage() {
     },
   });
 
+  // Fetch bundle variations for variable bundles
+  const { data: bundleVariations } = useWebBundleVariations(
+    bundleData?.bundle_type === "variable_bundle" ? bundleData?.id : undefined
+  );
+
   const { data: bundleStockResult } = useBundleStock(bundleData?.id, bundleData?.bundle_type);
 
   if (isLoading) {
@@ -57,17 +62,37 @@ export default function WebProductPage() {
   ];
   const displayImage = mainImage || allImages[0] || null;
 
-  const isVariable = product.product_type === "variable" && variations && variations.length > 0;
+  // Determine if this is a variable bundle or a regular variable product
+  const isVariableBundle = bundleData?.bundle_type === "variable_bundle" && bundleVariations && bundleVariations.length > 0;
+  const isVariable = !isVariableBundle && product.product_type === "variable" && variations && variations.length > 0;
+
+  // Active variation for regular variable products
   const activeVariation = isVariable
-    ? variations.find((v) => v.id === selectedVariation) || variations[0]
+    ? variations!.find((v) => v.id === selectedVariation) || variations![0]
     : null;
-  const price = activeVariation ? activeVariation.price : product.sale_price;
+
+  // Active bundle variation for variable bundles
+  const activeBundleVariation = isVariableBundle
+    ? bundleVariations!.find((v) => v.id === selectedVariation) || bundleVariations![0]
+    : null;
+
+  const price = activeBundleVariation
+    ? activeBundleVariation.price
+    : activeVariation
+      ? activeVariation.price
+      : product.sale_price;
+
   const displayName = product.name_ar || product.name;
 
   // Bundle stock check
   const isBundleOutOfStock = (() => {
     if (!bundleData || !bundleStockResult) return false;
     if (bundleStockResult.simple) return !bundleStockResult.simple.inStock;
+    // For variable bundles, check the selected variation
+    if (isVariableBundle && bundleStockResult.variable && activeBundleVariation) {
+      const varStock = bundleStockResult.variable.get(activeBundleVariation.id);
+      return varStock ? !varStock.inStock : false;
+    }
     return false;
   })();
 
@@ -76,12 +101,20 @@ export default function WebProductPage() {
       toast.error("الرجاء اختيار نوع المنتج");
       return;
     }
+    if (isVariableBundle && !activeBundleVariation) {
+      toast.error("الرجاء اختيار نوع الطقم");
+      return;
+    }
+
+    const variationId = activeBundleVariation?.id || activeVariation?.id || product.id;
+    const variationName = activeBundleVariation?.name || activeVariation?.name_ar || activeVariation?.name || "";
+
     for (let i = 0; i < quantity; i++) {
       addItem({
-        variationId: activeVariation?.id || product.id,
+        variationId,
         productId: product.id,
         productName: displayName,
-        variationName: activeVariation?.name_ar || activeVariation?.name || "",
+        variationName,
         price,
         imageUrl: activeVariation?.image_url || product.image_url,
       }, 1);
@@ -138,7 +171,7 @@ export default function WebProductPage() {
             <span className="text-3xl font-black text-primary">₪{price.toFixed(2)}</span>
           </div>
 
-          {/* Variations */}
+          {/* Regular product variations */}
           {isVariable && variations && (
             <div className="mb-6">
               <span className="text-sm font-medium mb-2 block">اختر النوع:</span>
@@ -156,6 +189,36 @@ export default function WebProductPage() {
                     {v.name_ar || v.name}
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Bundle variations */}
+          {isVariableBundle && bundleVariations && (
+            <div className="mb-6">
+              <span className="text-sm font-medium mb-2 block">اختر الطقم:</span>
+              <div className="flex flex-wrap gap-2">
+                {bundleVariations.map((bv) => {
+                  const bvStock = bundleStockResult?.variable?.get(bv.id);
+                  const bvOutOfStock = bvStock ? !bvStock.inStock : false;
+                  return (
+                    <button
+                      key={bv.id}
+                      onClick={() => !bvOutOfStock && setSelectedVariation(bv.id)}
+                      disabled={bvOutOfStock}
+                      className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                        bvOutOfStock
+                          ? "opacity-50 cursor-not-allowed border-border"
+                          : (selectedVariation || bundleVariations[0].id) === bv.id
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {bv.name} - ₪{bv.price.toFixed(2)}
+                      {bvOutOfStock && " (غير متوفر)"}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
