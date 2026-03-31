@@ -1,131 +1,73 @@
 
 
-# 3 עדכונים: תבניות SMS, Meta Pixel + XML Feed, תשלום HYP
+# תיקון אינטגרציית HYP — מעבר מ-CreditGuard ל-HYP Pay Protocol
 
-## סיכום
-שלושה מודולים חדשים: (1) תבניות SMS דרך InforUMobile עם שליחה אוטומטית בשינוי סטטוס הזמנה, (2) Meta Pixel עם דיווח המרות מלא + XML Product Feed ל-Meta Catalog, (3) תשלום באשראי באתר דרך HYP CreditGuard.
+## הבעיה
+המימוש הנוכחי משתמש ב-CreditGuard XML API (שליחת XML ל-`/xpo/Relay`). זה **לא** HYP Pay.
+HYP Pay משתמש ב-Pay Protocol — API פשוט מבוסס GET/POST עם redirect לדף תשלום מאובטח.
 
----
+## תהליך HYP Pay הנכון
 
-## 1. תבניות SMS — InforUMobile
+```text
+1. Edge Function → GET https://pay.hyp.co.il/p/?action=APISign&What=SIGN
+   עם: Masof, KEY, PassP, Amount, Order, ClientName, phone, etc.
+   ← מקבלים חזרה: פרמטרים חתומים + signature
 
-### DB
-- טבלת `sms_templates`: `id`, `trigger` (enum: `order_created`, `order_shipped`, `order_completed`), `template_text` (עם placeholders כמו `{customer_name}`, `{order_number}`, `{total}`), `active`, `created_at`
-- שמירת secrets: `INFORU_USERNAME`, `INFORU_TOKEN`, `INFORU_SENDER`
+2. Redirect לקוח → https://pay.hyp.co.il/p/?action=pay&...&signature=...
 
-### Edge Function — `send-sms`
-- מקבלת `phone`, `message`
-- שולחת POST ל-InforUMobile API: `https://uapi.inforu.co.il/SendMessageXml.ashx` עם XML payload שכולל username, token, message, recipient
-- UTF-8 encoding
+3. לקוח משלם → redirect ל-success URL עם:
+   Id, CCode, Amount, ACode, Order, Sign, etc.
 
-### Edge Function — `order-sms-trigger`
-- מקבלת `order_id`, `trigger_type`
-- שולפת הזמנה + תבנית פעילה לאותו trigger
-- מחליפה placeholders ושולחת SMS
-
-### Admin UI — דף ניהול תבניות
-- `src/pages/admin/SmsTemplatesPage.tsx` — CRUD לתבניות
-- בחירת trigger, עריכת טקסט עם placeholders
-- לינק מדף ההגדרות
-
-### שילוב אוטומטי
-- ב-`OrderDetail.tsx`: כאשר סטטוס הזמנה משתנה, קריאה ל-`order-sms-trigger` עם ה-trigger המתאים
-
----
-
-## 2. Meta Pixel + XML Feed + דיווח המרות
-
-### Meta Pixel Script
-- הוספת Meta Pixel base code ב-`index.html` (עם Pixel ID מ-env / הגדרות)
-- **או** דף הגדרות בלוח ניהול לשמירת Pixel ID ב-`site_content`
-
-### אירועי Pixel (Client-side)
-- `PageView` — בכל טעינת דף (ב-WebLayout)
-- `ViewContent` — בדף מוצר (WebProductPage)
-- `AddToCart` — בהוספה לסל
-- `InitiateCheckout` — בכניסה לצ'קאאוט
-- `Purchase` — בדף אישור הזמנה (WebOrderConfirmation) עם `value`, `currency: ILS`, `content_ids`
-
-### עזר: `src/lib/meta-pixel.ts`
-```typescript
-export function fbq(event: string, data?: Record<string, any>) {
-  if (window.fbq) window.fbq('track', event, data);
-}
+4. אימות → GET https://pay.hyp.co.il/p/?action=APISign&What=VERIFY
+   עם: Masof, KEY, PassP + פרמטרים מה-success
+   ← CCode=0 = אומת בהצלחה
 ```
 
-### XML Product Feed — Edge Function
-- `supabase/functions/meta-product-feed/index.ts`
-- מחזיר XML בפורמט Meta Product Catalog (RSS 2.0)
-- שולף כל המוצרים המפורסמים עם מחיר, תמונה, קטגוריה, זמינות, link
-- URL: `https://gboskpvfvwrsiqwzpctk.supabase.co/functions/v1/meta-product-feed`
-- ניתן להטמיע ב-Meta Business Manager כ-Data Feed
+## Credentials נדרשים (שונה מהנוכחי!)
 
-### Conversions API (Server-side) — אופציונלי
-- Edge function `meta-capi` לשליחת אירועי Purchase ל-Meta Conversions API (לדיוק גבוה יותר)
-- דורש Access Token מ-Meta — נטפל בזה בהמשך אם תרצה
+| נוכחי (שגוי) | נכון |
+|---|---|
+| terminal_number | **Masof** — מספר מסוף (10 ספרות) |
+| api_url | לא נדרש — תמיד `https://pay.hyp.co.il/p/` |
+| user | **KEY** — API Key מדף ההגדרות |
+| password | **PassP** — סיסמת אימות |
 
----
+## שינויים
 
-## 3. תשלום HYP באתר
+### 1. `src/pages/admin/HypSettingsPage.tsx` — עדכון שדות
+- הסרת שדות `api_url` ו-`user`
+- שינוי לשדות: **Masof** (מספר מסוף), **API Key**, **PassP** (סיסמה)
+- שמירה ב-`site_content` כ: `{ masof, api_key, passp }`
 
-### מצב
-אין לך עדיין חשבון HYP — צריך לפתוח חשבון ב-[hyp.co.il](https://hyp.co.il). לאחר הפתיחה תקבל:
-- `terminal_number` — מספר מסוף
-- HYP API URL (production)
-- credentials (user/password)
+### 2. `supabase/functions/hyp-create-payment/index.ts` — שכתוב מלא
+- הסרת כל לוגיקת CreditGuard XML
+- **Step 1**: שליחת GET ל-`https://pay.hyp.co.il/p/?action=APISign&What=SIGN` עם כל הפרמטרים
+- פרמטרים: `Masof`, `KEY`, `PassP`, `Amount`, `Order`, `ClientName`, `phone`, `Info`, `UTF8=True`, `UTF8out=True`, `Sign=True`, `MoreData=True`, `Coin=1`, `PageLang=HEB`, `tmp=1`, `sendemail=True`
+- פענוח התשובה — חילוץ ה-`signature`
+- בניית URL לדף התשלום: `https://pay.hyp.co.il/p/?action=pay&...&signature=...`
+- החזרת ה-URL ללקוח
 
-### Edge Function — `hyp-create-payment`
-- מקבלת: `order_id`, `total`, `customer_name`, `customer_phone`, `successUrl`, `errorUrl`
-- שולחת POST ל-HYP CreditGuard API (`/xpo/Relay`) עם XML payload של `doDeal`
-- מחזירה את `mpiHostedPageUrl` (URL של דף התשלום המאובטח)
+### 3. `src/pages/web/WebCheckoutPage.tsx` — שילוב תשלום HYP
+- אחרי יצירת הזמנה בסטטוס `pending_payment`:
+  - קריאה ל-edge function `hyp-create-payment`
+  - redirect ל-URL של דף התשלום
+- Success URL = `/web/order-confirmation/{order_number}?...`
 
-### תהליך בצ'קאאוט
-1. לקוח ממלא פרטים ולוחץ "תשלום"
-2. נוצרת הזמנה בסטטוס `pending_payment`
-3. קריאה ל-edge function שמחזירה URL של HYP
-4. הלקוח מופנה לדף תשלום מאובטח של HYP
-5. לאחר תשלום — redirect ל-success URL עם `uniqueID`
-6. דף ה-success מעדכן את ההזמנה לסטטוס `pending` + רושם payment
+### 4. `src/pages/web/WebOrderConfirmation.tsx` — טיפול בחזרה מ-HYP
+- קריאת פרמטרים מה-URL: `Id`, `CCode`, `ACode`, `Amount`
+- אם `CCode=0` → עדכון הזמנה ל-`pending` + רישום payment
+- אם `CCode≠0` → הצגת הודעת שגיאה
 
-### Edge Function — `hyp-verify-payment` (אופציונלי)
-- בדיקת סטטוס עסקה מול HYP לאימות
-
-### DB
-- הוספת סטטוס `pending_payment` ל-enum `order_status` (אם לא קיים)
-- שמירת `hyp_transaction_id` בהזמנה
-
-### Secrets נדרשים
-- `HYP_TERMINAL_NUMBER`
-- `HYP_API_URL`
-- `HYP_USER`
-- `HYP_PASSWORD`
-
----
-
-## סדר יישום מומלץ
-
-| שלב | נושא | סיבה |
-|-----|-------|------|
-| 1 | Meta Pixel + XML Feed | לא דורש חשבון חיצוני חדש, Pixel ID כבר יש |
-| 2 | תבניות SMS (InforUMobile) | צריך credentials מ-InforU |
-| 3 | תשלום HYP | צריך לפתוח חשבון HYP קודם |
+### 5. (אופציונלי) Edge Function `hyp-verify-payment` — אימות
+- שליחת GET עם `action=APISign&What=VERIFY` + פרמטרים מה-success
+- אימות שה-`CCode=0`
 
 ## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| `index.html` | Meta Pixel base script |
-| `src/lib/meta-pixel.ts` | חדש — helper function |
-| `src/components/web/WebLayout.tsx` | PageView event |
-| `src/pages/web/WebProductPage.tsx` | ViewContent event |
-| `src/lib/web-cart-store.ts` | AddToCart event |
-| `src/pages/web/WebCheckoutPage.tsx` | InitiateCheckout + HYP redirect |
-| `src/pages/web/WebOrderConfirmation.tsx` | Purchase event + HYP success handling |
-| `supabase/functions/meta-product-feed/index.ts` | חדש — XML feed |
-| `supabase/functions/send-sms/index.ts` | חדש — InforUMobile API |
-| `supabase/functions/order-sms-trigger/index.ts` | חדש — trigger SMS |
-| `supabase/functions/hyp-create-payment/index.ts` | חדש — יצירת עסקה |
-| `src/pages/admin/SmsTemplatesPage.tsx` | חדש — ניהול תבניות |
-| מיגרציה SQL | טבלת `sms_templates` + enum updates |
-| `src/pages/SettingsPage.tsx` | לינקים חדשים (SMS, Pixel) |
+| `src/pages/admin/HypSettingsPage.tsx` | עדכון שדות ל-Masof, API Key, PassP |
+| `supabase/functions/hyp-create-payment/index.ts` | שכתוב — HYP Pay Protocol במקום CreditGuard |
+| `src/pages/web/WebCheckoutPage.tsx` | שילוב redirect לתשלום HYP |
+| `src/pages/web/WebOrderConfirmation.tsx` | טיפול בחזרה מ-HYP + אימות |
 
