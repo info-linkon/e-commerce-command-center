@@ -43,6 +43,19 @@ export default function WebProductPage() {
 
   const { data: bundleStockResult } = useBundleStock(bundleData?.id, bundleData?.bundle_type);
 
+  // Meta Pixel: ViewContent (must be before early returns)
+  useEffect(() => {
+    if (product) {
+      fbq("ViewContent", {
+        content_ids: [product.id],
+        content_name: product.name_ar || product.name,
+        content_type: "product",
+        value: product.sale_price,
+        currency: "ILS",
+      });
+    }
+  }, [product?.id]);
+
   if (isLoading) {
     return (
       <div className="container py-16 text-center text-muted-foreground">جاري التحميل...</div>
