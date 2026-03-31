@@ -10,7 +10,7 @@ import { validateCoupon, calcDiscount, incrementCouponUsage, Coupon } from "@/ho
 import { Loader2, Tag, X } from "lucide-react";
 
 export default function WebCheckoutPage() {
-  const { items, totalPrice, clearCart } = useCartStore();
+  const { items, totalPrice, clearCart, shippingCost } = useCartStore();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
