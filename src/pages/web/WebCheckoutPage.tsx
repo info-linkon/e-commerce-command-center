@@ -22,6 +22,16 @@ export default function WebCheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
 
+  // Meta Pixel: InitiateCheckout
+  useEffect(() => {
+    fbq("InitiateCheckout", {
+      content_ids: items.map((i) => i.variationId),
+      num_items: items.length,
+      value: totalPrice(),
+      currency: "ILS",
+    });
+  }, []);
+
   const subtotal = totalPrice();
   const shipping = shippingCost();
   const discount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
