@@ -123,20 +123,15 @@ const HypSettingsPage = () => {
           <CardTitle className="text-lg">⚠️ הגדרות נדרשות בפורטל HYP</CardTitle>
           <CardDescription>
             יש להגדיר את כתובות ההפניה בפורטל HYP בנתיב: הגדרות → הגדרות מסוף → דף הצלחה / כישלון.
+            <br />
+            יש להזין את <strong>אותה כתובת</strong> גם בדף הצלחה וגם בדף כישלון — המערכת מזהה אוטומטית לפי הפרמטרים.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="bg-muted rounded-lg p-4 space-y-3 text-sm" dir="ltr">
-            <div>
-              <span className="font-bold text-foreground">Good URL (דף הצלחה):</span>
-              <br />
-              <code className="text-primary">https://YOUR-DOMAIN/web/order-confirmation</code>
-            </div>
-            <div>
-              <span className="font-bold text-foreground">Bad URL (דף כישלון):</span>
-              <br />
-              <code className="text-primary">https://YOUR-DOMAIN/web/checkout?payment_error=true</code>
-            </div>
+          <div className="bg-muted rounded-lg p-4 text-sm" dir="ltr">
+            <span className="font-bold text-foreground">Good URL + Bad URL (אותו לינק לשניהם):</span>
+            <br />
+            <code className="text-primary">https://YOUR-DOMAIN/web/order-confirmation</code>
           </div>
           <p className="text-xs text-muted-foreground" dir="rtl">
             החלף את <code className="font-mono">YOUR-DOMAIN</code> בכתובת האתר שלך (לדוגמה: www.myshop.com).
