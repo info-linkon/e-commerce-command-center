@@ -160,21 +160,21 @@ const ProductForm = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>תיאור קצר (עברית)</Label>
-                  <Textarea value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} rows={3} />
+                  <RichTextEditor value={form.short_description} onChange={(v) => setForm({ ...form, short_description: v })} rows={3} />
                 </div>
                 <div className="space-y-2">
                   <Label>وصف مختصر (ערבית)</Label>
-                  <Textarea value={form.short_description_ar} onChange={(e) => setForm({ ...form, short_description_ar: e.target.value })} rows={3} dir="rtl" />
+                  <RichTextEditor value={form.short_description_ar} onChange={(v) => setForm({ ...form, short_description_ar: v })} rows={3} dir="rtl" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>תיאור מלא (עברית)</Label>
-                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={6} />
+                  <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={6} />
                 </div>
                 <div className="space-y-2">
                   <Label>وصف كامل (ערבית)</Label>
-                  <Textarea value={form.description_ar} onChange={(e) => setForm({ ...form, description_ar: e.target.value })} rows={6} dir="rtl" />
+                  <RichTextEditor value={form.description_ar} onChange={(v) => setForm({ ...form, description_ar: v })} rows={6} dir="rtl" />
                 </div>
               </div>
             </CardContent>
