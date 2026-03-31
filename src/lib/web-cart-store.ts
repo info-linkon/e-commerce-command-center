@@ -20,6 +20,7 @@ interface CartStore {
   clearCart: () => void;
   totalItems: () => number;
   totalPrice: () => number;
+  shippingCost: () => number;
 }
 
 export const useCartStore = create<CartStore>()(
