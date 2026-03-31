@@ -14,3 +14,15 @@ verify_jwt = false
 
 [functions.woo-product-sync]
 verify_jwt = false
+
+[functions.meta-product-feed]
+verify_jwt = false
+
+[functions.send-sms]
+verify_jwt = false
+
+[functions.order-sms-trigger]
+verify_jwt = false
+
+[functions.hyp-create-payment]
+verify_jwt = false

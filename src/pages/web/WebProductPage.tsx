@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBundleStock } from "@/hooks/useBundleStock";
+import { fbq } from "@/lib/meta-pixel";
+import { useEffect } from "react";
 
 export default function WebProductPage() {
   const { id } = useParams();
@@ -40,6 +42,19 @@ export default function WebProductPage() {
   );
 
   const { data: bundleStockResult } = useBundleStock(bundleData?.id, bundleData?.bundle_type);
+
+  // Meta Pixel: ViewContent (must be before early returns)
+  useEffect(() => {
+    if (product) {
+      fbq("ViewContent", {
+        content_ids: [product.id],
+        content_name: product.name_ar || product.name,
+        content_type: "product",
+        value: product.sale_price,
+        currency: "ILS",
+      });
+    }
+  }, [product?.id]);
 
   if (isLoading) {
     return (
@@ -120,6 +135,14 @@ export default function WebProductPage() {
         shippingPrice: Number((product as any).shipping_price || 0),
       }, 1);
     }
+    // Meta Pixel: AddToCart
+    fbq("AddToCart", {
+      content_ids: [variationId],
+      content_name: displayName,
+      content_type: "product",
+      value: price * quantity,
+      currency: "ILS",
+    });
     toast.success("تمت الإضافة إلى السلة");
   };
 

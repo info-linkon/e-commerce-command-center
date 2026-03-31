@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { validateCoupon, calcDiscount, incrementCouponUsage, Coupon } from "@/hooks/useCoupons";
 import { Loader2, Tag, X } from "lucide-react";
+import { fbq } from "@/lib/meta-pixel";
+import { useEffect } from "react";
 
 export default function WebCheckoutPage() {
   const { items, totalPrice, clearCart, shippingCost } = useCartStore();
@@ -19,6 +21,16 @@ export default function WebCheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
+
+  // Meta Pixel: InitiateCheckout
+  useEffect(() => {
+    fbq("InitiateCheckout", {
+      content_ids: items.map((i) => i.variationId),
+      num_items: items.length,
+      value: totalPrice(),
+      currency: "ILS",
+    });
+  }, []);
 
   const subtotal = totalPrice();
   const shipping = shippingCost();
@@ -94,7 +106,8 @@ export default function WebCheckoutPage() {
 
       clearCart();
       toast.success("تم إرسال الطلب بنجاح!");
-      navigate(`/web/order-confirmation/${order.order_number}`);
+      const contentIds = items.map(i => i.variationId).join(",");
+      navigate(`/web/order-confirmation/${order.order_number}?total=${finalTotal.toFixed(2)}&ids=${contentIds}`);
     } catch (err) {
       console.error(err);
       toast.error("حدث خطأ أثناء إرسال الطلب");

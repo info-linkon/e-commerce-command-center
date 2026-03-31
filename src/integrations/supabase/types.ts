@@ -901,6 +901,7 @@ export type Database = {
           customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
+          hyp_transaction_id: string | null
           id: string
           includes_vat: boolean | null
           notes: string | null
@@ -928,6 +929,7 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          hyp_transaction_id?: string | null
           id?: string
           includes_vat?: boolean | null
           notes?: string | null
@@ -955,6 +957,7 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          hyp_transaction_id?: string | null
           id?: string
           includes_vat?: boolean | null
           notes?: string | null
@@ -1219,6 +1222,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_templates: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          template_text: string
+          trigger: Database["public"]["Enums"]["sms_trigger"]
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          template_text?: string
+          trigger: Database["public"]["Enums"]["sms_trigger"]
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          template_text?: string
+          trigger?: Database["public"]["Enums"]["sms_trigger"]
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1291,10 +1318,16 @@ export type Database = {
         | "adjustment"
         | "write_off"
       order_source: "manual" | "pos" | "website"
-      order_status: "pending" | "processing" | "completed" | "cancelled"
+      order_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "cancelled"
+        | "pending_payment"
       payment_method: "cash" | "bit" | "credit"
       picking_status: "not_started" | "in_progress" | "completed"
       product_type: "simple" | "variable"
+      sms_trigger: "order_created" | "order_shipped" | "order_completed"
       transfer_status: "pending" | "completed"
     }
     CompositeTypes: {
@@ -1437,10 +1470,17 @@ export const Constants = {
         "write_off",
       ],
       order_source: ["manual", "pos", "website"],
-      order_status: ["pending", "processing", "completed", "cancelled"],
+      order_status: [
+        "pending",
+        "processing",
+        "completed",
+        "cancelled",
+        "pending_payment",
+      ],
       payment_method: ["cash", "bit", "credit"],
       picking_status: ["not_started", "in_progress", "completed"],
       product_type: ["simple", "variable"],
+      sms_trigger: ["order_created", "order_shipped", "order_completed"],
       transfer_status: ["pending", "completed"],
     },
   },

@@ -1,4 +1,4 @@
-import { Truck, Wallet, Globe, Users, Settings as SettingsIcon } from "lucide-react";
+import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +21,18 @@ const settingsSections = [
     description: "ייבוא וייצוא מוצרים, קטגוריות והזמנות",
     icon: Globe,
     url: "/woo-sync",
+  },
+  {
+    title: "תבניות SMS",
+    description: "ניהול הודעות SMS אוטומטיות ללקוחות",
+    icon: MessageSquare,
+    url: "/admin/sms-templates",
+  },
+  {
+    title: "Meta Pixel",
+    description: "הגדרת Pixel ID למעקב המרות",
+    icon: BarChart3,
+    url: "/admin/meta-pixel",
   },
 ];
 

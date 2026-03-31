@@ -51,6 +51,8 @@ import WebContactPage from "./pages/web/WebContactPage";
 import WebContentPage from "./pages/admin/WebContentPage";
 import WebBannersPage from "./pages/admin/WebBannersPage";
 import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
+import SmsTemplatesPage from "./pages/admin/SmsTemplatesPage";
+import MetaPixelSettingsPage from "./pages/admin/MetaPixelSettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +120,8 @@ const App = () => (
             <Route path="/admin/web-content" element={<Protected><WebContentPage /></Protected>} />
             <Route path="/admin/web-banners" element={<Protected><WebBannersPage /></Protected>} />
             <Route path="/admin/coupons" element={<Protected><AdminCouponsPage /></Protected>} />
+            <Route path="/admin/sms-templates" element={<Protected><SmsTemplatesPage /></Protected>} />
+            <Route path="/admin/meta-pixel" element={<Protected><MetaPixelSettingsPage /></Protected>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

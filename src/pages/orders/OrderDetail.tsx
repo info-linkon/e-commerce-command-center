@@ -304,7 +304,17 @@ const OrderDetail = () => {
       {!isCancelled && !isCompleted && (
         <div className="flex gap-3">
           {!isAssigned && (
-            <Select value={status} onValueChange={(v) => updateStatus.mutate({ id: order.id, status: v as OrderStatus })}>
+            <Select value={status} onValueChange={(v) => {
+              updateStatus.mutate({ id: order.id, status: v as OrderStatus });
+              // Trigger SMS based on status change
+              const triggerMap: Record<string, string> = { processing: "order_created", completed: "order_completed" };
+              const smsTrigger = triggerMap[v];
+              if (smsTrigger) {
+                supabase.functions.invoke("order-sms-trigger", {
+                  body: { order_id: order.id, trigger_type: smsTrigger },
+                }).catch(console.error);
+              }
+            }}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="שנה סטטוס" />
               </SelectTrigger>
