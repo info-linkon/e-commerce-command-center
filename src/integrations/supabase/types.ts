@@ -905,6 +905,7 @@ export type Database = {
           includes_vat: boolean | null
           notes: string | null
           order_number: number
+          payment_method: string | null
           picking_status: Database["public"]["Enums"]["picking_status"] | null
           shipping_address: string | null
           shipping_city: string | null
@@ -931,6 +932,7 @@ export type Database = {
           includes_vat?: boolean | null
           notes?: string | null
           order_number?: number
+          payment_method?: string | null
           picking_status?: Database["public"]["Enums"]["picking_status"] | null
           shipping_address?: string | null
           shipping_city?: string | null
@@ -957,6 +959,7 @@ export type Database = {
           includes_vat?: boolean | null
           notes?: string | null
           order_number?: number
+          payment_method?: string | null
           picking_status?: Database["public"]["Enums"]["picking_status"] | null
           shipping_address?: string | null
           shipping_city?: string | null
