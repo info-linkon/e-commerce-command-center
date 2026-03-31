@@ -16,7 +16,6 @@ const HypSettingsPage = () => {
   const [passP, setPassP] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
   const [showPassP, setShowPassP] = useState(false);
-  const [showPassP, setShowPassP] = useState(false);
 
   useEffect(() => {
     if (hypConfig?.content) {
