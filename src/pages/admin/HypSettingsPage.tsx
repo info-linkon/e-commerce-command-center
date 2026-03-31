@@ -14,7 +14,7 @@ const HypSettingsPage = () => {
   const [masof, setMasof] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [passP, setPassP] = useState("");
-  const [siteUrl, setSiteUrl] = useState("");
+  
   const [showPassP, setShowPassP] = useState(false);
 
   useEffect(() => {
