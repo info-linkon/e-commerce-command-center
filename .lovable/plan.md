@@ -1,51 +1,49 @@
 
 
-# תיקון וריאציות מארז — שילוב פריטים לכל וריאציה
+# שדרוג תהליך הקופה (POS) — שיטת משלוח ותשלום
 
-## הבעיה
-כרגע וריאציות המארז משתמשות ב-`VariationsManager` שיוצר `product_variations` — שזה לא קשור לפריטים במארז. הלוגיקה הנכונה: כל וריאציה של מארז היא **שילוב שונה של פריטים** עם מחיר משלה.
-
-## המבנה בDB (כבר קיים!)
-- `bundle_variations` — שם + מחיר + bundle_id
-- `bundle_variation_items` — variation_id (של מוצר) + quantity + bundle_variation_id
+## סיכום
+הוספת שדות שיטת משלוח ושיטת תשלום לדיאלוג יצירת הזמנה בקופה. הזמנת אשראי תסומן כשולמה אוטומטית, הזמנת מזומן תדרוש רישום תקבול ושיוך לקופה בתהליך הרגיל.
 
 ## שינויים
 
-### 1. `src/components/inventory/BundleVariationsManager.tsx` — קומפוננטה חדשה
-מחליפה את `VariationsManager` עבור מארזים:
-- רשימת וריאציות מארז קיימות (שם + מחיר + מספר פריטים)
-- דיאלוג יצירה/עריכה:
-  - שם הוריאציה (עברית)
-  - מחיר
-  - **בחירת פריטים**: אותו ממשק בחירת מוצר → וריאציה → כמות שקיים היום ב-BundleForm
-- CRUD מלא: הוספה, עריכה, מחיקה
+### 1. DB — הוספת עמודת `payment_method` להזמנה
+מיגרציה: הוספת עמודה `payment_method text` לטבלת `orders` (nullable) — לתיעוד שיטת התשלום שנבחרה ביצירה (cash/credit/bit).
 
-### 2. `src/hooks/useBundleVariations.ts` — hook חדש
-- `useBundleVariations(bundleId)` — שליפת וריאציות + פריטים שלהן
-- `useCreateBundleVariation` — יצירת וריאציה + פריטים
-- `useUpdateBundleVariation` — עדכון
-- `useDeleteBundleVariation` — מחיקה
+### 2. `src/pages/PosPage.tsx` — שדרוג הדיאלוג
+- הסרת שדות כתובת ועיר (לא חובה ב-POS)
+- הוספת **שיטת משלוח**: Select עם חברות המשלוח הפעילות (`useDeliveryCompanies`) + אופציית "איסוף עצמי"
+- הוספת **שיטת תשלום**: בחירה בין מזומן / אשראי / ביט
+- אם מזומן — הצגת Select לבחירת קופה (`useCashRegisters`)
+- שמירת `payment_method` ו-`delivery_company_id` (אם רלוונטי) בהזמנה
 
-### 3. `src/pages/inventory/BundleForm.tsx` — החלפת VariationsManager
-- הסרת `VariationsManager` + import
-- הצגת `BundleVariationsManager` כשסוג = "עם וריאציות"
-- כשסוג = "פשוט" — הצגת פריטים כרגיל (bundle_items)
-- כשסוג = "עם וריאציות" — הסתרת קטע "פריטים במארז" (כי הפריטים מוגדרים בכל וריאציה בנפרד)
+### 3. `src/hooks/useOrders.ts` — הרחבת `useCreateOrder`
+- הוספת `payment_method` ל-input ולשמירה
+- אם שיטת תשלום = אשראי/ביט → לאחר יצירת ההזמנה, יצירת רשומת `payment` אוטומטית על מלא הסכום עם הסטטוס המתאים
+- אם מזומן + בחרו קופה → יצירת רשומת `payment` עם שיוך לקופה
 
-## זרימה למשתמש
+### 4. `src/pages/orders/OrderDetail.tsx` — חיווי תשלום
+- הצגת שיטת התשלום שנבחרה בכרטיס הסיכום
+- אם הזמנה שולמה באשראי/ביט → badge "שולם" יופיע גם אם ההזמנה לא completed עדיין
+- ה-PaymentSection יזהה שכבר שולם ולא יציג כפתור תשלום נוסף
 
-**מארז פשוט:** בוחרים פריטים + כמויות → מחיר אחד
+## זרימה מעודכנת
 
-**מארז עם וריאציות:**
-- אין בחירת פריטים ברמת המארז
-- יוצרים וריאציות, לכל אחת: שם, מחיר, ורשימת פריטים משלה
-- דוגמה: "מארז קטן" = 2 כיסאות + שולחן ₪500, "מארז גדול" = 4 כיסאות + 2 שולחנות ₪900
+```text
+POS: בחירת מוצרים → דיאלוג (שם, טלפון, משלוח, תשלום) → יצירת הזמנה
+  ↓
+  אם אשראי/ביט: רשומת payment נוצרת אוטומטית
+  אם מזומן + קופה: רשומת payment נוצרת עם שיוך קופה
+  ↓
+הזמנות: שיוך מחסן → ליקוט → משלוח → (תשלום כבר רשום) → השלמה
+```
 
 ## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| `src/components/inventory/BundleVariationsManager.tsx` | חדש — ניהול וריאציות מארז עם פריטים |
-| `src/hooks/useBundleVariations.ts` | חדש — CRUD לוריאציות מארז |
-| `src/pages/inventory/BundleForm.tsx` | החלפת VariationsManager, הסתרת פריטים כשמשתנה |
+| מיגרציה SQL | הוספת `payment_method` ל-orders |
+| `src/pages/PosPage.tsx` | שדרוג דיאלוג: משלוח + תשלום + קופה |
+| `src/hooks/useOrders.ts` | יצירת payment אוטומטי ב-POS |
+| `src/pages/orders/OrderDetail.tsx` | הצגת שיטת תשלום + חיווי |
 
