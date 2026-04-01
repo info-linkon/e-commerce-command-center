@@ -12,6 +12,7 @@ import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home,
 import { fbq } from "@/lib/meta-pixel";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import logo from "@/assets/logo.webp";
 
 type PaymentMethodType = "cash" | "credit";
 
@@ -238,13 +239,21 @@ export default function WebCheckoutPage() {
 
   // Show HYP payment iframe overlay
   if (hypPaymentUrl) {
+    const orderTotal = finalTotal;
     return (
-      <div className="fixed inset-0 z-[100] bg-background flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-border bg-card">
-          <span className="font-semibold text-sm flex items-center gap-2">
-            <Lock className="w-4 h-4 text-primary" />
-            صفحة دفع آمنة
-          </span>
+      <div className="fixed inset-0 z-[100] bg-muted/50 flex flex-col">
+        {/* Header with logo + secure badge */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shadow-sm">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="الوجهة" className="w-10 h-10 rounded-full ring-1 ring-border" />
+            <div>
+              <span className="font-bold text-sm text-foreground">الوجهة</span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Lock className="w-3 h-3 text-primary" />
+                دفع آمن
+              </span>
+            </div>
+          </div>
           <Button
             variant="ghost"
             size="sm"
@@ -257,9 +266,44 @@ export default function WebCheckoutPage() {
             إلغاء
           </Button>
         </div>
+
+        {/* Order summary strip */}
+        <div className="bg-card border-b border-border px-4 py-3">
+          <div className="flex items-center justify-between max-w-lg mx-auto">
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2 rtl:space-x-reverse">
+                {items.slice(0, 3).map((item, i) => (
+                  <div key={i} className="w-10 h-10 rounded-lg border-2 border-background bg-muted overflow-hidden shadow-sm">
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                        <ShoppingBag className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {items.length > 3 && (
+                  <div className="w-10 h-10 rounded-lg border-2 border-background bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground shadow-sm">
+                    +{items.length - 3}
+                  </div>
+                )}
+              </div>
+              <div className="text-sm">
+                <span className="text-muted-foreground">{items.reduce((s, i) => s + i.quantity, 0)} منتجات</span>
+              </div>
+            </div>
+            <div className="text-left">
+              <div className="text-lg font-bold text-foreground">₪{orderTotal.toFixed(2)}</div>
+              <div className="text-xs text-muted-foreground">المجموع الكلي</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Iframe */}
         <iframe
           src={hypPaymentUrl}
-          className="flex-1 w-full border-none"
+          className="flex-1 w-full border-none bg-background"
           allow="payment"
         />
       </div>
