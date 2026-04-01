@@ -7,13 +7,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { validateCoupon, calcDiscount, incrementCouponUsage, Coupon } from "@/hooks/useCoupons";
-import { Loader2, Tag, X } from "lucide-react";
+import { Loader2, Tag, X, CreditCard, Banknote } from "lucide-react";
 import { fbq } from "@/lib/meta-pixel";
+import { useSiteSection } from "@/hooks/useSiteContent";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+type PaymentMethodType = "cash" | "credit";
+
+interface PaymentSettings {
+  cash: { enabled: boolean; label: string };
+  credit: { enabled: boolean; label: string };
+}
+
+const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
+  cash: { enabled: true, label: "الدفع عند الاستلام" },
+  credit: { enabled: true, label: "بطاقة ائتمان" },
+};
 
 export default function WebCheckoutPage() {
   const { items, totalPrice, clearCart, shippingCost } = useCartStore();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
+  // Payment method
+  const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
+  const paymentSettings: PaymentSettings = paymentSettingsRow?.content
+    ? { ...DEFAULT_PAYMENT_SETTINGS, ...(paymentSettingsRow.content as PaymentSettings) }
+    : DEFAULT_PAYMENT_SETTINGS;
+
+  const enabledMethods: PaymentMethodType[] = [];
+  if (paymentSettings.cash.enabled) enabledMethods.push("cash");
+  if (paymentSettings.credit.enabled) enabledMethods.push("credit");
+
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType>("credit");
+
+  useEffect(() => {
+    if (enabledMethods.length > 0 && !enabledMethods.includes(selectedPayment)) {
+      setSelectedPayment(enabledMethods[0]);
+    }
+  }, [paymentSettingsRow]);
 
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
@@ -69,13 +101,15 @@ export default function WebCheckoutPage() {
     const customerPhone = form.get("phone") as string;
     const customerEmail = (form.get("email") as string) || "";
 
+    const isCash = selectedPayment === "cash";
+
     try {
-      // Create order with pending_payment status
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
           source: "website" as const,
-          status: "pending_payment" as const,
+          status: isCash ? ("pending" as const) : ("pending_payment" as const),
+          payment_method: isCash ? "cash" : "credit",
           customer_name: customerName,
           customer_phone: customerPhone,
           customer_email: customerEmail || null,
@@ -103,12 +137,18 @@ export default function WebCheckoutPage() {
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
       if (itemsError) throw itemsError;
 
-      // Increment coupon usage
       if (appliedCoupon) {
         await incrementCouponUsage(appliedCoupon.id);
       }
 
-      // Call HYP payment edge function
+      // Cash flow — redirect directly
+      if (isCash) {
+        clearCart();
+        navigate(`/web/order-confirmation/${order.order_number}`);
+        return;
+      }
+
+      // Credit flow — HYP
       const successUrl = `${window.location.origin}/web/order-confirmation/${order.order_number}`;
       const errorUrl = `${window.location.origin}/web/checkout?payment_error=true`;
 
@@ -127,7 +167,6 @@ export default function WebCheckoutPage() {
       });
 
       if (hypError || !hypData?.success) {
-        // If HYP fails, still save order but notify
         console.error("HYP payment error:", hypError || hypData?.error);
         toast.error("שגיאה ביצירת דף תשלום — ההזמנה נשמרה ונציג יצור קשר");
         clearCart();
@@ -135,14 +174,9 @@ export default function WebCheckoutPage() {
         return;
       }
 
-      // Store order info before redirect
       sessionStorage.setItem("hyp_order_id", order.id);
       sessionStorage.setItem("hyp_order_number", String(order.order_number));
-
-      // Clear cart before redirect
       clearCart();
-
-      // Redirect to HYP payment page
       window.location.href = hypData.payment_url;
     } catch (err) {
       console.error(err);
@@ -191,6 +225,29 @@ export default function WebCheckoutPage() {
                 <Input id="notes" name="notes" className="mt-1" placeholder="ملاحظات إضافية" />
               </div>
             </div>
+
+            {/* Payment Method Selection */}
+            {enabledMethods.length > 1 && (
+              <div className="space-y-3">
+                <h2 className="font-bold text-lg">طريقة الدفع</h2>
+                <RadioGroup value={selectedPayment} onValueChange={(v) => setSelectedPayment(v as PaymentMethodType)} className="space-y-2">
+                  {paymentSettings.cash.enabled && (
+                    <label htmlFor="pm-cash" className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition-colors ${selectedPayment === "cash" ? "border-primary bg-primary/5" : "border-border"}`}>
+                      <RadioGroupItem value="cash" id="pm-cash" />
+                      <Banknote className="w-5 h-5 text-muted-foreground" />
+                      <span className="font-medium">{paymentSettings.cash.label}</span>
+                    </label>
+                  )}
+                  {paymentSettings.credit.enabled && (
+                    <label htmlFor="pm-credit" className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition-colors ${selectedPayment === "credit" ? "border-primary bg-primary/5" : "border-border"}`}>
+                      <RadioGroupItem value="credit" id="pm-credit" />
+                      <CreditCard className="w-5 h-5 text-muted-foreground" />
+                      <span className="font-medium">{paymentSettings.credit.label}</span>
+                    </label>
+                  )}
+                </RadioGroup>
+              </div>
+            )}
           </div>
 
           <div className="bg-card p-6 rounded-xl border border-border h-fit">
@@ -267,14 +324,16 @@ export default function WebCheckoutPage() {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  جاري التحويل للدفع...
+                  جاري المعالجة...
                 </span>
+              ) : selectedPayment === "cash" ? (
+                `تأكيد الطلب — ₪${finalTotal.toFixed(2)}`
               ) : (
                 `ادفع الآن — ₪${finalTotal.toFixed(2)}`
               )}
             </Button>
             <p className="text-xs text-muted-foreground text-center mt-2">
-              سيتم تحويلك لصفحة الدفع الآمنة
+              {selectedPayment === "credit" ? "سيتم تحويلك لصفحة الدفع الآمنة" : "سيتم تأكيد طلبك والدفع عند الاستلام"}
             </p>
           </div>
         </div>
