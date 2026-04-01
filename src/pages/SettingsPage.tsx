@@ -5,6 +5,12 @@ import { useNavigate } from "react-router-dom";
 import ImageWebpConverter from "@/components/admin/ImageWebpConverter";
 const settingsSections = [
   {
+    title: "אמצעי תשלום באתר",
+    description: "הפעלת/כיבוי מזומן ואשראי באתר",
+    icon: Wallet,
+    url: "/admin/payment-methods",
+  },
+  {
     title: "חברות משלוח",
     description: "ניהול שליחים פנימיים וחיצוניים",
     icon: Truck,
