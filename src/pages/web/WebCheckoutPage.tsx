@@ -66,6 +66,7 @@ export default function WebCheckoutPage() {
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "hyp-payment-done" && e.data?.url) {
+        clearCart();
         window.location.href = e.data.url;
       }
     };
