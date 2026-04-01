@@ -32,7 +32,7 @@ export default function WebCheckoutPage() {
   // Payment method
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
   const paymentSettings: PaymentSettings = paymentSettingsRow?.content
-    ? { ...DEFAULT_PAYMENT_SETTINGS, ...(paymentSettingsRow.content as PaymentSettings) }
+    ? { ...DEFAULT_PAYMENT_SETTINGS, ...(paymentSettingsRow.content as unknown as PaymentSettings) }
     : DEFAULT_PAYMENT_SETTINGS;
 
   const enabledMethods: PaymentMethodType[] = [];
