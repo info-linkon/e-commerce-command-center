@@ -236,6 +236,36 @@ export default function WebCheckoutPage() {
     return null;
   }
 
+  // Show HYP payment iframe overlay
+  if (hypPaymentUrl) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-background flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-card">
+          <span className="font-semibold text-sm flex items-center gap-2">
+            <Lock className="w-4 h-4 text-primary" />
+            صفحة دفع آمنة
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setHypPaymentUrl(null);
+              navigate("/web/cart");
+            }}
+          >
+            <X className="w-4 h-4 ml-1" />
+            إلغاء
+          </Button>
+        </div>
+        <iframe
+          src={hypPaymentUrl}
+          className="flex-1 w-full border-none"
+          allow="payment"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-muted/30 min-h-screen pb-32 md:pb-12">
       <div className="container py-6 md:py-10 max-w-5xl">
