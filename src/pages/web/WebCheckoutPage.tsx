@@ -313,8 +313,12 @@ export default function WebCheckoutPage() {
   return (
     <div className="bg-muted/30 min-h-screen pb-32 md:pb-12">
       <div className="container py-6 md:py-10 max-w-5xl">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+        {/* Logo + Breadcrumb */}
+        <div className="flex flex-col items-center gap-3 mb-6">
+          <img src={logo} alt="الوجهة" className="w-16 h-16 rounded-full shadow-md ring-2 ring-primary/20" />
+          <span className="text-lg font-bold text-foreground">الوجهة</span>
+        </div>
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/web/cart" className="hover:text-foreground transition-colors flex items-center gap-1">
             <ShoppingBag className="w-4 h-4" />
             السلة
@@ -323,7 +327,7 @@ export default function WebCheckoutPage() {
           <span className="text-foreground font-medium">إتمام الطلب</span>
         </div>
 
-        <h1 className="text-2xl md:text-3xl font-bold mb-8">إتمام الطلب</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center">إتمام الطلب</h1>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
