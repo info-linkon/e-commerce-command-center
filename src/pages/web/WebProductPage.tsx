@@ -121,7 +121,7 @@ export default function WebProductPage() {
       return;
     }
 
-    const variationId = activeBundleVariation?.id || activeVariation?.id || product.id;
+    const variationId = activeBundleVariation?.id || activeVariation?.id || variations?.[0]?.id || product.id;
     const variationName = activeBundleVariation?.name || activeVariation?.name_ar || activeVariation?.name || "";
 
     for (let i = 0; i < quantity; i++) {

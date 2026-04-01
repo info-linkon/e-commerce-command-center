@@ -97,6 +97,50 @@ export default function WebCheckoutPage() {
     const isCash = selectedPayment === "cash";
 
     try {
+      const uniqueCartVariationIds = Array.from(new Set(items.map((item) => item.variationId)));
+      const { data: matchedVariations, error: matchedVariationsError } = await supabase
+        .from("product_variations")
+        .select("id, product_id")
+        .in("id", uniqueCartVariationIds);
+
+      if (matchedVariationsError) throw matchedVariationsError;
+
+      const matchedVariationIds = new Set((matchedVariations || []).map((variation) => variation.id));
+      const fallbackProductIds = Array.from(
+        new Set(items.filter((item) => !matchedVariationIds.has(item.variationId)).map((item) => item.productId))
+      );
+
+      let fallbackVariations: { id: string; product_id: string }[] = [];
+      if (fallbackProductIds.length > 0) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from("product_variations")
+          .select("id, product_id")
+          .in("product_id", fallbackProductIds)
+          .order("created_at", { ascending: true });
+
+        if (fallbackError) throw fallbackError;
+        fallbackVariations = (fallbackData || []) as { id: string; product_id: string }[];
+      }
+
+      const fallbackByProductId = new Map<string, string>();
+      for (const variation of fallbackVariations) {
+        if (!fallbackByProductId.has(variation.product_id)) {
+          fallbackByProductId.set(variation.product_id, variation.id);
+        }
+      }
+
+      const normalizedItems = items.map((item) => ({
+        ...item,
+        orderVariationId: matchedVariationIds.has(item.variationId)
+          ? item.variationId
+          : fallbackByProductId.get(item.productId) || null,
+      }));
+
+      if (normalizedItems.some((item) => !item.orderVariationId)) {
+        toast.error("يوجد منتج غير صالح في السلة، احذفه وأضفه من جديد");
+        return;
+      }
+
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -119,9 +163,9 @@ export default function WebCheckoutPage() {
 
       if (orderError) throw orderError;
 
-      const orderItems = items.map((item) => ({
+      const orderItems = normalizedItems.map((item) => ({
         order_id: order.id,
-        variation_id: item.variationId,
+        variation_id: item.orderVariationId!,
         quantity: item.quantity,
         unit_price: item.price,
         total_price: item.price * item.quantity,
