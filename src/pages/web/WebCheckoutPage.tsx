@@ -230,7 +230,7 @@ export default function WebCheckoutPage() {
     }
   };
 
-  if (items.length === 0) {
+  if (items.length === 0 && !hypPaymentUrl) {
     navigate("/web/cart");
     return null;
   }
