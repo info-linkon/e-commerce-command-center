@@ -211,7 +211,7 @@ export default function WebCheckoutPage() {
       sessionStorage.setItem("hyp_order_id", order.id);
       sessionStorage.setItem("hyp_order_number", String(order.order_number));
       clearCart();
-      window.location.href = hypData.payment_url;
+      setHypPaymentUrl(hypData.payment_url);
     } catch (err) {
       console.error(err);
       toast.error("حدث خطأ أثناء إرسال الطلب");
