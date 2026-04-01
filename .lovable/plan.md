@@ -1,42 +1,47 @@
 
 
-# הוספת הגדרות אמצעי תשלום באתר
+# שיפור עיצוב דף הצ'קאאוט
 
-## סיכום
-דף הגדרות חדש לבחירת אמצעי תשלום זמינים באתר (מזומן + אשראי HYP). ההגדרות נשמרות ב-`site_content` ומשפיעות על דף הצ'קאאוט — הלקוח בוחר אמצעי תשלום, ולפי הבחירה או שמופנה ל-HYP או שההזמנה נוצרת כ-"מזומן בעת מסירה".
+## בעיות נוכחיות
+- עיצוב בסיסי מדי — נראה כמו טופס גנרי ולא כמו checkout מקצועי
+- אין הפרדה ויזואלית ברורה בין האזורים
+- במובייל: שני העמודות נערמים אבל חסר polish
+- אין אייקונים לשדות, אין progress/stepper visual
+- כפתור השליחה לא בולט מספיק
+- חסרים אלמנטים של אמון (secure badge, lock icon)
 
-## לוגיקה
+## שיפורים
 
-- הגדרות נשמרות ב-`site_content` (page=`settings`, section=`payment_methods`)
-- מבנה: `{ cash: { enabled: true, label: "الدفع عند الاستلام" }, credit: { enabled: true, label: "بطاقة ائتمان" } }`
-- בצ'קאאוט: שליפת ההגדרות → הצגת radio buttons לבחירת אמצעי תשלום
-- מזומן: הזמנה נוצרת עם `status: "pending"` + `payment_method: "cash"` (ללא HYP)
-- אשראי: התנהגות נוכחית — `status: "pending_payment"` + redirect ל-HYP
+### 1. Layout כללי
+- רקע `bg-muted/30` לדף כולו עם `min-h-screen`
+- מרכוז עם `max-w-5xl` ורווחים יותר נדיבים
+- כותרת ראשית עם breadcrumb קטן (עגלה ← צ'קאאוט)
 
-## שינויים
+### 2. טופס משלוח — Card עם header
+- עטיפה ב-`Card` עם כותרת + אייקון `MapPin`
+- שדות ב-grid `2 cols` בדסקטופ (שם + טלפון בשורה, עיר + כתובת בשורה)
+- אייקונים בתוך ה-inputs (user, phone, mail, map-pin, home, message)
+- עיצוב inputs עם `rounded-xl` ו-focus ring מודגש
 
-### 1. `src/pages/admin/PaymentMethodsSettingsPage.tsx` — דף חדש
-- Switch להפעלת/כיבוי כל אמצעי (מזומן, אשראי)
-- שמירה ב-`site_content`
-- לינק מדף ההגדרות הראשי
+### 3. בחירת תשלום — Card נפרד
+- העברת בחירת אמצעי תשלום ל-Card נפרד (גם כשיש רק אמצעי אחד — להציג אותו כ-selected)
+- כרטיסיות תשלום יותר בולטות: גבוה יותר, אייקון גדול, border מודגש כשנבחר
 
-### 2. `src/pages/SettingsPage.tsx` — הוספת כרטיס "אמצעי תשלום באתר"
+### 4. סיכום הזמנה — Sticky בדסקטופ
+- `md:sticky md:top-24` כדי שהסיכום עוקב בגלילה
+- הוספת תמונות מוצרים קטנות (אם קיימות ב-cart items)
+- separator ויזואלי יותר ברור בין פריטים לסיכום
+- כפתור submit: גדול יותר (`h-14`), עם אייקון lock/shield, ואנימציית hover
+- הוספת badge "תשלום מאובטח 🔒" מתחת לכפתור עם אייקון Shield
 
-### 3. `src/App.tsx` — route חדש `/admin/payment-methods`
-
-### 4. `src/pages/web/WebCheckoutPage.tsx` — בחירת אמצעי תשלום
-- שליפת הגדרות מ-`site_content`
-- הצגת radio buttons (מזומן / אשראי) לפי מה שמופעל
-- אם רק אמצעי אחד מופעל — לא מציג בחירה, פשוט משתמש בו
-- מזומן: יוצר הזמנה עם `status: "pending"`, `payment_method: "cash"` → redirect ישיר לדף אישור
-- אשראי: התנהגות נוכחית (HYP redirect)
+### 5. מובייל
+- במובייל: סיכום ההזמנה מופיע **מעל** הטופס (order swap ב-grid)
+- Sticky bottom bar במובייל עם כפתור "ادفع الآن" + סה"כ (כדי שהכפתור תמיד נגיש)
+- padding תחתון לגוף הדף
 
 ## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| `src/pages/admin/PaymentMethodsSettingsPage.tsx` | חדש — הגדרות אמצעי תשלום |
-| `src/pages/SettingsPage.tsx` | כרטיס חדש |
-| `src/App.tsx` | route חדש |
-| `src/pages/web/WebCheckoutPage.tsx` | בחירת אמצעי תשלום + לוגיקת מזומן |
+| `src/pages/web/WebCheckoutPage.tsx` | שכתוב עיצוב מלא |
 
