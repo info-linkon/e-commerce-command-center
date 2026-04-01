@@ -249,7 +249,7 @@ export default function WebCheckoutPage() {
             <div>
               <span className="font-bold text-sm text-foreground">الوجهة</span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Lock className="w-3 h-3 text-green-600" />
+                <Lock className="w-3 h-3 text-primary" />
                 دفع آمن
               </span>
             </div>
