@@ -12,6 +12,7 @@ import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home,
 import { fbq } from "@/lib/meta-pixel";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import logo from "@/assets/logo.webp";
 
 type PaymentMethodType = "cash" | "credit";
 
