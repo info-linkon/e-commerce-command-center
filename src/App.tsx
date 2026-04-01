@@ -54,6 +54,7 @@ import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
 import SmsTemplatesPage from "./pages/admin/SmsTemplatesPage";
 import MetaPixelSettingsPage from "./pages/admin/MetaPixelSettingsPage";
 import HypSettingsPage from "./pages/admin/HypSettingsPage";
+import PaymentMethodsSettingsPage from "./pages/admin/PaymentMethodsSettingsPage";
 
 const queryClient = new QueryClient();
 
