@@ -245,7 +245,7 @@ export default function WebCheckoutPage() {
         {/* Header with logo + secure badge */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shadow-sm">
           <div className="flex items-center gap-3">
-            <img src={"/assets/logo.webp"} alt="الوجهة" className="w-10 h-10 rounded-full ring-1 ring-border" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <img src={logo} alt="الوجهة" className="w-10 h-10 rounded-full ring-1 ring-border" />
             <div>
               <span className="font-bold text-sm text-foreground">الوجهة</span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
