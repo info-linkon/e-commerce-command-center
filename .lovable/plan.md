@@ -1,47 +1,36 @@
 
 
-# שיפור עיצוב דף הצ'קאאוט
+# שימוש בתבנית 7 של HYP עם iframe
 
-## בעיות נוכחיות
-- עיצוב בסיסי מדי — נראה כמו טופס גנרי ולא כמו checkout מקצועי
-- אין הפרדה ויזואלית ברורה בין האזורים
-- במובייל: שני העמודות נערמים אבל חסר polish
-- אין אייקונים לשדות, אין progress/stepper visual
-- כפתור השליחה לא בולט מספיק
-- חסרים אלמנטים של אמון (secure badge, lock icon)
+## סיכום
+במקום redirect חיצוני לדף תשלום HYP, דף התשלום ייטען בתוך iframe באתר עצמו. תבנית 7 של HYP מותאמת להטמעה ב-iframe (עיצוב מינימלי ללא header/footer של HYP).
 
-## שיפורים
+## שינויים
 
-### 1. Layout כללי
-- רקע `bg-muted/30` לדף כולו עם `min-h-screen`
-- מרכוז עם `max-w-5xl` ורווחים יותר נדיבים
-- כותרת ראשית עם breadcrumb קטן (עגלה ← צ'קאאוט)
+### 1. `supabase/functions/hyp-create-payment/index.ts`
+- שינוי פרמטר `tmp` מ-`"1"` ל-`"7"` (תבנית 7)
+- הוספת פרמטר `PageLang: "HEB"` (כבר קיים)
 
-### 2. טופס משלוח — Card עם header
-- עטיפה ב-`Card` עם כותרת + אייקון `MapPin`
-- שדות ב-grid `2 cols` בדסקטופ (שם + טלפון בשורה, עיר + כתובת בשורה)
-- אייקונים בתוך ה-inputs (user, phone, mail, map-pin, home, message)
-- עיצוב inputs עם `rounded-xl` ו-focus ring מודגש
+### 2. `src/pages/web/WebCheckoutPage.tsx`
+- במקום `window.location.href = hypData.payment_url` → הצגת iframe
+- הוספת state `hypPaymentUrl` — כשקיים, מציג iframe במסך מלא/מודאל
+- ה-iframe יקבל את ה-`payment_url` מ-HYP כ-`src`
+- עיצוב: iframe בגובה מלא עם כפתור "חזור" למקרה של בעיה
+- האזנה ל-`postMessage` או שימוש ב-success/error URL redirect בתוך ה-iframe (HYP מפנה ל-success URL שנגדיר — נצטרך לטפל בזה)
 
-### 3. בחירת תשלום — Card נפרד
-- העברת בחירת אמצעי תשלום ל-Card נפרד (גם כשיש רק אמצעי אחד — להציג אותו כ-selected)
-- כרטיסיות תשלום יותר בולטות: גבוה יותר, אייקון גדול, border מודגש כשנבחר
+### 3. טיפול בחזרה מתשלום
+- ה-success URL של HYP (מוגדר בפורטל) יפנה ל-`/web/order-confirmation/...`
+- כשה-iframe מנווט ל-URL הזה, נזהה את זה ונפנה את הדף הראשי (parent) לדף האישור
+- שימוש ב-`onLoad` event על ה-iframe לזיהוי ניווט ל-success/error URL, או הוספת script קטן ב-`WebOrderConfirmation` שעושה `window.parent.location.href = ...` אם הוא בתוך iframe
 
-### 4. סיכום הזמנה — Sticky בדסקטופ
-- `md:sticky md:top-24` כדי שהסיכום עוקב בגלילה
-- הוספת תמונות מוצרים קטנות (אם קיימות ב-cart items)
-- separator ויזואלי יותר ברור בין פריטים לסיכום
-- כפתור submit: גדול יותר (`h-14`), עם אייקון lock/shield, ואנימציית hover
-- הוספת badge "תשלום מאובטח 🔒" מתחת לכפתור עם אייקון Shield
-
-### 5. מובייל
-- במובייל: סיכום ההזמנה מופיע **מעל** הטופס (order swap ב-grid)
-- Sticky bottom bar במובייל עם כפתור "ادفع الآن" + סה"כ (כדי שהכפתור תמיד נגיש)
-- padding תחתון לגוף הדף
+### 4. `src/pages/web/WebOrderConfirmation.tsx`
+- הוספת בדיקה: אם הדף נטען בתוך iframe (`window.self !== window.top`), שולח `postMessage` ל-parent עם ה-URL או מפנה ישירות את ה-parent
 
 ## קבצים
 
 | קובץ | שינוי |
 |---|---|
-| `src/pages/web/WebCheckoutPage.tsx` | שכתוב עיצוב מלא |
+| `supabase/functions/hyp-create-payment/index.ts` | `tmp: "7"` |
+| `src/pages/web/WebCheckoutPage.tsx` | iframe במקום redirect + האזנה ל-postMessage |
+| `src/pages/web/WebOrderConfirmation.tsx` | זיהוי iframe + הפניית parent |
 
