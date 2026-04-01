@@ -221,7 +221,6 @@ export default function WebCheckoutPage() {
 
       sessionStorage.setItem("hyp_order_id", order.id);
       sessionStorage.setItem("hyp_order_number", String(order.order_number));
-      clearCart();
       setHypPaymentUrl(hypData.payment_url);
     } catch (err) {
       console.error(err);
