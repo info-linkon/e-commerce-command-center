@@ -62,6 +62,17 @@ export default function WebCheckoutPage() {
     });
   }, []);
 
+  // Listen for postMessage from HYP iframe (success/error redirect)
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "hyp-payment-done" && e.data?.url) {
+        window.location.href = e.data.url;
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
   const subtotal = totalPrice();
   const shipping = shippingCost();
   const discount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
