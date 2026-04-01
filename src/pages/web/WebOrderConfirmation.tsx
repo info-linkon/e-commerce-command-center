@@ -12,6 +12,19 @@ export default function WebOrderConfirmation() {
   const [verified, setVerified] = useState<boolean | null>(null);
   const [paymentPending, setPaymentPending] = useState(false);
 
+  // If loaded inside iframe, redirect parent to this URL
+  useEffect(() => {
+    if (window.self !== window.top) {
+      try {
+        window.top!.location.href = window.location.href;
+      } catch {
+        // cross-origin — use postMessage fallback
+        window.parent.postMessage({ type: "hyp-payment-done", url: window.location.href }, "*");
+      }
+      return;
+    }
+  }, []);
+
   useEffect(() => {
     const hypId = searchParams.get("Id");
     const ccode = searchParams.get("CCode");

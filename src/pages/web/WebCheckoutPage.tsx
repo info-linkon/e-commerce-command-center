@@ -29,6 +29,7 @@ export default function WebCheckoutPage() {
   const { items, totalPrice, clearCart, shippingCost } = useCartStore();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
 
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
   const paymentSettings: PaymentSettings = paymentSettingsRow?.content
