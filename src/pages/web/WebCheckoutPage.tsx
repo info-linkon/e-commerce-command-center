@@ -66,6 +66,7 @@ export default function WebCheckoutPage() {
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "hyp-payment-done" && e.data?.url) {
+        clearCart();
         window.location.href = e.data.url;
       }
     };
@@ -221,7 +222,6 @@ export default function WebCheckoutPage() {
 
       sessionStorage.setItem("hyp_order_id", order.id);
       sessionStorage.setItem("hyp_order_number", String(order.order_number));
-      clearCart();
       setHypPaymentUrl(hypData.payment_url);
     } catch (err) {
       console.error(err);
@@ -231,7 +231,7 @@ export default function WebCheckoutPage() {
     }
   };
 
-  if (items.length === 0) {
+  if (items.length === 0 && !hypPaymentUrl) {
     navigate("/web/cart");
     return null;
   }
