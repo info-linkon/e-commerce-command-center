@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       MoreData: "True",
       Coin: "1",
       PageLang: "HEB",
-      tmp: "1",
+      tmp: "7",
       sendemail: customer_email ? "True" : "False",
       FixTash: "False",
       J5: "False",

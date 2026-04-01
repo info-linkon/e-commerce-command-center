@@ -29,6 +29,7 @@ export default function WebCheckoutPage() {
   const { items, totalPrice, clearCart, shippingCost } = useCartStore();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
 
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
   const paymentSettings: PaymentSettings = paymentSettingsRow?.content
@@ -59,6 +60,17 @@ export default function WebCheckoutPage() {
       value: totalPrice(),
       currency: "ILS",
     });
+  }, []);
+
+  // Listen for postMessage from HYP iframe (success/error redirect)
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "hyp-payment-done" && e.data?.url) {
+        window.location.href = e.data.url;
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
   }, []);
 
   const subtotal = totalPrice();
@@ -210,7 +222,7 @@ export default function WebCheckoutPage() {
       sessionStorage.setItem("hyp_order_id", order.id);
       sessionStorage.setItem("hyp_order_number", String(order.order_number));
       clearCart();
-      window.location.href = hypData.payment_url;
+      setHypPaymentUrl(hypData.payment_url);
     } catch (err) {
       console.error(err);
       toast.error("حدث خطأ أثناء إرسال الطلب");
@@ -222,6 +234,36 @@ export default function WebCheckoutPage() {
   if (items.length === 0) {
     navigate("/web/cart");
     return null;
+  }
+
+  // Show HYP payment iframe overlay
+  if (hypPaymentUrl) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-background flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-card">
+          <span className="font-semibold text-sm flex items-center gap-2">
+            <Lock className="w-4 h-4 text-primary" />
+            صفحة دفع آمنة
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setHypPaymentUrl(null);
+              navigate("/web/cart");
+            }}
+          >
+            <X className="w-4 h-4 ml-1" />
+            إلغاء
+          </Button>
+        </div>
+        <iframe
+          src={hypPaymentUrl}
+          className="flex-1 w-full border-none"
+          allow="payment"
+        />
+      </div>
+    );
   }
 
   return (
