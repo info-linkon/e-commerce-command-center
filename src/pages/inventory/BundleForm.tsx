@@ -47,6 +47,8 @@ const BundleForm = () => {
   const [items, setItems] = useState<{ variation_id: string; quantity: number; label: string }[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [uploading, setUploading] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<{ src: string }[]>([]);
 
   const { data: allVariations } = useQuery({
     queryKey: ["all-variations-for-bundle"],
@@ -88,6 +90,9 @@ const BundleForm = () => {
         image_url: product?.image_url || null,
         bundle_type: bundle.bundle_type,
       });
+      if (product?.gallery_images && Array.isArray(product.gallery_images)) {
+        setGalleryImages((product.gallery_images as { src: string }[]).filter((img: any) => img.src));
+      }
       const bundleItems = (bundle as any).bundle_items || [];
       setItems(bundleItems.map((bi: any) => {
         const v = allVariations?.find((av) => av.id === bi.variation_id);
@@ -117,6 +122,30 @@ const BundleForm = () => {
       toast.error("שגיאה בהעלאת תמונה");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingGallery(true);
+    try {
+      const newImages: { src: string }[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.split(".").pop();
+        const path = `${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from("product-images").upload(path, file);
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(path);
+        newImages.push({ src: publicUrl });
+      }
+      setGalleryImages(prev => [...prev, ...newImages]);
+      toast.success(`${newImages.length} תמונות הועלו`);
+    } catch {
+      toast.error("שגיאה בהעלאת תמונות");
+    } finally {
+      setUploadingGallery(false);
+      e.target.value = "";
     }
   };
 
@@ -154,6 +183,7 @@ const BundleForm = () => {
       category_id: form.category_id || null,
       is_published: form.is_published,
       image_url: form.image_url || null,
+      gallery_images: galleryImages,
       product_type: form.bundle_type === "variable_bundle" ? "variable" as const : "simple" as const,
     };
 
@@ -345,7 +375,33 @@ const BundleForm = () => {
                 <input id="bundle-image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
               </div>
 
-              {/* Prices */}
+              {/* Gallery */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">גלריה ({galleryImages.length})</Label>
+                  <Label htmlFor="bundle-gallery-upload" className="text-xs text-primary cursor-pointer hover:underline">
+                    {uploadingGallery ? "מעלה..." : "+ הוסף תמונות"}
+                  </Label>
+                  <input id="bundle-gallery-upload" type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryUpload} disabled={uploadingGallery} />
+                </div>
+                {galleryImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {galleryImages.map((img, i) => (
+                      <div key={i} className="relative group">
+                        <img src={img.src} alt={`גלריה ${i + 1}`} className="w-full h-16 object-cover rounded-md border border-border" />
+                        <button
+                          type="button"
+                          onClick={() => setGalleryImages(prev => prev.filter((_, idx) => idx !== i))}
+                          className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">מחירים</Label>
                 <div className="grid grid-cols-3 gap-2">
