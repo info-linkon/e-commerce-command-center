@@ -185,41 +185,45 @@ const BundleForm = () => {
   const isPending = createBundle.isPending || updateBundle.isPending;
 
   return (
-    <div className="space-y-6" dir="rtl">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/inventory/bundles")}>
-          <ArrowRight className="h-4 w-4" />
+    <div className="space-y-4 pb-20" dir="rtl">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/inventory/bundles")}>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          <h1 className="text-xl font-bold">{isEditing ? "עריכת מארז" : "מארז חדש"}</h1>
+        </div>
+        <Button onClick={handleSave} disabled={!form.name || isPending} size="sm">
+          {isPending ? "שומר..." : "שמור"}
         </Button>
-        <h1 className="text-2xl font-bold">{isEditing ? "עריכת מארז" : "הוספת מארז חדש"}</h1>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-4">
           {/* Details */}
           <Card>
-            <CardHeader><CardTitle>פרטי המארז</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>שם המארז (עברית)</Label>
-                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <CardContent className="pt-4 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">שם (עברית)</Label>
+                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-9" />
                 </div>
-                <div className="space-y-2">
-                  <Label>اسم المجموعة (ערבית)</Label>
-                  <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" />
+                <div className="space-y-1">
+                  <Label className="text-xs">اسم (ערבית)</Label>
+                  <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" className="h-9" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>מק״ט (אותיות/מספרים באנגלית)</Label>
-                  <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} dir="ltr" placeholder="e.g. BND-001" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">מק״ט</Label>
+                  <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} dir="ltr" placeholder="e.g. BND-001" className="h-9" />
                 </div>
-                <div className="space-y-2">
-                  <Label>קטגוריה</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">קטגוריה</Label>
                   <Select value={form.category_id || "none"} onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? null : v })}>
-                    <SelectTrigger><SelectValue placeholder="בחר קטגוריה" /></SelectTrigger>
+                    <SelectTrigger className="h-9"><SelectValue placeholder="בחר" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">ללא קטגוריה</SelectItem>
+                      <SelectItem value="none">ללא</SelectItem>
                       {categories?.map((c) => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                       ))}
@@ -227,44 +231,43 @@ const BundleForm = () => {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>תיאור קצר (עברית)</Label>
-                  <RichTextEditor value={form.short_description} onChange={(v) => setForm({ ...form, short_description: v })} rows={3} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">תיאור קצר (עברית)</Label>
+                  <RichTextEditor value={form.short_description} onChange={(v) => setForm({ ...form, short_description: v })} rows={2} />
                 </div>
-                <div className="space-y-2">
-                  <Label>وصف مختصر (ערבית)</Label>
-                  <RichTextEditor value={form.short_description_ar} onChange={(v) => setForm({ ...form, short_description_ar: v })} rows={3} dir="rtl" />
+                <div className="space-y-1">
+                  <Label className="text-xs">وصف مختصر (ערבית)</Label>
+                  <RichTextEditor value={form.short_description_ar} onChange={(v) => setForm({ ...form, short_description_ar: v })} rows={2} dir="rtl" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>תיאור מלא (עברית)</Label>
-                  <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={6} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">תיאור מלא (עברית)</Label>
+                  <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={4} />
                 </div>
-                <div className="space-y-2">
-                  <Label>وصف كامل (ערבית)</Label>
-                  <RichTextEditor value={form.description_ar} onChange={(v) => setForm({ ...form, description_ar: v })} rows={6} dir="rtl" />
+                <div className="space-y-1">
+                  <Label className="text-xs">وصف كامل (ערבית)</Label>
+                  <RichTextEditor value={form.description_ar} onChange={(v) => setForm({ ...form, description_ar: v })} rows={4} dir="rtl" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Bundle Items — only for simple bundles */}
+          {/* Bundle Items — simple */}
           {form.bundle_type === "simple_bundle" && (
             <Card>
-              <CardHeader><CardTitle>פריטים במארז</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Input
-                    placeholder="חפש מוצר..."
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-3">
+              <CardContent className="pt-4 space-y-3">
+                <Label className="text-sm font-semibold">פריטים במארז</Label>
+                <Input
+                  placeholder="חפש מוצר..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="h-9"
+                />
+                <div className="flex gap-2">
                   <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                    <SelectTrigger className="flex-1"><SelectValue placeholder="בחר מוצר" /></SelectTrigger>
+                    <SelectTrigger className="flex-1 h-9"><SelectValue placeholder="מוצר" /></SelectTrigger>
                     <SelectContent>
                       {availableProducts.map((p) => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
@@ -273,7 +276,7 @@ const BundleForm = () => {
                   </Select>
                   {variations && variations.length > 0 && (
                     <Select onValueChange={addItem}>
-                      <SelectTrigger className="flex-1"><SelectValue placeholder="בחר וריאציה" /></SelectTrigger>
+                      <SelectTrigger className="flex-1 h-9"><SelectValue placeholder="וריאציה" /></SelectTrigger>
                       <SelectContent>
                         {variations.map((v) => (
                           <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
@@ -284,19 +287,19 @@ const BundleForm = () => {
                 </div>
 
                 {items.length > 0 && (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {items.map((item) => (
-                      <div key={item.variation_id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                        <span className="flex-1 font-medium text-sm">{item.label}</span>
+                      <div key={item.variation_id} className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                        <span className="flex-1 text-xs font-medium truncate">{item.label}</span>
                         <Input
                           type="number"
                           value={item.quantity}
                           onChange={(e) => updateQuantity(item.variation_id, Number(e.target.value))}
-                          className="w-20"
+                          className="w-16 h-8 text-xs"
                           min={1}
                         />
-                        <Button variant="ghost" size="icon" onClick={() => removeItem(item.variation_id)}>
-                          <X className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeItem(item.variation_id)}>
+                          <X className="h-3 w-3" />
                         </Button>
                       </div>
                     ))}
@@ -306,85 +309,87 @@ const BundleForm = () => {
             </Card>
           )}
 
-          {/* Bundle Variations — for variable bundles */}
+          {/* Bundle Variations */}
           {form.bundle_type === "variable_bundle" && isEditing && bundle && (
             <Card>
-              <CardHeader><CardTitle>וריאציות מארז</CardTitle></CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
+                <Label className="text-sm font-semibold mb-3 block">וריאציות מארז</Label>
                 <BundleVariationsManager bundleId={bundle.id} />
               </CardContent>
             </Card>
           )}
           {form.bundle_type === "variable_bundle" && !isEditing && (
             <Card>
-              <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground text-center py-4">שמור את המארז תחילה כדי להוסיף וריאציות</p>
+              <CardContent className="pt-4">
+                <p className="text-xs text-muted-foreground text-center py-3">שמור תחילה כדי להוסיף וריאציות</p>
               </CardContent>
             </Card>
           )}
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Image */}
+        <div className="space-y-4">
+          {/* Image + Prices + Settings in one compact card on desktop */}
           <Card>
-            <CardHeader><CardTitle>תמונות</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              {form.image_url && (
-                <img src={form.image_url} alt="תמונת מארז" className="w-full h-40 object-cover rounded-lg border" />
-              )}
-              <Label htmlFor="bundle-image-upload" className="flex items-center gap-2 cursor-pointer justify-center p-3 border-2 border-dashed rounded-lg hover:bg-accent transition-colors">
-                <Upload className="h-4 w-4" />
-                {uploading ? "מעלה..." : "העלה תמונה"}
-              </Label>
-              <input id="bundle-image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
-            </CardContent>
-          </Card>
+            <CardContent className="pt-4 space-y-4">
+              {/* Image */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">תמונה</Label>
+                {form.image_url && (
+                  <img src={form.image_url} alt="מארז" className="w-full h-32 object-cover rounded-md border" />
+                )}
+                <Label htmlFor="bundle-image-upload" className="flex items-center gap-2 cursor-pointer justify-center p-2 border-2 border-dashed rounded-md hover:bg-accent transition-colors text-xs">
+                  <Upload className="h-3 w-3" />
+                  {uploading ? "מעלה..." : "העלה תמונה"}
+                </Label>
+                <input id="bundle-image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+              </div>
 
-          {/* Prices */}
-          <Card>
-            <CardHeader><CardTitle>מחירים</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
+              {/* Prices */}
               <div className="space-y-2">
-                <Label>מחיר מכירה</Label>
-                <Input type="number" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: Number(e.target.value) })} />
+                <Label className="text-xs font-semibold">מחירים</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">מכירה</Label>
+                    <Input type="number" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: Number(e.target.value) })} className="h-8 text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">עלות</Label>
+                    <Input type="number" value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: Number(e.target.value) })} className="h-8 text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">משלוח</Label>
+                    <Input type="number" value={form.shipping_price} onChange={(e) => setForm({ ...form, shipping_price: Number(e.target.value) })} className="h-8 text-xs" />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>מחיר עלות (ללא מע״מ)</Label>
-                <Input type="number" value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: Number(e.target.value) })} />
-              </div>
-              <div className="space-y-2">
-                <Label>מחיר משלוח</Label>
-                <Input type="number" value={form.shipping_price} onChange={(e) => setForm({ ...form, shipping_price: Number(e.target.value) })} />
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Settings */}
-          <Card>
-            <CardHeader><CardTitle>הגדרות</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
+              {/* Settings */}
               <div className="space-y-2">
-                <Label>סוג מארז</Label>
+                <Label className="text-xs font-semibold">הגדרות</Label>
                 <Select value={form.bundle_type} onValueChange={(v: "simple_bundle" | "variable_bundle") => setForm({ ...form, bundle_type: v })} disabled={isEditing}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="simple_bundle">פשוט</SelectItem>
                     <SelectItem value="variable_bundle">עם וריאציות</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="flex items-center justify-between">
-                <Label>מפורסם באתר</Label>
-                <Switch checked={form.is_published} onCheckedChange={(v) => setForm({ ...form, is_published: v })} />
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">מפורסם באתר</Label>
+                  <Switch checked={form.is_published} onCheckedChange={(v) => setForm({ ...form, is_published: v })} />
+                </div>
               </div>
             </CardContent>
           </Card>
-
-          <Button className="w-full" onClick={handleSave} disabled={!form.name || isPending}>
-            {isPending ? "שומר..." : "שמור מארז"}
-          </Button>
         </div>
+      </div>
+
+      {/* Sticky bottom save bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-t p-3 flex items-center justify-between" dir="rtl">
+        <span className="text-sm text-muted-foreground truncate">{form.name || "מארז חדש"}</span>
+        <Button onClick={handleSave} disabled={!form.name || isPending}>
+          {isPending ? "שומר..." : "שמור מארז"}
+        </Button>
       </div>
     </div>
   );
