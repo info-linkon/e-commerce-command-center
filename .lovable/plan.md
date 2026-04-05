@@ -1,22 +1,31 @@
 
 
-# תיקון RTL בדיאלוג הקופה — Select Component
+# תיקון מק"ט + תמיכה בגלריית תמונות
 
-## בעיה
-רכיב ה-`SelectItem` ב-`select.tsx` משתמש בערכי padding קשיחים (`pl-8 pr-2`) ומיקום אייקון V (`left-2`) שלא מתהפכים ב-RTL. גם `SelectLabel` סובל מאותה בעיה. לכן למרות שהוספת `dir="rtl"` לדיאלוג — הטקסט בתוך ה-dropdown עדיין נראה מיושר לשמאל.
+## 1. תיקון שדה מק"ט — אותיות באנגלית בלבד
 
-## פתרון
-שינוי `select.tsx` לשימוש ב-Tailwind logical properties שמתהפכים אוטומטית לפי כיוון:
+**בעיה:** בטופס מוצר (`ProductForm`) שדה המק"ט חסר `dir="ltr"` — מה שגורם למקלדת/IME לעבוד במצב RTL ומקשה על הקלדת אותיות באנגלית בלבד.
 
-| מקורי | מתוקן |
+**פתרון:**
+- הוספת `dir="ltr"` ו-`placeholder="e.g. SKU-001"` לשדה מק"ט ב-`ProductForm.tsx` (כמו שכבר קיים ב-`BundleForm`)
+- אותו תיקון גם לשדה מק"ט בוריאציות (`VariationsManager.tsx`)
+
+## 2. גלריית תמונות — העלאת מספר תמונות
+
+**מצב נוכחי:** שדה `gallery_images` (JSON) כבר קיים ב-DB אבל רק מוצג read-only (מסנכרון WooCommerce). אין אפשרות להעלות תמונות נוספות ידנית.
+
+**פתרון:**
+- הוספת state `galleryImages` (מערך URLs) לטופס מוצר וטופס מארז
+- כפתור "הוסף תמונות לגלריה" שמאפשר בחירת מספר קבצים (`multiple`)
+- תצוגת grid של התמונות עם אפשרות מחיקה (X על כל תמונה)
+- שמירת המערך ל-`gallery_images` ב-DB בפורמט `[{ src: "url" }]`
+- טעינת הגלריה הקיימת בעריכה
+
+## קבצים
+
+| קובץ | שינוי |
 |---|---|
-| `pl-8 pr-2` | `ps-8 pe-2` |
-| `left-2` | `start-2` |
-
-### קובץ: `src/components/ui/select.tsx`
-- **SelectLabel** (שורה 97): `pl-8 pr-2` → `ps-8 pe-2`
-- **SelectItem** (שורה 108): `pl-8 pr-2` → `ps-8 pe-2`
-- **SelectItem check icon** (שורה 113): `left-2` → `start-2`
-
-שינוי זה ישפיע על כל ה-Select בכל המערכת — כך שכל dropdown יתמוך ב-RTL אוטומטית.
+| `src/pages/inventory/ProductForm.tsx` | `dir="ltr"` למק"ט + העלאת גלריה + שמירה |
+| `src/pages/inventory/BundleForm.tsx` | העלאת גלריה + שמירה |
+| `src/components/inventory/VariationsManager.tsx` | `dir="ltr"` לשדה מק"ט |
 
