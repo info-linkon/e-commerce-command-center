@@ -47,6 +47,8 @@ const BundleForm = () => {
   const [items, setItems] = useState<{ variation_id: string; quantity: number; label: string }[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [uploading, setUploading] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<{ src: string }[]>([]);
 
   const { data: allVariations } = useQuery({
     queryKey: ["all-variations-for-bundle"],
