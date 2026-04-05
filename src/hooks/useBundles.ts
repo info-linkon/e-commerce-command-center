@@ -121,7 +121,10 @@ export function useUpdateBundle() {
       qc.invalidateQueries({ queryKey: ["products"] });
       toast.success("המארז עודכן בהצלחה");
     },
-    onError: () => toast.error("שגיאה בעדכון מארז"),
+    onError: (err: any) => {
+      console.error("Update bundle error:", err, JSON.stringify(err));
+      toast.error(`שגיאה בעדכון מארז: ${err?.message || "unknown"}`);
+    },
   });
 }
 
