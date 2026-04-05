@@ -456,7 +456,7 @@ const PosPage = () => {
             <div>
               <Label>שיטת תשלום *</Label>
               <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (v !== "cash") setCashRegisterId(""); }} dir="rtl">
-                <SelectTrigger className="text-right"><SelectValue /></SelectTrigger>
+                <SelectTrigger dir="rtl" className="text-right"><SelectValue /></SelectTrigger>
                 <SelectContent dir="rtl">
                   <SelectItem value="cash">מזומן</SelectItem>
                   <SelectItem value="credit">אשראי</SelectItem>
