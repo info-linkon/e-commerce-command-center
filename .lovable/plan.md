@@ -1,26 +1,22 @@
 
 
-# תיקון: iframe תשלום HYP לא מוצג
+# תיקון RTL בדיאלוג הקופה — Select Component
 
-## הבעיה
-בקוד, `clearCart()` נקרא **לפני** `setHypPaymentUrl()` (שורה 224-225). זה מרוקן את הסל, מה שגורם ל-re-render, ואז הבדיקה `if (items.length === 0)` בשורה 234 מפנה ישירות ל-`/web/cart` — לפני שה-iframe מספיק להיטען.
+## בעיה
+רכיב ה-`SelectItem` ב-`select.tsx` משתמש בערכי padding קשיחים (`pl-8 pr-2`) ומיקום אייקון V (`left-2`) שלא מתהפכים ב-RTL. גם `SelectLabel` סובל מאותה בעיה. לכן למרות שהוספת `dir="rtl"` לדיאלוג — הטקסט בתוך ה-dropdown עדיין נראה מיושר לשמאל.
 
-## הפתרון
-1. **העבר את `clearCart()`** לאחרי שה-iframe כבר מוצג, או לאחר שהתשלום הושלם בהצלחה
-2. **שנה את הבדיקה** `if (items.length === 0)` כך שתתעלם כש-`hypPaymentUrl` קיים
-3. הדרך הנכונה: בדוק `hypPaymentUrl` **לפני** הבדיקה של סל ריק
+## פתרון
+שינוי `select.tsx` לשימוש ב-Tailwind logical properties שמתהפכים אוטומטית לפי כיוון:
 
-## שינויים בקובץ `src/pages/web/WebCheckoutPage.tsx`
-
-- שורה 224: הזז את `clearCart()` — קרא לו רק בתשלום מזומן (שורה 192), ובמקרה של שגיאת HYP (שורה 217). ב-credit עם iframe, **אל תנקה את הסל** עד שהתשלום הושלם
-- שורות 234-237: שנה את הבדיקה כך ש-`hypPaymentUrl` דורס את הניתוב לסל ריק:
-  ```
-  if (hypPaymentUrl) { /* show iframe */ }
-  if (items.length === 0 && !hypPaymentUrl) { navigate to cart }
-  ```
-- בנוסף, נקה את הסל כשה-postMessage מגיע מה-iframe (הצלחת תשלום) — בתוך ה-handler של `hyp-payment-done`
-
-| קובץ | שינוי |
+| מקורי | מתוקן |
 |---|---|
-| `src/pages/web/WebCheckoutPage.tsx` | תיקון סדר clearCart + בדיקת סל ריק |
+| `pl-8 pr-2` | `ps-8 pe-2` |
+| `left-2` | `start-2` |
+
+### קובץ: `src/components/ui/select.tsx`
+- **SelectLabel** (שורה 97): `pl-8 pr-2` → `ps-8 pe-2`
+- **SelectItem** (שורה 108): `pl-8 pr-2` → `ps-8 pe-2`
+- **SelectItem check icon** (שורה 113): `left-2` → `start-2`
+
+שינוי זה ישפיע על כל ה-Select בכל המערכת — כך שכל dropdown יתמוך ב-RTL אוטומטית.
 
