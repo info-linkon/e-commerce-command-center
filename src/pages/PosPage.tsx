@@ -468,7 +468,7 @@ const PosPage = () => {
               <div>
                 <Label>קופה *</Label>
                 <Select value={cashRegisterId} onValueChange={setCashRegisterId} dir="rtl">
-                  <SelectTrigger className="text-right"><SelectValue placeholder="בחר קופה..." /></SelectTrigger>
+                  <SelectTrigger dir="rtl" className="text-right"><SelectValue placeholder="בחר קופה..." /></SelectTrigger>
                   <SelectContent dir="rtl">
                     {cashRegisters?.filter(r => r.is_active).map((r) => (
                       <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
