@@ -90,6 +90,9 @@ const BundleForm = () => {
         image_url: product?.image_url || null,
         bundle_type: bundle.bundle_type,
       });
+      if (product?.gallery_images && Array.isArray(product.gallery_images)) {
+        setGalleryImages((product.gallery_images as { src: string }[]).filter((img: any) => img.src));
+      }
       const bundleItems = (bundle as any).bundle_items || [];
       setItems(bundleItems.map((bi: any) => {
         const v = allVariations?.find((av) => av.id === bi.variation_id);
