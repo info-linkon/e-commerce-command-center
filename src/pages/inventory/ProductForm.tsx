@@ -43,7 +43,9 @@ const ProductForm = () => {
     image_url: "" as string | null,
   });
 
+  const [galleryImages, setGalleryImages] = useState<{ src: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   useEffect(() => {
     if (product) {
