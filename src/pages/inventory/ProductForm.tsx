@@ -65,6 +65,9 @@ const ProductForm = () => {
         is_published: product.is_published,
         image_url: product.image_url,
       });
+      if (product.gallery_images && Array.isArray(product.gallery_images)) {
+        setGalleryImages((product.gallery_images as { src: string }[]).filter(img => img.src));
+      }
     }
   }, [product]);
 
