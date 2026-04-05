@@ -444,7 +444,7 @@ const PosPage = () => {
             <div>
               <Label>שיטת משלוח *</Label>
               <Select value={deliveryMethod} onValueChange={setDeliveryMethod} dir="rtl">
-                <SelectTrigger className="text-right"><SelectValue /></SelectTrigger>
+                <SelectTrigger dir="rtl" className="text-right"><SelectValue /></SelectTrigger>
                 <SelectContent dir="rtl">
                   <SelectItem value="pickup">איסוף עצמי</SelectItem>
                   {deliveryCompanies?.map((dc) => (
