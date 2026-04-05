@@ -177,12 +177,15 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg" dir="rtl">
+        <DialogContent
+          className="max-w-lg max-h-[90vh] overflow-hidden grid-rows-[auto_minmax(0,1fr)_auto]"
+          dir="rtl"
+        >
           <DialogHeader>
             <DialogTitle>{editingId ? "עריכת וריאציה" : "וריאציה חדשה"}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 min-h-0 overflow-y-auto pe-1">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>שם הוריאציה</Label>
@@ -231,7 +234,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
             {items.length > 0 && (
               <div className="space-y-2">
                 {items.map((item) => (
-                  <div key={item.variation_id} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                  <div key={item.variation_id} className="flex items-center gap-2 rounded-lg bg-muted p-2">
                     <span className="flex-1 text-sm">{item.label}</span>
                     <Input
                       type="number"
@@ -249,7 +252,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="border-t pt-4">
             <Button onClick={handleSave} disabled={!name || isPending}>
               {isPending ? "שומר..." : "שמור"}
             </Button>
