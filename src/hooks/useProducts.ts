@@ -70,7 +70,7 @@ export function useCreateProduct() {
         syncProductToWoo(data.id);
       }
     },
-    onError: () => toast.error("שגיאה ביצירת מוצר"),
+    onError: (err) => { console.error("Create product error:", err); toast.error("שגיאה ביצירת מוצר"); },
   });
 }
 
