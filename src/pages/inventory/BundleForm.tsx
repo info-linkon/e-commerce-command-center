@@ -375,7 +375,33 @@ const BundleForm = () => {
                 <input id="bundle-image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
               </div>
 
-              {/* Prices */}
+              {/* Gallery */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">גלריה ({galleryImages.length})</Label>
+                  <Label htmlFor="bundle-gallery-upload" className="text-xs text-primary cursor-pointer hover:underline">
+                    {uploadingGallery ? "מעלה..." : "+ הוסף תמונות"}
+                  </Label>
+                  <input id="bundle-gallery-upload" type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryUpload} disabled={uploadingGallery} />
+                </div>
+                {galleryImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {galleryImages.map((img, i) => (
+                      <div key={i} className="relative group">
+                        <img src={img.src} alt={`גלריה ${i + 1}`} className="w-full h-16 object-cover rounded-md border border-border" />
+                        <button
+                          type="button"
+                          onClick={() => setGalleryImages(prev => prev.filter((_, idx) => idx !== i))}
+                          className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">מחירים</Label>
                 <div className="grid grid-cols-3 gap-2">
