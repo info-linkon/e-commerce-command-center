@@ -431,21 +431,21 @@ const PosPage = () => {
           <DialogHeader>
             <DialogTitle>יצירת הזמנה - ₪{total.toFixed(2)}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 text-right">
             <div>
               <Label>שם לקוח *</Label>
-              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="text-right" dir="rtl" />
             </div>
             <div>
               <Label>טלפון *</Label>
-              <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} type="tel" dir="ltr" />
+              <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} type="tel" dir="ltr" className="text-left" />
             </div>
             <Separator />
             <div>
               <Label>שיטת משלוח *</Label>
-              <Select value={deliveryMethod} onValueChange={setDeliveryMethod}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+              <Select value={deliveryMethod} onValueChange={setDeliveryMethod} dir="rtl">
+                <SelectTrigger className="text-right"><SelectValue /></SelectTrigger>
+                <SelectContent dir="rtl">
                   <SelectItem value="pickup">איסוף עצמי</SelectItem>
                   {deliveryCompanies?.map((dc) => (
                     <SelectItem key={dc.id} value={dc.id}>{dc.name}</SelectItem>
@@ -455,9 +455,9 @@ const PosPage = () => {
             </div>
             <div>
               <Label>שיטת תשלום *</Label>
-              <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (v !== "cash") setCashRegisterId(""); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+              <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (v !== "cash") setCashRegisterId(""); }} dir="rtl">
+                <SelectTrigger className="text-right"><SelectValue /></SelectTrigger>
+                <SelectContent dir="rtl">
                   <SelectItem value="cash">מזומן</SelectItem>
                   <SelectItem value="credit">אשראי</SelectItem>
                   <SelectItem value="bit">ביט</SelectItem>
@@ -467,9 +467,9 @@ const PosPage = () => {
             {paymentMethod === "cash" && (
               <div>
                 <Label>קופה *</Label>
-                <Select value={cashRegisterId} onValueChange={setCashRegisterId}>
-                  <SelectTrigger><SelectValue placeholder="בחר קופה..." /></SelectTrigger>
-                  <SelectContent>
+                <Select value={cashRegisterId} onValueChange={setCashRegisterId} dir="rtl">
+                  <SelectTrigger className="text-right"><SelectValue placeholder="בחר קופה..." /></SelectTrigger>
+                  <SelectContent dir="rtl">
                     {cashRegisters?.filter(r => r.is_active).map((r) => (
                       <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                     ))}
