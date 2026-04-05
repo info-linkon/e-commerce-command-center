@@ -125,6 +125,30 @@ const BundleForm = () => {
     }
   };
 
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingGallery(true);
+    try {
+      const newImages: { src: string }[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.split(".").pop();
+        const path = `${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from("product-images").upload(path, file);
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(path);
+        newImages.push({ src: publicUrl });
+      }
+      setGalleryImages(prev => [...prev, ...newImages]);
+      toast.success(`${newImages.length} תמונות הועלו`);
+    } catch {
+      toast.error("שגיאה בהעלאת תמונות");
+    } finally {
+      setUploadingGallery(false);
+      e.target.value = "";
+    }
+  };
+
   const addItem = (variationId: string) => {
     if (items.find((i) => i.variation_id === variationId)) return;
     const variation = allVariations?.find((v) => v.id === variationId);
@@ -159,6 +183,7 @@ const BundleForm = () => {
       category_id: form.category_id || null,
       is_published: form.is_published,
       image_url: form.image_url || null,
+      gallery_images: galleryImages,
       product_type: form.bundle_type === "variable_bundle" ? "variable" as const : "simple" as const,
     };
 
