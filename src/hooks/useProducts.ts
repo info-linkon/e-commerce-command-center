@@ -89,7 +89,7 @@ export function useUpdateProduct() {
         syncProductToWoo(data.id);
       }
     },
-    onError: () => toast.error("שגיאה בעדכון מוצר"),
+    onError: (err) => { console.error("Update product error:", err); toast.error("שגיאה בעדכון מוצר"); },
   });
 }
 
