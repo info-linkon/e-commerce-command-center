@@ -156,7 +156,15 @@ const PosPage = () => {
     return { bundleId: bundle.id, type: bundle.bundle_type, inStock: anyInStock, variationStock: varStock };
   };
 
-  const total = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unit_price, 0), [cart]);
+  const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unit_price, 0), [cart]);
+
+  const discountAmount = useMemo(() => {
+    if (discountType === "none" || discountValue <= 0) return 0;
+    if (discountType === "percent") return Math.min(subtotal * (discountValue / 100), subtotal);
+    return Math.min(discountValue, subtotal);
+  }, [discountType, discountValue, subtotal]);
+
+  const total = subtotal - discountAmount;
 
   const addToCart = (variation: { id: string; name: string; price: number }, productName: string) => {
     const existing = cart.find((c) => c.variation_id === variation.id);
