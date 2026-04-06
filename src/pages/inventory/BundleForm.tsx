@@ -123,6 +123,31 @@ const BundleForm = () => {
     }
   }, [bundle, isEditing, allVariations]);
 
+  // Pre-fill form when converting a product to bundle
+  useEffect(() => {
+    if (sourceProduct && !isEditing) {
+      setForm({
+        name: sourceProduct.name || "",
+        name_ar: sourceProduct.name_ar || "",
+        sku: sourceProduct.sku || "",
+        description: sourceProduct.description || "",
+        description_ar: sourceProduct.description_ar || "",
+        short_description: sourceProduct.short_description || "",
+        short_description_ar: sourceProduct.short_description_ar || "",
+        sale_price: Number(sourceProduct.sale_price || 0),
+        cost_price: Number(sourceProduct.cost_price || 0),
+        shipping_price: Number(sourceProduct.shipping_price || 0),
+        category_id: sourceProduct.category_id || null,
+        is_published: sourceProduct.is_published || false,
+        image_url: sourceProduct.image_url || null,
+        bundle_type: "simple_bundle",
+      });
+      if (sourceProduct.gallery_images && Array.isArray(sourceProduct.gallery_images)) {
+        setGalleryImages((sourceProduct.gallery_images as { src: string }[]).filter((img: any) => img.src));
+      }
+    }
+  }, [sourceProduct, isEditing]);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
