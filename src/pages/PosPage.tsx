@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, ShoppingCart, Plus, Minus, Trash2, Package } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, Trash2, Package, Percent, BadgeDollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
