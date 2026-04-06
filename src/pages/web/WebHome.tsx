@@ -1,11 +1,19 @@
 import { Link } from "react-router-dom";
-import { BannerSlider } from "@/components/web/BannerSlider";
 import { WebProductCard } from "@/components/web/WebProductCard";
 import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
 import { useSiteSection } from "@/hooks/useSiteContent";
+import { useBannersPublic } from "@/hooks/useBannersPublic";
 import { defaultContent } from "@/lib/web-default-content";
-import { Truck, Shield, ShoppingBag, RefreshCw, ArrowLeft } from "lucide-react";
+import { Truck, Shield, ShoppingBag, RefreshCw, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+import { useRef, useCallback, useEffect, useState } from "react";
+import type { CarouselApi } from "@/components/ui/carousel";
 import heroBg from "@/assets/hero-bg.jpg";
 import catTeaCoffee from "@/assets/cat-tea-coffee.jpg";
 import catSeating from "@/assets/cat-seating.jpg";
@@ -28,60 +36,129 @@ const categoryImageMap: Record<string, string> = {
 export default function WebHome() {
   const { data: products } = useWebProducts();
   const { data: categories } = useWebCategories();
+  const { data: banners } = useBannersPublic();
 
   const { data: heroData } = useSiteSection("home", "hero");
   const hero = {
     ...defaultContent.home.hero,
     ...((heroData?.content as Record<string, any>) || {}),
   };
-  const heroImage = hero.backgroundImage || heroBg;
+
+  const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (!api) return;
+    setCurrent(api.selectedScrollSnap());
+    api.on("select", () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
 
   const featured = products?.slice(0, 8) || [];
 
+  // Build slides from banners, fallback to hero CMS data
+  const slides = banners && banners.length > 0
+    ? banners.map((b) => ({
+        image: b.image_url || heroBg,
+        title: b.title || "",
+        subtitle: b.subtitle || "",
+        link: b.link || "",
+      }))
+    : [{
+        image: hero.backgroundImage || heroBg,
+        title: hero.title || "وجهتك الأولى",
+        subtitle: hero.subtitle || "لعالم الطبيعة والمغامرات",
+        link: "",
+      }];
+
   return (
     <div>
-      {/* Hero Banner */}
-      <section className="relative overflow-hidden aspect-[16/9] max-h-[600px] flex items-center">
-        <div className="absolute inset-0">
-          <img
-            src={heroImage}
-            alt={hero.title || "خلفية الوجهة"}
-            className="w-full h-full object-cover"
-            width={1920}
-            height={1080}
-          />
-          <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/95 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/40" />
-        </div>
-        <div className="container py-10 md:py-28 relative z-10 text-desert-foreground">
-          <div className="max-w-2xl">
-            <span className="inline-block bg-gold/20 text-gold px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 md:mb-6 animate-fade-in">
-              ✨ أهلاً بك في الوجهة
-            </span>
-            <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-tight mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              {hero.title || "وجهتك الأولى"}
-              <br />
-              <span className="text-gradient-gold">{hero.subtitle || "لعالم الطبيعة والمغامرات"}</span>
-            </h1>
-            <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
-                <Link to={hero.cta_link || "/web/shop"}>
-                  {hero.cta_text || "تسوق الآن"}
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="border-white/50 text-white bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:text-white font-bold text-base">
-                <Link to="/web/about">من نحن</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hero Carousel */}
+      <section className="relative overflow-hidden aspect-[16/9] max-h-[600px]">
+        <Carousel
+          opts={{ loop: true, direction: "rtl" }}
+          plugins={[plugin.current]}
+          setApi={setApi}
+          className="w-full h-full"
+        >
+          <CarouselContent className="-ml-0 h-full">
+            {slides.map((slide, i) => (
+              <CarouselItem key={i} className="pl-0 h-full">
+                <div className="relative w-full h-full flex items-center">
+                  <img
+                    src={slide.image}
+                    alt={slide.title || "באנר"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    width={1920}
+                    height={1080}
+                    loading={i === 0 ? "eager" : "lazy"}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/95 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/40" />
+                  <div className="container relative z-10 text-desert-foreground py-10 md:py-28">
+                    <div className="max-w-2xl">
+                      <span className="inline-block bg-gold/20 text-gold px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 md:mb-6 animate-fade-in">
+                        ✨ أهلاً بك في الوجهة
+                      </span>
+                      {slide.title && (
+                        <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-tight mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                          {slide.title}
+                          {slide.subtitle && (
+                            <>
+                              <br />
+                              <span className="text-gradient-gold">{slide.subtitle}</span>
+                            </>
+                          )}
+                        </h1>
+                      )}
+                      <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                        مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                        <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
+                          <Link to={slide.link || hero.cta_link || "/web/shop"}>
+                            {hero.cta_text || "تسوق الآن"}
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                          </Link>
+                        </Button>
+                        <Button asChild variant="outline" size="lg" className="border-white/50 text-white bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:text-white font-bold text-base">
+                          <Link to="/web/about">من نحن</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
 
-      {/* Banner Slider */}
-      <BannerSlider />
+          {/* Navigation arrows + dots */}
+          {slides.length > 1 && (
+            <>
+              <button
+                onClick={() => api?.scrollPrev()}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-background/30 backdrop-blur-sm hover:bg-background/50 rounded-full p-2 transition-colors"
+              >
+                <ChevronRight className="w-5 h-5 text-white" />
+              </button>
+              <button
+                onClick={() => api?.scrollNext()}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-background/30 backdrop-blur-sm hover:bg-background/50 rounded-full p-2 transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" />
+              </button>
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                {slides.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => api?.scrollTo(i)}
+                    className={`w-2.5 h-2.5 rounded-full transition-colors ${i === current ? 'bg-gold' : 'bg-white/50'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </Carousel>
+      </section>
 
       {/* Features Strip */}
       <section className="bg-card border-b border-border">
