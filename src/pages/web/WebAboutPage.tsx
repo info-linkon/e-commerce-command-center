@@ -107,7 +107,7 @@ export default function WebAboutPage() {
             {content.title || "من نحن"}
           </h1>
           <p className="text-white/80 max-w-xl mx-auto text-lg">
-            وجهتكم الأولى لعالم الطبيعة والمغامرات
+            {content.description || "وجهتكم الأولى لعالم الطبيعة والمغامرات"}
           </p>
         </div>
       </div>
