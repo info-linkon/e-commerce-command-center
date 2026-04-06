@@ -163,6 +163,13 @@ const ProductsPage = () => {
                 ) : (
                   categories.map((c) => (
                     <TableRow key={c.id}>
+                      <TableCell>
+                        {c.image_url ? (
+                          <img src={c.image_url} alt={c.name} className="w-8 h-8 rounded object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 rounded bg-muted" />
+                        )}
+                      </TableCell>
                       <TableCell>{c.display_order}</TableCell>
                       <TableCell className="font-medium">{c.name}</TableCell>
                       <TableCell>
