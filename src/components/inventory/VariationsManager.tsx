@@ -28,7 +28,7 @@ export function VariationsManager({ productId }: VariationsManagerProps) {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ name: "", sku: "", price: 0, cost_price: 0, image_url: null });
+    setForm({ name: "", name_ar: "", sku: "", price: 0, cost_price: 0, image_url: null });
     setDialogOpen(true);
   };
 
