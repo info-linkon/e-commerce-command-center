@@ -154,8 +154,12 @@ export function VariationsManager({ productId }: VariationsManagerProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>שם</Label>
+              <Label>שם (עברית)</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>اسم (ערבית)</Label>
+              <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" />
             </div>
             <div className="space-y-2">
               <Label>מק״ט</Label>

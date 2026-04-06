@@ -96,7 +96,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
-          <Button onClick={() => onSave({ name, display_order: displayOrder, image_url: imageUrl })} disabled={!name || loading || uploading}>
+          <Button onClick={() => onSave({ name, name_he: nameHe || null, display_order: displayOrder, image_url: imageUrl })} disabled={!name || loading || uploading}>
             {loading ? "שומר..." : "שמור"}
           </Button>
         </DialogFooter>
