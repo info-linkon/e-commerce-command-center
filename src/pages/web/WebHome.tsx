@@ -134,18 +134,6 @@ export default function WebHome() {
           {/* Navigation arrows + dots */}
           {slides.length > 1 && (
             <>
-              <button
-                onClick={() => api?.scrollPrev()}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-background/30 backdrop-blur-sm hover:bg-background/50 rounded-full p-2 transition-colors"
-              >
-                <ChevronRight className="w-5 h-5 text-white" />
-              </button>
-              <button
-                onClick={() => api?.scrollNext()}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-background/30 backdrop-blur-sm hover:bg-background/50 rounded-full p-2 transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5 text-white" />
-              </button>
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
                 {slides.map((_, i) => (
                   <button
