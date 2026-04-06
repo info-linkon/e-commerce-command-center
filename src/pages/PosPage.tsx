@@ -226,6 +226,9 @@ const PosPage = () => {
         payment_method: paymentMethod,
         cash_register_id: paymentMethod === "cash" ? cashRegisterId : undefined,
         delivery_method: deliveryMethod,
+        discount_type: discountType !== "none" ? discountType : undefined,
+        discount_value: discountType !== "none" ? discountValue : undefined,
+        discount_amount: discountType !== "none" ? discountAmount : undefined,
         items: cart.map((c) => ({
           variation_id: c.variation_id,
           quantity: c.quantity,
