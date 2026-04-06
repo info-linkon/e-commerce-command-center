@@ -43,7 +43,7 @@ const ProductsPage = () => {
     },
   });
 
-  const handleCatSave = (data: { name: string; display_order: number }) => {
+  const handleCatSave = (data: { name: string; display_order: number; image_url: string | null }) => {
     if (editingCat) {
       updateCategory.mutate({ id: editingCat.id, ...data }, { onSuccess: () => setCatDialogOpen(false) });
     } else {
@@ -150,7 +150,8 @@ const ProductsPage = () => {
             </div>
             <Table>
               <TableHeader>
-                <TableRow>
+              <TableRow>
+                  <TableHead className="w-12">תמונה</TableHead>
                   <TableHead>סדר</TableHead>
                   <TableHead>שם</TableHead>
                   <TableHead className="w-24">פעולות</TableHead>
@@ -158,10 +159,17 @@ const ProductsPage = () => {
               </TableHeader>
               <TableBody>
                 {!categories?.length ? (
-                  <TableRow><TableCell colSpan={3} className="text-center py-4 text-muted-foreground">אין קטגוריות</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center py-4 text-muted-foreground">אין קטגוריות</TableCell></TableRow>
                 ) : (
                   categories.map((c) => (
                     <TableRow key={c.id}>
+                      <TableCell>
+                        {c.image_url ? (
+                          <img src={c.image_url} alt={c.name} className="w-8 h-8 rounded object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 rounded bg-muted" />
+                        )}
+                      </TableCell>
                       <TableCell>{c.display_order}</TableCell>
                       <TableCell className="font-medium">{c.name}</TableCell>
                       <TableCell>

@@ -16,7 +16,7 @@ const CategoriesPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
 
-  const handleSave = (data: { name: string; display_order: number }) => {
+  const handleSave = (data: { name: string; display_order: number; image_url: string | null }) => {
     if (editing) {
       updateCategory.mutate({ id: editing.id, ...data }, { onSuccess: () => setDialogOpen(false) });
     } else {
@@ -38,6 +38,7 @@ const CategoriesPage = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="text-right w-12">תמונה</TableHead>
               <TableHead className="text-right">סדר</TableHead>
               <TableHead className="text-right">שם</TableHead>
               <TableHead className="text-right w-24">פעולות</TableHead>
@@ -45,12 +46,19 @@ const CategoriesPage = () => {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">טוען...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">טוען...</TableCell></TableRow>
             ) : !categories?.length ? (
-              <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">אין קטגוריות עדיין</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">אין קטגוריות עדיין</TableCell></TableRow>
             ) : (
               categories.map((c) => (
                 <TableRow key={c.id}>
+                  <TableCell>
+                    {c.image_url ? (
+                      <img src={c.image_url} alt={c.name} className="w-8 h-8 rounded object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded bg-muted" />
+                    )}
+                  </TableCell>
                   <TableCell>{c.display_order}</TableCell>
                   <TableCell className="font-medium">{c.name}</TableCell>
                   <TableCell>
