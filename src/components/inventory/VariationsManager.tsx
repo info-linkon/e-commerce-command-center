@@ -34,7 +34,7 @@ export function VariationsManager({ productId }: VariationsManagerProps) {
 
   const openEdit = (v: Variation) => {
     setEditing(v);
-    setForm({ name: v.name, sku: v.sku || "", price: Number(v.price), cost_price: Number(v.cost_price), image_url: v.image_url || null });
+    setForm({ name: v.name, name_ar: v.name_ar || "", sku: v.sku || "", price: Number(v.price), cost_price: Number(v.cost_price), image_url: v.image_url || null });
     setDialogOpen(true);
   };
 
