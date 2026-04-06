@@ -38,6 +38,7 @@ const CategoriesPage = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="text-right w-12">תמונה</TableHead>
               <TableHead className="text-right">סדר</TableHead>
               <TableHead className="text-right">שם</TableHead>
               <TableHead className="text-right w-24">פעולות</TableHead>
