@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, ShoppingCart, Plus, Minus, Trash2, Package } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, Trash2, Package, Percent, BadgeDollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,8 @@ const PosPage = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [cashRegisterId, setCashRegisterId] = useState<string>("");
   const [variationPicker, setVariationPicker] = useState<GroupedProduct | null>(null);
+  const [discountType, setDiscountType] = useState<"none" | "percent" | "fixed">("none");
+  const [discountValue, setDiscountValue] = useState<number>(0);
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
@@ -154,7 +156,15 @@ const PosPage = () => {
     return { bundleId: bundle.id, type: bundle.bundle_type, inStock: anyInStock, variationStock: varStock };
   };
 
-  const total = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unit_price, 0), [cart]);
+  const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unit_price, 0), [cart]);
+
+  const discountAmount = useMemo(() => {
+    if (discountType === "none" || discountValue <= 0) return 0;
+    if (discountType === "percent") return Math.min(subtotal * (discountValue / 100), subtotal);
+    return Math.min(discountValue, subtotal);
+  }, [discountType, discountValue, subtotal]);
+
+  const total = subtotal - discountAmount;
 
   const addToCart = (variation: { id: string; name: string; price: number }, productName: string) => {
     const existing = cart.find((c) => c.variation_id === variation.id);
@@ -231,6 +241,8 @@ const PosPage = () => {
       setDeliveryMethod("pickup");
       setPaymentMethod("cash");
       setCashRegisterId("");
+      setDiscountType("none");
+      setDiscountValue(0);
       toast.success("ההזמנה נוצרה ונשלחה לתהליך ההזמנות");
       navigate("/orders");
     } catch {
@@ -284,6 +296,55 @@ const PosPage = () => {
       </ScrollArea>
       <Separator className="my-3" />
       <div className="space-y-3">
+        {/* Discount controls */}
+        <div className="space-y-2">
+          <div className="flex gap-1">
+            <Button
+              variant={discountType === "percent" ? "default" : "outline"}
+              size="sm"
+              className="flex-1 text-xs"
+              onClick={() => { setDiscountType(discountType === "percent" ? "none" : "percent"); setDiscountValue(0); }}
+            >
+              <Percent className="h-3 w-3 ml-1" />
+              הנחה %
+            </Button>
+            <Button
+              variant={discountType === "fixed" ? "default" : "outline"}
+              size="sm"
+              className="flex-1 text-xs"
+              onClick={() => { setDiscountType(discountType === "fixed" ? "none" : "fixed"); setDiscountValue(0); }}
+            >
+              <BadgeDollarSign className="h-3 w-3 ml-1" />
+              הנחה ₪
+            </Button>
+          </div>
+          {discountType !== "none" && (
+            <Input
+              type="number"
+              min={0}
+              max={discountType === "percent" ? 100 : subtotal}
+              value={discountValue || ""}
+              onChange={(e) => setDiscountValue(Number(e.target.value))}
+              placeholder={discountType === "percent" ? "אחוז הנחה" : "סכום הנחה"}
+              className="text-center h-8 text-sm"
+            />
+          )}
+        </div>
+
+        {/* Subtotal + discount display */}
+        {discountAmount > 0 && (
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between text-muted-foreground">
+              <span>₪{subtotal.toFixed(2)}</span>
+              <span>סכום ביניים</span>
+            </div>
+            <div className="flex justify-between text-green-600 font-medium">
+              <span>-₪{discountAmount.toFixed(2)}</span>
+              <span>הנחה {discountType === "percent" ? `(${discountValue}%)` : ""}</span>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-between text-lg font-bold">
           <span>₪{total.toFixed(2)}</span>
           <span>סה״כ</span>
