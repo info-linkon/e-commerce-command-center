@@ -94,7 +94,7 @@ export default function WebAboutPage() {
       <div className="relative h-[250px] md:h-[450px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={aboutHero}
+            src={content.backgroundImage || aboutHero}
             alt="خلفية من نحن"
             className="w-full h-full object-cover"
             width={1920}
