@@ -128,6 +128,87 @@ export function useUpdateBundle() {
   });
 }
 
+export function useDuplicateBundle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ bundleId, productId }: { bundleId: string; productId: string }) => {
+      // Fetch source product
+      const { data: srcProduct, error: pErr } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", productId)
+        .single();
+      if (pErr) throw pErr;
+
+      // Create duplicate product
+      const { id, product_number, created_at, updated_at, ...productFields } = srcProduct;
+      const { data: newProduct, error: npErr } = await supabase
+        .from("products")
+        .insert({ ...productFields, name: `${productFields.name} (עותק)` })
+        .select()
+        .single();
+      if (npErr) throw npErr;
+
+      // Fetch source bundle
+      const { data: srcBundle, error: bErr } = await supabase
+        .from("bundles")
+        .select("*")
+        .eq("id", bundleId)
+        .single();
+      if (bErr) throw bErr;
+
+      // Create duplicate bundle
+      const { data: newBundle, error: nbErr } = await supabase
+        .from("bundles")
+        .insert({ product_id: newProduct.id, bundle_type: srcBundle.bundle_type })
+        .select()
+        .single();
+      if (nbErr) throw nbErr;
+
+      // Duplicate bundle_items
+      const { data: srcItems } = await supabase
+        .from("bundle_items")
+        .select("variation_id, quantity")
+        .eq("bundle_id", bundleId);
+      if (srcItems && srcItems.length > 0) {
+        await supabase
+          .from("bundle_items")
+          .insert(srcItems.map((i) => ({ ...i, bundle_id: newBundle.id })));
+      }
+
+      // Duplicate bundle_variations + their items
+      const { data: srcVars } = await supabase
+        .from("bundle_variations")
+        .select("*, bundle_variation_items(variation_id, quantity)")
+        .eq("bundle_id", bundleId);
+      if (srcVars && srcVars.length > 0) {
+        for (const sv of srcVars) {
+          const { data: newVar, error: nvErr } = await supabase
+            .from("bundle_variations")
+            .insert({ bundle_id: newBundle.id, name: sv.name, price: sv.price })
+            .select()
+            .single();
+          if (nvErr) continue;
+          const varItems = (sv as any).bundle_variation_items || [];
+          if (varItems.length > 0) {
+            await supabase
+              .from("bundle_variation_items")
+              .insert(varItems.map((vi: any) => ({ variation_id: vi.variation_id, quantity: vi.quantity, bundle_variation_id: newVar.id })));
+          }
+        }
+      }
+
+      return newBundle;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bundles"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      toast.success("המארז שוכפל בהצלחה");
+    },
+    onError: () => toast.error("שגיאה בשכפול מארז"),
+  });
+}
+
 export function useDeleteBundle() {
   const qc = useQueryClient();
   return useMutation({

@@ -70,8 +70,11 @@ const BundlesPage = () => {
           );
         }}
         actions={(b) => (
-          <div onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" onClick={() => deleteBundle.mutate({ bundleId: b.id, productId: b.product_id })}>
+          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" title="שכפל מארז" onClick={() => duplicateBundle.mutate({ bundleId: b.id, productId: b.product_id })}>
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" title="מחק מארז" onClick={() => deleteBundle.mutate({ bundleId: b.id, productId: b.product_id })}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
