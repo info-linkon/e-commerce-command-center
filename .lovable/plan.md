@@ -1,26 +1,25 @@
 
 
-# הצגת תמונות בתצוגת התוכן בניהול אתר
+# הוספת תמונות לערכים בדף אודות + חיבור ל-CMS
 
 ## בעיה
-כרגע בכרטיסי התוכן (Card preview) בדף ניהול התוכן, שדות תמונה מוצגים כ-URL טקסטואלי מקוצר. הלקוח רוצה לראות את התמונות עצמן בתצוגה המקדימה.
+סקשן הערכים (values) בדף אודות משתמש בתמונות hardcoded מקומיות (about-value-1/2/3.jpg) ולא מחובר ל-CMS. בניהול תוכן אין שדה תמונה לערכים.
 
-## מצב קיים
-- דיאלוג העריכה כבר תומך בהעלאת תמונות + תצוגה מקדימה (עובד מצוין)
-- התצוגה בכרטיס מציגה רק `Object.entries(content).slice(0,3)` כטקסט
+## שינויים
 
-## פתרון
+### 1. `src/lib/web-default-content.ts`
+- הוספת שדה `image` לכל פריט ב-`defaultContent.about.values.items`
+- הוספת `{ key: 'image', label: 'תמונה', type: 'text' }` ל-`sectionFields.about.values.arrayFields`
 
-### `src/pages/admin/WebContentPage.tsx`
-בתוך ה-CardContent (שורות 252-259), לשנות את הלוגיקה כך ש:
+### 2. `src/pages/web/WebAboutPage.tsx`
+- טעינת סקשן values מה-CMS באמצעות `useSiteSection("about", "values")`
+- טעינת סקשן story מה-CMS באמצעות `useSiteSection("about", "story")`
+- שימוש בנתוני ה-CMS לערכים (title, desc, image) במקום המערך ה-hardcoded
+- fallback לתמונות המקומיות אם אין תמונה ב-CMS
+- חיבור גם הסיפור שלנו (story) ל-CMS כדי שתמונת הסיפור תהיה ניתנת לעריכה
 
-1. **שדות תמונה** (שה-key שלהם מופיע ב-sectionFields כ-`type: 'image'`) — יוצגו כתמונה ממשית (`<img>`) במקום טקסט URL
-2. **שאר השדות** — יישארו כמו היום (טקסט מקוצר)
-
-הלוגיקה:
-- לבדוק עבור כל key בתוכן אם הוא מוגדר כ-`type: 'image'` ב-`sectionFields`
-- אם כן ויש URL — להציג `<img>` קטנה (w-16 h-16 rounded object-cover)
-- אם אין URL — להציג "לא הוגדרה תמונה"
-
-שינוי קטן, רק באזור ה-CardContent.
+## תוצאה
+- בניהול תוכן → אודות → ערכים: ניתן לעדכן תמונה לכל ערך
+- בניהול תוכן → אודות → הסיפור שלנו: ניתן לעדכן תמונת הסיפור
+- הדף מציג את התמונות מה-CMS
 
