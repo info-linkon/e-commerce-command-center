@@ -288,7 +288,7 @@ const ProductForm = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>סוג מוצר</Label>
-                <Select value={form.product_type} onValueChange={(v: "simple" | "variable") => setForm({ ...form, product_type: v })} disabled={isEditing}>
+                <Select value={form.product_type} onValueChange={(v: "simple" | "variable") => setForm({ ...form, product_type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="simple">פשוט</SelectItem>

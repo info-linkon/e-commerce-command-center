@@ -500,7 +500,7 @@ const BundleForm = () => {
               {/* Settings */}
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">הגדרות</Label>
-                <Select value={form.bundle_type} onValueChange={(v: "simple_bundle" | "variable_bundle") => setForm({ ...form, bundle_type: v })} disabled={isEditing}>
+                <Select value={form.bundle_type} onValueChange={(v: "simple_bundle" | "variable_bundle") => setForm({ ...form, bundle_type: v })}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="simple_bundle">פשוט</SelectItem>
