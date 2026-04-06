@@ -76,16 +76,26 @@ export default function WebContentPage() {
     });
   };
 
-  const handleImageUpload = async (key: string, file: File) => {
+  const uploadImage = async (file: File): Promise<string | null> => {
     const ext = file.name.split('.').pop();
     const path = `content/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: false });
     if (error) {
       toast.error('שגיאה בהעלאת התמונה');
-      return;
+      return null;
     }
     const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
-    updateField(key, urlData.publicUrl);
+    return urlData.publicUrl;
+  };
+
+  const handleImageUpload = async (key: string, file: File) => {
+    const url = await uploadImage(file);
+    if (url) updateField(key, url);
+  };
+
+  const handleArrayImageUpload = async (arrayKey: string, index: number, fieldKey: string, file: File) => {
+    const url = await uploadImage(file);
+    if (url) updateArrayItem(arrayKey, index, fieldKey, url);
   };
 
   const renderField = (field: FieldConfig) => {
