@@ -61,8 +61,12 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="cat-name">שם הקטגוריה</Label>
-            <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: סיגרים" />
+            <Label htmlFor="cat-name">שם הקטגוריה (ערבית)</Label>
+            <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: سيجار" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cat-name-he">שם הקטגוריה (עברית)</Label>
+            <Input id="cat-name-he" value={nameHe} onChange={(e) => setNameHe(e.target.value)} placeholder="למשל: סיגרים" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="order">סדר תצוגה</Label>
