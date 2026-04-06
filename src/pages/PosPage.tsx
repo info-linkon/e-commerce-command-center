@@ -241,6 +241,8 @@ const PosPage = () => {
       setDeliveryMethod("pickup");
       setPaymentMethod("cash");
       setCashRegisterId("");
+      setDiscountType("none");
+      setDiscountValue(0);
       toast.success("ההזמנה נוצרה ונשלחה לתהליך ההזמנות");
       navigate("/orders");
     } catch {
