@@ -118,7 +118,7 @@ export default function WebHome() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
             {categories.map((cat) => {
-              const imgSrc = categoryImageMap[cat.id] || (cat as any).image_url;
+              const imgSrc = (cat as any).image_url || categoryImageMap[cat.id];
               return (
                 <Link
                   key={cat.id}
