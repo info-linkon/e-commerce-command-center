@@ -28,6 +28,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
   const handleOpen = (isOpen: boolean) => {
     if (isOpen) {
       setName(category?.name ?? "");
+      setNameHe((category as any)?.name_he ?? "");
       setDisplayOrder(category?.display_order ?? 0);
       setImageUrl(category?.image_url ?? null);
     }
