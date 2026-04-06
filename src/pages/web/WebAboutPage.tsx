@@ -60,8 +60,14 @@ const StatCard = ({ end, suffix, desc, iconIndex }: { end: number; suffix: strin
 };
 
 export default function WebAboutPage() {
-  const { data: section } = useSiteSection("about", "hero");
-  const content = (section?.content as any) || defaultContent.about.hero || {};
+  const { data: heroSection } = useSiteSection("about", "hero");
+  const { data: storySection } = useSiteSection("about", "story");
+  const { data: valuesSection } = useSiteSection("about", "values");
+  const content = (heroSection?.content as any) || defaultContent.about.hero || {};
+  const storyContent = (storySection?.content as any) || defaultContent.about.story || {};
+  const valuesContent = (valuesSection?.content as any) || defaultContent.about.values || {};
+
+  const fallbackImages = [aboutValue1, aboutValue2, aboutValue3];
 
   const stats = [
     { end: 500, suffix: "+", desc: "منتج متوفر" },
@@ -70,11 +76,11 @@ export default function WebAboutPage() {
     { end: 100, suffix: "%", desc: "رضا العملاء" },
   ];
 
-  const values = [
-    { title: "رضاك مضمون", desc: "ضمان 100% على جميع المنتجات — رضاك هو أولويتنا", image: aboutValue1 },
-    { title: "أصالة وتراث", desc: "منتجات بأسلوب شرقي تقليدي أصيل تجمع بين الجودة والتراث", image: aboutValue2 },
-    { title: "توصيل سريع", desc: "نوصل لجميع المناطق بسرعة وأمان", image: aboutValue3 },
-  ];
+  const values = (valuesContent.items as any[] || defaultContent.about.values.items).map((v: any, i: number) => ({
+    title: v.title,
+    desc: v.desc,
+    image: v.image || fallbackImages[i] || fallbackImages[0],
+  }));
 
   const faqs = [
     { q: "كيف يمكنني الطلب؟", a: "يمكنك تصفح المنتجات وإضافتها إلى السلة ثم إتمام الطلب بسهولة" },

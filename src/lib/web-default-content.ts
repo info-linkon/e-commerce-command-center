@@ -141,6 +141,7 @@ export const sectionFields: Record<string, Record<string, FieldConfig[]>> = {
       { key: 'items', label: 'ערכים', type: 'array', arrayFields: [
         { key: 'title', label: 'כותרת', type: 'text' },
         { key: 'desc', label: 'תיאור', type: 'textarea' },
+        { key: 'image', label: 'תמונה', type: 'image' },
       ]},
     ],
   },
