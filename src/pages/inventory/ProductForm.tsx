@@ -212,7 +212,7 @@ const ProductForm = () => {
             </CardContent>
           </Card>
 
-          {isEditing && form.product_type === "variable" && (
+          {isEditing && id && form.product_type === "variable" && (
             <Card>
               <CardContent className="pt-6">
                 <VariationsManager productId={id!} />
