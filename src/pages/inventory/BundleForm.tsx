@@ -19,6 +19,8 @@ import { toast } from "sonner";
 
 const BundleForm = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const fromProductId = searchParams.get("fromProduct");
   const navigate = useNavigate();
   const isEditing = !!id;
   const createBundle = useCreateBundle();
@@ -26,6 +28,21 @@ const BundleForm = () => {
   const { data: bundle } = useBundle(id);
   const { data: products } = useProducts();
   const { data: categories } = useCategories();
+
+  // Load source product when converting from products list
+  const { data: sourceProduct } = useQuery({
+    queryKey: ["product-for-bundle", fromProductId],
+    enabled: !!fromProductId && !isEditing,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", fromProductId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const [form, setForm] = useState({
     name: "",
