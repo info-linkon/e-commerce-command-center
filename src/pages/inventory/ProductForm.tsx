@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowRight, RefreshCw, Upload } from "lucide-react";
+import { ArrowRight, RefreshCw, Upload, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,15 +144,23 @@ const ProductForm = () => {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/inventory/products")}>
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-        <h1 className="text-2xl font-bold">{isEditing ? "עריכת פריט" : "הוספת פריט חדש"}</h1>
-        {isEditing && (
-          <Badge variant={product?.woo_id ? "default" : "secondary"} className="mr-2">
-            {product?.woo_id ? "מסונכרן לוו" : "לא מסונכרן"}
-          </Badge>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/inventory/products")}>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold">{isEditing ? "עריכת פריט" : "הוספת פריט חדש"}</h1>
+          {isEditing && (
+            <Badge variant={product?.woo_id ? "default" : "secondary"} className="mr-2">
+              {product?.woo_id ? "מסונכרן לוו" : "לא מסונכרן"}
+            </Badge>
+          )}
+        </div>
+        {isEditing && id && (
+          <Button variant="outline" size="sm" onClick={() => navigate(`/inventory/bundles/new?fromProduct=${id}`)}>
+            <Package className="h-4 w-4 ml-1" />
+            העבר למארז
+          </Button>
         )}
       </div>
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, FolderOpen, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import { CategoryDialog } from "@/components/inventory/CategoryDialog";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+
 
 type Category = Tables<"categories">;
 
@@ -51,9 +51,6 @@ const ProductsPage = () => {
     }
   };
 
-  const handleConvertToBundle = (productId: string) => {
-    navigate(`/inventory/bundles/new?fromProduct=${productId}`);
-  };
 
   const filtered = useMemo(() => {
     return (products || []).filter((p) => {
@@ -128,9 +125,6 @@ const ProductsPage = () => {
         )}
         actions={(p) => (
           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" title="העבר למארז" onClick={() => handleConvertToBundle(p.id)}>
-              <Package className="h-4 w-4" />
-            </Button>
             <Button variant="ghost" size="icon" onClick={() => navigate(`/inventory/products/${p.id}`)}>
               <Pencil className="h-4 w-4" />
             </Button>
