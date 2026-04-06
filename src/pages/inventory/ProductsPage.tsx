@@ -51,9 +51,6 @@ const ProductsPage = () => {
     }
   };
 
-  const handleConvertToBundle = (productId: string) => {
-    navigate(`/inventory/bundles/new?fromProduct=${productId}`);
-  };
 
   const filtered = useMemo(() => {
     return (products || []).filter((p) => {
