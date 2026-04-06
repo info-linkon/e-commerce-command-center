@@ -205,7 +205,10 @@ export function useDuplicateBundle() {
       qc.invalidateQueries({ queryKey: ["products"] });
       toast.success("המארז שוכפל בהצלחה");
     },
-    onError: () => toast.error("שגיאה בשכפול מארז"),
+    onError: (err: any) => {
+      console.error("Duplicate bundle error:", err, JSON.stringify(err));
+      toast.error("שגיאה בשכפול מארז");
+    },
   });
 }
 
