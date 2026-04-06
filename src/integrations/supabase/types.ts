@@ -266,6 +266,7 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          name_he: string | null
           slug: string | null
           woo_id: number | null
         }
@@ -276,6 +277,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          name_he?: string | null
           slug?: string | null
           woo_id?: number | null
         }
@@ -286,6 +288,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          name_he?: string | null
           slug?: string | null
           woo_id?: number | null
         }

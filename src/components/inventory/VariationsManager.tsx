@@ -23,18 +23,18 @@ export function VariationsManager({ productId }: VariationsManagerProps) {
   const deleteVariation = useDeleteVariation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Variation | null>(null);
-  const [form, setForm] = useState({ name: "", sku: "", price: 0, cost_price: 0, image_url: "" as string | null });
+  const [form, setForm] = useState({ name: "", name_ar: "", sku: "", price: 0, cost_price: 0, image_url: "" as string | null });
   const [uploading, setUploading] = useState(false);
 
   const openNew = () => {
     setEditing(null);
-    setForm({ name: "", sku: "", price: 0, cost_price: 0, image_url: null });
+    setForm({ name: "", name_ar: "", sku: "", price: 0, cost_price: 0, image_url: null });
     setDialogOpen(true);
   };
 
   const openEdit = (v: Variation) => {
     setEditing(v);
-    setForm({ name: v.name, sku: v.sku || "", price: Number(v.price), cost_price: Number(v.cost_price), image_url: v.image_url || null });
+    setForm({ name: v.name, name_ar: v.name_ar || "", sku: v.sku || "", price: Number(v.price), cost_price: Number(v.cost_price), image_url: v.image_url || null });
     setDialogOpen(true);
   };
 
@@ -58,7 +58,7 @@ export function VariationsManager({ productId }: VariationsManagerProps) {
   };
 
   const handleSave = () => {
-    const payload = { name: form.name, sku: form.sku, price: form.price, cost_price: form.cost_price, image_url: form.image_url };
+    const payload = { name: form.name, name_ar: form.name_ar || null, sku: form.sku, price: form.price, cost_price: form.cost_price, image_url: form.image_url };
     if (editing) {
       updateVariation.mutate({ id: editing.id, ...payload }, { onSuccess: () => setDialogOpen(false) });
     } else {
@@ -154,8 +154,12 @@ export function VariationsManager({ productId }: VariationsManagerProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>שם</Label>
+              <Label>שם (עברית)</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>اسم (ערבית)</Label>
+              <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" />
             </div>
             <div className="space-y-2">
               <Label>מק״ט</Label>

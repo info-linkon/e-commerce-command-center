@@ -14,12 +14,13 @@ interface CategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category?: Category | null;
-  onSave: (data: { name: string; display_order: number; image_url: string | null }) => void;
+  onSave: (data: { name: string; name_he: string | null; display_order: number; image_url: string | null }) => void;
   loading?: boolean;
 }
 
 export function CategoryDialog({ open, onOpenChange, category, onSave, loading }: CategoryDialogProps) {
   const [name, setName] = useState(category?.name ?? "");
+  const [nameHe, setNameHe] = useState((category as any)?.name_he ?? "");
   const [displayOrder, setDisplayOrder] = useState(category?.display_order ?? 0);
   const [imageUrl, setImageUrl] = useState<string | null>(category?.image_url ?? null);
   const [uploading, setUploading] = useState(false);
@@ -27,6 +28,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
   const handleOpen = (isOpen: boolean) => {
     if (isOpen) {
       setName(category?.name ?? "");
+      setNameHe((category as any)?.name_he ?? "");
       setDisplayOrder(category?.display_order ?? 0);
       setImageUrl(category?.image_url ?? null);
     }
@@ -59,8 +61,12 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="cat-name">שם הקטגוריה</Label>
-            <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: סיגרים" />
+            <Label htmlFor="cat-name">שם הקטגוריה (ערבית)</Label>
+            <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: سيجار" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cat-name-he">שם הקטגוריה (עברית)</Label>
+            <Input id="cat-name-he" value={nameHe} onChange={(e) => setNameHe(e.target.value)} placeholder="למשל: סיגרים" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="order">סדר תצוגה</Label>
@@ -90,7 +96,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
-          <Button onClick={() => onSave({ name, display_order: displayOrder, image_url: imageUrl })} disabled={!name || loading || uploading}>
+          <Button onClick={() => onSave({ name, name_he: nameHe || null, display_order: displayOrder, image_url: imageUrl })} disabled={!name || loading || uploading}>
             {loading ? "שומר..." : "שמור"}
           </Button>
         </DialogFooter>
