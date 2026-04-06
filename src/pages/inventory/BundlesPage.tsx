@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
-import { useBundles, useDeleteBundle } from "@/hooks/useBundles";
+import { useBundles, useDeleteBundle, useDuplicateBundle } from "@/hooks/useBundles";
 
 const BundlesPage = () => {
   const navigate = useNavigate();
