@@ -176,18 +176,23 @@ export default function WebContentPage() {
                 <div key={af.key} className="space-y-1">
                   <Label className="text-xs">{af.label}</Label>
                   {af.type === 'image' ? (
-                    <div className="flex items-center gap-3">
-                      {(af.key === '_value' ? item : item?.[af.key]) && (
-                        <img src={af.key === '_value' ? item : item?.[af.key]} alt="" className="w-16 h-16 object-cover rounded-lg border border-border" />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        {(af.key === '_value' ? item : item?.[af.key]) && (
+                          <img src={af.key === '_value' ? item : item?.[af.key]} alt="" className="w-16 h-16 object-cover rounded-lg border border-border" />
+                        )}
+                        <label className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border hover:border-primary/50 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                          <ImagePlus className="w-4 h-4" />
+                          <span>{(af.key === '_value' ? item : item?.[af.key]) ? 'החלף תמונה' : 'העלה תמונה'}</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleArrayImageUpload(field.key, i, af.key, f);
+                          }} />
+                        </label>
+                      </div>
+                      {!(af.key === '_value' ? item : item?.[af.key]) && (
+                        <p className="text-xs text-muted-foreground/60">תמונת ברירת מחדל תוצג באתר אם לא תועלה תמונה</p>
                       )}
-                      <label className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border hover:border-primary/50 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                        <ImagePlus className="w-4 h-4" />
-                        <span>העלה תמונה</span>
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) handleArrayImageUpload(field.key, i, af.key, f);
-                        }} />
-                      </label>
                     </div>
                   ) : af.type === 'textarea' ? (
                     <Textarea
