@@ -9,6 +9,7 @@ const BundlesPage = () => {
   const navigate = useNavigate();
   const { data: bundles, isLoading } = useBundles();
   const deleteBundle = useDeleteBundle();
+  const duplicateBundle = useDuplicateBundle();
 
   const data = bundles || [];
 
