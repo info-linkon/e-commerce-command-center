@@ -128,6 +128,9 @@ const ProductsPage = () => {
         )}
         actions={(p) => (
           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" title="העבר למארז" onClick={() => handleConvertToBundle(p.id)}>
+              <Package className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => navigate(`/inventory/products/${p.id}`)}>
               <Pencil className="h-4 w-4" />
             </Button>
