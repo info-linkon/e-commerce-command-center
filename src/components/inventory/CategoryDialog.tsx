@@ -14,7 +14,7 @@ interface CategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category?: Category | null;
-  onSave: (data: { name: string; display_order: number; image_url: string | null }) => void;
+  onSave: (data: { name: string; name_he: string | null; display_order: number; image_url: string | null }) => void;
   loading?: boolean;
 }
 
