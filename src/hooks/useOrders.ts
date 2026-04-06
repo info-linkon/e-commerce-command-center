@@ -82,6 +82,9 @@ export function useCreateOrder() {
       payment_method?: string;
       delivery_method?: string;
       created_by?: string;
+      discount_type?: string;
+      discount_value?: number;
+      discount_amount?: number;
       items: OrderItem[];
     }) => {
       const { items, source, cash_register_id, payment_method, delivery_method, created_by, ...rest } = input;
