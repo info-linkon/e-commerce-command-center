@@ -16,7 +16,7 @@ const CategoriesPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
 
-  const handleSave = (data: { name: string; display_order: number }) => {
+  const handleSave = (data: { name: string; display_order: number; image_url: string | null }) => {
     if (editing) {
       updateCategory.mutate({ id: editing.id, ...data }, { onSuccess: () => setDialogOpen(false) });
     } else {
