@@ -51,6 +51,8 @@ const PosPage = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [cashRegisterId, setCashRegisterId] = useState<string>("");
   const [variationPicker, setVariationPicker] = useState<GroupedProduct | null>(null);
+  const [discountType, setDiscountType] = useState<"none" | "percent" | "fixed">("none");
+  const [discountValue, setDiscountValue] = useState<number>(0);
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
