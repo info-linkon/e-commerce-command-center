@@ -250,13 +250,29 @@ export default function WebContentPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      {Object.entries(content).slice(0, 3).map(([k, v]) => (
-                        <p key={k}>
-                          <span className="font-medium text-foreground">{k}:</span>{' '}
-                          {typeof v === 'string' ? v.substring(0, 80) + (v.length > 80 ? '...' : '') : Array.isArray(v) ? `${v.length} פריטים` : JSON.stringify(v).substring(0, 60)}
-                        </p>
-                      ))}
+                    <div className="text-sm text-muted-foreground space-y-2">
+                      {Object.entries(content).slice(0, 5).map(([k, v]) => {
+                        const fieldDef = sectionFields[page]?.[section]?.find((f) => f.key === k);
+                        const isImage = fieldDef?.type === 'image';
+                        if (isImage) {
+                          return (
+                            <div key={k} className="flex items-center gap-2">
+                              <span className="font-medium text-foreground">{fieldDef?.label || k}:</span>
+                              {v && typeof v === 'string' ? (
+                                <img src={v} alt="" className="w-16 h-16 rounded-lg object-cover border border-border" />
+                              ) : (
+                                <span className="text-xs text-muted-foreground/60">לא הוגדרה תמונה</span>
+                              )}
+                            </div>
+                          );
+                        }
+                        return (
+                          <p key={k}>
+                            <span className="font-medium text-foreground">{fieldDef?.label || k}:</span>{' '}
+                            {typeof v === 'string' ? v.substring(0, 80) + (v.length > 80 ? '...' : '') : Array.isArray(v) ? `${v.length} פריטים` : JSON.stringify(v).substring(0, 60)}
+                          </p>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
