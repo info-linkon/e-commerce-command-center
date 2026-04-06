@@ -116,15 +116,15 @@ export default function WebAboutPage() {
       <section className="container py-10 md:py-20">
         <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">قصتنا</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">{storyContent.title || "قصتنا"}</h2>
             <div className="w-16 h-1 bg-gold rounded-full mb-6" />
             <div className="prose prose-lg max-w-none text-muted-foreground leading-relaxed whitespace-pre-line">
-              {content.body || "نحن مجموعة من الأصدقاء الذين يعشقون الطبيعة والتخييم، قررنا أن نجمع شغفنا بحب الطبيعة مع التراث والأصالة العربية.\n\nأسسنا \"الوجهة\" لنوفر لكم أفضل مستلزمات التخييم والرحلات بأسلوب شرقي تقليدي أصيل — من الخيام والمجالس إلى أدوات الطبخ والشاي.\n\nهدفنا هو أن نكون وجهتكم الأولى لكل ما يخص عالم البر والمغامرات، مع الحفاظ على الجودة العالية والأسعار المنافسة."}
+              {storyContent.body || defaultContent.about.story.body}
             </div>
           </div>
           <div className="order-first md:order-last">
             <img
-              src={aboutStory}
+              src={storyContent.image || aboutStory}
               alt="قصتنا"
               className="w-full rounded-2xl shadow-xl object-cover aspect-[4/3] md:aspect-square"
               loading="lazy"
