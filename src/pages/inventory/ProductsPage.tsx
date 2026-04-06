@@ -159,7 +159,7 @@ const ProductsPage = () => {
               </TableHeader>
               <TableBody>
                 {!categories?.length ? (
-                  <TableRow><TableCell colSpan={3} className="text-center py-4 text-muted-foreground">אין קטגוריות</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center py-4 text-muted-foreground">אין קטגוריות</TableCell></TableRow>
                 ) : (
                   categories.map((c) => (
                     <TableRow key={c.id}>
