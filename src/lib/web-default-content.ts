@@ -41,9 +41,9 @@ export const defaultContent: Record<string, Record<string, Record<string, any>>>
     values: {
       title: "قيمنا",
       items: [
-        { title: "جودة عالية", desc: "نختار منتجاتنا بعناية ونختبرها لضمان أعلى مستوى من الجودة والمتانة." },
-        { title: "خدمة ممتازة", desc: "فريق دعم محترف جاهز لمساعدتك في اختيار المنتج المناسب." },
-        { title: "أصالة وتراث", desc: "نجمع بين الأصالة العربية وأحدث معدات التخييم العصرية." },
+        { title: "جودة عالية", desc: "نختار منتجاتنا بعناية ونختبرها لضمان أعلى مستوى من الجودة والمتانة.", image: "" },
+        { title: "خدمة ممتازة", desc: "فريق دعم محترف جاهز لمساعدتك في اختيار المنتج المناسب.", image: "" },
+        { title: "أصالة وتراث", desc: "نجمع بين الأصالة العربية وأحدث معدات التخييم العصرية.", image: "" },
       ],
     },
   },
@@ -141,6 +141,7 @@ export const sectionFields: Record<string, Record<string, FieldConfig[]>> = {
       { key: 'items', label: 'ערכים', type: 'array', arrayFields: [
         { key: 'title', label: 'כותרת', type: 'text' },
         { key: 'desc', label: 'תיאור', type: 'textarea' },
+        { key: 'image', label: 'תמונה', type: 'image' },
       ]},
     ],
   },

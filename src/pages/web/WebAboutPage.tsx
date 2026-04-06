@@ -60,8 +60,14 @@ const StatCard = ({ end, suffix, desc, iconIndex }: { end: number; suffix: strin
 };
 
 export default function WebAboutPage() {
-  const { data: section } = useSiteSection("about", "hero");
-  const content = (section?.content as any) || defaultContent.about.hero || {};
+  const { data: heroSection } = useSiteSection("about", "hero");
+  const { data: storySection } = useSiteSection("about", "story");
+  const { data: valuesSection } = useSiteSection("about", "values");
+  const content = (heroSection?.content as any) || defaultContent.about.hero || {};
+  const storyContent = (storySection?.content as any) || defaultContent.about.story || {};
+  const valuesContent = (valuesSection?.content as any) || defaultContent.about.values || {};
+
+  const fallbackImages = [aboutValue1, aboutValue2, aboutValue3];
 
   const stats = [
     { end: 500, suffix: "+", desc: "منتج متوفر" },
@@ -70,11 +76,11 @@ export default function WebAboutPage() {
     { end: 100, suffix: "%", desc: "رضا العملاء" },
   ];
 
-  const values = [
-    { title: "رضاك مضمون", desc: "ضمان 100% على جميع المنتجات — رضاك هو أولويتنا", image: aboutValue1 },
-    { title: "أصالة وتراث", desc: "منتجات بأسلوب شرقي تقليدي أصيل تجمع بين الجودة والتراث", image: aboutValue2 },
-    { title: "توصيل سريع", desc: "نوصل لجميع المناطق بسرعة وأمان", image: aboutValue3 },
-  ];
+  const values = (valuesContent.items as any[] || defaultContent.about.values.items).map((v: any, i: number) => ({
+    title: v.title,
+    desc: v.desc,
+    image: v.image || fallbackImages[i] || fallbackImages[0],
+  }));
 
   const faqs = [
     { q: "كيف يمكنني الطلب؟", a: "يمكنك تصفح المنتجات وإضافتها إلى السلة ثم إتمام الطلب بسهولة" },
@@ -110,15 +116,15 @@ export default function WebAboutPage() {
       <section className="container py-10 md:py-20">
         <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">قصتنا</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">{storyContent.title || "قصتنا"}</h2>
             <div className="w-16 h-1 bg-gold rounded-full mb-6" />
             <div className="prose prose-lg max-w-none text-muted-foreground leading-relaxed whitespace-pre-line">
-              {content.body || "نحن مجموعة من الأصدقاء الذين يعشقون الطبيعة والتخييم، قررنا أن نجمع شغفنا بحب الطبيعة مع التراث والأصالة العربية.\n\nأسسنا \"الوجهة\" لنوفر لكم أفضل مستلزمات التخييم والرحلات بأسلوب شرقي تقليدي أصيل — من الخيام والمجالس إلى أدوات الطبخ والشاي.\n\nهدفنا هو أن نكون وجهتكم الأولى لكل ما يخص عالم البر والمغامرات، مع الحفاظ على الجودة العالية والأسعار المنافسة."}
+              {storyContent.body || defaultContent.about.story.body}
             </div>
           </div>
           <div className="order-first md:order-last">
             <img
-              src={aboutStory}
+              src={storyContent.image || aboutStory}
               alt="قصتنا"
               className="w-full rounded-2xl shadow-xl object-cover aspect-[4/3] md:aspect-square"
               loading="lazy"
