@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, FolderOpen } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, FolderOpen, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,9 @@ import { useProducts, useDeleteProduct } from "@/hooks/useProducts";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/useCategories";
 import { CategoryDialog } from "@/components/inventory/CategoryDialog";
 import { Tables } from "@/integrations/supabase/types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type Category = Tables<"categories">;
 
@@ -30,6 +33,16 @@ const ProductsPage = () => {
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
 
+  // Fetch bundle product_ids to filter them out
+  const { data: bundleProductIds } = useQuery({
+    queryKey: ["bundle-product-ids"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("bundles").select("product_id");
+      if (error) throw error;
+      return new Set((data || []).map(b => b.product_id));
+    },
+  });
+
   const handleCatSave = (data: { name: string; display_order: number }) => {
     if (editingCat) {
       updateCategory.mutate({ id: editingCat.id, ...data }, { onSuccess: () => setCatDialogOpen(false) });
@@ -38,10 +51,18 @@ const ProductsPage = () => {
     }
   };
 
-  const filtered = products?.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.sku?.toLowerCase().includes(search.toLowerCase())
-  ) || [];
+  const handleConvertToBundle = (productId: string) => {
+    navigate(`/inventory/bundles/new?fromProduct=${productId}`);
+  };
+
+  const filtered = useMemo(() => {
+    return (products || []).filter((p) => {
+      // Hide products that are already bundles
+      if (bundleProductIds?.has(p.id)) return false;
+      return p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(search.toLowerCase());
+    });
+  }, [products, bundleProductIds, search]);
 
   const columns: ColumnDef<any>[] = [
     { label: "שם", render: (p) => <span className="font-medium">{p.name}</span> },
