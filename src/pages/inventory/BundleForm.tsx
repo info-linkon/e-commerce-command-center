@@ -242,6 +242,41 @@ const BundleForm = () => {
         },
         { onSuccess: () => navigate("/inventory/bundles") }
       );
+    } else if (fromProductId) {
+      // Converting existing product to bundle — update the product, then create bundle record
+      const convertToBundle = async () => {
+        try {
+          // Update the existing product with form data
+          const { error: updateErr } = await supabase
+            .from("products")
+            .update({ ...productData })
+            .eq("id", fromProductId);
+          if (updateErr) throw updateErr;
+
+          // Create bundle record linking to existing product
+          const { data: newBundle, error: bErr } = await supabase
+            .from("bundles")
+            .insert({ product_id: fromProductId, bundle_type: form.bundle_type })
+            .select()
+            .single();
+          if (bErr) throw bErr;
+
+          // Insert bundle items
+          if (bundleItems.length > 0) {
+            const { error: iErr } = await supabase
+              .from("bundle_items")
+              .insert(bundleItems.map(item => ({ ...item, bundle_id: newBundle.id })));
+            if (iErr) throw iErr;
+          }
+
+          toast.success("הפריט הועבר למארז בהצלחה");
+          navigate("/inventory/bundles");
+        } catch (err: any) {
+          console.error("Convert to bundle error:", err);
+          toast.error(`שגיאה בהמרה למארז: ${err?.message || "unknown"}`);
+        }
+      };
+      convertToBundle();
     } else {
       createBundle.mutate(
         {
