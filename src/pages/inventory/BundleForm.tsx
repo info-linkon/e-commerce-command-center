@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowRight, Upload, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ import { toast } from "sonner";
 
 const BundleForm = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const fromProductId = searchParams.get("fromProduct");
   const navigate = useNavigate();
   const isEditing = !!id;
   const createBundle = useCreateBundle();
@@ -26,6 +28,21 @@ const BundleForm = () => {
   const { data: bundle } = useBundle(id);
   const { data: products } = useProducts();
   const { data: categories } = useCategories();
+
+  // Load source product when converting from products list
+  const { data: sourceProduct } = useQuery({
+    queryKey: ["product-for-bundle", fromProductId],
+    enabled: !!fromProductId && !isEditing,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", fromProductId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const [form, setForm] = useState({
     name: "",
@@ -105,6 +122,31 @@ const BundleForm = () => {
       }));
     }
   }, [bundle, isEditing, allVariations]);
+
+  // Pre-fill form when converting a product to bundle
+  useEffect(() => {
+    if (sourceProduct && !isEditing) {
+      setForm({
+        name: sourceProduct.name || "",
+        name_ar: sourceProduct.name_ar || "",
+        sku: sourceProduct.sku || "",
+        description: sourceProduct.description || "",
+        description_ar: sourceProduct.description_ar || "",
+        short_description: sourceProduct.short_description || "",
+        short_description_ar: sourceProduct.short_description_ar || "",
+        sale_price: Number(sourceProduct.sale_price || 0),
+        cost_price: Number(sourceProduct.cost_price || 0),
+        shipping_price: Number(sourceProduct.shipping_price || 0),
+        category_id: sourceProduct.category_id || null,
+        is_published: sourceProduct.is_published || false,
+        image_url: sourceProduct.image_url || null,
+        bundle_type: "simple_bundle",
+      });
+      if (sourceProduct.gallery_images && Array.isArray(sourceProduct.gallery_images)) {
+        setGalleryImages((sourceProduct.gallery_images as { src: string }[]).filter((img: any) => img.src));
+      }
+    }
+  }, [sourceProduct, isEditing]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -200,6 +242,41 @@ const BundleForm = () => {
         },
         { onSuccess: () => navigate("/inventory/bundles") }
       );
+    } else if (fromProductId) {
+      // Converting existing product to bundle — update the product, then create bundle record
+      const convertToBundle = async () => {
+        try {
+          // Update the existing product with form data
+          const { error: updateErr } = await supabase
+            .from("products")
+            .update({ ...productData })
+            .eq("id", fromProductId);
+          if (updateErr) throw updateErr;
+
+          // Create bundle record linking to existing product
+          const { data: newBundle, error: bErr } = await supabase
+            .from("bundles")
+            .insert({ product_id: fromProductId, bundle_type: form.bundle_type })
+            .select()
+            .single();
+          if (bErr) throw bErr;
+
+          // Insert bundle items
+          if (bundleItems.length > 0) {
+            const { error: iErr } = await supabase
+              .from("bundle_items")
+              .insert(bundleItems.map(item => ({ ...item, bundle_id: newBundle.id })));
+            if (iErr) throw iErr;
+          }
+
+          toast.success("הפריט הועבר למארז בהצלחה");
+          navigate("/inventory/bundles");
+        } catch (err: any) {
+          console.error("Convert to bundle error:", err);
+          toast.error(`שגיאה בהמרה למארז: ${err?.message || "unknown"}`);
+        }
+      };
+      convertToBundle();
     } else {
       createBundle.mutate(
         {
