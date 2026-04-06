@@ -20,6 +20,7 @@ interface CategoryDialogProps {
 
 export function CategoryDialog({ open, onOpenChange, category, onSave, loading }: CategoryDialogProps) {
   const [name, setName] = useState(category?.name ?? "");
+  const [nameHe, setNameHe] = useState((category as any)?.name_he ?? "");
   const [displayOrder, setDisplayOrder] = useState(category?.display_order ?? 0);
   const [imageUrl, setImageUrl] = useState<string | null>(category?.image_url ?? null);
   const [uploading, setUploading] = useState(false);

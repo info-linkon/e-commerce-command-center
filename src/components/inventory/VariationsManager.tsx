@@ -23,7 +23,7 @@ export function VariationsManager({ productId }: VariationsManagerProps) {
   const deleteVariation = useDeleteVariation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Variation | null>(null);
-  const [form, setForm] = useState({ name: "", sku: "", price: 0, cost_price: 0, image_url: "" as string | null });
+  const [form, setForm] = useState({ name: "", name_ar: "", sku: "", price: 0, cost_price: 0, image_url: "" as string | null });
   const [uploading, setUploading] = useState(false);
 
   const openNew = () => {
