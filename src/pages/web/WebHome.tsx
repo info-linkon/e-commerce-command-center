@@ -74,7 +74,7 @@ export default function WebHome() {
   return (
     <div>
       {/* Hero Carousel */}
-      <section className="relative overflow-hidden aspect-[3/4] md:aspect-[4/3]">
+      <section className="relative overflow-hidden aspect-[3/2]">
         <Carousel
           opts={{ loop: true, direction: "rtl" }}
           plugins={[plugin.current]}
