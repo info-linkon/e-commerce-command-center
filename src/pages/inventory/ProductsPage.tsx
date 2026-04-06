@@ -43,7 +43,7 @@ const ProductsPage = () => {
     },
   });
 
-  const handleCatSave = (data: { name: string; display_order: number }) => {
+  const handleCatSave = (data: { name: string; display_order: number; image_url: string | null }) => {
     if (editingCat) {
       updateCategory.mutate({ id: editingCat.id, ...data }, { onSuccess: () => setCatDialogOpen(false) });
     } else {
