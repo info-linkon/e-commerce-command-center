@@ -58,7 +58,7 @@ export function VariationsManager({ productId }: VariationsManagerProps) {
   };
 
   const handleSave = () => {
-    const payload = { name: form.name, sku: form.sku, price: form.price, cost_price: form.cost_price, image_url: form.image_url };
+    const payload = { name: form.name, name_ar: form.name_ar || null, sku: form.sku, price: form.price, cost_price: form.cost_price, image_url: form.image_url };
     if (editing) {
       updateVariation.mutate({ id: editing.id, ...payload }, { onSuccess: () => setDialogOpen(false) });
     } else {
