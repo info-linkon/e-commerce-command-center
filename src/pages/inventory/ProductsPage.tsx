@@ -150,7 +150,8 @@ const ProductsPage = () => {
             </div>
             <Table>
               <TableHeader>
-                <TableRow>
+              <TableRow>
+                  <TableHead className="w-12">תמונה</TableHead>
                   <TableHead>סדר</TableHead>
                   <TableHead>שם</TableHead>
                   <TableHead className="w-24">פעולות</TableHead>
