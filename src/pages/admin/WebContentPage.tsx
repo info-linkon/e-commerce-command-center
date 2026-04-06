@@ -172,10 +172,24 @@ export default function WebContentPage() {
                 <Trash2 className="w-3 h-3" />
               </Button>
               <span className="text-xs text-muted-foreground">#{i + 1}</span>
-              {field.arrayFields!.map((af) => (
+               {field.arrayFields!.map((af) => (
                 <div key={af.key} className="space-y-1">
                   <Label className="text-xs">{af.label}</Label>
-                  {af.type === 'textarea' ? (
+                  {af.type === 'image' ? (
+                    <div className="flex items-center gap-3">
+                      {(af.key === '_value' ? item : item?.[af.key]) && (
+                        <img src={af.key === '_value' ? item : item?.[af.key]} alt="" className="w-16 h-16 object-cover rounded-lg border border-border" />
+                      )}
+                      <label className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border hover:border-primary/50 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        <ImagePlus className="w-4 h-4" />
+                        <span>העלה תמונה</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleArrayImageUpload(field.key, i, af.key, f);
+                        }} />
+                      </label>
+                    </div>
+                  ) : af.type === 'textarea' ? (
                     <Textarea
                       value={af.key === '_value' ? item : (item?.[af.key] || '')}
                       onChange={(e) => updateArrayItem(field.key, i, af.key, e.target.value)}
