@@ -87,12 +87,17 @@ export function useCreateOrder() {
       discount_amount?: number;
       items: OrderItem[];
     }) => {
-      const { items, source, cash_register_id, payment_method, delivery_method, created_by, ...rest } = input;
+      const { items, source, cash_register_id, payment_method, delivery_method, created_by, discount_type, discount_value, discount_amount, ...rest } = input;
       const orderPayload: any = { ...rest };
       if (source) orderPayload.source = source;
       if (cash_register_id) orderPayload.cash_register_id = cash_register_id;
       if (payment_method) orderPayload.payment_method = payment_method;
       if (created_by) orderPayload.created_by = created_by;
+      if (discount_type && discount_type !== "none") {
+        orderPayload.discount_type = discount_type;
+        orderPayload.discount_value = discount_value || 0;
+        orderPayload.discount_amount = discount_amount || 0;
+      }
       const { data: order, error } = await supabase
         .from("orders")
         .insert(orderPayload)
