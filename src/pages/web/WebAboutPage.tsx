@@ -94,7 +94,7 @@ export default function WebAboutPage() {
       <div className="relative h-[250px] md:h-[450px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={aboutHero}
+            src={content.backgroundImage || aboutHero}
             alt="خلفية من نحن"
             className="w-full h-full object-cover"
             width={1920}
@@ -107,7 +107,7 @@ export default function WebAboutPage() {
             {content.title || "من نحن"}
           </h1>
           <p className="text-white/80 max-w-xl mx-auto text-lg">
-            وجهتكم الأولى لعالم الطبيعة والمغامرات
+            {content.description || "وجهتكم الأولى لعالم الطبيعة والمغامرات"}
           </p>
         </div>
       </div>
