@@ -901,6 +901,9 @@ export type Database = {
           customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
+          discount_amount: number | null
+          discount_type: string | null
+          discount_value: number | null
           hyp_transaction_id: string | null
           id: string
           includes_vat: boolean | null
@@ -929,6 +932,9 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
           hyp_transaction_id?: string | null
           id?: string
           includes_vat?: boolean | null
@@ -957,6 +963,9 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
           hyp_transaction_id?: string | null
           id?: string
           includes_vat?: boolean | null
