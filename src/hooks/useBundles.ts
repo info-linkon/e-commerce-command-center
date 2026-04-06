@@ -141,10 +141,10 @@ export function useDuplicateBundle() {
       if (pErr) throw pErr;
 
       // Create duplicate product
-      const { id, product_number, created_at, updated_at, sku, ...productFields } = srcProduct;
+      const { id, product_number, created_at, updated_at, sku, woo_id, ...productFields } = srcProduct;
       const { data: newProduct, error: npErr } = await supabase
         .from("products")
-        .insert({ ...productFields, name: `${productFields.name} (עותק)`, sku: sku ? `${sku}-copy` : null })
+        .insert({ ...productFields, name: `${productFields.name} (עותק)`, sku: sku ? `${sku}-copy-${Date.now()}` : null, woo_id: null })
         .select()
         .single();
       if (npErr) throw npErr;
@@ -205,7 +205,10 @@ export function useDuplicateBundle() {
       qc.invalidateQueries({ queryKey: ["products"] });
       toast.success("המארז שוכפל בהצלחה");
     },
-    onError: () => toast.error("שגיאה בשכפול מארז"),
+    onError: (err: any) => {
+      console.error("Duplicate bundle error:", err, JSON.stringify(err));
+      toast.error("שגיאה בשכפול מארז");
+    },
   });
 }
 
