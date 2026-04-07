@@ -106,10 +106,10 @@ export default function WebAboutPage() {
         </div>
         <div className="relative z-10 text-center px-4">
           <h1 className="text-3xl md:text-5xl font-black text-white mb-4">
-            {content.title || "من نحن"}
+            {t(content.title || "من نحن", content.title_he || "אודותינו")}
           </h1>
           <p className="text-white/80 max-w-xl mx-auto text-lg">
-            {content.description || "وجهتكم الأولى لعالم الطبيعة والمغامرات"}
+            {t(content.description || "وجهتكم الأولى لعالم الطبيعة والمغامرات", content.description_he || "היעד הראשון שלכם לעולם הטבע וההרפתקאות")}
           </p>
         </div>
       </div>
