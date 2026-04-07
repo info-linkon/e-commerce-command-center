@@ -113,7 +113,7 @@ export default function WebShopPage() {
                 : "bg-card text-muted-foreground border-border hover:border-primary/50"
             }`}
           >
-            {cat.name}
+            {lang === "he" ? ((cat as any).name_he || cat.name) : cat.name}
           </button>
         ))}
       </div>
