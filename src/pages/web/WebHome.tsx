@@ -99,7 +99,7 @@ export default function WebHome() {
                   <div className="container relative z-10 text-desert-foreground py-10 md:py-28">
                     <div className="max-w-2xl">
                       <span className="inline-block bg-gold/20 text-gold px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 md:mb-6 animate-fade-in">
-                        ✨ أهلاً بك في الوجهة
+                        ✨ {t("أهلاً بك في الوجهة", "ברוכים הבאים ליעד")}
                       </span>
                       {slide.title && (
                         <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-tight mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
