@@ -144,7 +144,7 @@ export default function WebProductPage() {
       value: price * quantity,
       currency: "ILS",
     });
-    toast.success("تمت الإضافة إلى السلة");
+    toast.success(t("تمت الإضافة إلى السلة", "נוסף לסל"));
   };
 
   return (
