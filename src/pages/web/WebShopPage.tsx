@@ -74,7 +74,7 @@ export default function WebShopPage() {
             onClick={() => setShowAll(true)}
             className="font-bold"
           >
-            عرض جميع المنتجات
+            {t("عرض جميع المنتجات", "הצג את כל המוצרים")}
             <ArrowLeft className="w-4 h-4 mr-2" />
           </Button>
         </div>
