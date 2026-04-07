@@ -1,51 +1,67 @@
 
 
-# תיקונים ושיפורים — 5 נקודות
+# תיקונים — 4 נקודות
 
-## 1. תמונות קטגוריות בדף המתגר (Shop) לא מתעדכנות
-**בעיה:** בדף `WebShopPage.tsx` שורה 40, סדר העדיפות הפוך — קודם בודק `categoryImageMap[cat.id]` (תמונה hardcoded) ורק אח"כ `cat.image_url` (מה-DB). בדף הבית (`WebHome.tsx` שורה 186) הסדר נכון.
+## 1. מארזים לא מופיעים באתר
+**סיבה:** כל המארזים מסומנים `is_published = false`. השאילתה ב-`useWebProducts` מסננת רק `is_published = true`.
+**פתרון:** אין באג בקוד — צריך לוודא שהמארזים מסומנים כמפורסמים. אבל גם כדאי לוודא שהם מופיעים ברשימת הפריטים (ProductsPage) כדי לערוך אותם.
 
-**תיקון:** `src/pages/web/WebShopPage.tsx` שורה 40 — להפוך את הסדר:
-```typescript
-const imgSrc = (cat as any).image_url || categoryImageMap[cat.id];
+**בעיה נוספת:** ב-`ProductsPage` (שורות 36-44) מסננים החוצה את ה-`bundleProductIds` מהרשימה — כלומר מוצרים שהם מארזים מוסתרים מדף הפריטים. זה בכוונה (כי יש דף מארזים נפרד), אבל צריך לוודא שמדף המארזים (`BundlesPage`) אפשר לשנות `is_published`.
+
+**פתרון:** להוסיף בדף המארזים עמודה/אפשרות לשנות `is_published` + badge שמראה סטטוס פרסום. גם לוודא שב-`BundleForm` יש שדה "פורסם באתר".
+
+## 2. מחיקת מוצרים עדיין נכשלת
+**סיבה:** ה-cascading delete ב-`useDeleteProduct` לא מטפל ב-`order_items` ו-`inventory_log` שגם הם מקושרים ב-FK ל-`product_variations`.
+
+**פתרון:** ב-`src/hooks/useProducts.ts`, להוסיף לפני מחיקת `product_variations`:
+- `order_items` — לא ניתן למחוק פריטי הזמנות (נתונים עסקיים). במקום זה, ננתק את ה-FK או נעדכן ל-NULL. אבל מכיוון ש-`variation_id` הוא NOT NULL, הפתרון הנכון הוא **לשנות את ה-FK constraint ל-ON DELETE SET NULL** במיגרציה, או לחילופין — למחוק את ה-FK constraint ולהשאיר את ה-order_items כמו שהם.
+- `inventory_log` — אותו דבר.
+
+**הגישה:** מיגרציית DB שמשנה את ה-FK constraints של `order_items.variation_id` ו-`inventory_log.variation_id` ל-`ON DELETE SET NULL` (אחרי שנהפוך אותם ל-nullable).
+
+## 3. באנרים — שדות עבריים
+**סיבה:** טבלת `banners` מכילה רק `title` ו-`subtitle`, אין שדות `title_he` / `subtitle_he`.
+
+**פתרון:**
+- מיגרציית DB: הוספת `title_he TEXT`, `subtitle_he TEXT` לטבלת `banners`
+- `WebBannersPage.tsx`: הוספת שדות "כותרת בעברית" ו"תת כותרת בעברית" בטופס
+- `BannerSlider.tsx`: הצגת הטקסט לפי השפה הנבחרת
+
+## 4. וריאציות מארז — שם בעברית
+**סיבה:** טבלת `bundle_variations` מכילה רק `name`, אין `name_he`.
+
+**פתרון:**
+- מיגרציית DB: הוספת `name_he TEXT` לטבלת `bundle_variations`
+- `BundleVariationsManager.tsx`: הוספת שדה "שם בעברית" בדיאלוג הוריאציה
+- `WebProductPage.tsx`: הצגת שם הוריאציה לפי שפה
+
+## מיגרציית DB
+```sql
+-- Banner Hebrew fields
+ALTER TABLE banners ADD COLUMN title_he TEXT;
+ALTER TABLE banners ADD COLUMN subtitle_he TEXT;
+
+-- Bundle variation Hebrew name
+ALTER TABLE bundle_variations ADD COLUMN name_he TEXT;
+
+-- Allow deletion of products that have order history
+ALTER TABLE order_items ALTER COLUMN variation_id DROP NOT NULL;
+ALTER TABLE order_items DROP CONSTRAINT order_items_variation_id_fkey;
+ALTER TABLE order_items ADD CONSTRAINT order_items_variation_id_fkey 
+  FOREIGN KEY (variation_id) REFERENCES product_variations(id) ON DELETE SET NULL;
+
+ALTER TABLE inventory_log ALTER COLUMN variation_id DROP NOT NULL;
+ALTER TABLE inventory_log DROP CONSTRAINT inventory_log_variation_id_fkey;
+ALTER TABLE inventory_log ADD CONSTRAINT inventory_log_variation_id_fkey 
+  FOREIGN KEY (variation_id) REFERENCES product_variations(id) ON DELETE SET NULL;
 ```
 
-## 2. שגיאה במחיקת מוצרים (מארזים ישנים)
-**בעיה:** כשמוחקים מוצר שיש לו וריאציות או מארז מקושר, ה-DB זורק שגיאת FK constraint (`product_variations_product_id_fkey`, `bundles_product_id_fkey`). הקוד הנוכחי ב-`useDeleteProduct` מוחק רק את המוצר עצמו.
-
-**תיקון:** `src/hooks/useProducts.ts` — לעדכן את `useDeleteProduct` שימחק קודם:
-1. `bundle_items` שמקושרים למארזים של המוצר
-2. `bundle_variation_items` שמקושרים ל-`bundle_variations` של המארזים
-3. `bundle_variations` של המארזים
-4. `bundles` של המוצר
-5. `product_variations` של המוצר
-6. ולבסוף — המוצר עצמו
-
-גם להוסיף אישור (confirm dialog) לפני מחיקה.
-
-## 3. מק"ט לכל וריאציה — כבר קיים ✓
-השדה כבר קיים בטופס הווריאציות.
-
-## 4. קטגוריות ווריאציות בעברית — כבר קיים ✓
-הוטמע בשיחה הקודמת.
-
-## 5. כפתור שינוי שפה לעברית באתר
-**תיקון:** הוספת כפתור toggle שפה (AR ↔ HE) ב-`WebHeader.tsx` + יצירת context לניהול שפת התצוגה + עדכון הקומפוננטות הציבוריות להציג טקסט לפי השפה הנבחרת.
-
-### קבצים חדשים:
-- `src/hooks/useLanguage.tsx` — Language context עם state (ar/he), שמור ב-localStorage
-
-### קבצים לעדכון:
-- `src/components/web/WebHeader.tsx` — כפתור AR/HE ליד האייקונים
-- `src/components/web/WebLayout.tsx` — עטיפה ב-LanguageProvider, שינוי `dir` לפי שפה
-- `src/components/web/WebProductCard.tsx` — הצגת `name` או `name_ar` לפי שפה
-- `src/pages/web/WebHome.tsx` — הצגת תוכן CMS לפי שפה (שדות `_he`)
-- `src/pages/web/WebAboutPage.tsx` — הצגת תוכן CMS לפי שפה
-- `src/pages/web/WebShopPage.tsx` — תיקון תמונות + כותרות לפי שפה
-
-## סיכום שינויים:
-1. **שורה אחת** — `WebShopPage.tsx` סדר תמונות
-2. **פונקציה אחת** — `useDeleteProduct` מחיקה מדורגת
-3. **קובץ חדש** — `useLanguage.tsx` context
-4. **~6 קבצים** — חיבור toggle שפה
+## קבצים לעדכון
+1. **`src/pages/admin/WebBannersPage.tsx`** — שדות `title_he`, `subtitle_he` בטופס
+2. **`src/components/web/BannerSlider.tsx`** — הצגה לפי שפה
+3. **`src/components/inventory/BundleVariationsManager.tsx`** — שדה `name_he` בדיאלוג
+4. **`src/hooks/useBundleVariations.ts`** — שליחת `name_he` ב-create/update
+5. **`src/pages/web/WebProductPage.tsx`** — הצגת שם וריאציית מארז לפי שפה
+6. **`src/hooks/useProducts.ts`** — הסרת הטיפול הידני ב-`order_items`/`inventory_log` (ה-DB יטפל ב-SET NULL)
+7. **`src/pages/inventory/BundlesPage.tsx`** — הוספת badge פרסום + כפתור toggle
 
