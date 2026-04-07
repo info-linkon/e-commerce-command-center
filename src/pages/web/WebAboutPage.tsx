@@ -193,12 +193,12 @@ export default function WebAboutPage() {
       {/* CTA */}
       <section className="bg-desert-gradient">
         <div className="container py-14 md:py-20 text-center">
-          <h2 className="text-2xl md:text-3xl font-black text-desert-foreground mb-4">ابدأ التسوق الآن</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-desert-foreground mb-4">{t("ابدأ التسوق الآن", "התחל לקנות עכשיו")}</h2>
           <p className="text-desert-foreground/70 max-w-lg mx-auto mb-8">
-            اكتشف مجموعتنا الواسعة من المنتجات الأصلية
+            {t("اكتشف مجموعتنا الواسعة من المنتجات الأصلية", "גלה את מגוון המוצרים המקוריים שלנו")}
           </p>
           <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
-            <Link to="/web/shop">تسوق الآن</Link>
+            <Link to="/web/shop">{t("تسوق الآن", "קנה עכשיו")}</Link>
           </Button>
         </div>
       </section>
