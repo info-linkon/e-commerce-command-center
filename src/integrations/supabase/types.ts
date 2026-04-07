@@ -23,7 +23,9 @@ export type Database = {
           link: string | null
           sort_order: number
           subtitle: string | null
+          subtitle_he: string | null
           title: string | null
+          title_he: string | null
         }
         Insert: {
           active?: boolean
@@ -33,7 +35,9 @@ export type Database = {
           link?: string | null
           sort_order?: number
           subtitle?: string | null
+          subtitle_he?: string | null
           title?: string | null
+          title_he?: string | null
         }
         Update: {
           active?: boolean
@@ -43,7 +47,9 @@ export type Database = {
           link?: string | null
           sort_order?: number
           subtitle?: string | null
+          subtitle_he?: string | null
           title?: string | null
+          title_he?: string | null
         }
         Relationships: []
       }
@@ -125,6 +131,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          name_he: string | null
           price: number
           woo_id: number | null
         }
@@ -133,6 +140,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          name_he?: string | null
           price?: number
           woo_id?: number | null
         }
@@ -141,6 +149,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          name_he?: string | null
           price?: number
           woo_id?: number | null
         }
@@ -681,7 +690,7 @@ export type Database = {
           quantity_after: number
           quantity_change: number
           reference_id: string | null
-          variation_id: string
+          variation_id: string | null
           warehouse_id: string
         }
         Insert: {
@@ -693,7 +702,7 @@ export type Database = {
           quantity_after: number
           quantity_change: number
           reference_id?: string | null
-          variation_id: string
+          variation_id?: string | null
           warehouse_id: string
         }
         Update: {
@@ -705,7 +714,7 @@ export type Database = {
           quantity_after?: number
           quantity_change?: number
           reference_id?: string | null
-          variation_id?: string
+          variation_id?: string | null
           warehouse_id?: string
         }
         Relationships: [
@@ -814,7 +823,7 @@ export type Database = {
           quantity: number
           total_price: number
           unit_price: number
-          variation_id: string
+          variation_id: string | null
         }
         Insert: {
           created_at?: string
@@ -823,7 +832,7 @@ export type Database = {
           quantity?: number
           total_price?: number
           unit_price?: number
-          variation_id: string
+          variation_id?: string | null
         }
         Update: {
           created_at?: string
@@ -832,7 +841,7 @@ export type Database = {
           quantity?: number
           total_price?: number
           unit_price?: number
-          variation_id?: string
+          variation_id?: string | null
         }
         Relationships: [
           {
