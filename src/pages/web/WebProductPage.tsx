@@ -205,7 +205,7 @@ export default function WebProductPage() {
           {/* Regular product variations */}
           {isVariable && variations && (
             <div className="mb-6">
-              <span className="text-sm font-medium mb-2 block">اختر النوع:</span>
+              <span className="text-sm font-medium mb-2 block">{t("اختر النوع:", "בחר סוג:")}</span>
               <div className="flex flex-wrap gap-2">
                 {variations.map((v) => (
                   <button
@@ -217,7 +217,7 @@ export default function WebProductPage() {
                         : "border-border hover:border-primary/50"
                     }`}
                   >
-                    {v.name_ar || v.name}
+                    {lang === "he" ? (v.name || v.name_ar) : (v.name_ar || v.name)}
                   </button>
                 ))}
               </div>
