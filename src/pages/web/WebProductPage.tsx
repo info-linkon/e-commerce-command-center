@@ -98,7 +98,7 @@ export default function WebProductPage() {
       ? activeVariation.price
       : product.sale_price;
 
-  const displayName = product.name_ar || product.name;
+  const displayName = lang === "he" ? (product.name || product.name_ar) : (product.name_ar || product.name);
 
   // Bundle stock check
   const isBundleOutOfStock = (() => {
