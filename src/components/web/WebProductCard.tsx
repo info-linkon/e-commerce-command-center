@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface WebProductCardProps {
   id: string;
@@ -14,14 +15,16 @@ interface WebProductCardProps {
 }
 
 export function WebProductCard({ id, productNumber, name, nameAr, price, imageUrl, categoryName, outOfStock }: WebProductCardProps) {
-  const displayName = nameAr || name;
+  const { lang } = useLanguage();
+  // name = Hebrew name, nameAr = Arabic name
+  const displayName = lang === "he" ? (name || nameAr || "") : (nameAr || name);
   const linkId = productNumber || id;
 
   return (
     <div className={`group relative bg-card rounded-xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${outOfStock ? "opacity-60" : ""}`}>
       {outOfStock && (
         <div className="absolute top-2 left-2 z-10 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-          غير متوفر
+          {lang === "he" ? "אזל מהמלאי" : "غير متوفر"}
         </div>
       )}
       <Link to={`/web/product/${linkId}`} className="block relative overflow-hidden">

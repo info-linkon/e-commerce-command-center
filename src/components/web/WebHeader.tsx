@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { ShoppingCart, Search, Menu, X } from "lucide-react";
+import { ShoppingCart, Search, Menu, X, Globe } from "lucide-react";
 import { useCartStore } from "@/lib/web-cart-store";
 import { useWebCategories } from "@/hooks/useWebProducts";
 import { useState } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 import logo from "@/assets/logo.webp";
 
 export function WebHeader() {
@@ -10,12 +11,13 @@ export function WebHeader() {
   const { data: categories } = useWebCategories();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const { lang, toggleLang, t } = useLanguage();
 
   const navLinks = [
-    { label: "الرئيسية", to: "/web" },
-    { label: "المتجر", to: "/web/shop" },
-    { label: "من نحن", to: "/web/about" },
-    { label: "تواصل معنا", to: "/web/contact" },
+    { label: t("الرئيسية", "ראשי"), to: "/web" },
+    { label: t("المتجر", "חנות"), to: "/web/shop" },
+    { label: t("من نحن", "אודותינו"), to: "/web/about" },
+    { label: t("تواصل معنا", "צור קשר"), to: "/web/contact" },
   ];
 
   return (
@@ -25,7 +27,7 @@ export function WebHeader() {
           {/* Logo */}
           <Link to="/web" className="flex items-center gap-2 md:gap-3 group">
             <img src={logo} alt="الوجهة" className="w-14 h-14 md:w-24 md:h-24 rounded-full shadow-md ring-2 ring-gold/30 group-hover:ring-gold/60 transition-all" />
-            <span className="text-lg md:text-2xl font-bold web-text-gradient-gold">الوجهة</span>
+            <span className="text-lg md:text-2xl font-bold web-text-gradient-gold">{t("الوجهة", "היעד")}</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -45,6 +47,15 @@ export function WebHeader() {
 
           {/* Actions */}
           <div className="flex items-center gap-0.5 md:gap-1">
+            {/* Language toggle */}
+            <button
+              onClick={toggleLang}
+              className="p-2.5 rounded-lg hover:text-gold hover:bg-desert-light transition-all flex items-center gap-1 text-xs font-bold"
+              title={lang === "ar" ? "עברית" : "العربية"}
+            >
+              <Globe className="h-4 w-4" />
+              <span>{lang === "ar" ? "HE" : "AR"}</span>
+            </button>
             <Link to="/web/search" className="p-2.5 rounded-lg hover:text-gold hover:bg-desert-light transition-all">
               <Search className="h-5 w-5" />
             </Link>
