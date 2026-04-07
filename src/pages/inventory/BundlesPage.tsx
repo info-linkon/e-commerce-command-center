@@ -127,3 +127,5 @@ const BundlesPage = () => {
     </div>
   );
 };
+
+export default BundlesPage;
