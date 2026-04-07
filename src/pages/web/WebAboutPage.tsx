@@ -175,7 +175,7 @@ export default function WebAboutPage() {
       {/* FAQ */}
       <section className="bg-sand/30">
         <div className="container py-14 md:py-20">
-          <h2 className="text-2xl md:text-3xl font-black text-foreground text-center mb-2">أسئلة شائعة</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-foreground text-center mb-2">{t("أسئلة شائعة", "שאלות נפוצות")}</h2>
           <div className="w-16 h-1 bg-gold rounded-full mx-auto mb-10" />
           <div className="max-w-2xl mx-auto">
             <Accordion type="single" collapsible>
