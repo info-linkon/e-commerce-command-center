@@ -5,6 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Users, Award, Heart, Package } from "lucide-react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { defaultContent } from "@/lib/web-default-content";
+import { useLanguage } from "@/hooks/useLanguage";
 import aboutHero from "@/assets/about-hero.jpg";
 import aboutStory from "@/assets/about-story.jpg";
 import aboutValue1 from "@/assets/about-value-1.jpg";
