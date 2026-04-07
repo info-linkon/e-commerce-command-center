@@ -37,7 +37,7 @@ export default function WebShopPage() {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
           {categories?.map((cat) => {
-            const imgSrc = categoryImageMap[cat.id] || (cat as any).image_url;
+            const imgSrc = (cat as any).image_url || categoryImageMap[cat.id];
             return (
               <Link
                 key={cat.id}

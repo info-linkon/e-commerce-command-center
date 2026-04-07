@@ -97,6 +97,44 @@ export function useDeleteProduct() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // 1. Find bundles linked to this product
+      const { data: bundles } = await supabase.from("bundles").select("id").eq("product_id", id);
+      const bundleIds = (bundles || []).map(b => b.id);
+
+      if (bundleIds.length > 0) {
+        // 2. Delete bundle_variation_items via bundle_variations
+        const { data: bvs } = await supabase.from("bundle_variations").select("id").in("bundle_id", bundleIds);
+        const bvIds = (bvs || []).map(v => v.id);
+        if (bvIds.length > 0) {
+          await supabase.from("bundle_variation_items").delete().in("bundle_variation_id", bvIds);
+        }
+        // 3. Delete bundle_variations
+        await supabase.from("bundle_variations").delete().in("bundle_id", bundleIds);
+        // 4. Delete bundle_items
+        await supabase.from("bundle_items").delete().in("bundle_id", bundleIds);
+        // 5. Delete bundles
+        await supabase.from("bundles").delete().eq("product_id", id);
+      }
+
+      // 6. Delete order_picking_items referencing order_items with this product's variations
+      const { data: variations } = await supabase.from("product_variations").select("id").eq("product_id", id);
+      const varIds = (variations || []).map(v => v.id);
+      if (varIds.length > 0) {
+        // Delete inventory records
+        await supabase.from("inventory").delete().in("variation_id", varIds);
+        // Delete intake_session_items
+        await supabase.from("intake_session_items").delete().in("variation_id", varIds);
+        // Delete inventory_transfer_items
+        await supabase.from("inventory_transfer_items").delete().in("variation_id", varIds);
+        // Delete bundle_items referencing these variations (from other bundles)
+        await supabase.from("bundle_items").delete().in("variation_id", varIds);
+        await supabase.from("bundle_variation_items").delete().in("variation_id", varIds);
+      }
+
+      // 7. Delete product_variations
+      await supabase.from("product_variations").delete().eq("product_id", id);
+
+      // 8. Finally delete the product
       const { error } = await supabase.from("products").delete().eq("id", id);
       if (error) throw error;
     },
@@ -104,7 +142,7 @@ export function useDeleteProduct() {
       qc.invalidateQueries({ queryKey: ["products"] });
       toast.success("המוצר נמחק בהצלחה");
     },
-    onError: () => toast.error("שגיאה במחיקת מוצר"),
+    onError: (err) => { console.error("Delete product error:", err); toast.error("שגיאה במחיקת מוצר"); },
   });
 }
 
