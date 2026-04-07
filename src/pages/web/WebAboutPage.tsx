@@ -61,6 +61,7 @@ const StatCard = ({ end, suffix, desc, iconIndex }: { end: number; suffix: strin
 };
 
 export default function WebAboutPage() {
+  const { lang, t } = useLanguage();
   const { data: heroSection } = useSiteSection("about", "hero");
   const { data: storySection } = useSiteSection("about", "story");
   const { data: valuesSection } = useSiteSection("about", "values");
