@@ -1,6 +1,7 @@
 import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
 import { WebProductCard } from "@/components/web/WebProductCard";
 import { Link } from "react-router-dom";
+import { useLanguage } from "@/hooks/useLanguage";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import catTeaCoffee from "@/assets/cat-tea-coffee.jpg";
