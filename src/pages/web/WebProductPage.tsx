@@ -271,7 +271,7 @@ export default function WebProductPage() {
               disabled={isBundleOutOfStock}
             >
               <ShoppingCart className="w-4 h-4 ml-2" />
-              {isBundleOutOfStock ? "غير متوفر" : "أضف إلى السلة"}
+              {isBundleOutOfStock ? t("غير متوفر", "אזל מהמלאי") : t("أضف إلى السلة", "הוסף לסל")}
             </Button>
           </div>
         </div>
