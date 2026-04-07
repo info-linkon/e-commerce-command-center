@@ -183,13 +183,19 @@ export default function WebProductPage() {
         {/* Details */}
         <div className="flex flex-col justify-center">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">{displayName}</h1>
-          {product.description_ar && (
-            <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: product.description_ar }} />
-          )}
-          {!product.description_ar && product.description && (
-            <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: product.description }} />
+          {lang === "he" ? (
+            (product.description || product.description_ar) && (
+              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description || product.description_ar }} />
+            )
+          ) : (
+            product.description_ar ? (
+              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description_ar }} />
+            ) : product.description ? (
+              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description }} />
+            ) : null
           )}
 
           <div className="flex items-center gap-3 mb-6">
