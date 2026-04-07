@@ -179,8 +179,8 @@ export default function WebHome() {
         <section className="container py-8 md:py-16">
           <div className="flex items-center justify-between mb-6 md:mb-8">
             <div>
-              <h2 className="text-xl md:text-3xl font-bold">الأقسام</h2>
-              <p className="text-muted-foreground text-sm mt-1">تصفح حسب القسم</p>
+              <h2 className="text-xl md:text-3xl font-bold">{t("الأقسام", "קטגוריות")}</h2>
+              <p className="text-muted-foreground text-sm mt-1">{t("تصفح حسب القسم", "עיון לפי קטגוריה")}</p>
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
