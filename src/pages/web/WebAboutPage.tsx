@@ -150,7 +150,7 @@ export default function WebAboutPage() {
 
       {/* Values with images */}
       <section className="container py-14 md:py-20">
-        <h2 className="text-2xl md:text-3xl font-black text-foreground text-center mb-2">الأسس والقيم</h2>
+        <h2 className="text-2xl md:text-3xl font-black text-foreground text-center mb-2">{t("الأسس والقيم", "ערכים ויסודות")}</h2>
         <div className="w-16 h-1 bg-gold rounded-full mx-auto mb-10" />
         <div className="grid md:grid-cols-3 gap-6">
           {values.map((v, i) => (
