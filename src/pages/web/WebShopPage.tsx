@@ -28,13 +28,14 @@ export default function WebShopPage() {
   const { data: products, isLoading } = useWebProducts(selectedCategory);
   const { data: categories } = useWebCategories();
   const [showAll, setShowAll] = useState(false);
+  const { lang, t } = useLanguage();
 
   // Default: show categories grid. "الكل" shows all products.
   if (!showAll) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">المتجر</h1>
-        <p className="text-muted-foreground mb-8">اختر القسم المطلوب</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{t("المتجر", "חנות")}</h1>
+        <p className="text-muted-foreground mb-8">{t("اختر القسم المطلوب", "בחר קטגוריה")}</p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
           {categories?.map((cat) => {
