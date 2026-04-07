@@ -118,7 +118,7 @@ export default function WebHome() {
                       <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                         <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
                           <Link to={slide.link || hero.cta_link || "/web/shop"}>
-                            {hero.cta_text || "تسوق الآن"}
+                            {t(hero.cta_text || "تسوق الآن", hero.cta_text_he || "קנה עכשיו")}
                             <ArrowLeft className="w-4 h-4 mr-2" />
                           </Link>
                         </Button>
