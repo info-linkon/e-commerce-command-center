@@ -140,7 +140,7 @@ export default function WebShopPage() {
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground text-center py-12">لا توجد منتجات</p>
+        <p className="text-muted-foreground text-center py-12">{t("لا توجد منتجات", "אין מוצרים")}</p>
       )}
     </div>
   );
