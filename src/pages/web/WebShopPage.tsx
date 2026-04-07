@@ -60,7 +60,7 @@ export default function WebShopPage() {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="font-bold text-white text-lg drop-shadow-lg">{cat.name}</h3>
+                  <h3 className="font-bold text-white text-lg drop-shadow-lg">{lang === "he" ? ((cat as any).name_he || cat.name) : cat.name}</h3>
                 </div>
               </Link>
             );
