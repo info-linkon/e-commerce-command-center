@@ -250,12 +250,12 @@ export default function WebHome() {
       {/* CTA */}
       <section className="bg-desert-gradient text-desert-foreground">
         <div className="container py-16 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">اكتشف مجموعتنا الكاملة</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">{t("اكتشف مجموعتنا الكاملة", "גלה את הקולקציה המלאה שלנו")}</h2>
           <p className="text-desert-foreground/70 mb-8 max-w-lg mx-auto">
-            منتجات أصلية بأفضل الأسعار مع توصيل سريع لباب بيتك
+            {t("منتجات أصلية بأفضل الأسعار مع توصيل سريع لباب بيتك", "מוצרים מקוריים במחירים הטובים ביותר עם משלוח מהיר עד הבית")}
           </p>
           <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold px-8">
-            <Link to="/web/shop">تسوق الآن</Link>
+            <Link to="/web/shop">{t("تسوق الآن", "קנה עכשיו")}</Link>
           </Button>
         </div>
       </section>
