@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useRef, useCallback, useEffect, useState } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 import type { CarouselApi } from "@/components/ui/carousel";
 import heroBg from "@/assets/hero-bg.jpg";
 import catTeaCoffee from "@/assets/cat-tea-coffee.jpg";
