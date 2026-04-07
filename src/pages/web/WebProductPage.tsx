@@ -59,13 +59,13 @@ export default function WebProductPage() {
 
   if (isLoading) {
     return (
-      <div className="container py-16 text-center text-muted-foreground">جاري التحميل...</div>
+      <div className="container py-16 text-center text-muted-foreground">{t("جاري التحميل...", "טוען...")}</div>
     );
   }
 
   if (!product) {
     return (
-      <div className="container py-16 text-center text-muted-foreground">المنتج غير موجود</div>
+      <div className="container py-16 text-center text-muted-foreground">{t("المنتج غير موجود", "המוצר לא נמצא")}</div>
     );
   }
 
