@@ -101,7 +101,7 @@ export default function WebShopPage() {
               : "bg-card text-muted-foreground border-border hover:border-primary/50"
           }`}
         >
-          الكل
+          {t("الكل", "הכל")}
         </button>
         {categories?.map((cat) => (
           <button
