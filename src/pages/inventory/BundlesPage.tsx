@@ -1,15 +1,26 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Copy } from "lucide-react";
+import { Plus, Trash2, Copy, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
 import { useBundles, useDeleteBundle, useDuplicateBundle } from "@/hooks/useBundles";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const BundlesPage = () => {
   const navigate = useNavigate();
   const { data: bundles, isLoading } = useBundles();
   const deleteBundle = useDeleteBundle();
   const duplicateBundle = useDuplicateBundle();
+  const qc = useQueryClient();
+
+  const togglePublish = async (productId: string, current: boolean) => {
+    const { error } = await supabase.from("products").update({ is_published: !current }).eq("id", productId);
+    if (error) { toast.error("שגיאה בעדכון"); return; }
+    qc.invalidateQueries({ queryKey: ["bundles"] });
+    toast.success(!current ? "המארז פורסם" : "המארז הוסר מהאתר");
+  };
 
   const data = bundles || [];
 
@@ -31,6 +42,7 @@ const BundlesPage = () => {
     { label: "מחיר", render: (b) => (b as any).products?.sale_price ? `₪${Number((b as any).products.sale_price).toFixed(0)}` : "—" },
     { label: "סוג", render: (b) => <Badge variant="secondary">{b.bundle_type === "simple_bundle" ? "פשוט" : "משתנה"}</Badge> },
     { label: "פריטים", render: (b) => (b as any).bundle_items?.length || 0, hideOnMobile: true },
+    { label: "פרסום", render: (b) => (b as any).products?.is_published ? <Badge className="bg-green-600">באתר</Badge> : <Badge variant="outline">טיוטה</Badge> },
   ];
 
   return (
@@ -71,6 +83,9 @@ const BundlesPage = () => {
         }}
         actions={(b) => (
           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" title={(b as any).products?.is_published ? "הסר מהאתר" : "פרסם באתר"} onClick={() => togglePublish(b.product_id, (b as any).products?.is_published)}>
+              <Globe className={`h-4 w-4 ${(b as any).products?.is_published ? "text-green-600" : "text-muted-foreground"}`} />
+            </Button>
             <Button variant="ghost" size="icon" title="שכפל מארז" onClick={() => duplicateBundle.mutate({ bundleId: b.id, productId: b.product_id })}>
               <Copy className="h-4 w-4" />
             </Button>

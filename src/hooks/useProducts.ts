@@ -116,7 +116,7 @@ export function useDeleteProduct() {
         await supabase.from("bundles").delete().eq("product_id", id);
       }
 
-      // 6. Delete order_picking_items referencing order_items with this product's variations
+      // 6. Clean up references to product variations
       const { data: variations } = await supabase.from("product_variations").select("id").eq("product_id", id);
       const varIds = (variations || []).map(v => v.id);
       if (varIds.length > 0) {
@@ -129,6 +129,12 @@ export function useDeleteProduct() {
         // Delete bundle_items referencing these variations (from other bundles)
         await supabase.from("bundle_items").delete().in("variation_id", varIds);
         await supabase.from("bundle_variation_items").delete().in("variation_id", varIds);
+        // Delete order_picking_items linked to order_items with these variations
+        const { data: orderItems } = await supabase.from("order_items").select("id").in("variation_id", varIds);
+        const oiIds = (orderItems || []).map(oi => oi.id);
+        if (oiIds.length > 0) {
+          await supabase.from("order_picking_items").delete().in("order_item_id", oiIds);
+        }
       }
 
       // 7. Delete product_variations

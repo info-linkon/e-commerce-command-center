@@ -9,9 +9,11 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useRef } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export function BannerSlider() {
   const { data: banners } = useBannersPublic();
+  const { lang } = useLanguage();
   const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
 
   if (!banners?.length) return null;
@@ -37,9 +39,9 @@ export function BannerSlider() {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent flex items-end">
                   <div className="container pb-6 md:pb-10 text-white">
-                    {banner.title && <h3 className="text-lg md:text-2xl font-bold">{banner.title}</h3>}
-                    {banner.subtitle && (
-                      <p className="text-sm md:text-base opacity-90 mt-1">{banner.subtitle}</p>
+                    {(banner.title || (banner as any).title_he) && <h3 className="text-lg md:text-2xl font-bold">{lang === "he" ? ((banner as any).title_he || banner.title) : (banner.title || (banner as any).title_he)}</h3>}
+                    {(banner.subtitle || (banner as any).subtitle_he) && (
+                      <p className="text-sm md:text-base opacity-90 mt-1">{lang === "he" ? ((banner as any).subtitle_he || banner.subtitle) : (banner.subtitle || (banner as any).subtitle_he)}</p>
                     )}
                   </div>
                 </div>

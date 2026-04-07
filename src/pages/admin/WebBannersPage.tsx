@@ -16,7 +16,9 @@ import {
 
 interface BannerForm {
   title: string;
+  title_he: string;
   subtitle: string;
+  subtitle_he: string;
   image_url: string;
   link: string;
 }
@@ -28,7 +30,7 @@ const linkOptions = [
   { value: "/web/faq", label: "שאלות נפוצות" },
 ];
 
-const emptyForm: BannerForm = { title: "", subtitle: "", image_url: "", link: "" };
+const emptyForm: BannerForm = { title: "", title_he: "", subtitle: "", subtitle_he: "", image_url: "", link: "" };
 
 export default function WebBannersPage() {
   const { data: banners, isLoading } = useBannersAdmin();
@@ -50,7 +52,9 @@ export default function WebBannersPage() {
     setEditingId(banner.id);
     setForm({
       title: banner.title || "",
+      title_he: banner.title_he || "",
       subtitle: banner.subtitle || "",
+      subtitle_he: banner.subtitle_he || "",
       image_url: banner.image_url || "",
       link: banner.link || "",
     });
@@ -137,12 +141,20 @@ export default function WebBannersPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>כותרת</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-1" />
+              <Label>כותרת (ערבית)</Label>
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-1" dir="rtl" />
             </div>
             <div>
-              <Label>תת כותרת</Label>
-              <Input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} className="mt-1" />
+              <Label>כותרת (עברית)</Label>
+              <Input value={form.title_he} onChange={(e) => setForm({ ...form, title_he: e.target.value })} className="mt-1" dir="rtl" />
+            </div>
+            <div>
+              <Label>תת כותרת (ערבית)</Label>
+              <Input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} className="mt-1" dir="rtl" />
+            </div>
+            <div>
+              <Label>תת כותרת (עברית)</Label>
+              <Input value={form.subtitle_he} onChange={(e) => setForm({ ...form, subtitle_he: e.target.value })} className="mt-1" dir="rtl" />
             </div>
             <div>
               <Label>תמונה</Label>

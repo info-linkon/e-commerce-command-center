@@ -245,7 +245,7 @@ export default function WebProductPage() {
                             : "border-border hover:border-primary/50"
                       }`}
                     >
-                      {bv.name} - ₪{bv.price.toFixed(2)}
+                      {lang === "he" ? ((bv as any).name_he || bv.name) : (bv.name)} - ₪{bv.price.toFixed(2)}
                       {bvOutOfStock && t(" (غير متوفر)", " (אזל)")}
                     </button>
                   );
