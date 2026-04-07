@@ -220,12 +220,12 @@ export default function WebHome() {
         <div className="container py-8 md:py-16">
           <div className="flex items-center justify-between mb-6 md:mb-8">
             <div>
-              <h2 className="text-xl md:text-3xl font-bold">منتجات مميزة</h2>
-              <p className="text-muted-foreground text-sm mt-1">أحدث المنتجات في متجرنا</p>
+              <h2 className="text-xl md:text-3xl font-bold">{t("منتجات مميزة", "מוצרים מומלצים")}</h2>
+              <p className="text-muted-foreground text-sm mt-1">{t("أحدث المنتجات في متجرنا", "המוצרים החדשים בחנות")}</p>
             </div>
             <Button asChild variant="ghost" className="text-primary hover:text-gold">
               <Link to="/web/shop">
-                عرض الكل
+                {t("عرض الكل", "הצג הכל")}
                 <ArrowLeft className="w-4 h-4 mr-1" />
               </Link>
             </Button>
