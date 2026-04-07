@@ -37,6 +37,7 @@ const categoryImageMap: Record<string, string> = {
 export default function WebHome() {
   const { data: products } = useWebProducts();
   const { data: categories } = useWebCategories();
+  const { lang, t } = useLanguage();
   const { data: banners } = useBannersPublic();
 
   const { data: heroData } = useSiteSection("home", "hero");
