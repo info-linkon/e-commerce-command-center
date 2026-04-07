@@ -227,7 +227,7 @@ export default function WebProductPage() {
           {/* Bundle variations */}
           {isVariableBundle && bundleVariations && (
             <div className="mb-6">
-              <span className="text-sm font-medium mb-2 block">اختر الطقم:</span>
+              <span className="text-sm font-medium mb-2 block">{t("اختر الطقم:", "בחר ערכה:")}</span>
               <div className="flex flex-wrap gap-2">
                 {bundleVariations.map((bv) => {
                   const bvStock = bundleStockResult?.variations?.get(bv.id);
@@ -246,7 +246,7 @@ export default function WebProductPage() {
                       }`}
                     >
                       {bv.name} - ₪{bv.price.toFixed(2)}
-                      {bvOutOfStock && " (غير متوفر)"}
+                      {bvOutOfStock && t(" (غير متوفر)", " (אזל)")}
                     </button>
                   );
                 })}
