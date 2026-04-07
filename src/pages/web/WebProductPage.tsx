@@ -114,11 +114,11 @@ export default function WebProductPage() {
 
   const handleAddToCart = () => {
     if (isVariable && !activeVariation) {
-      toast.error("الرجاء اختيار نوع المنتج");
+      toast.error(t("الرجاء اختيار نوع المنتج", "יש לבחור סוג מוצר"));
       return;
     }
     if (isVariableBundle && !activeBundleVariation) {
-      toast.error("الرجاء اختيار نوع الطقم");
+      toast.error(t("الرجاء اختيار نوع الطقم", "יש לבחור סוג ערכה"));
       return;
     }
 
