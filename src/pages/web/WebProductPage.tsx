@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useWebProduct, useWebProductVariations, useWebBundleVariations } from "@/hooks/useWebProducts";
 import { useCartStore } from "@/lib/web-cart-store";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ShoppingCart, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBundleStock } from "@/hooks/useBundleStock";
 import { fbq } from "@/lib/meta-pixel";
-import { useEffect } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function WebProductPage() {
+  const { lang, t } = useLanguage();
   const { id } = useParams();
   const { data: product, isLoading } = useWebProduct(id);
   const productId = product?.id;
@@ -58,13 +59,13 @@ export default function WebProductPage() {
 
   if (isLoading) {
     return (
-      <div className="container py-16 text-center text-muted-foreground">جاري التحميل...</div>
+      <div className="container py-16 text-center text-muted-foreground">{t("جاري التحميل...", "טוען...")}</div>
     );
   }
 
   if (!product) {
     return (
-      <div className="container py-16 text-center text-muted-foreground">المنتج غير موجود</div>
+      <div className="container py-16 text-center text-muted-foreground">{t("المنتج غير موجود", "המוצר לא נמצא")}</div>
     );
   }
 
@@ -97,7 +98,7 @@ export default function WebProductPage() {
       ? activeVariation.price
       : product.sale_price;
 
-  const displayName = product.name_ar || product.name;
+  const displayName = lang === "he" ? (product.name || product.name_ar) : (product.name_ar || product.name);
 
   // Bundle stock check
   const isBundleOutOfStock = (() => {
@@ -113,11 +114,11 @@ export default function WebProductPage() {
 
   const handleAddToCart = () => {
     if (isVariable && !activeVariation) {
-      toast.error("الرجاء اختيار نوع المنتج");
+      toast.error(t("الرجاء اختيار نوع المنتج", "יש לבחור סוג מוצר"));
       return;
     }
     if (isVariableBundle && !activeBundleVariation) {
-      toast.error("الرجاء اختيار نوع الطقم");
+      toast.error(t("الرجاء اختيار نوع الطقم", "יש לבחור סוג ערכה"));
       return;
     }
 
@@ -143,7 +144,7 @@ export default function WebProductPage() {
       value: price * quantity,
       currency: "ILS",
     });
-    toast.success("تمت الإضافة إلى السلة");
+    toast.success(t("تمت الإضافة إلى السلة", "נוסף לסל"));
   };
 
   return (
@@ -182,13 +183,19 @@ export default function WebProductPage() {
         {/* Details */}
         <div className="flex flex-col justify-center">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">{displayName}</h1>
-          {product.description_ar && (
-            <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: product.description_ar }} />
-          )}
-          {!product.description_ar && product.description && (
-            <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: product.description }} />
+          {lang === "he" ? (
+            (product.description || product.description_ar) && (
+              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description || product.description_ar }} />
+            )
+          ) : (
+            product.description_ar ? (
+              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description_ar }} />
+            ) : product.description ? (
+              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description }} />
+            ) : null
           )}
 
           <div className="flex items-center gap-3 mb-6">
@@ -198,7 +205,7 @@ export default function WebProductPage() {
           {/* Regular product variations */}
           {isVariable && variations && (
             <div className="mb-6">
-              <span className="text-sm font-medium mb-2 block">اختر النوع:</span>
+              <span className="text-sm font-medium mb-2 block">{t("اختر النوع:", "בחר סוג:")}</span>
               <div className="flex flex-wrap gap-2">
                 {variations.map((v) => (
                   <button
@@ -210,7 +217,7 @@ export default function WebProductPage() {
                         : "border-border hover:border-primary/50"
                     }`}
                   >
-                    {v.name_ar || v.name}
+                    {lang === "he" ? (v.name || v.name_ar) : (v.name_ar || v.name)}
                   </button>
                 ))}
               </div>
@@ -220,7 +227,7 @@ export default function WebProductPage() {
           {/* Bundle variations */}
           {isVariableBundle && bundleVariations && (
             <div className="mb-6">
-              <span className="text-sm font-medium mb-2 block">اختر الطقم:</span>
+              <span className="text-sm font-medium mb-2 block">{t("اختر الطقم:", "בחר ערכה:")}</span>
               <div className="flex flex-wrap gap-2">
                 {bundleVariations.map((bv) => {
                   const bvStock = bundleStockResult?.variations?.get(bv.id);
@@ -239,7 +246,7 @@ export default function WebProductPage() {
                       }`}
                     >
                       {bv.name} - ₪{bv.price.toFixed(2)}
-                      {bvOutOfStock && " (غير متوفر)"}
+                      {bvOutOfStock && t(" (غير متوفر)", " (אזל)")}
                     </button>
                   );
                 })}
@@ -264,7 +271,7 @@ export default function WebProductPage() {
               disabled={isBundleOutOfStock}
             >
               <ShoppingCart className="w-4 h-4 ml-2" />
-              {isBundleOutOfStock ? "غير متوفر" : "أضف إلى السلة"}
+              {isBundleOutOfStock ? t("غير متوفر", "אזל מהמלאי") : t("أضف إلى السلة", "הוסף לסל")}
             </Button>
           </div>
         </div>
