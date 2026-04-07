@@ -12,6 +12,7 @@ import { fbq } from "@/lib/meta-pixel";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export default function WebProductPage() {
+  const { lang, t } = useLanguage();
   const { id } = useParams();
   const { data: product, isLoading } = useWebProduct(id);
   const productId = product?.id;
