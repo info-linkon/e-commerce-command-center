@@ -1,6 +1,7 @@
 import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
 import { WebProductCard } from "@/components/web/WebProductCard";
 import { Link } from "react-router-dom";
+import { useLanguage } from "@/hooks/useLanguage";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import catTeaCoffee from "@/assets/cat-tea-coffee.jpg";
@@ -27,17 +28,18 @@ export default function WebShopPage() {
   const { data: products, isLoading } = useWebProducts(selectedCategory);
   const { data: categories } = useWebCategories();
   const [showAll, setShowAll] = useState(false);
+  const { lang, t } = useLanguage();
 
   // Default: show categories grid. "الكل" shows all products.
   if (!showAll) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">المتجر</h1>
-        <p className="text-muted-foreground mb-8">اختر القسم المطلوب</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{t("المتجر", "חנות")}</h1>
+        <p className="text-muted-foreground mb-8">{t("اختر القسم المطلوب", "בחר קטגוריה")}</p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
           {categories?.map((cat) => {
-            const imgSrc = categoryImageMap[cat.id] || (cat as any).image_url;
+            const imgSrc = (cat as any).image_url || categoryImageMap[cat.id];
             return (
               <Link
                 key={cat.id}
@@ -58,7 +60,7 @@ export default function WebShopPage() {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="font-bold text-white text-lg drop-shadow-lg">{cat.name}</h3>
+                  <h3 className="font-bold text-white text-lg drop-shadow-lg">{lang === "he" ? ((cat as any).name_he || cat.name) : cat.name}</h3>
                 </div>
               </Link>
             );
@@ -72,7 +74,7 @@ export default function WebShopPage() {
             onClick={() => setShowAll(true)}
             className="font-bold"
           >
-            عرض جميع المنتجات
+            {t("عرض جميع المنتجات", "הצג את כל המוצרים")}
             <ArrowLeft className="w-4 h-4 mr-2" />
           </Button>
         </div>
@@ -83,9 +85,9 @@ export default function WebShopPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">جميع المنتجات</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("جميع المنتجات", "כל המוצרים")}</h1>
         <Button variant="ghost" onClick={() => { setShowAll(false); setSelectedCategory(undefined); }} className="text-muted-foreground">
-          العودة للأقسام
+          {t("العودة للأقسام", "חזרה לקטגוריות")}
         </Button>
       </div>
 
@@ -99,7 +101,7 @@ export default function WebShopPage() {
               : "bg-card text-muted-foreground border-border hover:border-primary/50"
           }`}
         >
-          الكل
+          {t("الكل", "הכל")}
         </button>
         {categories?.map((cat) => (
           <button
@@ -111,7 +113,7 @@ export default function WebShopPage() {
                 : "bg-card text-muted-foreground border-border hover:border-primary/50"
             }`}
           >
-            {cat.name}
+            {lang === "he" ? ((cat as any).name_he || cat.name) : cat.name}
           </button>
         ))}
       </div>
@@ -138,7 +140,7 @@ export default function WebShopPage() {
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground text-center py-12">لا توجد منتجات</p>
+        <p className="text-muted-foreground text-center py-12">{t("لا توجد منتجات", "אין מוצרים")}</p>
       )}
     </div>
   );

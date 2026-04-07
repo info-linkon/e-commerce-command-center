@@ -5,6 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Users, Award, Heart, Package } from "lucide-react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { defaultContent } from "@/lib/web-default-content";
+import { useLanguage } from "@/hooks/useLanguage";
 import aboutHero from "@/assets/about-hero.jpg";
 import aboutStory from "@/assets/about-story.jpg";
 import aboutValue1 from "@/assets/about-value-1.jpg";
@@ -60,6 +61,7 @@ const StatCard = ({ end, suffix, desc, iconIndex }: { end: number; suffix: strin
 };
 
 export default function WebAboutPage() {
+  const { lang, t } = useLanguage();
   const { data: heroSection } = useSiteSection("about", "hero");
   const { data: storySection } = useSiteSection("about", "story");
   const { data: valuesSection } = useSiteSection("about", "values");
@@ -104,10 +106,10 @@ export default function WebAboutPage() {
         </div>
         <div className="relative z-10 text-center px-4">
           <h1 className="text-3xl md:text-5xl font-black text-white mb-4">
-            {content.title || "من نحن"}
+            {t(content.title || "من نحن", content.title_he || "אודותינו")}
           </h1>
           <p className="text-white/80 max-w-xl mx-auto text-lg">
-            {content.description || "وجهتكم الأولى لعالم الطبيعة والمغامرات"}
+            {t(content.description || "وجهتكم الأولى لعالم الطبيعة والمغامرات", content.description_he || "היעד הראשון שלכם לעולם הטבע וההרפתקאות")}
           </p>
         </div>
       </div>
@@ -116,10 +118,10 @@ export default function WebAboutPage() {
       <section className="container py-10 md:py-20">
         <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">{storyContent.title || "قصتنا"}</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">{t(storyContent.title || "قصتنا", storyContent.title_he || "הסיפור שלנו")}</h2>
             <div className="w-16 h-1 bg-gold rounded-full mb-6" />
             <div className="prose prose-lg max-w-none text-muted-foreground leading-relaxed whitespace-pre-line">
-              {storyContent.body || defaultContent.about.story.body}
+              {t(storyContent.body || defaultContent.about.story.body, storyContent.body_he || "")}
             </div>
           </div>
           <div className="order-first md:order-last">
@@ -148,7 +150,7 @@ export default function WebAboutPage() {
 
       {/* Values with images */}
       <section className="container py-14 md:py-20">
-        <h2 className="text-2xl md:text-3xl font-black text-foreground text-center mb-2">الأسس والقيم</h2>
+        <h2 className="text-2xl md:text-3xl font-black text-foreground text-center mb-2">{t("الأسس والقيم", "ערכים ויסודות")}</h2>
         <div className="w-16 h-1 bg-gold rounded-full mx-auto mb-10" />
         <div className="grid md:grid-cols-3 gap-6">
           {values.map((v, i) => (
@@ -173,7 +175,7 @@ export default function WebAboutPage() {
       {/* FAQ */}
       <section className="bg-sand/30">
         <div className="container py-14 md:py-20">
-          <h2 className="text-2xl md:text-3xl font-black text-foreground text-center mb-2">أسئلة شائعة</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-foreground text-center mb-2">{t("أسئلة شائعة", "שאלות נפוצות")}</h2>
           <div className="w-16 h-1 bg-gold rounded-full mx-auto mb-10" />
           <div className="max-w-2xl mx-auto">
             <Accordion type="single" collapsible>
@@ -191,12 +193,12 @@ export default function WebAboutPage() {
       {/* CTA */}
       <section className="bg-desert-gradient">
         <div className="container py-14 md:py-20 text-center">
-          <h2 className="text-2xl md:text-3xl font-black text-desert-foreground mb-4">ابدأ التسوق الآن</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-desert-foreground mb-4">{t("ابدأ التسوق الآن", "התחל לקנות עכשיו")}</h2>
           <p className="text-desert-foreground/70 max-w-lg mx-auto mb-8">
-            اكتشف مجموعتنا الواسعة من المنتجات الأصلية
+            {t("اكتشف مجموعتنا الواسعة من المنتجات الأصلية", "גלה את מגוון המוצרים המקוריים שלנו")}
           </p>
           <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
-            <Link to="/web/shop">تسوق الآن</Link>
+            <Link to="/web/shop">{t("تسوق الآن", "קנה עכשיו")}</Link>
           </Button>
         </div>
       </section>

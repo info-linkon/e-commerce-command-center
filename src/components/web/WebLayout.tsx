@@ -6,10 +6,11 @@ import { MessageCircle } from "lucide-react";
 import { useEffect } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { fbqPageView } from "@/lib/meta-pixel";
+import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
 
-export function WebLayout() {
-  // Load Pixel ID from site_content and initialize
+function WebLayoutInner() {
   const { data: pixelSettings } = useSiteSection("settings", "meta_pixel");
+  const { lang } = useLanguage();
 
   useEffect(() => {
     const pixelId = (pixelSettings?.content as any)?.pixel_id;
@@ -39,5 +40,13 @@ export function WebLayout() {
         <MessageCircle className="h-6 w-6 md:h-7 md:w-7" />
       </a>
     </div>
+  );
+}
+
+export function WebLayout() {
+  return (
+    <LanguageProvider>
+      <WebLayoutInner />
+    </LanguageProvider>
   );
 }

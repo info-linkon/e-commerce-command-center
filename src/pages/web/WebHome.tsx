@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useRef, useCallback, useEffect, useState } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 import type { CarouselApi } from "@/components/ui/carousel";
 import heroBg from "@/assets/hero-bg.jpg";
 import catTeaCoffee from "@/assets/cat-tea-coffee.jpg";
@@ -36,6 +37,7 @@ const categoryImageMap: Record<string, string> = {
 export default function WebHome() {
   const { data: products } = useWebProducts();
   const { data: categories } = useWebCategories();
+  const { lang, t } = useLanguage();
   const { data: banners } = useBannersPublic();
 
   const { data: heroData } = useSiteSection("home", "hero");
@@ -97,7 +99,7 @@ export default function WebHome() {
                   <div className="container relative z-10 text-desert-foreground py-10 md:py-28">
                     <div className="max-w-2xl">
                       <span className="inline-block bg-gold/20 text-gold px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 md:mb-6 animate-fade-in">
-                        ✨ أهلاً بك في الوجهة
+                        ✨ {t("أهلاً بك في الوجهة", "ברוכים הבאים ליעד")}
                       </span>
                       {slide.title && (
                         <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-tight mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
@@ -111,17 +113,17 @@ export default function WebHome() {
                         </h1>
                       )}
                       <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                        مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق
+                        {t("مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق", "ציוד קמפינג וטיולים בסגנון מזרחי מקורי — משלוחים לכל האזורים")}
                       </p>
                       <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                         <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
                           <Link to={slide.link || hero.cta_link || "/web/shop"}>
-                            {hero.cta_text || "تسوق الآن"}
+                            {t(hero.cta_text || "تسوق الآن", hero.cta_text_he || "קנה עכשיו")}
                             <ArrowLeft className="w-4 h-4 mr-2" />
                           </Link>
                         </Button>
                         <Button asChild variant="outline" size="lg" className="border-white/50 text-white bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:text-white font-bold text-base">
-                          <Link to="/web/about">من نحن</Link>
+                          <Link to="/web/about">{t("من نحن", "אודותינו")}</Link>
                         </Button>
                       </div>
                     </div>
@@ -177,8 +179,8 @@ export default function WebHome() {
         <section className="container py-8 md:py-16">
           <div className="flex items-center justify-between mb-6 md:mb-8">
             <div>
-              <h2 className="text-xl md:text-3xl font-bold">الأقسام</h2>
-              <p className="text-muted-foreground text-sm mt-1">تصفح حسب القسم</p>
+              <h2 className="text-xl md:text-3xl font-bold">{t("الأقسام", "קטגוריות")}</h2>
+              <p className="text-muted-foreground text-sm mt-1">{t("تصفح حسب القسم", "עיון לפי קטגוריה")}</p>
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
@@ -204,7 +206,7 @@ export default function WebHome() {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="font-bold text-white text-lg drop-shadow-lg">{cat.name}</h3>
+                    <h3 className="font-bold text-white text-lg drop-shadow-lg">{lang === "he" ? ((cat as any).name_he || cat.name) : cat.name}</h3>
                   </div>
                 </Link>
               );
@@ -218,12 +220,12 @@ export default function WebHome() {
         <div className="container py-8 md:py-16">
           <div className="flex items-center justify-between mb-6 md:mb-8">
             <div>
-              <h2 className="text-xl md:text-3xl font-bold">منتجات مميزة</h2>
-              <p className="text-muted-foreground text-sm mt-1">أحدث المنتجات في متجرنا</p>
+              <h2 className="text-xl md:text-3xl font-bold">{t("منتجات مميزة", "מוצרים מומלצים")}</h2>
+              <p className="text-muted-foreground text-sm mt-1">{t("أحدث المنتجات في متجرنا", "המוצרים החדשים בחנות")}</p>
             </div>
             <Button asChild variant="ghost" className="text-primary hover:text-gold">
               <Link to="/web/shop">
-                عرض الكل
+                {t("عرض الكل", "הצג הכל")}
                 <ArrowLeft className="w-4 h-4 mr-1" />
               </Link>
             </Button>
@@ -248,12 +250,12 @@ export default function WebHome() {
       {/* CTA */}
       <section className="bg-desert-gradient text-desert-foreground">
         <div className="container py-16 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">اكتشف مجموعتنا الكاملة</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">{t("اكتشف مجموعتنا الكاملة", "גלה את הקולקציה המלאה שלנו")}</h2>
           <p className="text-desert-foreground/70 mb-8 max-w-lg mx-auto">
-            منتجات أصلية بأفضل الأسعار مع توصيل سريع لباب بيتك
+            {t("منتجات أصلية بأفضل الأسعار مع توصيل سريع لباب بيتك", "מוצרים מקוריים במחירים הטובים ביותר עם משלוח מהיר עד הבית")}
           </p>
           <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold px-8">
-            <Link to="/web/shop">تسوق الآن</Link>
+            <Link to="/web/shop">{t("تسوق الآن", "קנה עכשיו")}</Link>
           </Button>
         </div>
       </section>
