@@ -37,6 +37,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [nameHe, setNameHe] = useState("");
   const [price, setPrice] = useState(0);
   const [items, setItems] = useState<VariationItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -64,6 +65,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
   const openCreate = () => {
     setEditingId(null);
     setName("");
+    setNameHe("");
     setPrice(0);
     setItems([]);
     setSelectedProduct("");
@@ -73,6 +75,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
   const openEdit = (bv: any) => {
     setEditingId(bv.id);
     setName(bv.name);
+    setNameHe((bv as any).name_he || "");
     setPrice(Number(bv.price));
     const mappedItems = (bv.bundle_variation_items || []).map((bvi: any) => {
       const pv = bvi.product_variations;
@@ -114,6 +117,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     const payload = {
       bundleId,
       name,
+      name_he: nameHe,
       price,
       items: items.map(({ variation_id, quantity }) => ({ variation_id, quantity })),
     };
@@ -188,13 +192,17 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
           <div className="space-y-4 min-h-0 overflow-y-auto pe-1">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>שם הוריאציה</Label>
+                <Label>שם הוריאציה (עברית)</Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: מארז קטן" />
               </div>
               <div className="space-y-2">
-                <Label>מחיר</Label>
-                <Input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
+                <Label>שם הוריאציה (ערבית)</Label>
+                <Input value={nameHe} onChange={(e) => setNameHe(e.target.value)} placeholder="مثلاً: طقم صغير" />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>מחיר</Label>
+              <Input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
             </div>
 
             <div className="space-y-2">

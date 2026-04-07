@@ -24,17 +24,19 @@ export function useCreateBundleVariation() {
     mutationFn: async ({
       bundleId,
       name,
+      name_he,
       price,
       items,
     }: {
       bundleId: string;
       name: string;
+      name_he?: string;
       price: number;
       items: { variation_id: string; quantity: number }[];
     }) => {
       const { data: variation, error: vErr } = await supabase
         .from("bundle_variations")
-        .insert({ bundle_id: bundleId, name, price })
+        .insert({ bundle_id: bundleId, name, name_he: name_he || null, price } as any)
         .select()
         .single();
       if (vErr) throw vErr;
@@ -62,18 +64,20 @@ export function useUpdateBundleVariation() {
       variationId,
       bundleId,
       name,
+      name_he,
       price,
       items,
     }: {
       variationId: string;
       bundleId: string;
       name: string;
+      name_he?: string;
       price: number;
       items: { variation_id: string; quantity: number }[];
     }) => {
       const { error: vErr } = await supabase
         .from("bundle_variations")
-        .update({ name, price })
+        .update({ name, name_he: name_he || null, price } as any)
         .eq("id", variationId);
       if (vErr) throw vErr;
 
