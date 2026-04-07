@@ -118,10 +118,10 @@ export default function WebAboutPage() {
       <section className="container py-10 md:py-20">
         <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">{storyContent.title || "قصتنا"}</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">{t(storyContent.title || "قصتنا", storyContent.title_he || "הסיפור שלנו")}</h2>
             <div className="w-16 h-1 bg-gold rounded-full mb-6" />
             <div className="prose prose-lg max-w-none text-muted-foreground leading-relaxed whitespace-pre-line">
-              {storyContent.body || defaultContent.about.story.body}
+              {t(storyContent.body || defaultContent.about.story.body, storyContent.body_he || "")}
             </div>
           </div>
           <div className="order-first md:order-last">
