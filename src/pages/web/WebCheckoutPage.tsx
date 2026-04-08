@@ -335,14 +335,67 @@ export default function WebCheckoutPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
             {/* Right Column — Forms */}
             <div className="md:col-span-7 space-y-6 order-2 md:order-1">
-              {/* Shipping Info Card */}
+              {/* Shipping Method Card */}
               <Card className="border-border/60 shadow-sm">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <div className="p-2 rounded-lg bg-primary/10">
-                      <MapPin className="h-4 w-4 text-primary" />
+                      <Truck className="h-4 w-4 text-primary" />
                     </div>
-                    معلومات التوصيل
+                    طريقة الاستلام
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RadioGroup value={shippingMethod} onValueChange={(v) => setShippingMethod(v as ShippingMethod)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label
+                      htmlFor="sm-delivery"
+                      className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
+                        shippingMethod === "delivery"
+                          ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
+                          : "border-border hover:border-muted-foreground/30"
+                      }`}
+                    >
+                      <RadioGroupItem value="delivery" id="sm-delivery" className="sr-only" />
+                      <Truck className={`w-8 h-8 ${shippingMethod === "delivery" ? "text-primary" : "text-muted-foreground"}`} />
+                      <div className="text-center">
+                        <span className="font-semibold text-sm block">توصيل للبيت</span>
+                        {shippingCost() > 0 && (
+                          <span className="text-xs text-muted-foreground">₪{shippingCost().toFixed(2)}</span>
+                        )}
+                      </div>
+                    </label>
+                    <label
+                      htmlFor="sm-pickup"
+                      className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
+                        shippingMethod === "pickup"
+                          ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
+                          : "border-border hover:border-muted-foreground/30"
+                      }`}
+                    >
+                      <RadioGroupItem value="pickup" id="sm-pickup" className="sr-only" />
+                      <Package className={`w-8 h-8 ${shippingMethod === "pickup" ? "text-primary" : "text-muted-foreground"}`} />
+                      <div className="text-center">
+                        <span className="font-semibold text-sm block">איסוף עצמי</span>
+                        <span className="text-xs text-muted-foreground">חינם</span>
+                      </div>
+                    </label>
+                  </RadioGroup>
+                  {shippingMethod === "pickup" && (
+                    <p className="text-xs text-muted-foreground mt-3 text-center">
+                      نعمل أونلاين — يرجى التنسيق معنا مسبقاً لموعد الاستلام
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Customer / Shipping Info Card */}
+              <Card className="border-border/60 shadow-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      {shippingMethod === "delivery" ? <MapPin className="h-4 w-4 text-primary" /> : <User className="h-4 w-4 text-primary" />}
+                    </div>
+                    {shippingMethod === "delivery" ? "معلومات التوصيل" : "معلومات الزبون"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -369,22 +422,24 @@ export default function WebCheckoutPage() {
                       <Input id="email" name="email" type="email" className="pl-10 rounded-xl" placeholder="email@example.com" dir="ltr" />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="city">المدينة *</Label>
-                      <div className="relative">
-                        <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input id="city" name="city" required className="pr-10 rounded-xl" placeholder="المدينة" />
+                  {shippingMethod === "delivery" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="city">المدينة *</Label>
+                        <div className="relative">
+                          <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input id="city" name="city" required className="pr-10 rounded-xl" placeholder="المدينة" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="address">العنوان التفصيلي *</Label>
+                        <div className="relative">
+                          <Home className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input id="address" name="address" required className="pr-10 rounded-xl" placeholder="الشارع، رقم البيت" />
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="address">العنوان التفصيلي *</Label>
-                      <div className="relative">
-                        <Home className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input id="address" name="address" required className="pr-10 rounded-xl" placeholder="الشارع، رقم البيت" />
-                      </div>
-                    </div>
-                  </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="notes">ملاحظات</Label>
                     <div className="relative">
