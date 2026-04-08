@@ -8,7 +8,7 @@ import logo from "@/assets/logo.webp";
 export function WebFooter() {
   const { data: categories } = useWebCategories();
   const { lang, t } = useLanguage();
-  const { data: contactDetails } = useSiteSection("contact", "details");
+  const { data: contactDetails } = useSiteSection("contact", "info");
   const { data: settingsData } = useSiteSection("settings", "general");
   const settings = (settingsData?.content || {}) as any;
   const storeName = t(settings.store_name || "الوجهة", settings.store_name_he || "");
@@ -94,8 +94,8 @@ export function WebFooter() {
               </a>
               <p className="text-sand/50 text-xs mt-1">
                 {t(
-                  "زيمر — نعمل أونلاين، زيارة المخازن بموعد مسبق",
-                  "זמר — עובדים אונליין, ביקור במחסנים בתיאום מראש"
+                  contact.address || "زيمر — نعمل أونلاين، زيارة المخازن بموعد مسبق",
+                  contact.address_he || "זמר — עובדים אונליין, ביקור במחסנים בתיאום מראש"
                 )}
               </p>
             </div>
