@@ -1,18 +1,24 @@
 import { useParams } from "react-router-dom";
 import { useWebProductsByCategoryNumber } from "@/hooks/useWebProducts";
 import { WebProductCard } from "@/components/web/WebProductCard";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function WebCategoryPage() {
+  const { lang, t } = useLanguage();
   const { id } = useParams();
   const categoryNumber = parseInt(id || "", 10);
   const { data, isLoading } = useWebProductsByCategoryNumber(isNaN(categoryNumber) ? undefined : categoryNumber);
   const products = data?.products || [];
   const category = data?.category;
 
+  const categoryName = category
+    ? (lang === "he" ? (category.name_he || category.name) : category.name)
+    : t("المنتجات", "מוצרים");
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
       <h1 className="text-3xl font-bold text-foreground mb-8">
-        {category?.name || "المنتجات"}
+        {categoryName}
       </h1>
 
       {isLoading ? (
@@ -37,7 +43,7 @@ export default function WebCategoryPage() {
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground text-center py-12">لا توجد منتجات في هذا القسم</p>
+        <p className="text-muted-foreground text-center py-12">{t("لا توجد منتجات في هذا القسم", "אין מוצרים בקטגוריה זו")}</p>
       )}
     </div>
   );

@@ -26,7 +26,7 @@ export function useWebProductsByCategoryNumber(categoryNumber: number | undefine
       // First find category by number
       const { data: cat } = await (supabase
         .from("categories")
-        .select("id, name") as any)
+        .select("id, name, name_he") as any)
         .eq("category_number", categoryNumber!)
         .single();
       if (!cat) return { products: [], category: null };
