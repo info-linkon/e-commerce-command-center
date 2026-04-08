@@ -55,6 +55,10 @@ export default function WebOrderConfirmation() {
           supabase.functions.invoke("hyp-verify-payment", {
             body: { ...hypParams, order_id: orderId },
           }).then(() => {
+            // Trigger SMS for new order after successful payment
+            supabase.functions.invoke("order-sms-trigger", {
+              body: { order_id: orderId, trigger_type: "order_created" },
+            }).catch(console.error);
             sessionStorage.removeItem("hyp_order_id");
             sessionStorage.removeItem("hyp_order_number");
           }).catch((err) => console.error("Background verify error:", err));

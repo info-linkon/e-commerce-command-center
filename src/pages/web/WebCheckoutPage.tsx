@@ -206,6 +206,10 @@ export default function WebCheckoutPage() {
       if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
 
       if (isCash) {
+        // Trigger SMS for new order
+        supabase.functions.invoke("order-sms-trigger", {
+          body: { order_id: order.id, trigger_type: "order_created" },
+        }).catch(console.error);
         clearCart();
         navigate(`/web/order-confirmation/${order.order_number}`);
         return;
