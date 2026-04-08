@@ -88,8 +88,14 @@ export const defaultContent: Record<string, Record<string, Record<string, any>>>
       tiktok: "",
     },
     shipping_methods: {
-      delivery: { enabled: true, label: "توصيل للبيت", label_he: "משלוח עד הבית" },
-      pickup: { enabled: true, label: "איסوف ذاتي", label_he: "איסוף עצמי", note: "نعمل أونلاين — يرجى التنسيق معنا مسبقاً لموعد الاستلام", note_he: "אנו פועלים אונליין — יש לתאם איתנו מראש לביקור" },
+      delivery_enabled: true,
+      delivery_label: "توصيل للبيت",
+      delivery_label_he: "משלוח עד הבית",
+      pickup_enabled: true,
+      pickup_label: "استلام ذاتي",
+      pickup_label_he: "איסוף עצמי",
+      pickup_note: "نعمل أونلاين — يرجى التنسيق معنا مسبقاً لموعد الاستلام",
+      pickup_note_he: "אנו פועלים אונליין — יש לתאם איתנו מראש לביקור",
     },
   },
 };
