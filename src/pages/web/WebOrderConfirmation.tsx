@@ -12,20 +12,23 @@ export default function WebOrderConfirmation() {
   const [verified, setVerified] = useState<boolean | null>(null);
   const [paymentPending, setPaymentPending] = useState(false);
 
-  // If loaded inside iframe, redirect parent to this URL
+  const isIframe = window.self !== window.top;
+
+  // If loaded inside iframe, redirect parent to this URL and do nothing else
   useEffect(() => {
-    if (window.self !== window.top) {
+    if (isIframe) {
       try {
         window.top!.location.href = window.location.href;
       } catch {
-        // cross-origin — use postMessage fallback
         window.parent.postMessage({ type: "hyp-payment-done", url: window.location.href }, "*");
       }
-      return;
     }
   }, []);
 
   useEffect(() => {
+    // Don't run verification inside iframe — parent will handle it
+    if (isIframe) return;
+
     const hypId = searchParams.get("Id");
     const ccode = searchParams.get("CCode");
     const paymentParam = searchParams.get("payment");
@@ -35,15 +38,12 @@ export default function WebOrderConfirmation() {
       return;
     }
 
-    // If we have HYP return params, verify the payment
     if (hypId && ccode !== null) {
       verifyPayment();
     } else {
-      // No HYP params — just show confirmation
       setVerified(true);
     }
 
-    // Meta Pixel: Purchase event
     const total = searchParams.get("Amount") || searchParams.get("total");
     if (total) {
       const ids = searchParams.get("ids");
