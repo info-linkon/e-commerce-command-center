@@ -37,50 +37,53 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!order.customer_phone) {
-      return new Response(JSON.stringify({ error: "No phone number on order" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Get active template for this trigger
-    const { data: template } = await supabase
+    // Get active templates for this trigger (there can be multiple — customer + admin)
+    const { data: templates } = await supabase
       .from("sms_templates")
       .select("*")
       .eq("trigger", trigger_type)
-      .eq("active", true)
-      .limit(1)
-      .single();
+      .eq("active", true);
 
-    if (!template) {
+    if (!templates || templates.length === 0) {
       return new Response(JSON.stringify({ skipped: true, reason: "No active template" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Replace placeholders
-    let message = template.template_text
-      .replace(/{customer_name}/g, order.customer_name || "")
-      .replace(/{order_number}/g, String(order.order_number))
-      .replace(/{total}/g, Number(order.total).toFixed(2))
-      .replace(/{status}/g, order.status)
-      .replace(/{phone}/g, order.customer_phone || "");
+    const results: any[] = [];
 
-    // Call send-sms function
-    const { error: smsErr } = await supabase.functions.invoke("send-sms", {
-      body: { phone: order.customer_phone, message },
-    });
+    for (const template of templates) {
+      // Determine recipient phone
+      const recipientType = template.recipient_type || "customer";
+      const phone = recipientType === "custom" ? template.recipient_phone : order.customer_phone;
 
-    if (smsErr) {
-      console.error("SMS trigger error:", smsErr);
-      return new Response(JSON.stringify({ error: smsErr.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      if (!phone) {
+        results.push({ template_id: template.id, skipped: true, reason: "No phone number" });
+        continue;
+      }
+
+      // Replace placeholders
+      let message = template.template_text
+        .replace(/{customer_name}/g, order.customer_name || "")
+        .replace(/{order_number}/g, String(order.order_number))
+        .replace(/{total}/g, Number(order.total).toFixed(2))
+        .replace(/{status}/g, order.status)
+        .replace(/{phone}/g, order.customer_phone || "");
+
+      // Call send-sms function
+      const { error: smsErr } = await supabase.functions.invoke("send-sms", {
+        body: { phone, message },
       });
+
+      if (smsErr) {
+        console.error("SMS trigger error:", smsErr);
+        results.push({ template_id: template.id, error: smsErr.message });
+      } else {
+        results.push({ template_id: template.id, success: true });
+      }
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
