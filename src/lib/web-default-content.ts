@@ -114,7 +114,9 @@ export const pageLabels: Record<string, string> = {
 export interface FieldConfig {
   key: string;
   label: string;
-  type: 'text' | 'textarea' | 'image' | 'array' | 'color';
+  type: 'text' | 'textarea' | 'image' | 'array' | 'color' | 'toggle';
+  /** For nested object fields like shipping_methods.delivery.label */
+  objectKey?: string;
   arrayFields?: FieldConfig[];
 }
 
