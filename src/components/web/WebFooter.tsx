@@ -9,6 +9,9 @@ export function WebFooter() {
   const { data: categories } = useWebCategories();
   const { lang, t } = useLanguage();
   const { data: contactDetails } = useSiteSection("contact", "details");
+  const { data: settingsData } = useSiteSection("settings", "general");
+  const settings = (settingsData?.content || {}) as any;
+  const storeName = t(settings.store_name || "الوجهة", settings.store_name_he || "");
   const contact = (contactDetails?.content || {}) as any;
   const phone = contact.phone || "0526213999";
   const email = contact.email || "info@elwejha.co.il";
@@ -23,8 +26,8 @@ export function WebFooter() {
           {/* Brand */}
           <div className="flex flex-col items-start gap-3 col-span-2 md:col-span-1">
             <Link to="/web" className="flex items-center gap-3">
-              <img src={logo} alt={t("الوجهة", "היעד")} className="w-11 h-11 rounded-full ring-2 ring-gold/30" />
-              <span className="text-xl font-bold web-text-gradient-gold">{t("الوجهة", "היעד")}</span>
+              <img src={logo} alt={storeName} className="w-11 h-11 rounded-full ring-2 ring-gold/30" />
+              <span className="text-xl font-bold web-text-gradient-gold">{storeName}</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {t(
@@ -100,7 +103,7 @@ export function WebFooter() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-desert-light text-center text-sm text-sand/50">
-          © {new Date().getFullYear()} {t("الوجهة. جميع الحقوق محفوظة.", "היעד. כל הזכויות שמורות.")}
+          © {new Date().getFullYear()} {storeName}. {t("جميع الحقوق محفوظة.", "כל הזכויות שמורות.")}
         </div>
       </div>
     </footer>

@@ -4,6 +4,7 @@ import { useCartStore } from "@/lib/web-cart-store";
 import { useWebCategories } from "@/hooks/useWebProducts";
 import { useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useSiteSection } from "@/hooks/useSiteContent";
 import logo from "@/assets/logo.webp";
 
 export function WebHeader() {
@@ -12,6 +13,9 @@ export function WebHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const { lang, toggleLang, t } = useLanguage();
+  const { data: settingsData } = useSiteSection("settings", "general");
+  const settings = (settingsData?.content || {}) as any;
+  const storeName = t(settings.store_name || "الوجهة", settings.store_name_he || "");
 
   const navLinks = [
     { label: t("الرئيسية", "ראשי"), to: "/web" },
@@ -27,7 +31,7 @@ export function WebHeader() {
           {/* Logo */}
           <Link to="/web" className="flex items-center gap-2 md:gap-3 group">
             <img src={logo} alt="الوجهة" className="w-14 h-14 md:w-24 md:h-24 rounded-full shadow-md ring-2 ring-gold/30 group-hover:ring-gold/60 transition-all" />
-            <span className="text-lg md:text-2xl font-bold web-text-gradient-gold">{t("الوجهة", "היעד")}</span>
+            <span className="text-lg md:text-2xl font-bold web-text-gradient-gold">{storeName}</span>
           </Link>
 
           {/* Desktop Nav */}
