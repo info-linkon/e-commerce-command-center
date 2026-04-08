@@ -136,6 +136,23 @@ export default function WebProductPage() {
     return false;
   })();
 
+  // Regular product stock check
+  const isRegularOutOfStock = (() => {
+    if (bundleData) return false; // handled by isBundleOutOfStock
+    if (!inventoryStock) return false;
+    if (isVariable && activeVariation) {
+      return (inventoryStock.get(activeVariation.id) || 0) <= 0;
+    }
+    // Simple product — check first variation
+    if (variations && variations.length > 0) {
+      const firstVar = variations[0];
+      return (inventoryStock.get(firstVar.id) || 0) <= 0;
+    }
+    return false;
+  })();
+
+  const isOutOfStock = isBundleOutOfStock || isRegularOutOfStock;
+
   const handleAddToCart = () => {
     if (isVariable && !activeVariation) {
       toast.error(t("الرجاء اختيار نوع المنتج", "יש לבחור סוג מוצר"));
