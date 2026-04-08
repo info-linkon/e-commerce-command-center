@@ -574,12 +574,14 @@ export default function WebCheckoutPage() {
                           <span className="font-semibold">-₪{discount.toFixed(2)}</span>
                         </div>
                       )}
-                      {shipping > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">تكلفة التوصيل</span>
-                          <span className="font-medium">₪{shipping.toFixed(2)}</span>
-                        </div>
-                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          {shippingMethod === "pickup" ? "איסוף עצמי" : "تكلفة التوصيل"}
+                        </span>
+                        <span className={`font-medium ${shippingMethod === "pickup" ? "text-primary" : ""}`}>
+                          {shippingMethod === "pickup" ? "مجاناً" : `₪${shipping.toFixed(2)}`}
+                        </span>
+                      </div>
                       <div className="flex justify-between text-lg font-black pt-3 border-t border-border">
                         <span>المجموع</span>
                         <span className="text-primary">₪{finalTotal.toFixed(2)}</span>
