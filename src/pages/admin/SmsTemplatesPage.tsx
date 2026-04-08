@@ -33,6 +33,8 @@ export default function SmsTemplatesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [trigger, setTrigger] = useState("order_created");
   const [templateText, setTemplateText] = useState("");
+  const [recipientType, setRecipientType] = useState("customer");
+  const [recipientPhone, setRecipientPhone] = useState("");
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ["sms-templates"],
@@ -47,17 +49,17 @@ export default function SmsTemplatesPage() {
   });
 
   const upsertMutation = useMutation({
-    mutationFn: async (values: { id?: string; trigger: string; template_text: string }) => {
+    mutationFn: async (values: { id?: string; trigger: string; template_text: string; recipient_type: string; recipient_phone?: string }) => {
       if (values.id) {
         const { error } = await supabase
           .from("sms_templates")
-          .update({ trigger: values.trigger as any, template_text: values.template_text })
+          .update({ trigger: values.trigger as any, template_text: values.template_text, recipient_type: values.recipient_type, recipient_phone: values.recipient_phone || null })
           .eq("id", values.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("sms_templates")
-          .insert({ trigger: values.trigger as any, template_text: values.template_text });
+          .insert({ trigger: values.trigger as any, template_text: values.template_text, recipient_type: values.recipient_type, recipient_phone: values.recipient_phone || null });
         if (error) throw error;
       }
     },
@@ -93,17 +95,21 @@ export default function SmsTemplatesPage() {
     setEditingId(null);
     setTrigger("order_created");
     setTemplateText("");
+    setRecipientType("customer");
+    setRecipientPhone("");
   };
 
   const handleEdit = (t: any) => {
     setEditingId(t.id);
     setTrigger(t.trigger);
     setTemplateText(t.template_text);
+    setRecipientType(t.recipient_type || "customer");
+    setRecipientPhone(t.recipient_phone || "");
     setDialogOpen(true);
   };
 
   const handleSave = () => {
-    upsertMutation.mutate({ id: editingId || undefined, trigger, template_text: templateText });
+    upsertMutation.mutate({ id: editingId || undefined, trigger, template_text: templateText, recipient_type: recipientType, recipient_phone: recipientType === "custom" ? recipientPhone : undefined });
   };
 
   return (
