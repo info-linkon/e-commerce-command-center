@@ -38,6 +38,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [nameHe, setNameHe] = useState("");
+  const [sku, setSku] = useState("");
   const [price, setPrice] = useState(0);
   const [items, setItems] = useState<VariationItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -66,6 +67,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     setEditingId(null);
     setName("");
     setNameHe("");
+    setSku("");
     setPrice(0);
     setItems([]);
     setSelectedProduct("");
@@ -76,6 +78,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     setEditingId(bv.id);
     setName(bv.name);
     setNameHe((bv as any).name_he || "");
+    setSku((bv as any).sku || "");
     setPrice(Number(bv.price));
     const mappedItems = (bv.bundle_variation_items || []).map((bvi: any) => {
       const pv = bvi.product_variations;
@@ -118,6 +121,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
       bundleId,
       name,
       name_he: nameHe,
+      sku,
       price,
       items: items.map(({ variation_id, quantity }) => ({ variation_id, quantity })),
     };
@@ -155,6 +159,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{bv.name}</span>
                     <Badge variant="secondary">₪{Number(bv.price).toFixed(2)}</Badge>
+                    {(bv as any).sku && <Badge variant="outline">{(bv as any).sku}</Badge>}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {(bv as any).bundle_variation_items?.length || 0} פריטים
@@ -203,6 +208,10 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
             <div className="space-y-2">
               <Label>מחיר</Label>
               <Input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
+            </div>
+            <div className="space-y-2">
+              <Label>מק"ט (SKU)</Label>
+              <Input value={sku} onChange={(e) => setSku(e.target.value)} placeholder="למשל: BV-001" dir="ltr" />
             </div>
 
             <div className="space-y-2">
