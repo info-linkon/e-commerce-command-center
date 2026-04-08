@@ -2,11 +2,19 @@ import { Link } from "react-router-dom";
 import { useWebCategories } from "@/hooks/useWebProducts";
 import { Phone, Mail, Facebook, Instagram } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useSiteSection } from "@/hooks/useSiteContent";
 import logo from "@/assets/logo.webp";
 
 export function WebFooter() {
   const { data: categories } = useWebCategories();
   const { lang, t } = useLanguage();
+  const { data: contactDetails } = useSiteSection("contact", "details");
+  const contact = (contactDetails?.content || {}) as any;
+  const phone = contact.phone || "0526213999";
+  const email = contact.email || "info@elwejha.co.il";
+  const whatsapp = contact.whatsapp || "972526573185";
+  const instagramUrl = contact.instagram || "https://www.instagram.com/elwejha.outdoors";
+  const facebookUrl = contact.facebook || "https://www.facebook.com/1094362587370591";
 
   return (
     <footer className="bg-desert text-sand border-t border-desert-light" dir="rtl">
