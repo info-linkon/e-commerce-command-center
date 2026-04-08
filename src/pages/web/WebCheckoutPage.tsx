@@ -166,15 +166,13 @@ export default function WebCheckoutPage() {
           customer_name: customerName,
           customer_phone: customerPhone,
           customer_email: customerEmail || null,
-          shipping_city: form.get("city") as string,
-          shipping_address: form.get("address") as string,
+          shipping_city: shippingMethod === "delivery" ? (form.get("city") as string) : "איסוף עצמי",
+          shipping_address: shippingMethod === "delivery" ? (form.get("address") as string) : "",
           notes: [
             shippingMethod === "pickup" ? "🏪 איסוף עצמי" : "",
             (form.get("notes") as string) || "",
             appliedCoupon ? `קופון: ${appliedCoupon.code} (הנחה: ₪${discount.toFixed(2)})` : "",
           ].filter(Boolean).join(" | ") || null,
-          shipping_city: shippingMethod === "delivery" ? (form.get("city") as string) : "איסוף עצמי",
-          shipping_address: shippingMethod === "delivery" ? (form.get("address") as string) : "",
           total: finalTotal,
         })
         .select()
