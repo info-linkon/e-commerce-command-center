@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Plus, Trash2, Info } from "lucide-react";
+import { MessageSquare, Plus, Trash2, Info, Phone, User } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const triggerLabels: Record<string, string> = {
   order_created: "הזמנה חדשה",
@@ -142,6 +143,29 @@ export default function SmsTemplatesPage() {
                 </Select>
               </div>
               <div>
+                <Label>נמען</Label>
+                <RadioGroup value={recipientType} onValueChange={setRecipientType} className="mt-2 space-y-2">
+                  <label className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition-colors ${recipientType === "customer" ? "border-primary bg-primary/5" : "border-border"}`}>
+                    <RadioGroupItem value="customer" id="r-customer" />
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">טלפון הלקוח (מההזמנה)</span>
+                  </label>
+                  <label className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition-colors ${recipientType === "custom" ? "border-primary bg-primary/5" : "border-border"}`}>
+                    <RadioGroupItem value="custom" id="r-custom" />
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">מספר מותאם (מנהל)</span>
+                  </label>
+                </RadioGroup>
+                {recipientType === "custom" && (
+                  <Input
+                    value={recipientPhone}
+                    onChange={(e) => setRecipientPhone(e.target.value)}
+                    placeholder="05XXXXXXXX"
+                    className="mt-2"
+                    dir="ltr"
+                  />
+                )}
+              <div>
                 <Label>טקסט ההודעה</Label>
                 <Textarea
                   value={templateText}
@@ -194,6 +218,9 @@ export default function SmsTemplatesPage() {
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">{triggerLabels[t.trigger] || t.trigger}</Badge>
                     {!t.active && <Badge variant="outline" className="text-muted-foreground">מושבת</Badge>}
+                    <Badge variant="outline" className="text-xs">
+                      {t.recipient_type === "custom" ? `📞 ${t.recipient_phone}` : "👤 טלפון הלקוח"}
+                    </Badge>
                   </div>
                   <p className="text-sm mt-2 whitespace-pre-wrap">{t.template_text}</p>
                 </div>
