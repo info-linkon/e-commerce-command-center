@@ -1,0 +1,1 @@
+ALTER TABLE public.bundle_variations ADD COLUMN sku text;
