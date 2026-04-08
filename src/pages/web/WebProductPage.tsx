@@ -44,6 +44,30 @@ export default function WebProductPage() {
 
   const { data: bundleStockResult } = useBundleStock(bundleData?.id, bundleData?.bundle_type);
 
+  // Fetch inventory stock for regular (non-bundle) products
+  const { data: inventoryStock } = useQuery({
+    queryKey: ["product-inventory-stock", productId],
+    enabled: !!productId && !bundleData,
+    queryFn: async () => {
+      // Get all variations for this product
+      const { data: vars } = await supabase
+        .from("product_variations")
+        .select("id")
+        .eq("product_id", productId!);
+      if (!vars || vars.length === 0) return new Map<string, number>();
+      const varIds = vars.map(v => v.id);
+      const { data: inv } = await supabase
+        .from("inventory")
+        .select("variation_id, quantity")
+        .in("variation_id", varIds);
+      const stockMap = new Map<string, number>();
+      for (const row of (inv || [])) {
+        stockMap.set(row.variation_id, (stockMap.get(row.variation_id) || 0) + row.quantity);
+      }
+      return stockMap;
+    },
+  });
+
   // Meta Pixel: ViewContent (must be before early returns)
   useEffect(() => {
     if (product) {
