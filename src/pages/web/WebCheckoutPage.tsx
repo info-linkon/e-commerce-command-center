@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateCoupon, calcDiscount, incrementCouponUsage, Coupon } from "@/hooks/useCoupons";
-import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home, MessageSquare, ShieldCheck, Lock, ChevronLeft, ShoppingBag } from "lucide-react";
+import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home, MessageSquare, ShieldCheck, Lock, ChevronLeft, ShoppingBag, Package, Truck } from "lucide-react";
 import { fbq } from "@/lib/meta-pixel";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
