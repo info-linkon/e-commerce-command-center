@@ -248,19 +248,26 @@ export default function WebProductPage() {
             <div className="mb-6">
               <span className="text-sm font-medium mb-2 block">{t("اختر النوع:", "בחר סוג:")}</span>
               <div className="flex flex-wrap gap-2">
-                {variations.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVariation(v.id)}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
-                      (selectedVariation || variations[0].id) === v.id
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    {lang === "he" ? (v.name || v.name_ar) : (v.name_ar || v.name)}
-                  </button>
-                ))}
+              {variations.map((v) => {
+                  const vOutOfStock = inventoryStock ? (inventoryStock.get(v.id) || 0) <= 0 : false;
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => !vOutOfStock && setSelectedVariation(v.id)}
+                      disabled={vOutOfStock}
+                      className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                        vOutOfStock
+                          ? "opacity-50 cursor-not-allowed border-border"
+                          : (selectedVariation || variations[0].id) === v.id
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {lang === "he" ? (v.name || v.name_ar) : (v.name_ar || v.name)}
+                      {vOutOfStock && t(" (غير متوفر)", " (אזל)")}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
