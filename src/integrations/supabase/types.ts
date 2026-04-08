@@ -133,6 +133,7 @@ export type Database = {
           name: string
           name_he: string | null
           price: number
+          sku: string | null
           woo_id: number | null
         }
         Insert: {
@@ -142,6 +143,7 @@ export type Database = {
           name: string
           name_he?: string | null
           price?: number
+          sku?: string | null
           woo_id?: number | null
         }
         Update: {
@@ -151,6 +153,7 @@ export type Database = {
           name?: string
           name_he?: string | null
           price?: number
+          sku?: string | null
           woo_id?: number | null
         }
         Relationships: [
