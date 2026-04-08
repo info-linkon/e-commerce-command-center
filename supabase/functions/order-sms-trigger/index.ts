@@ -83,15 +83,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (smsErr) {
-      console.error("SMS trigger error:", smsErr);
-      return new Response(JSON.stringify({ error: smsErr.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
