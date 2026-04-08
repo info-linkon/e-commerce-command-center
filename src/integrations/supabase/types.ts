@@ -1251,6 +1251,8 @@ export type Database = {
           active: boolean
           created_at: string
           id: string
+          recipient_phone: string | null
+          recipient_type: string
           template_text: string
           trigger: Database["public"]["Enums"]["sms_trigger"]
         }
@@ -1258,6 +1260,8 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          recipient_phone?: string | null
+          recipient_type?: string
           template_text?: string
           trigger: Database["public"]["Enums"]["sms_trigger"]
         }
@@ -1265,6 +1269,8 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          recipient_phone?: string | null
+          recipient_type?: string
           template_text?: string
           trigger?: Database["public"]["Enums"]["sms_trigger"]
         }
