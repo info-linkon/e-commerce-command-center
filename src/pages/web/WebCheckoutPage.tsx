@@ -12,6 +12,7 @@ import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home,
 import { fbq } from "@/lib/meta-pixel";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useLanguage } from "@/hooks/useLanguage";
 import logo from "@/assets/logo.webp";
 
 type ShippingMethod = "delivery" | "pickup";
@@ -34,6 +35,16 @@ export default function WebCheckoutPage() {
   const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
 
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
+  const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
+  const { t } = useLanguage();
+
+  const shippingSettings = (shippingSettingsRow?.content || {}) as any;
+  const deliveryEnabled = shippingSettings.delivery_enabled !== false;
+  const pickupEnabled = shippingSettings.pickup_enabled !== false;
+  const deliveryLabel = t(shippingSettings.delivery_label || "توصيل للبيت", shippingSettings.delivery_label_he || "משלוח עד הבית");
+  const pickupLabel = t(shippingSettings.pickup_label || "استلام ذاتي", shippingSettings.pickup_label_he || "איסוף עצמי");
+  const pickupNote = t(shippingSettings.pickup_note || "", shippingSettings.pickup_note_he || "");
+
   const paymentSettings: PaymentSettings = paymentSettingsRow?.content
     ? { ...DEFAULT_PAYMENT_SETTINGS, ...(paymentSettingsRow.content as unknown as PaymentSettings) }
     : DEFAULT_PAYMENT_SETTINGS;
@@ -43,7 +54,8 @@ export default function WebCheckoutPage() {
   if (paymentSettings.credit.enabled) enabledMethods.push("credit");
 
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType>("credit");
-  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("delivery");
+  const defaultShipping = deliveryEnabled ? "delivery" : "pickup";
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>(defaultShipping);
 
   useEffect(() => {
     if (enabledMethods.length > 0 && !enabledMethods.includes(selectedPayment)) {
