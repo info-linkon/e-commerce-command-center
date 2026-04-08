@@ -122,9 +122,6 @@ export default function WebHome() {
                             <ArrowLeft className="w-4 h-4 mr-2" />
                           </Link>
                         </Button>
-                        <Button asChild variant="outline" size="lg" className="border-white/50 text-white bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:text-white font-bold text-base">
-                          <Link to="/web/about">{t("من نحن", "אודותינו")}</Link>
-                        </Button>
                       </div>
                     </div>
                   </div>
