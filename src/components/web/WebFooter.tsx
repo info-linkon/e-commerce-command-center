@@ -33,10 +33,10 @@ export function WebFooter() {
               )}
             </p>
             <div className="flex gap-3 mt-1">
-              <a href="https://www.facebook.com/1094362587370591" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 rounded-full hover:bg-gold/20 transition-colors">
+              <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 rounded-full hover:bg-gold/20 transition-colors">
                 <Facebook className="w-4 h-4 text-gold" />
               </a>
-              <a href="https://www.instagram.com/elwejha.outdoors" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 rounded-full hover:bg-gold/20 transition-colors">
+              <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 rounded-full hover:bg-gold/20 transition-colors">
                 <Instagram className="w-4 h-4 text-gold" />
               </a>
             </div>
