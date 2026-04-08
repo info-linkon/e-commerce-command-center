@@ -87,6 +87,10 @@ export const defaultContent: Record<string, Record<string, Record<string, any>>>
       facebook: "https://www.facebook.com/1094362587370591",
       tiktok: "",
     },
+    shipping_methods: {
+      delivery: { enabled: true, label: "توصيل للبيت", label_he: "משלוח עד הבית" },
+      pickup: { enabled: true, label: "איסوف ذاتي", label_he: "איסוף עצמי", note: "نعمل أونلاين — يرجى التنسيق معنا مسبقاً لموعد الاستلام", note_he: "אנו פועלים אונליין — יש לתאם איתנו מראש לביקור" },
+    },
   },
 };
 
@@ -95,8 +99,7 @@ export const sectionLabels: Record<string, Record<string, string>> = {
   home: { hero: 'באנר ראשי', features: 'פיצ\'רים', categories: 'סקשן קטגוריות', featured: 'סקשן מוצרים מומלצים' },
   about: { hero: 'באנר ראשי', story: 'הסיפור שלנו', values: 'ערכים' },
   contact: { hero: 'באנר ראשי', info: 'פרטי התקשרות' },
-  
-  settings: { general: 'הגדרות כלליות' },
+  settings: { general: 'הגדרות כלליות', shipping_methods: 'אפשרויות משלוח' },
 };
 
 export const pageLabels: Record<string, string> = {
