@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateCoupon, calcDiscount, incrementCouponUsage, Coupon } from "@/hooks/useCoupons";
-import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home, MessageSquare, ShieldCheck, Lock, ChevronLeft, ShoppingBag } from "lucide-react";
+import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home, MessageSquare, ShieldCheck, Lock, ChevronLeft, ShoppingBag, Package, Truck } from "lucide-react";
 import { fbq } from "@/lib/meta-pixel";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import logo from "@/assets/logo.webp";
 
+type ShippingMethod = "delivery" | "pickup";
 type PaymentMethodType = "cash" | "credit";
 
 interface PaymentSettings {
@@ -42,6 +43,7 @@ export default function WebCheckoutPage() {
   if (paymentSettings.credit.enabled) enabledMethods.push("credit");
 
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType>("credit");
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("delivery");
 
   useEffect(() => {
     if (enabledMethods.length > 0 && !enabledMethods.includes(selectedPayment)) {
@@ -76,7 +78,7 @@ export default function WebCheckoutPage() {
   }, []);
 
   const subtotal = totalPrice();
-  const shipping = shippingCost();
+  const shipping = shippingMethod === "pickup" ? 0 : shippingCost();
   const discount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
   const finalTotal = subtotal - discount + shipping;
 
@@ -164,9 +166,10 @@ export default function WebCheckoutPage() {
           customer_name: customerName,
           customer_phone: customerPhone,
           customer_email: customerEmail || null,
-          shipping_city: form.get("city") as string,
-          shipping_address: form.get("address") as string,
+          shipping_city: shippingMethod === "delivery" ? (form.get("city") as string) : "איסוף עצמי",
+          shipping_address: shippingMethod === "delivery" ? (form.get("address") as string) : "",
           notes: [
+            shippingMethod === "pickup" ? "🏪 איסוף עצמי" : "",
             (form.get("notes") as string) || "",
             appliedCoupon ? `קופון: ${appliedCoupon.code} (הנחה: ₪${discount.toFixed(2)})` : "",
           ].filter(Boolean).join(" | ") || null,
@@ -333,14 +336,67 @@ export default function WebCheckoutPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
             {/* Right Column — Forms */}
             <div className="md:col-span-7 space-y-6 order-2 md:order-1">
-              {/* Shipping Info Card */}
+              {/* Shipping Method Card */}
               <Card className="border-border/60 shadow-sm">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <div className="p-2 rounded-lg bg-primary/10">
-                      <MapPin className="h-4 w-4 text-primary" />
+                      <Truck className="h-4 w-4 text-primary" />
                     </div>
-                    معلومات التوصيل
+                    طريقة الاستلام
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RadioGroup value={shippingMethod} onValueChange={(v) => setShippingMethod(v as ShippingMethod)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label
+                      htmlFor="sm-delivery"
+                      className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
+                        shippingMethod === "delivery"
+                          ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
+                          : "border-border hover:border-muted-foreground/30"
+                      }`}
+                    >
+                      <RadioGroupItem value="delivery" id="sm-delivery" className="sr-only" />
+                      <Truck className={`w-8 h-8 ${shippingMethod === "delivery" ? "text-primary" : "text-muted-foreground"}`} />
+                      <div className="text-center">
+                        <span className="font-semibold text-sm block">توصيل للبيت</span>
+                        {shippingCost() > 0 && (
+                          <span className="text-xs text-muted-foreground">₪{shippingCost().toFixed(2)}</span>
+                        )}
+                      </div>
+                    </label>
+                    <label
+                      htmlFor="sm-pickup"
+                      className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
+                        shippingMethod === "pickup"
+                          ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
+                          : "border-border hover:border-muted-foreground/30"
+                      }`}
+                    >
+                      <RadioGroupItem value="pickup" id="sm-pickup" className="sr-only" />
+                      <Package className={`w-8 h-8 ${shippingMethod === "pickup" ? "text-primary" : "text-muted-foreground"}`} />
+                      <div className="text-center">
+                        <span className="font-semibold text-sm block">איסוף עצמי</span>
+                        <span className="text-xs text-muted-foreground">חינם</span>
+                      </div>
+                    </label>
+                  </RadioGroup>
+                  {shippingMethod === "pickup" && (
+                    <p className="text-xs text-muted-foreground mt-3 text-center">
+                      نعمل أونلاين — يرجى التنسيق معنا مسبقاً لموعد الاستلام
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Customer / Shipping Info Card */}
+              <Card className="border-border/60 shadow-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      {shippingMethod === "delivery" ? <MapPin className="h-4 w-4 text-primary" /> : <User className="h-4 w-4 text-primary" />}
+                    </div>
+                    {shippingMethod === "delivery" ? "معلومات التوصيل" : "معلومات الزبون"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -367,22 +423,24 @@ export default function WebCheckoutPage() {
                       <Input id="email" name="email" type="email" className="pl-10 rounded-xl" placeholder="email@example.com" dir="ltr" />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="city">المدينة *</Label>
-                      <div className="relative">
-                        <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input id="city" name="city" required className="pr-10 rounded-xl" placeholder="المدينة" />
+                  {shippingMethod === "delivery" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="city">المدينة *</Label>
+                        <div className="relative">
+                          <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input id="city" name="city" required className="pr-10 rounded-xl" placeholder="المدينة" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="address">العنوان التفصيلي *</Label>
+                        <div className="relative">
+                          <Home className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input id="address" name="address" required className="pr-10 rounded-xl" placeholder="الشارع، رقم البيت" />
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="address">العنوان التفصيلي *</Label>
-                      <div className="relative">
-                        <Home className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input id="address" name="address" required className="pr-10 rounded-xl" placeholder="الشارع، رقم البيت" />
-                      </div>
-                    </div>
-                  </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="notes">ملاحظات</Label>
                     <div className="relative">
@@ -516,12 +574,14 @@ export default function WebCheckoutPage() {
                           <span className="font-semibold">-₪{discount.toFixed(2)}</span>
                         </div>
                       )}
-                      {shipping > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">تكلفة التوصيل</span>
-                          <span className="font-medium">₪{shipping.toFixed(2)}</span>
-                        </div>
-                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          {shippingMethod === "pickup" ? "איסוף עצמי" : "تكلفة التوصيل"}
+                        </span>
+                        <span className={`font-medium ${shippingMethod === "pickup" ? "text-primary" : ""}`}>
+                          {shippingMethod === "pickup" ? "مجاناً" : `₪${shipping.toFixed(2)}`}
+                        </span>
+                      </div>
                       <div className="flex justify-between text-lg font-black pt-3 border-t border-border">
                         <span>المجموع</span>
                         <span className="text-primary">₪{finalTotal.toFixed(2)}</span>
