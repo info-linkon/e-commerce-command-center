@@ -215,6 +215,17 @@ export default function WebContentPage() {
         </div>
       );
     }
+    if (field.type === 'toggle') {
+      return (
+        <div key={field.key} className="flex items-center justify-between py-2">
+          <Label>{field.label}</Label>
+          <Switch
+            checked={!!editData[field.key]}
+            onCheckedChange={(checked) => updateField(field.key, checked)}
+          />
+        </div>
+      );
+    }
     if (field.type === 'color') {
       return (
         <div key={field.key} className="space-y-1.5">
