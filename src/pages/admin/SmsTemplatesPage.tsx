@@ -165,6 +165,7 @@ export default function SmsTemplatesPage() {
                     dir="ltr"
                   />
                 )}
+              </div>
               <div>
                 <Label>טקסט ההודעה</Label>
                 <Textarea
