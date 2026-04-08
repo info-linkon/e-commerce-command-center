@@ -216,5 +216,15 @@ export const sectionFields: Record<string, Record<string, FieldConfig[]>> = {
       { key: 'facebook', label: 'Facebook', type: 'text' },
       { key: 'tiktok', label: 'TikTok', type: 'text' },
     ],
+    shipping_methods: [
+      { key: 'delivery_enabled', label: 'משלוח עד הבית — מופעל', type: 'toggle' },
+      { key: 'delivery_label', label: 'שם (ערבית)', type: 'text' },
+      { key: 'delivery_label_he', label: 'שם (עברית)', type: 'text' },
+      { key: 'pickup_enabled', label: 'איסוף עצמי — מופעל', type: 'toggle' },
+      { key: 'pickup_label', label: 'שם (ערבית)', type: 'text' },
+      { key: 'pickup_label_he', label: 'שם (עברית)', type: 'text' },
+      { key: 'pickup_note', label: 'הערה לאיסוף (ערבית)', type: 'text' },
+      { key: 'pickup_note_he', label: 'הערה לאיסוף (עברית)', type: 'text' },
+    ],
   },
 };
