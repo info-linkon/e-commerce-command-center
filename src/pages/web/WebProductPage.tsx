@@ -316,10 +316,10 @@ export default function WebProductPage() {
               size="lg"
               className="w-full sm:flex-1 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
               onClick={handleAddToCart}
-              disabled={isBundleOutOfStock}
+              disabled={isOutOfStock}
             >
               <ShoppingCart className="w-4 h-4 ml-2" />
-              {isBundleOutOfStock ? t("غير متوفر", "אזל מהמלאי") : t("أضف إلى السلة", "הוסף לסל")}
+              {isOutOfStock ? t("غير متوفر", "אזל מהמלאי") : t("أضف إلى السلة", "הוסף לסל")}
             </Button>
           </div>
         </div>
