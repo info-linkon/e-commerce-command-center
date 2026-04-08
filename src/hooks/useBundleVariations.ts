@@ -25,18 +25,20 @@ export function useCreateBundleVariation() {
       bundleId,
       name,
       name_he,
+      sku,
       price,
       items,
     }: {
       bundleId: string;
       name: string;
       name_he?: string;
+      sku?: string;
       price: number;
       items: { variation_id: string; quantity: number }[];
     }) => {
       const { data: variation, error: vErr } = await supabase
         .from("bundle_variations")
-        .insert({ bundle_id: bundleId, name, name_he: name_he || null, price } as any)
+        .insert({ bundle_id: bundleId, name, name_he: name_he || null, sku: sku || null, price } as any)
         .select()
         .single();
       if (vErr) throw vErr;
@@ -65,6 +67,7 @@ export function useUpdateBundleVariation() {
       bundleId,
       name,
       name_he,
+      sku,
       price,
       items,
     }: {
@@ -72,12 +75,13 @@ export function useUpdateBundleVariation() {
       bundleId: string;
       name: string;
       name_he?: string;
+      sku?: string;
       price: number;
       items: { variation_id: string; quantity: number }[];
     }) => {
       const { error: vErr } = await supabase
         .from("bundle_variations")
-        .update({ name, name_he: name_he || null, price } as any)
+        .update({ name, name_he: name_he || null, sku: sku || null, price } as any)
         .eq("id", variationId);
       if (vErr) throw vErr;
 
