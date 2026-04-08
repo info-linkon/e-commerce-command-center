@@ -12,6 +12,7 @@ import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home,
 import { fbq } from "@/lib/meta-pixel";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useLanguage } from "@/hooks/useLanguage";
 import logo from "@/assets/logo.webp";
 
 type ShippingMethod = "delivery" | "pickup";
@@ -34,6 +35,16 @@ export default function WebCheckoutPage() {
   const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
 
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
+  const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
+  const { t } = useLanguage();
+
+  const shippingSettings = (shippingSettingsRow?.content || {}) as any;
+  const deliveryEnabled = shippingSettings.delivery_enabled !== false;
+  const pickupEnabled = shippingSettings.pickup_enabled !== false;
+  const deliveryLabel = t(shippingSettings.delivery_label || "توصيل للبيت", shippingSettings.delivery_label_he || "משלוח עד הבית");
+  const pickupLabel = t(shippingSettings.pickup_label || "استلام ذاتي", shippingSettings.pickup_label_he || "איסוף עצמי");
+  const pickupNote = t(shippingSettings.pickup_note || "", shippingSettings.pickup_note_he || "");
+
   const paymentSettings: PaymentSettings = paymentSettingsRow?.content
     ? { ...DEFAULT_PAYMENT_SETTINGS, ...(paymentSettingsRow.content as unknown as PaymentSettings) }
     : DEFAULT_PAYMENT_SETTINGS;
@@ -43,7 +54,8 @@ export default function WebCheckoutPage() {
   if (paymentSettings.credit.enabled) enabledMethods.push("credit");
 
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType>("credit");
-  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("delivery");
+  const defaultShipping = deliveryEnabled ? "delivery" : "pickup";
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>(defaultShipping);
 
   useEffect(() => {
     if (enabledMethods.length > 0 && !enabledMethods.includes(selectedPayment)) {
@@ -337,57 +349,63 @@ export default function WebCheckoutPage() {
             {/* Right Column — Forms */}
             <div className="md:col-span-7 space-y-6 order-2 md:order-1">
               {/* Shipping Method Card */}
+              {(deliveryEnabled && pickupEnabled) && (
               <Card className="border-border/60 shadow-sm">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <div className="p-2 rounded-lg bg-primary/10">
                       <Truck className="h-4 w-4 text-primary" />
                     </div>
-                    طريقة الاستلام
+                    {t("طريقة الاستلام", "אופן קבלת המשלוח")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <RadioGroup value={shippingMethod} onValueChange={(v) => setShippingMethod(v as ShippingMethod)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label
-                      htmlFor="sm-delivery"
-                      className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                        shippingMethod === "delivery"
-                          ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
-                          : "border-border hover:border-muted-foreground/30"
-                      }`}
-                    >
-                      <RadioGroupItem value="delivery" id="sm-delivery" className="sr-only" />
-                      <Truck className={`w-8 h-8 ${shippingMethod === "delivery" ? "text-primary" : "text-muted-foreground"}`} />
-                      <div className="text-center">
-                        <span className="font-semibold text-sm block">توصيل للبيت</span>
-                        {shippingCost() > 0 && (
-                          <span className="text-xs text-muted-foreground">₪{shippingCost().toFixed(2)}</span>
-                        )}
-                      </div>
-                    </label>
-                    <label
-                      htmlFor="sm-pickup"
-                      className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                        shippingMethod === "pickup"
-                          ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
-                          : "border-border hover:border-muted-foreground/30"
-                      }`}
-                    >
-                      <RadioGroupItem value="pickup" id="sm-pickup" className="sr-only" />
-                      <Package className={`w-8 h-8 ${shippingMethod === "pickup" ? "text-primary" : "text-muted-foreground"}`} />
-                      <div className="text-center">
-                        <span className="font-semibold text-sm block">איסוף עצמי</span>
-                        <span className="text-xs text-muted-foreground">חינם</span>
-                      </div>
-                    </label>
+                    {deliveryEnabled && (
+                      <label
+                        htmlFor="sm-delivery"
+                        className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
+                          shippingMethod === "delivery"
+                            ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
+                            : "border-border hover:border-muted-foreground/30"
+                        }`}
+                      >
+                        <RadioGroupItem value="delivery" id="sm-delivery" className="sr-only" />
+                        <Truck className={`w-8 h-8 ${shippingMethod === "delivery" ? "text-primary" : "text-muted-foreground"}`} />
+                        <div className="text-center">
+                          <span className="font-semibold text-sm block">{deliveryLabel}</span>
+                          {shippingCost() > 0 && (
+                            <span className="text-xs text-muted-foreground">₪{shippingCost().toFixed(2)}</span>
+                          )}
+                        </div>
+                      </label>
+                    )}
+                    {pickupEnabled && (
+                      <label
+                        htmlFor="sm-pickup"
+                        className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
+                          shippingMethod === "pickup"
+                            ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
+                            : "border-border hover:border-muted-foreground/30"
+                        }`}
+                      >
+                        <RadioGroupItem value="pickup" id="sm-pickup" className="sr-only" />
+                        <Package className={`w-8 h-8 ${shippingMethod === "pickup" ? "text-primary" : "text-muted-foreground"}`} />
+                        <div className="text-center">
+                          <span className="font-semibold text-sm block">{pickupLabel}</span>
+                          <span className="text-xs text-muted-foreground">{t("مجاناً", "חינם")}</span>
+                        </div>
+                      </label>
+                    )}
                   </RadioGroup>
-                  {shippingMethod === "pickup" && (
+                  {shippingMethod === "pickup" && pickupNote && (
                     <p className="text-xs text-muted-foreground mt-3 text-center">
-                      نعمل أونلاين — يرجى التنسيق معنا مسبقاً لموعد الاستلام
+                      {pickupNote}
                     </p>
                   )}
                 </CardContent>
               </Card>
+              )}
 
               {/* Customer / Shipping Info Card */}
               <Card className="border-border/60 shadow-sm">

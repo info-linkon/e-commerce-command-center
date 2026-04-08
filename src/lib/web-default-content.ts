@@ -87,6 +87,16 @@ export const defaultContent: Record<string, Record<string, Record<string, any>>>
       facebook: "https://www.facebook.com/1094362587370591",
       tiktok: "",
     },
+    shipping_methods: {
+      delivery_enabled: true,
+      delivery_label: "توصيل للبيت",
+      delivery_label_he: "משלוח עד הבית",
+      pickup_enabled: true,
+      pickup_label: "استلام ذاتي",
+      pickup_label_he: "איסוף עצמי",
+      pickup_note: "نعمل أونلاين — يرجى التنسيق معنا مسبقاً لموعد الاستلام",
+      pickup_note_he: "אנו פועלים אונליין — יש לתאם איתנו מראש לביקור",
+    },
   },
 };
 
@@ -95,8 +105,7 @@ export const sectionLabels: Record<string, Record<string, string>> = {
   home: { hero: 'באנר ראשי', features: 'פיצ\'רים', categories: 'סקשן קטגוריות', featured: 'סקשן מוצרים מומלצים' },
   about: { hero: 'באנר ראשי', story: 'הסיפור שלנו', values: 'ערכים' },
   contact: { hero: 'באנר ראשי', info: 'פרטי התקשרות' },
-  
-  settings: { general: 'הגדרות כלליות' },
+  settings: { general: 'הגדרות כלליות', shipping_methods: 'אפשרויות משלוח' },
 };
 
 export const pageLabels: Record<string, string> = {
@@ -111,7 +120,9 @@ export const pageLabels: Record<string, string> = {
 export interface FieldConfig {
   key: string;
   label: string;
-  type: 'text' | 'textarea' | 'image' | 'array' | 'color';
+  type: 'text' | 'textarea' | 'image' | 'array' | 'color' | 'toggle';
+  /** For nested object fields like shipping_methods.delivery.label */
+  objectKey?: string;
   arrayFields?: FieldConfig[];
 }
 
@@ -204,6 +215,16 @@ export const sectionFields: Record<string, Record<string, FieldConfig[]>> = {
       { key: 'instagram', label: 'Instagram', type: 'text' },
       { key: 'facebook', label: 'Facebook', type: 'text' },
       { key: 'tiktok', label: 'TikTok', type: 'text' },
+    ],
+    shipping_methods: [
+      { key: 'delivery_enabled', label: 'משלוח עד הבית — מופעל', type: 'toggle' },
+      { key: 'delivery_label', label: 'שם (ערבית)', type: 'text' },
+      { key: 'delivery_label_he', label: 'שם (עברית)', type: 'text' },
+      { key: 'pickup_enabled', label: 'איסוף עצמי — מופעל', type: 'toggle' },
+      { key: 'pickup_label', label: 'שם (ערבית)', type: 'text' },
+      { key: 'pickup_label_he', label: 'שם (עברית)', type: 'text' },
+      { key: 'pickup_note', label: 'הערה לאיסוף (ערבית)', type: 'text' },
+      { key: 'pickup_note_he', label: 'הערה לאיסוף (עברית)', type: 'text' },
     ],
   },
 };
