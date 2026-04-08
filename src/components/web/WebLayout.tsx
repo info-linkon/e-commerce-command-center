@@ -10,7 +10,10 @@ import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
 
 function WebLayoutInner() {
   const { data: pixelSettings } = useSiteSection("settings", "meta_pixel");
+  const { data: contactHero } = useSiteSection("contact", "hero");
   const { lang } = useLanguage();
+
+  const whatsapp = (contactHero?.content as any)?.whatsapp || "972526573185";
 
   useEffect(() => {
     const pixelId = (pixelSettings?.content as any)?.pixel_id;
@@ -31,7 +34,7 @@ function WebLayoutInner() {
 
       {/* WhatsApp float */}
       <a
-        href="https://wa.me/972526573185"
+        href={`https://wa.me/${whatsapp}`}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-[4.5rem] md:bottom-6 left-4 md:left-6 z-50 w-12 h-12 md:w-14 md:h-14 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 hover:scale-110 transition-all duration-200"
