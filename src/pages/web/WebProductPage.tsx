@@ -44,6 +44,30 @@ export default function WebProductPage() {
 
   const { data: bundleStockResult } = useBundleStock(bundleData?.id, bundleData?.bundle_type);
 
+  // Fetch inventory stock for regular (non-bundle) products
+  const { data: inventoryStock } = useQuery({
+    queryKey: ["product-inventory-stock", productId],
+    enabled: !!productId && !bundleData,
+    queryFn: async () => {
+      // Get all variations for this product
+      const { data: vars } = await supabase
+        .from("product_variations")
+        .select("id")
+        .eq("product_id", productId!);
+      if (!vars || vars.length === 0) return new Map<string, number>();
+      const varIds = vars.map(v => v.id);
+      const { data: inv } = await supabase
+        .from("inventory")
+        .select("variation_id, quantity")
+        .in("variation_id", varIds);
+      const stockMap = new Map<string, number>();
+      for (const row of (inv || [])) {
+        stockMap.set(row.variation_id, (stockMap.get(row.variation_id) || 0) + row.quantity);
+      }
+      return stockMap;
+    },
+  });
+
   // Meta Pixel: ViewContent (must be before early returns)
   useEffect(() => {
     if (product) {
@@ -111,6 +135,23 @@ export default function WebProductPage() {
     }
     return false;
   })();
+
+  // Regular product stock check
+  const isRegularOutOfStock = (() => {
+    if (bundleData) return false; // handled by isBundleOutOfStock
+    if (!inventoryStock) return false;
+    if (isVariable && activeVariation) {
+      return (inventoryStock.get(activeVariation.id) || 0) <= 0;
+    }
+    // Simple product — check first variation
+    if (variations && variations.length > 0) {
+      const firstVar = variations[0];
+      return (inventoryStock.get(firstVar.id) || 0) <= 0;
+    }
+    return false;
+  })();
+
+  const isOutOfStock = isBundleOutOfStock || isRegularOutOfStock;
 
   const handleAddToCart = () => {
     if (isVariable && !activeVariation) {
@@ -207,19 +248,26 @@ export default function WebProductPage() {
             <div className="mb-6">
               <span className="text-sm font-medium mb-2 block">{t("اختر النوع:", "בחר סוג:")}</span>
               <div className="flex flex-wrap gap-2">
-                {variations.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVariation(v.id)}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
-                      (selectedVariation || variations[0].id) === v.id
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    {lang === "he" ? (v.name || v.name_ar) : (v.name_ar || v.name)}
-                  </button>
-                ))}
+              {variations.map((v) => {
+                  const vOutOfStock = inventoryStock ? (inventoryStock.get(v.id) || 0) <= 0 : false;
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => !vOutOfStock && setSelectedVariation(v.id)}
+                      disabled={vOutOfStock}
+                      className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                        vOutOfStock
+                          ? "opacity-50 cursor-not-allowed border-border"
+                          : (selectedVariation || variations[0].id) === v.id
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {lang === "he" ? (v.name || v.name_ar) : (v.name_ar || v.name)}
+                      {vOutOfStock && t(" (غير متوفر)", " (אזל)")}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -268,10 +316,10 @@ export default function WebProductPage() {
               size="lg"
               className="w-full sm:flex-1 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
               onClick={handleAddToCart}
-              disabled={isBundleOutOfStock}
+              disabled={isOutOfStock}
             >
               <ShoppingCart className="w-4 h-4 ml-2" />
-              {isBundleOutOfStock ? t("غير متوفر", "אזל מהמלאי") : t("أضف إلى السلة", "הוסף לסל")}
+              {isOutOfStock ? t("غير متوفر", "אזל מהמלאי") : t("أضف إلى السلة", "הוסף לסל")}
             </Button>
           </div>
         </div>
