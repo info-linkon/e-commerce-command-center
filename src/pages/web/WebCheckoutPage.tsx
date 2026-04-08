@@ -14,6 +14,7 @@ import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import logo from "@/assets/logo.webp";
 
+type ShippingMethod = "delivery" | "pickup";
 type PaymentMethodType = "cash" | "credit";
 
 interface PaymentSettings {
@@ -42,6 +43,7 @@ export default function WebCheckoutPage() {
   if (paymentSettings.credit.enabled) enabledMethods.push("credit");
 
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType>("credit");
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("delivery");
 
   useEffect(() => {
     if (enabledMethods.length > 0 && !enabledMethods.includes(selectedPayment)) {
@@ -76,7 +78,7 @@ export default function WebCheckoutPage() {
   }, []);
 
   const subtotal = totalPrice();
-  const shipping = shippingCost();
+  const shipping = shippingMethod === "pickup" ? 0 : shippingCost();
   const discount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
   const finalTotal = subtotal - discount + shipping;
 
