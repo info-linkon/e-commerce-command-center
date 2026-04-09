@@ -56,13 +56,15 @@ const ProductsPage = () => {
     return (products || []).filter((p) => {
       // Hide products that are already bundles
       if (bundleProductIds?.has(p.id)) return false;
-      return p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.sku?.toLowerCase().includes(search.toLowerCase());
+      const s = search.toLowerCase();
+      return p.name.toLowerCase().includes(s) ||
+        p.name_ar?.toLowerCase().includes(s) ||
+        p.sku?.toLowerCase().includes(s);
     });
   }, [products, bundleProductIds, search]);
 
   const columns: ColumnDef<any>[] = [
-    { label: "שם", render: (p) => <span className="font-medium">{p.name}</span> },
+    { label: "שם", render: (p) => <span className="font-medium">{p.name_ar || p.name}</span> },
     { label: "מק״ט", render: (p) => p.sku || "—", hideOnMobile: true },
     { label: "קטגוריה", render: (p) => (p as any).categories?.name || "—", hideOnMobile: true },
     { label: "סוג", render: (p) => <Badge variant="secondary">{p.product_type === "simple" ? "פשוט" : "עם וריאציות"}</Badge> },
@@ -115,7 +117,7 @@ const ProductsPage = () => {
           <div>
             <div className="flex justify-between items-start">
               <Badge variant="secondary" className="text-xs">{p.product_type === "simple" ? "פשוט" : "וריאציות"}</Badge>
-              <span className="font-medium">{p.name}</span>
+              <span className="font-medium">{p.name_ar || p.name}</span>
             </div>
             <div className="flex justify-between items-center mt-2 text-sm">
               <span className="font-bold">₪{Number(p.sale_price).toFixed(2)}</span>

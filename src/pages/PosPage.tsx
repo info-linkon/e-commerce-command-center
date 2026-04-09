@@ -33,6 +33,7 @@ interface GroupedProduct {
   product_id: string;
   product_name: string;
   category_id: string | null;
+  image_url: string | null;
   variations: { id: string; name: string; price: number }[];
   isBundle?: boolean;
 }
@@ -64,7 +65,7 @@ const PosPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_variations")
-        .select("*, products(name, category_id, is_published)")
+        .select("*, products(name, name_ar, image_url, category_id, is_published)")
         .order("name");
       if (error) throw error;
       return data;
@@ -76,7 +77,7 @@ const PosPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bundles")
-        .select("id, bundle_type, product_id, products(name, category_id, sale_price, is_published)");
+        .select("id, bundle_type, product_id, products(name, name_ar, image_url, category_id, sale_price, is_published)");
       if (error) throw error;
       const variableBundleIds = (data || []).filter(b => b.bundle_type === "variable_bundle").map(b => b.id);
       let bundleVars: any[] = [];
@@ -105,7 +106,7 @@ const PosPage = () => {
         const isBundleProduct = allBundles?.bundles.some(b => b.product_id === pid);
         if (isBundleProduct) continue;
         if (!map.has(pid)) {
-          map.set(pid, { product_id: pid, product_name: product.name, category_id: product.category_id, variations: [] });
+          map.set(pid, { product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id, variations: [] });
         }
         map.get(pid)!.variations.push({ id: v.id, name: v.name, price: Number(v.price) });
       }
@@ -117,15 +118,15 @@ const PosPage = () => {
         const pid = bundle.product_id;
         if (bundle.bundle_type === "simple_bundle") {
           map.set(pid, {
-            product_id: pid, product_name: product.name, category_id: product.category_id,
-            variations: [{ id: bundle.id, name: product.name, price: Number(product.sale_price) }],
+            product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
+            variations: [{ id: bundle.id, name: product.name_ar || product.name, price: Number(product.sale_price) }],
             isBundle: true,
           });
         } else {
           const bvs = allBundles.bundleVars.filter(bv => bv.bundle_id === bundle.id);
           if (bvs.length > 0) {
             map.set(pid, {
-              product_id: pid, product_name: product.name, category_id: product.category_id,
+              product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
               variations: bvs.map(bv => ({ id: bv.id, name: bv.name, price: Number(bv.price) })),
               isBundle: true,
             });
@@ -389,7 +390,7 @@ const PosPage = () => {
                   key={product.product_id}
                   onClick={() => !outOfStock && handleProductClick(product)}
                   disabled={outOfStock}
-                  className={`rounded-lg border bg-card p-3 text-right transition-colors text-sm relative ${outOfStock ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"}`}
+                  className={`rounded-lg border bg-card p-2 text-right transition-colors text-sm relative flex flex-col items-center ${outOfStock ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"}`}
                 >
                   {product.isBundle && (
                     <Badge variant="secondary" className="absolute top-1 right-1 text-[10px] px-1.5 py-0 gap-0.5">
@@ -400,7 +401,14 @@ const PosPage = () => {
                   {outOfStock && (
                     <Badge variant="destructive" className="absolute top-1 left-1 text-[10px] px-1.5 py-0">אזל</Badge>
                   )}
-                  <div className="font-medium truncate mt-4">{product.product_name}</div>
+                  {product.image_url ? (
+                    <img src={product.image_url} alt={product.product_name} className="w-12 h-12 rounded object-cover mt-1 mb-1" />
+                  ) : (
+                    <div className="w-12 h-12 rounded bg-muted flex items-center justify-center mt-1 mb-1">
+                      <Package className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="font-medium truncate w-full text-center">{product.product_name}</div>
                   {product.variations.length === 1 ? (
                     <div className="text-xs text-muted-foreground truncate">{product.variations[0].name}</div>
                   ) : (
