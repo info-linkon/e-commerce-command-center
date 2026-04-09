@@ -91,7 +91,11 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
           {Object.values(groupedByOrderItem).map((group: any[], groupIndex) => {
             const first = group[0];
             const isBundle = group.length > 1;
-            const parentProductName = first?.product_variations?.products?.name_ar || first?.product_variations?.products?.name || "—";
+            // For bundles, use the order_item's own variation (the bundle product), not the component's product
+            const orderItemVar = first?.order_items?.product_variations;
+            const parentProductName = isBundle
+              ? (orderItemVar?.products?.name_ar || orderItemVar?.products?.name || "מארז")
+              : (first?.product_variations?.products?.name_ar || first?.product_variations?.products?.name || "—");
 
             return (
               <div key={`${first.order_item_id}-${groupIndex}`} className="space-y-2">
