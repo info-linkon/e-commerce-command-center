@@ -86,6 +86,13 @@ Deno.serve(async (req) => {
     if (resultCCode === "0") {
       // Payment verified — update order
       if (order_id) {
+        // Fetch order data for invoice
+        const { data: orderData } = await supabase
+          .from("orders")
+          .select("total, customer_name, customer_email, customer_phone")
+          .eq("id", order_id)
+          .single();
+
         await supabase
           .from("orders")
           .update({
@@ -96,12 +103,6 @@ Deno.serve(async (req) => {
           .eq("id", order_id);
 
         // Create payment record
-        const { data: orderData } = await supabase
-          .from("orders")
-          .select("total")
-          .eq("id", order_id)
-          .single();
-
         if (orderData) {
           await supabase.from("payments").insert({
             order_id,
@@ -109,6 +110,51 @@ Deno.serve(async (req) => {
             payment_method: "credit",
             reference: `HYP-${Id || ""}`,
           });
+
+          // Auto-issue invoice receipt (type 320) via ezcount-doc
+          try {
+            // Fetch order items
+            const { data: orderItems } = await supabase
+              .from("order_items")
+              .select("quantity, unit_price, variation_id, product_variations(name, sku, products(name))")
+              .eq("order_id", order_id);
+
+            const items = (orderItems || []).map((oi: any) => ({
+              details: `${oi.product_variations?.products?.name || ""} - ${oi.product_variations?.name || ""}`.trim().replace(/^- /, ""),
+              amount: oi.quantity,
+              price: Number(oi.unit_price),
+              catalog_number: oi.product_variations?.sku || undefined,
+            }));
+
+            const ezRes = await fetch(`${supabaseUrl}/functions/v1/ezcount-doc`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${supabaseKey}`,
+              },
+              body: JSON.stringify({
+                doc_type: "invoice_receipt",
+                order_id,
+                customer_name: orderData.customer_name || "לקוח אתר",
+                customer_email: orderData.customer_email || undefined,
+                customer_phone: orderData.customer_phone || undefined,
+                items,
+                payments: [{ type: "credit", amount: Number(orderData.total) }],
+              }),
+            });
+
+            const ezData = await ezRes.json();
+            console.log("EZCount auto-invoice result:", JSON.stringify(ezData));
+
+            if (ezData.success && ezData.doc_url) {
+              await supabase
+                .from("orders")
+                .update({ invoice_url: ezData.doc_url })
+                .eq("id", order_id);
+            }
+          } catch (ezErr) {
+            console.error("Auto-invoice error (non-blocking):", ezErr);
+          }
         }
       }
 
