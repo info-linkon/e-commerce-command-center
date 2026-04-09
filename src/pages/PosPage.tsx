@@ -288,7 +288,7 @@ const PosPage = () => {
       setDiscountType("none");
       setDiscountValue(0);
       toast.success("ההזמנה נוצרה ונשלחה לתהליך ההזמנות");
-      navigate("/orders");
+      navigate("/crm/orders");
     } catch {
       toast.error("שגיאה ביצירת הזמנה");
     }

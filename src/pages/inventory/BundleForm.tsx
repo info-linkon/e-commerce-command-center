@@ -240,7 +240,7 @@ const BundleForm = () => {
           bundleType: form.bundle_type,
           items: bundleItems,
         },
-        { onSuccess: () => navigate("/inventory/bundles") }
+        { onSuccess: () => navigate("/crm/inventory/bundles") }
       );
     } else if (fromProductId) {
       // Converting existing product to bundle — update the product, then create bundle record
@@ -270,7 +270,7 @@ const BundleForm = () => {
           }
 
           toast.success("הפריט הועבר למארז בהצלחה");
-          navigate("/inventory/bundles");
+          navigate("/crm/inventory/bundles");
         } catch (err: any) {
           console.error("Convert to bundle error:", err);
           toast.error(`שגיאה בהמרה למארז: ${err?.message || "unknown"}`);
@@ -284,7 +284,7 @@ const BundleForm = () => {
           bundleType: form.bundle_type,
           items: bundleItems,
         },
-        { onSuccess: () => navigate("/inventory/bundles") }
+        { onSuccess: () => navigate("/crm/inventory/bundles") }
       );
     }
   };
@@ -295,7 +295,7 @@ const BundleForm = () => {
     <div className="space-y-4 pb-20" dir="rtl">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/inventory/bundles")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/crm/inventory/bundles")}>
             <ArrowRight className="h-4 w-4" />
           </Button>
           <h1 className="text-xl font-bold">{isEditing ? "עריכת מארז" : "מארז חדש"}</h1>

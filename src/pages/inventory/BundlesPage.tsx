@@ -74,7 +74,7 @@ const BundlesPage = () => {
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-bold">ניהול מארזים</h1>
-        <Button onClick={() => navigate("/inventory/bundles/new")}>
+        <Button onClick={() => navigate("/crm/inventory/bundles/new")}>
           <Plus className="ml-2 h-4 w-4" />
           הוסף מארז
         </Button>
@@ -86,7 +86,7 @@ const BundlesPage = () => {
         keyExtractor={(b) => b.id}
         isLoading={isLoading}
         emptyMessage="אין מארזים עדיין"
-        onRowClick={(b) => navigate(`/inventory/bundles/${b.id}`)}
+        onRowClick={(b) => navigate(`/crm/inventory/bundles/${b.id}`)}
         mobileCard={(b) => {
           const product = (b as any).products;
           const stock = getStock(b);

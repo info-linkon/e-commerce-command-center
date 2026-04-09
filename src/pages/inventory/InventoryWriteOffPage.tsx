@@ -106,7 +106,7 @@ const InventoryWriteOffPage = () => {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/inventory")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/crm/inventory")}>
           <ArrowRight className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold">הורדת מלאי (פחת)</h1>

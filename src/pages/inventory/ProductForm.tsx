@@ -121,9 +121,9 @@ const ProductForm = () => {
       gallery_images: galleryImages,
     };
     if (isEditing) {
-      updateProduct.mutate({ id, ...data } as any, { onSuccess: () => navigate("/inventory/products") });
+      updateProduct.mutate({ id, ...data } as any, { onSuccess: () => navigate("/crm/inventory/products") });
     } else {
-      createProduct.mutate(data as any, { onSuccess: () => navigate("/inventory/products") });
+      createProduct.mutate(data as any, { onSuccess: () => navigate("/crm/inventory/products") });
     }
   };
 
@@ -146,7 +146,7 @@ const ProductForm = () => {
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/inventory/products")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/crm/inventory/products")}>
             <ArrowRight className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-bold">{isEditing ? "עריכת פריט" : "הוספת פריט חדש"}</h1>
@@ -157,7 +157,7 @@ const ProductForm = () => {
           )}
         </div>
         {isEditing && id && (
-          <Button variant="outline" size="sm" onClick={() => navigate(`/inventory/bundles/new?fromProduct=${id}`)}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/crm/inventory/bundles/new?fromProduct=${id}`)}>
             <Package className="h-4 w-4 ml-1" />
             העבר למארז
           </Button>
