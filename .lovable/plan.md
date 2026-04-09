@@ -1,38 +1,47 @@
 
 
-## Plan: Three Fixes — Picking Bundle Breakdown, Arabic Names in POS/Management, Product Images in POS
+## Plan: Payment Link via SMS for POS Orders
 
-### 1. Picking Checklist — Expand Bundles to Components
+### Overview
+Add a "Send Payment Link" button to the Payment section on the order detail page. When clicked, the system generates a HYP credit card payment link, sends it to the customer via SMS, and after the customer pays, the order is automatically marked as paid with an invoice receipt.
 
-**Problem:** When a bundle is ordered, the picking list shows only the bundle name, not its individual component items. Workers might forget items.
+### How It Works
 
-**Solution:** In `PickingChecklist.tsx`, after fetching picking items, detect which items are bundles (by checking `bundles` table via product_id). For each bundle item, fetch its `bundle_items` with their `product_variations(name, products(name, name_ar))` and display them as indented sub-items under the bundle name.
+```text
+Manager clicks "שלח לינק תשלום" 
+  → Edge Function generates HYP payment URL
+  → SMS sent to customer with the link
+  → Customer opens link, pays via credit card
+  → HYP redirects to confirmation page
+  → hyp-verify-payment auto-updates order status + creates invoice
+```
 
-**Changes:**
-- `src/components/orders/PickingChecklist.tsx` — Add a secondary query to fetch bundle components for any bundle products in the picking list. Render them as nested items under the bundle parent (visually indented, with quantity × bundle quantity).
+### Changes
 
-### 2. Arabic Names as Primary in POS & Management
+**1. New Edge Function: `hyp-payment-link`**
+- Combines `hyp-create-payment` + `send-sms` into one call
+- Generates the HYP payment URL with success/error URLs pointing to the public web order confirmation page
+- Sends SMS with the payment link to the customer's phone
+- Returns success/failure to the UI
 
-**Problem:** Product names in POS cards and management pages show Hebrew (`name`). User wants Arabic (`name_ar`) as the primary display name.
+**2. Update `PaymentSection.tsx`**
+- Add a "שלח לינק תשלום באשראי" button (visible when order is unpaid and customer has a phone number)
+- Button calls the new edge function
+- Shows loading state while sending
+- Toast notification on success/failure
 
-**Changes:**
-- `src/pages/PosPage.tsx` — Update the variations query to also fetch `name_ar` from products. Change `product_name` in `GroupedProduct` to use `name_ar || name`. Update all display points (product cards, cart items, variation picker).
-- `src/pages/inventory/ProductsPage.tsx` — Show `name_ar || name` in the product list table and mobile cards.
+**3. Update `hyp-verify-payment` (minor)**
+- Ensure the success URL from the SMS flow triggers the same verification + invoice logic already in place
+- Add SMS notification trigger (`order_completed`) after successful payment verification
 
-### 3. Product Images in POS
+**4. Update `supabase/config.toml`**
+- Register the new `hyp-payment-link` function with `verify_jwt = false`
 
-**Problem:** POS product cards are text-only. User wants product images next to names.
+### Technical Details
 
-**Changes:**
-- `src/pages/PosPage.tsx` — Fetch `image_url` from products in the query. Add `image_url` to `GroupedProduct` interface. Display a small thumbnail (e.g. 40×40px) in each product card above/beside the name.
-
-### Files to Modify
-1. `src/components/orders/PickingChecklist.tsx` — bundle expansion in picking
-2. `src/pages/PosPage.tsx` — Arabic names + product images
-3. `src/pages/inventory/ProductsPage.tsx` — Arabic names as primary
-
-### Technical Notes
-- Bundle detection: join `order_items.variation_id → product_variations.product_id → bundles.product_id`
-- For bundle components: query `bundle_items` with `product_variations(name, products(name, name_ar))` where `bundle_id` matches
-- POS query change: `products(name, name_ar, image_url, category_id, is_published)`
+- The HYP payment URL uses `tmp=1` (standalone page, not iframe template 7) so it works in mobile browsers
+- Success URL: `{site_url}/web/order-confirmation?order_id={id}&CCode=0`
+- The existing `WebOrderConfirmation` page already handles HYP return params and calls `hyp-verify-payment`
+- Invoice receipt is auto-issued by the existing logic in `hyp-verify-payment`
+- SMS message template: `שלום {customer_name}, לתשלום הזמנה #{order_number} בסך ₪{total} לחץ כאן: {payment_url}`
 
