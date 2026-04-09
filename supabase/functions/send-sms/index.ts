@@ -21,14 +21,6 @@ Deno.serve(async (req) => {
 
   try {
     const { phone, message } = await req.json();
-
-    // XML-escape special characters
-    const escapeXml = (s: string) =>
-      s.replace(/&/g, "&amp;")
-       .replace(/</g, "&lt;")
-       .replace(/>/g, "&gt;")
-       .replace(/"/g, "&quot;")
-       .replace(/'/g, "&apos;");
     if (!phone || !message) {
       return new Response(JSON.stringify({ error: "phone and message are required" }), {
         status: 400,
@@ -45,33 +37,37 @@ Deno.serve(async (req) => {
       formattedPhone = "972" + formattedPhone;
     }
 
-    const safeMessage = escapeXml(message);
-    const safeSender = escapeXml(INFORU_SENDER || "ELWEJHA");
+    const sender = INFORU_SENDER || "ELWEJHA";
 
-    const xmlPayload = `<Inforu>
-  <User>
-    <Username>${escapeXml(INFORU_USERNAME)}</Username>
-    <Token>${escapeXml(INFORU_TOKEN)}</Token>
-  </User>
-  <Content Type="sms">
-    <Message>${safeMessage}</Message>
-  </Content>
-  <Recipients>
-    <PhoneNumber>${formattedPhone}</PhoneNumber>
-  </Recipients>
-  <Settings>
-    <Sender>${safeSender}</Sender>
-  </Settings>
-</Inforu>`;
+    // Use InforU JSON API
+    const jsonPayload = {
+      User: {
+        Username: INFORU_USERNAME,
+        Token: INFORU_TOKEN,
+      },
+      Content: {
+        Type: "sms",
+        Message: message,
+      },
+      Recipients: [{ Phone: formattedPhone }],
+      Settings: {
+        Sender: sender,
+      },
+    };
 
-    const response = await fetch("https://uapi.inforu.co.il/SendMessageXml.ashx", {
+    console.log("Sending SMS to:", formattedPhone, "sender:", sender);
+
+    const response = await fetch("https://capi.inforu.co.il/api/v2/SMS/SendSms", {
       method: "POST",
-      headers: { "Content-Type": "application/xml; charset=utf-8" },
-      body: xmlPayload,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${btoa(INFORU_USERNAME + ":" + INFORU_TOKEN)}`,
+      },
+      body: JSON.stringify(jsonPayload),
     });
 
     const result = await response.text();
-    console.log("InforU response:", result);
+    console.log("InforU response status:", response.status, "body:", result);
 
     return new Response(JSON.stringify({ success: true, result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
