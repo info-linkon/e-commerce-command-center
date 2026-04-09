@@ -37,32 +37,42 @@ Deno.serve(async (req) => {
       formattedPhone = "972" + formattedPhone;
     }
 
-    const escapeXml = (s: string) =>
-      s.replace(/&/g, "&amp;")
-       .replace(/</g, "&lt;")
-       .replace(/>/g, "&gt;")
-       .replace(/"/g, "&quot;")
-       .replace(/'/g, "&apos;");
-
     const sender = INFORU_SENDER || "ELWEJHA";
 
-    const xmlPayload = `<Inforu><User><Username>${escapeXml(INFORU_USERNAME)}</Username><Token>${escapeXml(INFORU_TOKEN)}</Token></User><Content Type="sms"><Message>${escapeXml(message)}</Message></Content><Recipients><PhoneNumber>${formattedPhone}</PhoneNumber></Recipients><Settings><Sender>${escapeXml(sender)}</Sender></Settings></Inforu>`;
+    console.log("Sending SMS to:", formattedPhone, "from:", sender);
 
-    console.log("Sending SMS to:", formattedPhone, "XML length:", xmlPayload.length);
+    // Use InforU SOAP SendSmsDetailed endpoint
+    const soapBody = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <SendSmsDetailed xmlns="http://inforu.co.il/api/v2/asmx/SendMessage/">
+      <userName>${escapeXml(INFORU_USERNAME)}</userName>
+      <apiToken>${escapeXml(INFORU_TOKEN)}</apiToken>
+      <message>${escapeXml(message)}</message>
+      <phoneNumber>${formattedPhone}</phoneNumber>
+      <senderName>${escapeXml(sender)}</senderName>
+      <customerParameter></customerParameter>
+    </SendSmsDetailed>
+  </soap:Body>
+</soap:Envelope>`;
 
-    // Try sending as form-encoded with InforuXML parameter
-    const formBody = "InforuXML=" + encodeURIComponent(xmlPayload);
-
-    const response = await fetch("https://uapi.inforu.co.il/SendMessageXml.ashx", {
+    const response = await fetch("https://uapi.inforu.co.il/v2/SendMessage.asmx", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded; charset=utf-8" },
-      body: formBody,
+      headers: {
+        "Content-Type": "text/xml; charset=utf-8",
+        "SOAPAction": "http://inforu.co.il/api/v2/asmx/SendMessage/SendSmsDetailed",
+      },
+      body: soapBody,
     });
 
     const result = await response.text();
-    console.log("InforU response:", result);
+    console.log("InforU SOAP response:", result);
 
-    return new Response(JSON.stringify({ success: true, result }), {
+    // Check for success in SOAP response
+    const statusMatch = result.match(/<SendSmsDetailedResult>(.*?)<\/SendSmsDetailedResult>/);
+    const soapResult = statusMatch ? statusMatch[1] : result;
+
+    return new Response(JSON.stringify({ success: true, result: soapResult }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
@@ -74,3 +84,12 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+function escapeXml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
