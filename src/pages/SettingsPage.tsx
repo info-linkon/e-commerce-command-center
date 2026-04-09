@@ -1,4 +1,4 @@
-import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon } from "lucide-react";
+import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -51,6 +51,12 @@ const settingsSections = [
     description: "הגדרת חשבון HYP CreditGuard לתשלומי אשראי",
     icon: CreditCard,
     url: "/admin/hyp-settings",
+  },
+  {
+    title: "הגדרות EZCount",
+    description: "API Key ומייל מפתח להפקת חשבוניות",
+    icon: FileText,
+    url: "/admin/ezcount-settings",
   },
 ];
 
