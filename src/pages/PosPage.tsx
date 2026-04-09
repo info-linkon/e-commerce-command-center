@@ -106,7 +106,7 @@ const PosPage = () => {
         const isBundleProduct = allBundles?.bundles.some(b => b.product_id === pid);
         if (isBundleProduct) continue;
         if (!map.has(pid)) {
-          map.set(pid, { product_id: pid, product_name: product.name, category_id: product.category_id, variations: [] });
+          map.set(pid, { product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id, variations: [] });
         }
         map.get(pid)!.variations.push({ id: v.id, name: v.name, price: Number(v.price) });
       }
@@ -118,15 +118,15 @@ const PosPage = () => {
         const pid = bundle.product_id;
         if (bundle.bundle_type === "simple_bundle") {
           map.set(pid, {
-            product_id: pid, product_name: product.name, category_id: product.category_id,
-            variations: [{ id: bundle.id, name: product.name, price: Number(product.sale_price) }],
+            product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
+            variations: [{ id: bundle.id, name: product.name_ar || product.name, price: Number(product.sale_price) }],
             isBundle: true,
           });
         } else {
           const bvs = allBundles.bundleVars.filter(bv => bv.bundle_id === bundle.id);
           if (bvs.length > 0) {
             map.set(pid, {
-              product_id: pid, product_name: product.name, category_id: product.category_id,
+              product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
               variations: bvs.map(bv => ({ id: bv.id, name: bv.name, price: Number(bv.price) })),
               isBundle: true,
             });
