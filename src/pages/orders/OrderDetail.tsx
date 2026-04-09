@@ -265,6 +265,7 @@ const OrderDetail = () => {
         <PaymentSection
           orderId={order.id}
           orderTotal={Number(order.total)}
+          orderNumber={order.order_number}
           isDelivered={delivery?.status === "delivered"}
           isCancelled={isCancelled}
           isCompleted={isCompleted}
