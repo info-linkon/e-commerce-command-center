@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
 
     const sender = INFORU_SENDER || "ELWEJHA";
 
-    const xmlPayload = `<Inforu><User><Username>${escapeXml(INFORU_USERNAME)}</Username><Password>${escapeXml(INFORU_TOKEN)}</Password></User><Content Type="sms"><Message>${escapeXml(message)}</Message></Content><Recipients><PhoneNumber>${formattedPhone}</PhoneNumber></Recipients><Settings><Sender>${escapeXml(sender)}</Sender></Settings></Inforu>`;
+    const xmlPayload = `<Inforu><User><Username>${escapeXml(INFORU_USERNAME)}</Username><Token>${escapeXml(INFORU_TOKEN)}</Token></User><Content Type="sms"><Message>${escapeXml(message)}</Message></Content><Recipients><PhoneNumber>${formattedPhone}</PhoneNumber></Recipients><Settings><Sender>${escapeXml(sender)}</Sender></Settings></Inforu>`;
 
     console.log("Sending SMS to:", formattedPhone, "XML length:", xmlPayload.length);
 
