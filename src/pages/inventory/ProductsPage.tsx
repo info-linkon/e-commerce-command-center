@@ -115,7 +115,7 @@ const ProductsPage = () => {
           <div>
             <div className="flex justify-between items-start">
               <Badge variant="secondary" className="text-xs">{p.product_type === "simple" ? "פשוט" : "וריאציות"}</Badge>
-              <span className="font-medium">{p.name}</span>
+              <span className="font-medium">{p.name_ar || p.name}</span>
             </div>
             <div className="flex justify-between items-center mt-2 text-sm">
               <span className="font-bold">₪{Number(p.sale_price).toFixed(2)}</span>
