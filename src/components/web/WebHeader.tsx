@@ -18,10 +18,10 @@ export function WebHeader() {
   const storeName = t(settings.store_name || "الوجهة", settings.store_name_he || "");
 
   const navLinks = [
-    { label: t("الرئيسية", "ראשי"), to: "/web" },
-    { label: t("المتجر", "חנות"), to: "/web/shop" },
-    { label: t("من نحن", "אודותינו"), to: "/web/about" },
-    { label: t("تواصل معنا", "צור קשר"), to: "/web/contact" },
+    { label: t("الرئيسية", "ראשי"), to: "/" },
+    { label: t("المتجر", "חנות"), to: "/shop" },
+    { label: t("من نحن", "אודותינו"), to: "/about" },
+    { label: t("تواصل معنا", "צור קשר"), to: "/contact" },
   ];
 
   return (
@@ -29,7 +29,7 @@ export function WebHeader() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-24">
           {/* Logo */}
-          <Link to="/web" className="flex items-center gap-2 md:gap-3 group">
+          <Link to="/" className="flex items-center gap-2 md:gap-3 group">
             <img src={logo} alt="الوجهة" className="w-14 h-14 md:w-24 md:h-24 rounded-full shadow-md ring-2 ring-gold/30 group-hover:ring-gold/60 transition-all" />
             <span className="text-lg md:text-2xl font-bold web-text-gradient-gold">{storeName}</span>
           </Link>
@@ -60,10 +60,10 @@ export function WebHeader() {
               <Globe className="h-4 w-4" />
               <span>{lang === "ar" ? "HE" : "AR"}</span>
             </button>
-            <Link to="/web/search" className="p-2.5 rounded-lg hover:text-gold hover:bg-desert-light transition-all">
+            <Link to="/search" className="p-2.5 rounded-lg hover:text-gold hover:bg-desert-light transition-all">
               <Search className="h-5 w-5" />
             </Link>
-            <Link to="/web/cart" className="p-2.5 rounded-lg hover:text-gold hover:bg-desert-light transition-all relative">
+            <Link to="/cart" className="p-2.5 rounded-lg hover:text-gold hover:bg-desert-light transition-all relative">
               <ShoppingCart className="h-5 w-5" />
               {totalItems > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-gold text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-md">

@@ -24,10 +24,10 @@ interface BannerForm {
 }
 
 const linkOptions = [
-  { value: "/web/shop", label: "חנות" },
-  { value: "/web/about", label: "אודות" },
-  { value: "/web/contact", label: "צור קשר" },
-  { value: "/web/faq", label: "שאלות נפוצות" },
+  { value: "/shop", label: "חנות" },
+  { value: "/about", label: "אודות" },
+  { value: "/contact", label: "צור קשר" },
+  { value: "/faq", label: "שאלות נפוצות" },
 ];
 
 const emptyForm: BannerForm = { title: "", title_he: "", subtitle: "", subtitle_he: "", image_url: "", link: "" };

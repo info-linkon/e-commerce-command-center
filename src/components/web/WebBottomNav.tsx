@@ -3,11 +3,11 @@ import { Home, Search, ShoppingCart, User, Grid3X3 } from "lucide-react";
 import { useCartStore } from "@/lib/web-cart-store";
 
 const navItems = [
-  { icon: Home, label: "الرئيسية", to: "/web" },
-  { icon: Grid3X3, label: "المتجر", to: "/web/shop" },
-  { icon: Search, label: "بحث", to: "/web/search" },
-  { icon: ShoppingCart, label: "السلة", to: "/web/cart", showBadge: true },
-  { icon: User, label: "تواصل", to: "/web/contact" },
+  { icon: Home, label: "الرئيسية", to: "/" },
+  { icon: Grid3X3, label: "المتجر", to: "/shop" },
+  { icon: Search, label: "بحث", to: "/search" },
+  { icon: ShoppingCart, label: "السلة", to: "/cart", showBadge: true },
+  { icon: User, label: "تواصل", to: "/contact" },
 ];
 
 export function WebBottomNav() {

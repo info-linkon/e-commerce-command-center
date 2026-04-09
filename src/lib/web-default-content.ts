@@ -9,7 +9,7 @@ export const defaultContent: Record<string, Record<string, Record<string, any>>>
       subtitle_he: "",
       cta_text: "تسوق الآن",
       cta_text_he: "",
-      cta_link: "/web/shop",
+      cta_link: "/shop",
       backgroundImage: "",
     },
     features: {

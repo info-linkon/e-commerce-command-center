@@ -82,7 +82,7 @@ const ProductsPage = () => {
             <span className="hidden sm:inline">ניהול קטגוריות</span>
             <span className="sm:hidden">קטגוריות</span>
           </Button>
-          <Button onClick={() => navigate("/inventory/products/new")}>
+          <Button onClick={() => navigate("/crm/inventory/products/new")}>
             <Plus className="ml-2 h-4 w-4" />
             <span className="hidden sm:inline">הוסף פריט</span>
             <span className="sm:hidden">חדש</span>
@@ -112,7 +112,7 @@ const ProductsPage = () => {
         keyExtractor={(p) => p.id}
         isLoading={isLoading}
         emptyMessage="אין פריטים"
-        onRowClick={(p) => navigate(`/inventory/products/${p.id}`)}
+        onRowClick={(p) => navigate(`/crm/inventory/products/${p.id}`)}
         mobileCard={(p) => (
           <div>
             <div className="flex justify-between items-start">
@@ -127,7 +127,7 @@ const ProductsPage = () => {
         )}
         actions={(p) => (
           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" onClick={() => navigate(`/inventory/products/${p.id}`)}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(`/crm/inventory/products/${p.id}`)}>
               <Pencil className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" onClick={() => deleteProduct.mutate(p.id)}>

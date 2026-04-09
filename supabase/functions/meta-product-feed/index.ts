@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     const availability = stock > 0 ? "in stock" : "out of stock";
     const category = p.categories?.name || "General";
     const imageUrl = p.image_url || "";
-    const link = `${siteUrl}/web/product/${p.id}`;
+    const link = `${siteUrl}/product/${p.id}`;
 
     return `    <item>
       <g:id>${p.id}</g:id>

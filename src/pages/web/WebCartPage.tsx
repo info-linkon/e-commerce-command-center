@@ -13,7 +13,7 @@ export default function WebCartPage() {
         <h1 className="text-2xl font-bold mb-2">السلة فارغة</h1>
         <p className="text-muted-foreground mb-6">لم تقم بإضافة أي منتجات بعد</p>
         <Button asChild className="bg-gold text-gold-foreground hover:bg-gold/90">
-          <Link to="/web/shop">تصفح المنتجات</Link>
+          <Link to="/shop">تصفح المنتجات</Link>
         </Button>
       </div>
     );
@@ -79,7 +79,7 @@ export default function WebCartPage() {
             </div>
           </div>
           <Button asChild size="lg" className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold">
-            <Link to="/web/checkout">إتمام الطلب</Link>
+            <Link to="/checkout">إتمام الطلب</Link>
           </Button>
           <button onClick={clearCart} className="w-full text-sm text-muted-foreground hover:text-destructive mt-3 transition-colors">
             إفراغ السلة
