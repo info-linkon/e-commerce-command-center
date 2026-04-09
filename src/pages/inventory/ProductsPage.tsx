@@ -56,8 +56,10 @@ const ProductsPage = () => {
     return (products || []).filter((p) => {
       // Hide products that are already bundles
       if (bundleProductIds?.has(p.id)) return false;
-      return p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.sku?.toLowerCase().includes(search.toLowerCase());
+      const s = search.toLowerCase();
+      return p.name.toLowerCase().includes(s) ||
+        p.name_ar?.toLowerCase().includes(s) ||
+        p.sku?.toLowerCase().includes(s);
     });
   }, [products, bundleProductIds, search]);
 
