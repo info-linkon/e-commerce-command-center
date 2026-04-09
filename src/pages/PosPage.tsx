@@ -123,24 +123,48 @@ const PosPage = () => {
       }
     }
     if (allBundles) {
+      const bpvs = allBundles.bundleProductVariations || [];
       for (const bundle of allBundles.bundles) {
         const product = bundle.products as any;
         if (!product || !product.is_published) continue;
         const pid = bundle.product_id;
+        // Get the product_variations for this bundle's product
+        const productVars = bpvs.filter((pv: any) => pv.product_id === pid);
         if (bundle.bundle_type === "simple_bundle") {
-          map.set(pid, {
-            product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
-            variations: [{ id: bundle.id, name: product.name_ar || product.name, price: Number(product.sale_price) }],
-            isBundle: true,
-          });
-        } else {
-          const bvs = allBundles.bundleVars.filter(bv => bv.bundle_id === bundle.id);
-          if (bvs.length > 0) {
+          // Use the first product_variation if available, otherwise skip (can't create order without one)
+          const firstVar = productVars[0];
+          if (productVars.length <= 1) {
             map.set(pid, {
               product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
-              variations: bvs.map(bv => ({ id: bv.id, name: bv.name, price: Number(bv.price) })),
+              variations: [{ id: firstVar?.id || bundle.id, name: product.name_ar || product.name, price: Number(product.sale_price) }],
               isBundle: true,
             });
+          } else {
+            // Multiple variations on a simple bundle product — show them all
+            map.set(pid, {
+              product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
+              variations: productVars.map((pv: any) => ({ id: pv.id, name: pv.name, price: Number(product.sale_price) })),
+              isBundle: true,
+            });
+          }
+        } else {
+          // Variable bundle — use product_variations (they correspond to bundle_variations)
+          if (productVars.length > 0) {
+            map.set(pid, {
+              product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
+              variations: productVars.map((pv: any) => ({ id: pv.id, name: pv.name, price: Number(pv.price) })),
+              isBundle: true,
+            });
+          } else {
+            // Fallback: use bundle_variations (won't work for order creation but shows in UI)
+            const bvs = allBundles.bundleVars.filter(bv => bv.bundle_id === bundle.id);
+            if (bvs.length > 0) {
+              map.set(pid, {
+                product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
+                variations: bvs.map(bv => ({ id: bv.id, name: bv.name, price: Number(bv.price) })),
+                isBundle: true,
+              });
+            }
           }
         }
       }
