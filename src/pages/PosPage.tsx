@@ -89,7 +89,18 @@ const PosPage = () => {
           .order("name");
         bundleVars = bv || [];
       }
-      return { bundles: data || [], bundleVars };
+      // Fetch product_variations for all bundle products so we can use real variation_ids in orders
+      const productIds = (data || []).map(b => b.product_id);
+      let bundleProductVariations: any[] = [];
+      if (productIds.length > 0) {
+        const { data: pvs } = await supabase
+          .from("product_variations")
+          .select("id, product_id, name, price")
+          .in("product_id", productIds)
+          .order("name");
+        bundleProductVariations = pvs || [];
+      }
+      return { bundles: data || [], bundleVars, bundleProductVariations };
     },
   });
 
