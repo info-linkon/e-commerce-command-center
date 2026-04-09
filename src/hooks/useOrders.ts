@@ -226,15 +226,45 @@ export function useAssignWarehouse() {
         .eq("id", orderId);
       if (updateErr) throw updateErr;
 
-      // 4. Create picking items
-      const pickingItems = items.map((item: any) => ({
-        order_id: orderId,
-        order_item_id: item.id,
-      }));
+      // 4. Create picking items (bundle lines expand to component rows, regular lines stay single)
+      const pickingItems: Array<{ order_id: string; order_item_id: string; variation_id: string; quantity: number }> = [];
+
+      for (const item of items) {
+        const { data: bundle } = await supabase
+          .from("bundles")
+          .select("id")
+          .eq("product_id", item.product_variations?.product_id)
+          .maybeSingle();
+
+        if (bundle?.id) {
+          const { data: bundleComponents, error: bundleErr } = await supabase
+            .from("bundle_items")
+            .select("variation_id, quantity")
+            .eq("bundle_id", bundle.id);
+          if (bundleErr) throw bundleErr;
+
+          for (const component of bundleComponents || []) {
+            pickingItems.push({
+              order_id: orderId,
+              order_item_id: item.id,
+              variation_id: component.variation_id,
+              quantity: component.quantity * item.quantity,
+            });
+          }
+        } else {
+          pickingItems.push({
+            order_id: orderId,
+            order_item_id: item.id,
+            variation_id: item.variation_id,
+            quantity: item.quantity,
+          });
+        }
+      }
+
       if (pickingItems.length > 0) {
         const { error: pickErr } = await supabase
           .from("order_picking_items")
-          .insert(pickingItems);
+          .insert(pickingItems as any);
         if (pickErr) throw pickErr;
       }
 

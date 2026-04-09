@@ -874,6 +874,8 @@ export type Database = {
           picked: boolean
           picked_at: string | null
           picked_by: string | null
+          quantity: number
+          variation_id: string | null
         }
         Insert: {
           id?: string
@@ -882,6 +884,8 @@ export type Database = {
           picked?: boolean
           picked_at?: string | null
           picked_by?: string | null
+          quantity?: number
+          variation_id?: string | null
         }
         Update: {
           id?: string
@@ -890,6 +894,8 @@ export type Database = {
           picked?: boolean
           picked_at?: string | null
           picked_by?: string | null
+          quantity?: number
+          variation_id?: string | null
         }
         Relationships: [
           {
@@ -904,6 +910,13 @@ export type Database = {
             columns: ["order_item_id"]
             isOneToOne: false
             referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_picking_items_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
             referencedColumns: ["id"]
           },
         ]

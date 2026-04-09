@@ -9,7 +9,7 @@ export function usePickingItems(orderId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("order_picking_items")
-        .select("*, order_items(*, product_variations(*, products(name)))")
+        .select("*, order_items(id, quantity), product_variations(id, name, name_ar, products(name, name_ar, image_url))")
         .eq("order_id", orderId!)
         .order("id");
       if (error) throw error;
@@ -22,7 +22,6 @@ export function useTogglePickedItem() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ pickingItemId, picked, orderId }: { pickingItemId: string; picked: boolean; orderId: string }) => {
-      // 1. Update the picking item
       const { error } = await supabase
         .from("order_picking_items")
         .update({
@@ -32,7 +31,6 @@ export function useTogglePickedItem() {
         .eq("id", pickingItemId);
       if (error) throw error;
 
-      // 2. Check all picking items for this order to update picking_status
       const { data: allItems, error: fetchErr } = await supabase
         .from("order_picking_items")
         .select("picked")
