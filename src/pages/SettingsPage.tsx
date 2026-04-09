@@ -35,7 +35,7 @@ const settingsSections = [
     url: "/admin/sms-templates",
   },
   {
-    title: "הגדרות InforU SMS",
+    title: "הגדרות LINKON SMS",
     description: "שם משתמש, טוקן ושליחת הודעת בדיקה",
     icon: MessageSquare,
     url: "/admin/inforu-settings",
