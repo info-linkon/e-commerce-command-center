@@ -46,6 +46,7 @@ import WebOrderConfirmation from "./pages/web/WebOrderConfirmation";
 import WebSearchPage from "./pages/web/WebSearchPage";
 import WebAboutPage from "./pages/web/WebAboutPage";
 import WebContactPage from "./pages/web/WebContactPage";
+import InvoiceRedirect from "./pages/web/InvoiceRedirect";
 
 // Admin website management
 import WebContentPage from "./pages/admin/WebContentPage";
@@ -89,6 +90,9 @@ const App = () => (
               <Route path="about" element={<WebAboutPage />} />
               <Route path="contact" element={<WebContactPage />} />
             </Route>
+
+            {/* Public invoice short link */}
+            <Route path="/inv/:code" element={<InvoiceRedirect />} />
 
             {/* Admin Panel */}
             <Route path="/" element={<Protected><Dashboard /></Protected>} />

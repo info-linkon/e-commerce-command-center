@@ -24,7 +24,6 @@ const PAYMENT_TYPE_MAP: Record<string, number> = {
 };
 
 async function getEzcountConfig(supabase: any): Promise<{ api_key: string; developer_email: string }> {
-  // Try DB first
   const { data } = await supabase
     .from("site_content")
     .select("content")
@@ -37,6 +36,10 @@ async function getEzcountConfig(supabase: any): Promise<{ api_key: string; devel
   const developer_email = content?.developer_email || "elwejha.outdoors@gmail.com";
 
   return { api_key, developer_email };
+}
+
+function generateShortCode(): string {
+  return crypto.randomUUID().replace(/-/g, "").substring(0, 8);
 }
 
 serve(async (req) => {
@@ -126,7 +129,10 @@ serve(async (req) => {
       : 0;
 
     if (ezResponse.ok && !ezData.errMsg) {
-      // Success - save document
+      // Generate short code for the document
+      const shortCode = generateShortCode();
+
+      // Success - save document with short_code
       const { data: doc, error: dbError } = await supabase.from("documents").insert({
         order_id: order_id || null,
         doc_type: typeNum,
@@ -138,6 +144,7 @@ serve(async (req) => {
         customer_phone: customer_phone || null,
         total,
         status: "issued",
+        short_code: shortCode,
       }).select().single();
 
       if (dbError) console.error("DB save error:", dbError);
@@ -147,6 +154,7 @@ serve(async (req) => {
         doc_number: ezData.doc_number,
         doc_uuid: ezData.doc_uuid,
         doc_url: ezData.pdf_link || ezData.doc_url,
+        short_code: shortCode,
         document: doc,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

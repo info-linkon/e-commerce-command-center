@@ -141,11 +141,15 @@ const PaymentSection = ({
                 payments: docPayments,
               });
 
-              // Save invoice_url to order
-              if (result?.doc_url) {
+              // Save short invoice URL to order
+              const shortCode = result?.short_code;
+              const invoiceLink = shortCode
+                ? `/inv/${shortCode}`
+                : result?.doc_url;
+              if (invoiceLink) {
                 await supabase
                   .from("orders")
-                  .update({ invoice_url: result.doc_url } as any)
+                  .update({ invoice_url: invoiceLink } as any)
                   .eq("id", orderId);
                 qc.invalidateQueries({ queryKey: ["orders", orderId] });
               }

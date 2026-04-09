@@ -471,6 +471,7 @@ export type Database = {
           error_message: string | null
           id: string
           order_id: string | null
+          short_code: string | null
           status: string
           total: number
           updated_at: string
@@ -487,6 +488,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           order_id?: string | null
+          short_code?: string | null
           status?: string
           total?: number
           updated_at?: string
@@ -503,6 +505,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           order_id?: string | null
+          short_code?: string | null
           status?: string
           total?: number
           updated_at?: string
