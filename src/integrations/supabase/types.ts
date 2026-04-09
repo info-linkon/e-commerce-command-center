@@ -922,6 +922,7 @@ export type Database = {
           hyp_transaction_id: string | null
           id: string
           includes_vat: boolean | null
+          invoice_url: string | null
           notes: string | null
           order_number: number
           payment_method: string | null
@@ -953,6 +954,7 @@ export type Database = {
           hyp_transaction_id?: string | null
           id?: string
           includes_vat?: boolean | null
+          invoice_url?: string | null
           notes?: string | null
           order_number?: number
           payment_method?: string | null
@@ -984,6 +986,7 @@ export type Database = {
           hyp_transaction_id?: string | null
           id?: string
           includes_vat?: boolean | null
+          invoice_url?: string | null
           notes?: string | null
           order_number?: number
           payment_method?: string | null

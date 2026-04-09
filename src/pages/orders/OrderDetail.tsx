@@ -268,6 +268,16 @@ const OrderDetail = () => {
           isDelivered={delivery?.status === "delivered"}
           isCancelled={isCancelled}
           isCompleted={isCompleted}
+          customerName={order.customer_name || undefined}
+          customerEmail={order.customer_email || undefined}
+          customerPhone={order.customer_phone || undefined}
+          invoiceUrl={(order as any).invoice_url || null}
+          orderItems={items.map((item: any) => ({
+            details: `${item.product_variations?.products?.name || ""} - ${item.product_variations?.name || ""}`.trim().replace(/^- /, ""),
+            amount: item.quantity,
+            price: Number(item.unit_price),
+            catalog_number: item.product_variations?.sku || undefined,
+          }))}
         />
       )}
 

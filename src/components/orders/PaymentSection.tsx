@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, Plus, Trash2, CheckCircle2, Banknote, Smartphone } from "lucide-react";
+import { CreditCard, Plus, Trash2, CheckCircle2, Banknote, Smartphone, FileText, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useOrderPayments, useRecordPayment } from "@/hooks/usePayments";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
+import { useCreateDocument } from "@/hooks/useDocuments";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
@@ -24,31 +27,68 @@ interface PaymentLine {
   reference: string;
 }
 
+interface OrderItemForInvoice {
+  details: string;
+  amount: number;
+  price: number;
+  catalog_number?: string;
+}
+
 interface PaymentSectionProps {
   orderId: string;
   orderTotal: number;
   isDelivered: boolean;
   isCancelled: boolean;
   isCompleted: boolean;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  orderItems?: OrderItemForInvoice[];
+  invoiceUrl?: string | null;
 }
 
-const PaymentSection = ({ orderId, orderTotal, isDelivered, isCancelled, isCompleted }: PaymentSectionProps) => {
+const PaymentSection = ({
+  orderId, orderTotal, isDelivered, isCancelled, isCompleted,
+  customerName, customerEmail, customerPhone, orderItems, invoiceUrl,
+}: PaymentSectionProps) => {
   const { data: existingPayments } = useOrderPayments(orderId);
   const { data: registers } = useCashRegisters();
   const recordPayment = useRecordPayment();
+  const createDocument = useCreateDocument();
+  const qc = useQueryClient();
 
   const [open, setOpen] = useState(false);
   const [completeOrder, setCompleteOrder] = useState(true);
+  const [issueInvoice, setIssueInvoice] = useState(false);
   const [lines, setLines] = useState<PaymentLine[]>([
     { amount: String(orderTotal), method: "cash", cash_register_id: "", reference: "" },
   ]);
 
+  // Check if invoice receipt (type 320) already exists for this order
+  const { data: existingInvoiceDocs } = useQuery({
+    queryKey: ["documents", orderId, "invoice_receipt"],
+    enabled: !!orderId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("documents" as any)
+        .select("id, doc_url")
+        .eq("order_id", orderId)
+        .eq("doc_type", 320)
+        .eq("status", "issued");
+      return data as any[] | null;
+    },
+  });
+  const hasInvoiceReceipt = (existingInvoiceDocs && existingInvoiceDocs.length > 0) || !!invoiceUrl;
+
   const totalPaid = existingPayments?.reduce((s, p) => s + Number(p.amount), 0) || 0;
   const remaining = orderTotal - totalPaid;
+
+  const hasCashLine = lines.some((l) => l.method === "cash" && parseFloat(l.amount) > 0);
 
   const resetForm = () => {
     setLines([{ amount: String(remaining > 0 ? remaining : orderTotal), method: "cash", cash_register_id: "", reference: "" }]);
     setCompleteOrder(true);
+    setIssueInvoice(false);
   };
 
   const updateLine = (idx: number, field: keyof PaymentLine, value: string) => {
@@ -78,14 +118,52 @@ const PaymentSection = ({ orderId, orderTotal, isDelivered, isCancelled, isCompl
         reference: l.reference || undefined,
       }));
     if (payments.length === 0) return;
+
     recordPayment.mutate(
       { order_id: orderId, payments, completeOrder },
-      { onSuccess: () => setOpen(false) }
+      {
+        onSuccess: async () => {
+          // Issue invoice if toggled on
+          if (issueInvoice && customerName && orderItems && orderItems.length > 0) {
+            try {
+              const docPayments = payments.map((p) => ({
+                type: p.payment_method === "cash" ? "cash" : p.payment_method === "bit" ? "bit" : "credit",
+                amount: p.amount,
+              }));
+
+              const result = await createDocument.mutateAsync({
+                doc_type: "invoice_receipt",
+                order_id: orderId,
+                customer_name: customerName,
+                customer_email: customerEmail,
+                customer_phone: customerPhone,
+                items: orderItems,
+                payments: docPayments,
+              });
+
+              // Save invoice_url to order
+              if (result?.doc_url) {
+                await supabase
+                  .from("orders")
+                  .update({ invoice_url: result.doc_url } as any)
+                  .eq("id", orderId);
+                qc.invalidateQueries({ queryKey: ["orders", orderId] });
+              }
+            } catch (err) {
+              console.error("Invoice creation error:", err);
+            }
+          }
+          setOpen(false);
+        },
+      }
     );
   };
 
   // Show existing payments
   const hasPayments = existingPayments && existingPayments.length > 0;
+
+  // Determine displayed invoice URL
+  const displayInvoiceUrl = invoiceUrl || (existingInvoiceDocs?.[0] as any)?.doc_url;
 
   return (
     <Card className={isCompleted ? "border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20" : ""}>
@@ -95,9 +173,20 @@ const PaymentSection = ({ orderId, orderTotal, isDelivered, isCancelled, isCompl
             <CreditCard className="h-5 w-5" />
             תשלום
           </div>
-          {isCompleted && (
-            <Badge className="bg-green-100 text-green-800 border-0">שולם</Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {displayInvoiceUrl && (
+              <a href={displayInvoiceUrl} target="_blank" rel="noopener noreferrer">
+                <Badge className="bg-blue-100 text-blue-800 border-0 gap-1 cursor-pointer hover:bg-blue-200">
+                  <FileText className="h-3 w-3" />
+                  חשבונית מס קבלה
+                  <ExternalLink className="h-3 w-3" />
+                </Badge>
+              </a>
+            )}
+            {isCompleted && (
+              <Badge className="bg-green-100 text-green-800 border-0">שולם</Badge>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -220,6 +309,17 @@ const PaymentSection = ({ orderId, orderTotal, isDelivered, isCancelled, isCompl
                   </span>
                 </div>
 
+                {/* Invoice toggle — show only if cash payment and no existing invoice */}
+                {hasCashLine && !hasInvoiceReceipt && customerName && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg border bg-blue-50/50 dark:bg-blue-950/20">
+                    <Switch checked={issueInvoice} onCheckedChange={setIssueInvoice} />
+                    <Label className="text-sm flex items-center gap-1">
+                      <FileText className="h-4 w-4" />
+                      הנפק חשבונית מס קבלה
+                    </Label>
+                  </div>
+                )}
+
                 {Math.abs(linesTotal - remaining) < 0.01 && (
                   <div className="flex items-center gap-2">
                     <Switch checked={completeOrder} onCheckedChange={setCompleteOrder} />
@@ -229,11 +329,11 @@ const PaymentSection = ({ orderId, orderTotal, isDelivered, isCancelled, isCompl
 
                 <Button
                   onClick={handleSubmit}
-                  disabled={linesTotal <= 0 || recordPayment.isPending}
+                  disabled={linesTotal <= 0 || recordPayment.isPending || createDocument.isPending}
                   className="w-full gap-2"
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  {recordPayment.isPending ? "שומר..." : "אשר תשלום"}
+                  {recordPayment.isPending || createDocument.isPending ? "שומר..." : "אשר תשלום"}
                 </Button>
               </div>
             </DialogContent>
