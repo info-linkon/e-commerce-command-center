@@ -160,6 +160,20 @@ Deno.serve(async (req) => {
           } catch (ezErr) {
             console.error("Auto-invoice error (non-blocking):", ezErr);
           }
+
+          // Trigger SMS notification for completed payment
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/order-sms-trigger`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${supabaseKey}`,
+              },
+              body: JSON.stringify({ order_id, trigger_type: "order_completed" }),
+            });
+          } catch (smsErr) {
+            console.error("SMS trigger error (non-blocking):", smsErr);
+          }
         }
       }
 
