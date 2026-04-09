@@ -124,11 +124,24 @@ serve(async (req) => {
             category_id: categoryId,
           };
 
-          const { data: existing } = await supabase
+          // Check by woo_id first
+          let existing: { id: string } | null = null;
+          const { data: byWoo } = await supabase
             .from("products")
             .select("id")
             .eq("woo_id", p.id)
             .maybeSingle();
+          existing = byWoo;
+
+          // If not found by woo_id, check by SKU
+          if (!existing && p.sku) {
+            const { data: bySku } = await supabase
+              .from("products")
+              .select("id")
+              .eq("sku", p.sku)
+              .maybeSingle();
+            existing = bySku;
+          }
 
           let productId: string;
           if (existing) {
@@ -157,11 +170,25 @@ serve(async (req) => {
                 cost_price: 0,
                 image_url: v.image?.src || null,
               };
-              const { data: existingVar } = await supabase
+              // Check variation by woo_id first, then by SKU
+              let existingVar: { id: string } | null = null;
+              const { data: varByWoo } = await supabase
                 .from("product_variations")
                 .select("id")
                 .eq("woo_id", v.id)
                 .maybeSingle();
+              existingVar = varByWoo;
+
+              if (!existingVar && v.sku) {
+                const { data: varBySku } = await supabase
+                  .from("product_variations")
+                  .select("id")
+                  .eq("sku", v.sku)
+                  .eq("product_id", productId)
+                  .maybeSingle();
+                existingVar = varBySku;
+              }
+
               if (existingVar) {
                 await supabase.from("product_variations").update(varData).eq("id", existingVar.id);
               } else {
