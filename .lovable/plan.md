@@ -1,33 +1,81 @@
 
 
-## Plan: Add EZCount Settings Page
+## Plan: Invoice Receipt Integration in Payment Flow + Save to Order
 
 ### What
-Create a new settings page for EZCount where the admin can enter the API Key and developer email. These values will be stored in `site_content` (page: "settings", section: "ezcount") and used by the `ezcount-doc` edge function instead of hardcoded values.
+1. Add `invoice_url` column to `orders` table to store the EZCount document link
+2. In the cash payment dialog, add a toggle to issue a tax invoice/receipt (חשבונית מס קבלה) -- only if no existing invoice_receipt (type 320) document exists for that order
+3. After successful payment + invoice creation, save the `doc_url` to `orders.invoice_url`
+4. In the credit card flow (`hyp-verify-payment`), automatically issue an invoice_receipt via EZCount and save the URL to the order
+5. Display the invoice link in the order detail page
 
 ### Changes
 
-#### 1. Create `src/pages/admin/EzcountSettingsPage.tsx`
-- Form with two fields: API Key (password input with show/hide toggle) and Developer Email
-- Load existing values from `site_content` using `useSiteSection("settings", "ezcount")`
-- Save using `useUpsertSiteContent`
-- Same pattern as `InforuSettingsPage`
+#### 1. Database Migration
+Add `invoice_url` column to `orders`:
+```sql
+ALTER TABLE orders ADD COLUMN invoice_url text;
+```
 
-#### 2. Update `src/pages/SettingsPage.tsx`
-- Add a new card: "הגדרות EZCount" with description "API Key ומייל מפתח להפקת חשבוניות"
-- Link to `/admin/ezcount-settings`
+#### 2. `PaymentSection.tsx` - Add invoice toggle for cash payments
+- Accept new props: `customerName`, `customerEmail`, `customerPhone`, `orderNumber`, `orderItems` (from order data)
+- Query existing documents for this order to check if a type 320 doc already exists
+- Add a `Switch` toggle "הנפק חשבונית מס קבלה" that appears only when:
+  - At least one payment line is cash
+  - No existing invoice_receipt (type 320) for this order
+- On submit success, if toggle is on, call `useCreateDocument` with the order data, then save `doc_url` to `orders.invoice_url`
 
-#### 3. Update `src/App.tsx`
-- Add route `/admin/ezcount-settings` → `EzcountSettingsPage`
+#### 3. `OrderDetail.tsx` - Pass order data to PaymentSection
+Pass `customerName`, `customerEmail`, `customerPhone`, `orderNumber`, `orderItems` props
 
-#### 4. Update `supabase/functions/ezcount-doc/index.ts`
-- Instead of only reading `EZCOUNT_API_KEY` from env, first try to fetch from `site_content` table (page: "settings", section: "ezcount")
-- Fall back to env secret if not found in DB
-- Use developer_email from the same config (fallback to current hardcoded value)
+#### 4. `OrderDetail.tsx` - Show invoice link
+Display a link/badge when `order.invoice_url` is set
+
+#### 5. `hyp-verify-payment/index.ts` - Auto-issue invoice on credit payment
+After verifying credit payment successfully:
+- Fetch order items from DB
+- Call the `ezcount-doc` function internally to create an invoice_receipt (type 320)
+- Save the returned `doc_url` to `orders.invoice_url`
+
+#### 6. `ezcount-doc/index.ts` - Return doc_url in response
+Already returns `doc_url` — just ensure it's used correctly by callers
+
+### Technical Details
+
+**Check for existing invoice:**
+```tsx
+const { data: existingDocs } = useQuery({
+  queryKey: ["documents", orderId, "invoice_receipt"],
+  queryFn: async () => {
+    const { data } = await supabase.from("documents")
+      .select("id, doc_url").eq("order_id", orderId).eq("doc_type", 320).eq("status", "issued");
+    return data;
+  }
+});
+const hasInvoiceReceipt = existingDocs && existingDocs.length > 0;
+```
+
+**Auto-invoice in hyp-verify-payment (credit):**
+```typescript
+// After payment verified, call ezcount-doc internally
+const ezRes = await fetch(`${supabaseUrl}/functions/v1/ezcount-doc`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
+  body: JSON.stringify({
+    doc_type: "invoice_receipt",
+    order_id, customer_name, items, payments: [{ type: "credit", amount }]
+  })
+});
+const ezData = await ezRes.json();
+if (ezData.success) {
+  await supabase.from("orders").update({ invoice_url: ezData.doc_url }).eq("id", order_id);
+}
+```
 
 ### Files
-1. `src/pages/admin/EzcountSettingsPage.tsx` (new)
-2. `src/pages/SettingsPage.tsx` (add card)
-3. `src/App.tsx` (add route)
-4. `supabase/functions/ezcount-doc/index.ts` (read config from DB)
+1. **Migration** — add `invoice_url` to orders
+2. `src/components/orders/PaymentSection.tsx` — add invoice toggle + logic
+3. `src/pages/orders/OrderDetail.tsx` — pass props + show invoice link
+4. `supabase/functions/hyp-verify-payment/index.ts` — auto-issue invoice on credit
+5. `src/hooks/usePayments.ts` — save invoice_url after document creation
 
