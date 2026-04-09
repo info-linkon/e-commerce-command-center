@@ -273,6 +273,11 @@ const PosPage = () => {
         })),
       } as any);
 
+      // Trigger SMS for new POS order
+      supabase.functions.invoke("order-sms-trigger", {
+        body: { order_id: (createOrder as any).data?.id, trigger_type: "order_created" },
+      }).catch(console.error);
+
       setCart([]);
       setShowCreateOrder(false);
       setCustomerName("");
