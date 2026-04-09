@@ -175,6 +175,17 @@ export default function SmsTemplatesPage() {
                   placeholder="שלום {customer_name}, הזמנה #{order_number} התקבלה בהצלחה!"
                   dir="rtl"
                 />
+                {templateText.length > 0 && (() => {
+                  const len = templateText.length;
+                  const smsCount = len <= 267 ? 1 : len <= 536 ? 2 : Math.ceil(len / 267);
+                  return (
+                    <p className={`text-xs mt-1 ${smsCount > 1 ? "text-amber-600" : "text-muted-foreground"}`}>
+                      {len} תווים · {smsCount === 1 ? "הודעה אחת" : `${smsCount} הודעות`}
+                      {" "}
+                      <span className="text-muted-foreground">(לא כולל אורך הפרמטרים)</span>
+                    </p>
+                  );
+                })()}
               </div>
               <div className="bg-muted/50 p-3 rounded-lg">
                 <p className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
@@ -224,6 +235,15 @@ export default function SmsTemplatesPage() {
                     </Badge>
                   </div>
                   <p className="text-sm mt-2 whitespace-pre-wrap">{t.template_text}</p>
+                  {(() => {
+                    const len = t.template_text?.length || 0;
+                    const smsCount = len <= 267 ? 1 : len <= 536 ? 2 : Math.ceil(len / 267);
+                    return len > 0 ? (
+                      <p className={`text-xs mt-1 ${smsCount > 1 ? "text-amber-600" : "text-muted-foreground"}`}>
+                        {len} תווים · {smsCount === 1 ? "הודעה אחת" : `${smsCount} הודעות`}
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <Switch
