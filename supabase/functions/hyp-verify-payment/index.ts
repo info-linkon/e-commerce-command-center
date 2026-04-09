@@ -146,11 +146,16 @@ Deno.serve(async (req) => {
             const ezData = await ezRes.json();
             console.log("EZCount auto-invoice result:", JSON.stringify(ezData));
 
-            if (ezData.success && ezData.doc_url) {
-              await supabase
-                .from("orders")
-                .update({ invoice_url: ezData.doc_url })
-                .eq("id", order_id);
+            if (ezData.success) {
+              const invoiceLink = ezData.short_code
+                ? `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/inv/${ezData.short_code}`
+                : ezData.doc_url;
+              if (invoiceLink) {
+                await supabase
+                  .from("orders")
+                  .update({ invoice_url: invoiceLink })
+                  .eq("id", order_id);
+              }
             }
           } catch (ezErr) {
             console.error("Auto-invoice error (non-blocking):", ezErr);
