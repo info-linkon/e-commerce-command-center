@@ -33,6 +33,7 @@ interface GroupedProduct {
   product_id: string;
   product_name: string;
   category_id: string | null;
+  image_url: string | null;
   variations: { id: string; name: string; price: number }[];
   isBundle?: boolean;
 }
