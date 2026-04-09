@@ -33,7 +33,6 @@ Deno.serve(async (req) => {
 
     const inforuConfig = config?.content as Record<string, string> | null;
 
-    // Fallback to env secrets
     const username = inforuConfig?.username || Deno.env.get("INFORU_USERNAME");
     const token = inforuConfig?.token || Deno.env.get("INFORU_TOKEN");
     const sender = inforuConfig?.sender || Deno.env.get("INFORU_SENDER") || "ELWEJHA";
@@ -56,40 +55,52 @@ Deno.serve(async (req) => {
 
     console.log("Sending SMS to:", formattedPhone, "from:", sender);
 
-    // Use InforU SOAP SendSmsDetailed endpoint
-    const soapBody = `<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <SendSmsDetailed xmlns="http://inforu.co.il/api/v2/asmx/SendMessage/">
-      <userName>${escapeXml(username)}</userName>
-      <apiToken>${escapeXml(token)}</apiToken>
-      <message>${escapeXml(message)}</message>
-      <phoneNumber>${formattedPhone}</phoneNumber>
-      <senderName>${escapeXml(sender)}</senderName>
-      <customerParameter></customerParameter>
-    </SendSmsDetailed>
-  </soap:Body>
-</soap:Envelope>`;
+    // Build Basic auth from username:token
+    const basicAuth = btoa(`${username}:${token}`);
 
-    const response = await fetch("https://uapi.inforu.co.il/v2/SendMessage.asmx", {
+    // Use InforU REST API v2
+    const restBody = {
+      Message: message,
+      Recipients: [{ Phone: formattedPhone }],
+      Settings: {
+        Sender: sender,
+      },
+    };
+
+    console.log("Using REST API with Basic auth");
+
+    const response = await fetch("https://capi.inforu.co.il/api/v2/SMS/SendSms", {
       method: "POST",
       headers: {
-        "Content-Type": "text/xml; charset=utf-8",
-        "SOAPAction": "http://inforu.co.il/api/v2/asmx/SendMessage/SendSmsDetailed",
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${basicAuth}`,
       },
-      body: soapBody,
+      body: JSON.stringify(restBody),
     });
 
-    const result = await response.text();
-    console.log("InforU response:", result);
+    const resultText = await response.text();
+    console.log("InforU REST response:", response.status, resultText);
 
-    // Extract result from SOAP response
-    const statusMatch = result.match(/<SendSmsDetailedResult>([\s\S]*?)<\/SendSmsDetailedResult>/);
-    const soapResult = statusMatch ? statusMatch[1] : result;
+    let resultData;
+    try {
+      resultData = JSON.parse(resultText);
+    } catch {
+      resultData = { raw: resultText };
+    }
 
-    return new Response(JSON.stringify({ success: true, result: soapResult }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    if (response.ok && resultData?.StatusDescription !== "Error") {
+      return new Response(JSON.stringify({ success: true, result: resultData }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } else {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: resultData?.StatusDescription || resultData?.Message || resultText 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("SMS send error:", errorMessage);
@@ -99,12 +110,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-
-function escapeXml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
