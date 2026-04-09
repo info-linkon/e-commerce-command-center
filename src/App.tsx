@@ -55,6 +55,7 @@ import SmsTemplatesPage from "./pages/admin/SmsTemplatesPage";
 import MetaPixelSettingsPage from "./pages/admin/MetaPixelSettingsPage";
 import HypSettingsPage from "./pages/admin/HypSettingsPage";
 import PaymentMethodsSettingsPage from "./pages/admin/PaymentMethodsSettingsPage";
+import InforuSettingsPage from "./pages/admin/InforuSettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +127,7 @@ const App = () => (
             <Route path="/admin/meta-pixel" element={<Protected><MetaPixelSettingsPage /></Protected>} />
             <Route path="/admin/hyp-settings" element={<Protected><HypSettingsPage /></Protected>} />
             <Route path="/admin/payment-methods" element={<Protected><PaymentMethodsSettingsPage /></Protected>} />
+            <Route path="/admin/inforu-settings" element={<Protected><InforuSettingsPage /></Protected>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

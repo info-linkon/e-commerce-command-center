@@ -35,6 +35,12 @@ const settingsSections = [
     url: "/admin/sms-templates",
   },
   {
+    title: "הגדרות InforU SMS",
+    description: "שם משתמש, טוקן ושליחת הודעת בדיקה",
+    icon: MessageSquare,
+    url: "/admin/inforu-settings",
+  },
+  {
     title: "Meta Pixel",
     description: "הגדרת Pixel ID למעקב המרות",
     icon: BarChart3,
