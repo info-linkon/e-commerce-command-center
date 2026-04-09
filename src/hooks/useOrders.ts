@@ -232,16 +232,37 @@ export function useAssignWarehouse() {
       for (const item of items) {
         const { data: bundle } = await supabase
           .from("bundles")
-          .select("id")
+          .select("id, bundle_type")
           .eq("product_id", item.product_variations?.product_id)
           .maybeSingle();
 
         if (bundle?.id) {
-          const { data: bundleComponents, error: bundleErr } = await supabase
-            .from("bundle_items")
-            .select("variation_id, quantity")
-            .eq("bundle_id", bundle.id);
-          if (bundleErr) throw bundleErr;
+          let bundleComponents: Array<{ variation_id: string; quantity: number }> = [];
+
+          if (bundle.bundle_type === "variable_bundle") {
+            // For variable bundles, get components from first bundle_variation (or match by name)
+            const { data: bvs } = await supabase
+              .from("bundle_variations")
+              .select("id")
+              .eq("bundle_id", bundle.id)
+              .limit(1);
+
+            if (bvs && bvs.length > 0) {
+              const { data: bvItems, error: bvErr } = await supabase
+                .from("bundle_variation_items")
+                .select("variation_id, quantity")
+                .eq("bundle_variation_id", bvs[0].id);
+              if (bvErr) throw bvErr;
+              bundleComponents = bvItems || [];
+            }
+          } else {
+            const { data: biItems, error: biErr } = await supabase
+              .from("bundle_items")
+              .select("variation_id, quantity")
+              .eq("bundle_id", bundle.id);
+            if (biErr) throw biErr;
+            bundleComponents = biItems || [];
+          }
 
           for (const component of bundleComponents || []) {
             pickingItems.push({
