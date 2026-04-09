@@ -180,7 +180,7 @@ serve(async (req) => {
         }
         page++;
       }
-      return new Response(JSON.stringify({ success: true, imported }), {
+      return new Response(JSON.stringify({ success: true, imported, skipped }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
