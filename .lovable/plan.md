@@ -1,47 +1,92 @@
 
 
-## Plan: Payment Link via SMS for POS Orders
+## Plan: Swap URL Structure — Website at `/`, Admin at `/crm`
 
-### Overview
-Add a "Send Payment Link" button to the Payment section on the order detail page. When clicked, the system generates a HYP credit card payment link, sends it to the customer via SMS, and after the customer pays, the order is automatically marked as paid with an invoice receipt.
+### Current State
+- **Admin panel**: `/`, `/dashboard`, `/inventory/*`, `/orders/*`, `/pos`, etc.
+- **Public website**: `/web`, `/web/shop`, `/web/product/:id`, etc.
+- **Auth**: `/auth`
+- **Invoice redirect**: `/inv/:code`
 
-### How It Works
+### Target State
+- **Public website**: `/`, `/shop`, `/product/:id`, `/cart`, `/checkout`, etc.
+- **Admin panel**: `/crm`, `/crm/dashboard`, `/crm/inventory/*`, `/crm/orders/*`, etc.
+- **Auth**: `/crm/auth`
+- **Invoice redirect**: `/inv/:code` (unchanged)
 
-```text
-Manager clicks "שלח לינק תשלום" 
-  → Edge Function generates HYP payment URL
-  → SMS sent to customer with the link
-  → Customer opens link, pays via credit card
-  → HYP redirects to confirmation page
-  → hyp-verify-payment auto-updates order status + creates invoice
-```
+### Files to Update
 
-### Changes
+**1. `src/App.tsx` — Route definitions**
+- Website routes: remove `/web` prefix → `/`, `/shop`, `/category/:id`, `/product/:id`, `/cart`, `/checkout`, `/order-confirmation/:orderNumber?`, `/search`, `/about`, `/contact`
+- Admin routes: add `/crm` prefix → `/crm`, `/crm/dashboard`, `/crm/inventory/*`, `/crm/orders/*`, `/crm/pos`, `/crm/finance`, etc.
+- Auth route: `/auth` → `/crm/auth`
+- Admin sub-routes: `/admin/*` → `/crm/admin/*`
+- `/inv/:code` stays unchanged
 
-**1. New Edge Function: `hyp-payment-link`**
-- Combines `hyp-create-payment` + `send-sms` into one call
-- Generates the HYP payment URL with success/error URLs pointing to the public web order confirmation page
-- Sends SMS with the payment link to the customer's phone
-- Returns success/failure to the UI
+**2. `src/components/layout/ProtectedRoute.tsx`**
+- Redirect to `/crm/auth` instead of `/auth`
 
-**2. Update `PaymentSection.tsx`**
-- Add a "שלח לינק תשלום באשראי" button (visible when order is unpaid and customer has a phone number)
-- Button calls the new edge function
-- Shows loading state while sending
-- Toast notification on success/failure
+**3. `src/pages/Auth.tsx`**
+- Redirect after login to `/crm/dashboard`
 
-**3. Update `hyp-verify-payment` (minor)**
-- Ensure the success URL from the SMS flow triggers the same verification + invoice logic already in place
-- Add SMS notification trigger (`order_completed`) after successful payment verification
+**4. `src/pages/Index.tsx`**
+- No longer needed (root is now website)
 
-**4. Update `supabase/config.toml`**
-- Register the new `hyp-payment-link` function with `verify_jwt = false`
+**5. `src/components/layout/AppSidebar.tsx`**
+- All menu URLs: prefix with `/crm` (e.g., `/crm/dashboard`, `/crm/inventory`, `/crm/customers`)
+- "צפה באתר" link: change from `/web` to `/`
 
-### Technical Details
+**6. `src/components/web/WebHeader.tsx`**
+- All nav links: `/web` → `/`, `/web/shop` → `/shop`, etc.
 
-- The HYP payment URL uses `tmp=1` (standalone page, not iframe template 7) so it works in mobile browsers
-- Success URL: `{site_url}/web/order-confirmation?order_id={id}&CCode=0`
-- The existing `WebOrderConfirmation` page already handles HYP return params and calls `hyp-verify-payment`
-- Invoice receipt is auto-issued by the existing logic in `hyp-verify-payment`
-- SMS message template: `שלום {customer_name}, לתשלום הזמנה #{order_number} בסך ₪{total} לחץ כאן: {payment_url}`
+**7. `src/components/web/WebBottomNav.tsx`**
+- All nav items: remove `/web` prefix
+
+**8. `src/components/web/WebFooter.tsx`**
+- All links: remove `/web` prefix
+
+**9. `src/components/web/WebProductCard.tsx`**
+- Product links: `/web/product/` → `/product/`
+
+**10. `src/pages/web/WebHome.tsx`**
+- All internal links: remove `/web` prefix
+
+**11. `src/pages/web/WebShopPage.tsx`**
+- Category links: `/web/category/` → `/category/`
+
+**12. `src/pages/web/WebAboutPage.tsx`**
+- Shop link: `/web/shop` → `/shop`
+
+**13. `src/pages/web/WebCartPage.tsx`**
+- Links: `/web/shop` → `/shop`, `/web/checkout` → `/checkout`
+
+**14. `src/pages/web/WebCheckoutPage.tsx`**
+- All navigations and URLs: remove `/web` prefix
+
+**15. `src/pages/web/WebOrderConfirmation.tsx`**
+- Links: `/web` → `/`
+
+**16. `src/lib/web-default-content.ts`**
+- Default CTA link: `/web/shop` → `/shop`
+
+**17. Admin pages with navigate calls** (add `/crm` prefix):
+- `src/pages/inventory/ProductsPage.tsx` — navigate paths
+- `src/pages/inventory/BundlesPage.tsx` — navigate paths
+- `src/pages/inventory/BundleForm.tsx` — navigate paths
+- `src/pages/inventory/ProductForm.tsx` — navigate paths
+- `src/pages/inventory/InventoryWriteOffPage.tsx` — navigate paths
+- `src/pages/orders/OrderDetail.tsx` — navigate paths
+- `src/pages/orders/OrderForm.tsx` — navigate paths
+- `src/pages/PosPage.tsx` — navigate paths
+- `src/pages/SettingsPage.tsx` — settings URLs
+
+**18. Edge Functions** (Supabase):
+- `supabase/functions/hyp-payment-link/index.ts` — URLs: `/web/order-confirmation` → `/order-confirmation`
+- `supabase/functions/meta-product-feed/index.ts` — URLs: `/web/product/` → `/product/`
+
+### Summary
+~25 files need updating. All changes are straightforward find-and-replace of URL prefixes:
+- `/web/` → `/` (website paths)
+- Admin paths get `/crm/` prefix
+- `/auth` → `/crm/auth`
 
