@@ -46,6 +46,7 @@ import WebOrderConfirmation from "./pages/web/WebOrderConfirmation";
 import WebSearchPage from "./pages/web/WebSearchPage";
 import WebAboutPage from "./pages/web/WebAboutPage";
 import WebContactPage from "./pages/web/WebContactPage";
+import InvoiceRedirect from "./pages/web/InvoiceRedirect";
 
 // Admin website management
 import WebContentPage from "./pages/admin/WebContentPage";
