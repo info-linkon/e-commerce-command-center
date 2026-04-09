@@ -62,7 +62,7 @@ const ProductsPage = () => {
   }, [products, bundleProductIds, search]);
 
   const columns: ColumnDef<any>[] = [
-    { label: "שם", render: (p) => <span className="font-medium">{p.name}</span> },
+    { label: "שם", render: (p) => <span className="font-medium">{p.name_ar || p.name}</span> },
     { label: "מק״ט", render: (p) => p.sku || "—", hideOnMobile: true },
     { label: "קטגוריה", render: (p) => (p as any).categories?.name || "—", hideOnMobile: true },
     { label: "סוג", render: (p) => <Badge variant="secondary">{p.product_type === "simple" ? "פשוט" : "עם וריאציות"}</Badge> },
