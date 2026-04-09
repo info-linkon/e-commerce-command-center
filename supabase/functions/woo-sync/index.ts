@@ -171,10 +171,9 @@ serve(async (req) => {
               product_id: productId,
               name: "ברירת מחדל",
               sku: p.sku || null,
-                price: Number(p.price) || 0,
-                cost_price: 0,
-              });
-            }
+              price: Number(p.price) || 0,
+              cost_price: 0,
+            });
           }
           imported++;
         }
