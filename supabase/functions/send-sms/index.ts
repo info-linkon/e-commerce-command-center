@@ -21,6 +21,14 @@ Deno.serve(async (req) => {
 
   try {
     const { phone, message } = await req.json();
+
+    // XML-escape special characters
+    const escapeXml = (s: string) =>
+      s.replace(/&/g, "&amp;")
+       .replace(/</g, "&lt;")
+       .replace(/>/g, "&gt;")
+       .replace(/"/g, "&quot;")
+       .replace(/'/g, "&apos;");
     if (!phone || !message) {
       return new Response(JSON.stringify({ error: "phone and message are required" }), {
         status: 400,
