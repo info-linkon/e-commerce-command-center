@@ -45,19 +45,22 @@ Deno.serve(async (req) => {
       formattedPhone = "972" + formattedPhone;
     }
 
+    const safeMessage = escapeXml(message);
+    const safeSender = escapeXml(INFORU_SENDER || "ELWEJHA");
+
     const xmlPayload = `<Inforu>
   <User>
-    <Username>${INFORU_USERNAME}</Username>
-    <Token>${INFORU_TOKEN}</Token>
+    <Username>${escapeXml(INFORU_USERNAME)}</Username>
+    <Token>${escapeXml(INFORU_TOKEN)}</Token>
   </User>
   <Content Type="sms">
-    <Message>${message}</Message>
+    <Message>${safeMessage}</Message>
   </Content>
   <Recipients>
     <PhoneNumber>${formattedPhone}</PhoneNumber>
   </Recipients>
   <Settings>
-    <Sender>${INFORU_SENDER || "ELWEJHA"}</Sender>
+    <Sender>${safeSender}</Sender>
   </Settings>
 </Inforu>`;
 
