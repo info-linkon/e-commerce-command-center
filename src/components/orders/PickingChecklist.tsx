@@ -24,6 +24,7 @@ interface PickingChecklistProps {
 const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => {
   const { data: items, isLoading } = usePickingItems(orderId);
   const togglePicked = useTogglePickedItem();
+  const status = pickingStatus || "not_started";
 
   if (isLoading) {
     return (
@@ -35,10 +36,30 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
     );
   }
 
-  if (!items || items.length === 0) return null;
+  if (!items || items.length === 0) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center justify-between text-lg">
+            <div className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              ליקוט
+            </div>
+            <Badge className={`${pickingColors[status]} border-0 text-xs`}>
+              {pickingLabels[status] || status}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+            לא נמצאו עדיין שורות ליקוט להזמנה הזו.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const pickedCount = items.filter((i) => i.picked).length;
-  const status = pickingStatus || "not_started";
 
   const groupedByOrderItem = items.reduce((acc: Record<string, any[]>, item: any) => {
     const key = item.order_item_id;
