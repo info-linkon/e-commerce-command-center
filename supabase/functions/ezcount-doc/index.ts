@@ -23,18 +23,34 @@ const PAYMENT_TYPE_MAP: Record<string, number> = {
   bank_transfer: 4,
 };
 
+async function getEzcountConfig(supabase: any): Promise<{ api_key: string; developer_email: string }> {
+  // Try DB first
+  const { data } = await supabase
+    .from("site_content")
+    .select("content")
+    .eq("page", "settings")
+    .eq("section", "ezcount")
+    .maybeSingle();
+
+  const content = data?.content as Record<string, string> | null;
+  const api_key = content?.api_key || Deno.env.get("EZCOUNT_API_KEY") || "";
+  const developer_email = content?.developer_email || "elwejha.outdoors@gmail.com";
+
+  return { api_key, developer_email };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const EZCOUNT_API_KEY = Deno.env.get("EZCOUNT_API_KEY");
-    if (!EZCOUNT_API_KEY) throw new Error("EZCOUNT_API_KEY is not configured");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { api_key, developer_email } = await getEzcountConfig(supabase);
+    if (!api_key) throw new Error("EZCOUNT_API_KEY is not configured");
 
     const body = await req.json();
     const {
@@ -55,8 +71,8 @@ serve(async (req) => {
 
     // Build EZCount request
     const ezBody: Record<string, unknown> = {
-      api_key: EZCOUNT_API_KEY,
-      developer_email: "dev@elwejha.com",
+      api_key,
+      developer_email,
       type: typeNum,
       customer_name,
       dont_send_email: dont_send_email ? 1 : 0,
@@ -81,15 +97,16 @@ serve(async (req) => {
     if (payments && payments.length > 0) {
       ezBody.payment = payments.map((p: { type: string; amount: number; comment?: string }) => ({
         payment_type: PAYMENT_TYPE_MAP[p.type] || 9,
-        payment_sum: p.amount,
+        payment: p.amount,
         ...(p.comment ? { comment: p.comment } : {}),
       }));
     }
 
-    // For invoice_receipt, price_total is mandatory
+    // For invoice_receipt, price_total and tax_included are mandatory
     if (typeNum === 320 && items && items.length > 0) {
       const total = items.reduce((sum: number, i: { amount: number; price: number }) => sum + i.amount * i.price, 0);
       ezBody.price_total = total;
+      ezBody.tax_included = 1;
     }
 
     console.log("Sending to EZCount:", JSON.stringify(ezBody, null, 2));
