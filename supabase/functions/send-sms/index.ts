@@ -37,37 +37,42 @@ Deno.serve(async (req) => {
       formattedPhone = "972" + formattedPhone;
     }
 
+    const escapeXml = (s: string) =>
+      s.replace(/&/g, "&amp;")
+       .replace(/</g, "&lt;")
+       .replace(/>/g, "&gt;")
+       .replace(/"/g, "&quot;")
+       .replace(/'/g, "&apos;");
+
     const sender = INFORU_SENDER || "ELWEJHA";
 
-    // Use InforU JSON API
-    const jsonPayload = {
-      User: {
-        Username: INFORU_USERNAME,
-        Token: INFORU_TOKEN,
-      },
-      Content: {
-        Type: "sms",
-        Message: message,
-      },
-      Recipients: [{ Phone: formattedPhone }],
-      Settings: {
-        Sender: sender,
-      },
-    };
+    const xmlPayload = `<?xml version="1.0" encoding="utf-8"?>
+<Inforu>
+<User>
+<Username>${escapeXml(INFORU_USERNAME)}</Username>
+<Token>${escapeXml(INFORU_TOKEN)}</Token>
+</User>
+<Content Type="sms">
+<Message>${escapeXml(message)}</Message>
+</Content>
+<Recipients>
+<PhoneNumber>${formattedPhone}</PhoneNumber>
+</Recipients>
+<Settings>
+<Sender>${escapeXml(sender)}</Sender>
+</Settings>
+</Inforu>`;
 
-    console.log("Sending SMS to:", formattedPhone, "sender:", sender);
+    console.log("Sending SMS to:", formattedPhone);
 
-    const response = await fetch("https://capi.inforu.co.il/api/v2/SMS/SendSms", {
+    const response = await fetch("https://uapi.inforu.co.il/SendMessageXml.ashx", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${btoa(INFORU_USERNAME + ":" + INFORU_TOKEN)}`,
-      },
-      body: JSON.stringify(jsonPayload),
+      headers: { "Content-Type": "application/xml; charset=utf-8" },
+      body: xmlPayload,
     });
 
     const result = await response.text();
-    console.log("InforU response status:", response.status, "body:", result);
+    console.log("InforU response:", result);
 
     return new Response(JSON.stringify({ success: true, result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
