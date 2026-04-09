@@ -235,6 +235,15 @@ export default function SmsTemplatesPage() {
                     </Badge>
                   </div>
                   <p className="text-sm mt-2 whitespace-pre-wrap">{t.template_text}</p>
+                  {(() => {
+                    const len = t.template_text?.length || 0;
+                    const smsCount = len <= 267 ? 1 : len <= 536 ? 2 : Math.ceil(len / 267);
+                    return len > 0 ? (
+                      <p className={`text-xs mt-1 ${smsCount > 1 ? "text-amber-600" : "text-muted-foreground"}`}>
+                        {len} תווים · {smsCount === 1 ? "הודעה אחת" : `${smsCount} הודעות`}
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <Switch
