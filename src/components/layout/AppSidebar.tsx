@@ -38,35 +38,35 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import logo from "@/assets/logo.webp";
 
 const inventorySubItems = [
-  { title: "תצוגת מלאי", url: "/inventory" },
-  { title: "פריטים", url: "/inventory/products" },
-  { title: "מארזים", url: "/inventory/bundles" },
-  { title: "קליטת מלאי", url: "/inventory/intake" },
-  { title: "העברות", url: "/inventory/transfers" },
-  { title: "פחת מלאי", url: "/inventory/write-off" },
+  { title: "תצוגת מלאי", url: "/crm/inventory" },
+  { title: "פריטים", url: "/crm/inventory/products" },
+  { title: "מארזים", url: "/crm/inventory/bundles" },
+  { title: "קליטת מלאי", url: "/crm/inventory/intake" },
+  { title: "העברות", url: "/crm/inventory/transfers" },
+  { title: "פחת מלאי", url: "/crm/inventory/write-off" },
 ];
 
 const ordersSubItems = [
-  { title: "כל ההזמנות", url: "/orders" },
-  { title: "תור ליקוט", url: "/orders/picking" },
-  { title: "במשלוח", url: "/orders/in-delivery" },
+  { title: "כל ההזמנות", url: "/crm/orders" },
+  { title: "תור ליקוט", url: "/crm/orders/picking" },
+  { title: "במשלוח", url: "/crm/orders/in-delivery" },
 ];
 
 const webManagementSubItems = [
-  { title: "תוכן ודפים", url: "/admin/web-content" },
-  { title: "באנרים", url: "/admin/web-banners" },
-  { title: "קופונים", url: "/admin/coupons" },
+  { title: "תוכן ודפים", url: "/crm/admin/web-content" },
+  { title: "באנרים", url: "/crm/admin/web-banners" },
+  { title: "קופונים", url: "/crm/admin/coupons" },
 ];
 
 const menuItems = [
-  { title: "דשבורד", url: "/dashboard", icon: LayoutDashboard },
-  { title: "פריטי אתר", url: "/website-items", icon: Globe },
-  { title: "לקוחות", url: "/customers", icon: Users },
-  { title: "משלוחים", url: "/deliveries", icon: Truck },
-  { title: "קופה", url: "/pos", icon: CreditCard },
-  { title: "כספים", url: "/finance", icon: Receipt },
-  { title: "דוחות", url: "/reports", icon: BarChart3 },
-  { title: "הגדרות", url: "/settings", icon: Settings },
+  { title: "דשבורד", url: "/crm/dashboard", icon: LayoutDashboard },
+  { title: "פריטי אתר", url: "/crm/website-items", icon: Globe },
+  { title: "לקוחות", url: "/crm/customers", icon: Users },
+  { title: "משלוחים", url: "/crm/deliveries", icon: Truck },
+  { title: "קופה", url: "/crm/pos", icon: CreditCard },
+  { title: "כספים", url: "/crm/finance", icon: Receipt },
+  { title: "דוחות", url: "/crm/reports", icon: BarChart3 },
+  { title: "הגדרות", url: "/crm/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -86,7 +86,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
-                    to="/dashboard"
+                    to="/crm/dashboard"
                     end
                     className="hover:bg-sidebar-accent"
                     activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
@@ -116,7 +116,7 @@ export function AppSidebar() {
                           <SidebarMenuSubButton asChild>
                             <NavLink
                               to={item.url}
-                              end={item.url === "/inventory"}
+                              end={item.url === "/crm/inventory"}
                               className="hover:bg-sidebar-accent"
                               activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                             >
@@ -149,7 +149,7 @@ export function AppSidebar() {
                           <SidebarMenuSubButton asChild>
                             <NavLink
                               to={item.url}
-                              end={item.url === "/orders"}
+                              end={item.url === "/crm/orders"}
                               className="hover:bg-sidebar-accent"
                               activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                             >
@@ -193,7 +193,7 @@ export function AppSidebar() {
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton asChild>
                           <a
-                            href="/web"
+                            href="/"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:bg-sidebar-accent flex items-center"

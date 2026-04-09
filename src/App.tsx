@@ -75,10 +75,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/auth" element={<Auth />} />
-
-            {/* Public Website */}
-            <Route path="/web" element={<WebLayout />}>
+            {/* Public Website — root */}
+            <Route path="/" element={<WebLayout />}>
               <Route index element={<WebHome />} />
               <Route path="shop" element={<WebShopPage />} />
               <Route path="category/:id" element={<WebCategoryPage />} />
@@ -94,46 +92,49 @@ const App = () => (
             {/* Public invoice short link */}
             <Route path="/inv/:code" element={<InvoiceRedirect />} />
 
-            {/* Admin Panel */}
-            <Route path="/" element={<Protected><Dashboard /></Protected>} />
-            <Route path="/flows" element={<Protected><FlowsPage /></Protected>} />
-            <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
-            <Route path="/inventory" element={<Protected><InventoryIndex /></Protected>} />
-            <Route path="/inventory/products" element={<Protected><ProductsPage /></Protected>} />
-            <Route path="/inventory/products/new" element={<Protected><ProductForm /></Protected>} />
-            <Route path="/inventory/products/:id" element={<Protected><ProductForm /></Protected>} />
-            <Route path="/inventory/bundles" element={<Protected><BundlesPage /></Protected>} />
-            <Route path="/inventory/bundles/new" element={<Protected><BundleForm /></Protected>} />
-            <Route path="/inventory/bundles/:id" element={<Protected><BundleForm /></Protected>} />
-            <Route path="/inventory/intake" element={<Protected><IntakePage /></Protected>} />
-            <Route path="/inventory/transfers" element={<Protected><TransfersPage /></Protected>} />
-            <Route path="/inventory/write-off" element={<Protected><InventoryWriteOffPage /></Protected>} />
-            <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
-            <Route path="/orders/new" element={<Protected><OrderForm /></Protected>} />
-            <Route path="/orders/picking" element={<Protected><PickingQueuePage /></Protected>} />
-            <Route path="/orders/in-delivery" element={<Protected><InDeliveryPage /></Protected>} />
-            <Route path="/orders/:id" element={<Protected><OrderDetail /></Protected>} />
-            <Route path="/pos" element={<Protected><PosPage /></Protected>} />
-            <Route path="/deliveries" element={<Protected><DeliveriesPage /></Protected>} />
-            <Route path="/settings/delivery-companies" element={<Protected><DeliveryCompaniesPage /></Protected>} />
-            <Route path="/cash-registers" element={<Protected><CashRegistersPage /></Protected>} />
-            <Route path="/finance" element={<Protected><FinancePage /></Protected>} />
-            <Route path="/customers" element={<Protected><CustomersPage /></Protected>} />
-            <Route path="/woo-sync" element={<Protected><WooSyncPage /></Protected>} />
-            <Route path="/website-items" element={<Protected><WebsiteItemsPage /></Protected>} />
-            <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
-            <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
+            {/* CRM Auth */}
+            <Route path="/crm/auth" element={<Auth />} />
 
-            {/* Admin website management */}
-            <Route path="/admin/web-content" element={<Protected><WebContentPage /></Protected>} />
-            <Route path="/admin/web-banners" element={<Protected><WebBannersPage /></Protected>} />
-            <Route path="/admin/coupons" element={<Protected><AdminCouponsPage /></Protected>} />
-            <Route path="/admin/sms-templates" element={<Protected><SmsTemplatesPage /></Protected>} />
-            <Route path="/admin/meta-pixel" element={<Protected><MetaPixelSettingsPage /></Protected>} />
-            <Route path="/admin/hyp-settings" element={<Protected><HypSettingsPage /></Protected>} />
-            <Route path="/admin/payment-methods" element={<Protected><PaymentMethodsSettingsPage /></Protected>} />
-            <Route path="/admin/inforu-settings" element={<Protected><InforuSettingsPage /></Protected>} />
-            <Route path="/admin/ezcount-settings" element={<Protected><EzcountSettingsPage /></Protected>} />
+            {/* CRM Admin Panel */}
+            <Route path="/crm" element={<Protected><Dashboard /></Protected>} />
+            <Route path="/crm/flows" element={<Protected><FlowsPage /></Protected>} />
+            <Route path="/crm/dashboard" element={<Protected><Dashboard /></Protected>} />
+            <Route path="/crm/inventory" element={<Protected><InventoryIndex /></Protected>} />
+            <Route path="/crm/inventory/products" element={<Protected><ProductsPage /></Protected>} />
+            <Route path="/crm/inventory/products/new" element={<Protected><ProductForm /></Protected>} />
+            <Route path="/crm/inventory/products/:id" element={<Protected><ProductForm /></Protected>} />
+            <Route path="/crm/inventory/bundles" element={<Protected><BundlesPage /></Protected>} />
+            <Route path="/crm/inventory/bundles/new" element={<Protected><BundleForm /></Protected>} />
+            <Route path="/crm/inventory/bundles/:id" element={<Protected><BundleForm /></Protected>} />
+            <Route path="/crm/inventory/intake" element={<Protected><IntakePage /></Protected>} />
+            <Route path="/crm/inventory/transfers" element={<Protected><TransfersPage /></Protected>} />
+            <Route path="/crm/inventory/write-off" element={<Protected><InventoryWriteOffPage /></Protected>} />
+            <Route path="/crm/orders" element={<Protected><OrdersPage /></Protected>} />
+            <Route path="/crm/orders/new" element={<Protected><OrderForm /></Protected>} />
+            <Route path="/crm/orders/picking" element={<Protected><PickingQueuePage /></Protected>} />
+            <Route path="/crm/orders/in-delivery" element={<Protected><InDeliveryPage /></Protected>} />
+            <Route path="/crm/orders/:id" element={<Protected><OrderDetail /></Protected>} />
+            <Route path="/crm/pos" element={<Protected><PosPage /></Protected>} />
+            <Route path="/crm/deliveries" element={<Protected><DeliveriesPage /></Protected>} />
+            <Route path="/crm/settings/delivery-companies" element={<Protected><DeliveryCompaniesPage /></Protected>} />
+            <Route path="/crm/cash-registers" element={<Protected><CashRegistersPage /></Protected>} />
+            <Route path="/crm/finance" element={<Protected><FinancePage /></Protected>} />
+            <Route path="/crm/customers" element={<Protected><CustomersPage /></Protected>} />
+            <Route path="/crm/woo-sync" element={<Protected><WooSyncPage /></Protected>} />
+            <Route path="/crm/website-items" element={<Protected><WebsiteItemsPage /></Protected>} />
+            <Route path="/crm/settings" element={<Protected><SettingsPage /></Protected>} />
+            <Route path="/crm/reports" element={<Protected><ReportsPage /></Protected>} />
+
+            {/* CRM Admin website management */}
+            <Route path="/crm/admin/web-content" element={<Protected><WebContentPage /></Protected>} />
+            <Route path="/crm/admin/web-banners" element={<Protected><WebBannersPage /></Protected>} />
+            <Route path="/crm/admin/coupons" element={<Protected><AdminCouponsPage /></Protected>} />
+            <Route path="/crm/admin/sms-templates" element={<Protected><SmsTemplatesPage /></Protected>} />
+            <Route path="/crm/admin/meta-pixel" element={<Protected><MetaPixelSettingsPage /></Protected>} />
+            <Route path="/crm/admin/hyp-settings" element={<Protected><HypSettingsPage /></Protected>} />
+            <Route path="/crm/admin/payment-methods" element={<Protected><PaymentMethodsSettingsPage /></Protected>} />
+            <Route path="/crm/admin/inforu-settings" element={<Protected><InforuSettingsPage /></Protected>} />
+            <Route path="/crm/admin/ezcount-settings" element={<Protected><EzcountSettingsPage /></Protected>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

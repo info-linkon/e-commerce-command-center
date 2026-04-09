@@ -27,7 +27,7 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, imageUr
           {lang === "he" ? "אזל מהמלאי" : "غير متوفر"}
         </div>
       )}
-      <Link to={`/web/product/${linkId}`} className="block relative overflow-hidden">
+      <Link to={`/product/${linkId}`} className="block relative overflow-hidden">
         <div className="aspect-square bg-muted flex items-center justify-center">
           {imageUrl ? (
             <img
@@ -48,7 +48,7 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, imageUr
         {categoryName && (
           <p className="text-xs text-gold font-medium mb-1">{categoryName}</p>
         )}
-        <Link to={`/web/product/${linkId}`}>
+        <Link to={`/product/${linkId}`}>
           <h3 className="font-semibold text-xs md:text-sm leading-snug mb-2 line-clamp-2 hover:text-primary transition-colors">
             {displayName}
           </h3>
@@ -61,7 +61,7 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, imageUr
             className="h-9 w-9 bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary"
             asChild
           >
-            <Link to={`/web/product/${linkId}`}>
+            <Link to={`/product/${linkId}`}>
               <ShoppingCart className="w-4 h-4" />
             </Link>
           </Button>
