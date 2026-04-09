@@ -113,7 +113,7 @@ export default function WebOrderConfirmation() {
         <p className="text-muted-foreground mb-2">מספר הזמנה: <span className="font-bold text-primary">#{orderNumber}</span></p>
         <p className="text-muted-foreground mb-8">התשלום לא הצליח. אם חויבת, נציג יצור איתך קשר.</p>
         <Link
-          to="/web"
+          to="/"
           className="px-6 py-3 web-gold-gradient text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-md"
         >
           العودة للرئيسية
@@ -136,7 +136,7 @@ export default function WebOrderConfirmation() {
       </p>
       <div className="flex gap-4 justify-center">
         <Link
-          to="/web"
+          to="/"
           className="px-6 py-3 web-gold-gradient text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-md"
         >
           العودة للرئيسية

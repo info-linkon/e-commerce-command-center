@@ -186,7 +186,7 @@ export default function WebHome() {
               return (
                 <Link
                   key={cat.id}
-                  to={`/web/category/${(cat as any).category_number || cat.id}`}
+                  to={`/category/${(cat as any).category_number || cat.id}`}
                   className="group relative rounded-xl overflow-hidden aspect-square border border-border hover:shadow-xl transition-all duration-300"
                 >
                   {imgSrc ? (
@@ -221,7 +221,7 @@ export default function WebHome() {
               <p className="text-muted-foreground text-sm mt-1">{t("أحدث المنتجات في متجرنا", "המוצרים החדשים בחנות")}</p>
             </div>
             <Button asChild variant="ghost" className="text-primary hover:text-gold">
-              <Link to="/web/shop">
+              <Link to="/shop">
                 {t("عرض الكل", "הצג הכל")}
                 <ArrowLeft className="w-4 h-4 mr-1" />
               </Link>
@@ -252,7 +252,7 @@ export default function WebHome() {
             {t("منتجات أصلية بأفضل الأسعار مع توصيل سريع لباب بيتك", "מוצרים מקוריים במחירים הטובים ביותר עם משלוח מהיר עד הבית")}
           </p>
           <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold px-8">
-            <Link to="/web/shop">{t("تسوق الآن", "קנה עכשיו")}</Link>
+            <Link to="/shop">{t("تسوق الآن", "קנה עכשיו")}</Link>
           </Button>
         </div>
       </section>

@@ -211,12 +211,12 @@ export default function WebCheckoutPage() {
           body: { order_id: order.id, trigger_type: "order_created" },
         }).catch(console.error);
         clearCart();
-        navigate(`/web/order-confirmation/${order.order_number}`);
+        navigate(`/order-confirmation/${order.order_number}`);
         return;
       }
 
-      const successUrl = `${window.location.origin}/web/order-confirmation/${order.order_number}`;
-      const errorUrl = `${window.location.origin}/web/checkout?payment_error=true`;
+      const successUrl = `${window.location.origin}/order-confirmation/${order.order_number}`;
+      const errorUrl = `${window.location.origin}/checkout?payment_error=true`;
 
       const { data: hypData, error: hypError } = await supabase.functions.invoke("hyp-create-payment", {
         body: {
@@ -236,7 +236,7 @@ export default function WebCheckoutPage() {
         console.error("HYP payment error:", hypError || hypData?.error);
         toast.error("שגיאה ביצירת דף תשלום — ההזמנה נשמרה ונציג יצור קשר");
         clearCart();
-        navigate(`/web/order-confirmation/${order.order_number}?payment=pending`);
+        navigate(`/order-confirmation/${order.order_number}?payment=pending`);
         return;
       }
 
@@ -252,7 +252,7 @@ export default function WebCheckoutPage() {
   };
 
   if (items.length === 0 && !hypPaymentUrl) {
-    navigate("/web/cart");
+    navigate("/cart");
     return null;
   }
 
@@ -278,7 +278,7 @@ export default function WebCheckoutPage() {
             size="sm"
             onClick={() => {
               setHypPaymentUrl(null);
-              navigate("/web/cart");
+              navigate("/cart");
             }}
           >
             <X className="w-4 h-4 ml-1" />
@@ -338,7 +338,7 @@ export default function WebCheckoutPage() {
           <span className="text-lg font-bold text-foreground">الوجهة</span>
         </div>
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link to="/web/cart" className="hover:text-foreground transition-colors flex items-center gap-1">
+          <Link to="/cart" className="hover:text-foreground transition-colors flex items-center gap-1">
             <ShoppingBag className="w-4 h-4" />
             السلة
           </Link>
