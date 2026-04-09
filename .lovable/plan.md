@@ -1,67 +1,33 @@
 
 
-# תיקונים — 4 נקודות
+## Plan: Add EZCount Settings Page
 
-## 1. מארזים לא מופיעים באתר
-**סיבה:** כל המארזים מסומנים `is_published = false`. השאילתה ב-`useWebProducts` מסננת רק `is_published = true`.
-**פתרון:** אין באג בקוד — צריך לוודא שהמארזים מסומנים כמפורסמים. אבל גם כדאי לוודא שהם מופיעים ברשימת הפריטים (ProductsPage) כדי לערוך אותם.
+### What
+Create a new settings page for EZCount where the admin can enter the API Key and developer email. These values will be stored in `site_content` (page: "settings", section: "ezcount") and used by the `ezcount-doc` edge function instead of hardcoded values.
 
-**בעיה נוספת:** ב-`ProductsPage` (שורות 36-44) מסננים החוצה את ה-`bundleProductIds` מהרשימה — כלומר מוצרים שהם מארזים מוסתרים מדף הפריטים. זה בכוונה (כי יש דף מארזים נפרד), אבל צריך לוודא שמדף המארזים (`BundlesPage`) אפשר לשנות `is_published`.
+### Changes
 
-**פתרון:** להוסיף בדף המארזים עמודה/אפשרות לשנות `is_published` + badge שמראה סטטוס פרסום. גם לוודא שב-`BundleForm` יש שדה "פורסם באתר".
+#### 1. Create `src/pages/admin/EzcountSettingsPage.tsx`
+- Form with two fields: API Key (password input with show/hide toggle) and Developer Email
+- Load existing values from `site_content` using `useSiteSection("settings", "ezcount")`
+- Save using `useUpsertSiteContent`
+- Same pattern as `InforuSettingsPage`
 
-## 2. מחיקת מוצרים עדיין נכשלת
-**סיבה:** ה-cascading delete ב-`useDeleteProduct` לא מטפל ב-`order_items` ו-`inventory_log` שגם הם מקושרים ב-FK ל-`product_variations`.
+#### 2. Update `src/pages/SettingsPage.tsx`
+- Add a new card: "הגדרות EZCount" with description "API Key ומייל מפתח להפקת חשבוניות"
+- Link to `/admin/ezcount-settings`
 
-**פתרון:** ב-`src/hooks/useProducts.ts`, להוסיף לפני מחיקת `product_variations`:
-- `order_items` — לא ניתן למחוק פריטי הזמנות (נתונים עסקיים). במקום זה, ננתק את ה-FK או נעדכן ל-NULL. אבל מכיוון ש-`variation_id` הוא NOT NULL, הפתרון הנכון הוא **לשנות את ה-FK constraint ל-ON DELETE SET NULL** במיגרציה, או לחילופין — למחוק את ה-FK constraint ולהשאיר את ה-order_items כמו שהם.
-- `inventory_log` — אותו דבר.
+#### 3. Update `src/App.tsx`
+- Add route `/admin/ezcount-settings` → `EzcountSettingsPage`
 
-**הגישה:** מיגרציית DB שמשנה את ה-FK constraints של `order_items.variation_id` ו-`inventory_log.variation_id` ל-`ON DELETE SET NULL` (אחרי שנהפוך אותם ל-nullable).
+#### 4. Update `supabase/functions/ezcount-doc/index.ts`
+- Instead of only reading `EZCOUNT_API_KEY` from env, first try to fetch from `site_content` table (page: "settings", section: "ezcount")
+- Fall back to env secret if not found in DB
+- Use developer_email from the same config (fallback to current hardcoded value)
 
-## 3. באנרים — שדות עבריים
-**סיבה:** טבלת `banners` מכילה רק `title` ו-`subtitle`, אין שדות `title_he` / `subtitle_he`.
-
-**פתרון:**
-- מיגרציית DB: הוספת `title_he TEXT`, `subtitle_he TEXT` לטבלת `banners`
-- `WebBannersPage.tsx`: הוספת שדות "כותרת בעברית" ו"תת כותרת בעברית" בטופס
-- `BannerSlider.tsx`: הצגת הטקסט לפי השפה הנבחרת
-
-## 4. וריאציות מארז — שם בעברית
-**סיבה:** טבלת `bundle_variations` מכילה רק `name`, אין `name_he`.
-
-**פתרון:**
-- מיגרציית DB: הוספת `name_he TEXT` לטבלת `bundle_variations`
-- `BundleVariationsManager.tsx`: הוספת שדה "שם בעברית" בדיאלוג הוריאציה
-- `WebProductPage.tsx`: הצגת שם הוריאציה לפי שפה
-
-## מיגרציית DB
-```sql
--- Banner Hebrew fields
-ALTER TABLE banners ADD COLUMN title_he TEXT;
-ALTER TABLE banners ADD COLUMN subtitle_he TEXT;
-
--- Bundle variation Hebrew name
-ALTER TABLE bundle_variations ADD COLUMN name_he TEXT;
-
--- Allow deletion of products that have order history
-ALTER TABLE order_items ALTER COLUMN variation_id DROP NOT NULL;
-ALTER TABLE order_items DROP CONSTRAINT order_items_variation_id_fkey;
-ALTER TABLE order_items ADD CONSTRAINT order_items_variation_id_fkey 
-  FOREIGN KEY (variation_id) REFERENCES product_variations(id) ON DELETE SET NULL;
-
-ALTER TABLE inventory_log ALTER COLUMN variation_id DROP NOT NULL;
-ALTER TABLE inventory_log DROP CONSTRAINT inventory_log_variation_id_fkey;
-ALTER TABLE inventory_log ADD CONSTRAINT inventory_log_variation_id_fkey 
-  FOREIGN KEY (variation_id) REFERENCES product_variations(id) ON DELETE SET NULL;
-```
-
-## קבצים לעדכון
-1. **`src/pages/admin/WebBannersPage.tsx`** — שדות `title_he`, `subtitle_he` בטופס
-2. **`src/components/web/BannerSlider.tsx`** — הצגה לפי שפה
-3. **`src/components/inventory/BundleVariationsManager.tsx`** — שדה `name_he` בדיאלוג
-4. **`src/hooks/useBundleVariations.ts`** — שליחת `name_he` ב-create/update
-5. **`src/pages/web/WebProductPage.tsx`** — הצגת שם וריאציית מארז לפי שפה
-6. **`src/hooks/useProducts.ts`** — הסרת הטיפול הידני ב-`order_items`/`inventory_log` (ה-DB יטפל ב-SET NULL)
-7. **`src/pages/inventory/BundlesPage.tsx`** — הוספת badge פרסום + כפתור toggle
+### Files
+1. `src/pages/admin/EzcountSettingsPage.tsx` (new)
+2. `src/pages/SettingsPage.tsx` (add card)
+3. `src/App.tsx` (add route)
+4. `supabase/functions/ezcount-doc/index.ts` (read config from DB)
 
