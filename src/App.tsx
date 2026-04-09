@@ -91,6 +91,9 @@ const App = () => (
               <Route path="contact" element={<WebContactPage />} />
             </Route>
 
+            {/* Public invoice short link */}
+            <Route path="/inv/:code" element={<InvoiceRedirect />} />
+
             {/* Admin Panel */}
             <Route path="/" element={<Protected><Dashboard /></Protected>} />
             <Route path="/flows" element={<Protected><FlowsPage /></Protected>} />

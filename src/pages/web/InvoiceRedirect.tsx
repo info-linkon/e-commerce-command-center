@@ -16,7 +16,7 @@ const InvoiceRedirect = () => {
         .select("doc_url")
         .eq("short_code", code)
         .eq("status", "issued")
-        .maybeSingle();
+        .maybeSingle() as any;
 
       if (dbErr || !data?.doc_url) {
         setError(true);
