@@ -75,7 +75,7 @@ const InforuSettingsPage = () => {
     <div className="max-w-2xl mx-auto space-y-6" dir="rtl">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <MessageSquare className="h-6 w-6" />
-        הגדרות InforU SMS
+        הגדרות LINKON SMS
       </h1>
 
       <Card>
@@ -86,10 +86,10 @@ const InforuSettingsPage = () => {
             ) : (
               <AlertCircle className="h-5 w-5 text-yellow-500" />
             )}
-            פרטי חשבון InforU
+            פרטי חשבון LINKON
           </CardTitle>
           <CardDescription>
-            הזן את פרטי החשבון מממשק הניהול של InforUMobile.
+            הזן את פרטי החשבון מממשק הניהול של LINKON.
             הטוקן נמצא תחת פרטי חשבון &gt; API Tokens.
           </CardDescription>
         </CardHeader>
@@ -100,7 +100,7 @@ const InforuSettingsPage = () => {
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="שם משתמש InforU"
+              placeholder="שם משתמש LINKON"
             />
           </div>
 
