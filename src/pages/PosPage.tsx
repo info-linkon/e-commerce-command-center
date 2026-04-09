@@ -64,7 +64,7 @@ const PosPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_variations")
-        .select("*, products(name, category_id, is_published)")
+        .select("*, products(name, name_ar, image_url, category_id, is_published)")
         .order("name");
       if (error) throw error;
       return data;
@@ -76,7 +76,7 @@ const PosPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bundles")
-        .select("id, bundle_type, product_id, products(name, category_id, sale_price, is_published)");
+        .select("id, bundle_type, product_id, products(name, name_ar, image_url, category_id, sale_price, is_published)");
       if (error) throw error;
       const variableBundleIds = (data || []).filter(b => b.bundle_type === "variable_bundle").map(b => b.id);
       let bundleVars: any[] = [];
