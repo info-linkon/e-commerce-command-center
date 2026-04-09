@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
 
             if (ezData.success) {
               const invoiceLink = ezData.short_code
-                ? `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/inv/${ezData.short_code}`
+                ? `/inv/${ezData.short_code}`
                 : ezData.doc_url;
               if (invoiceLink) {
                 await supabase

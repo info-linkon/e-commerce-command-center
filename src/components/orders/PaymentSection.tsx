@@ -144,7 +144,7 @@ const PaymentSection = ({
               // Save short invoice URL to order
               const shortCode = result?.short_code;
               const invoiceLink = shortCode
-                ? `${window.location.origin}/inv/${shortCode}`
+                ? `/inv/${shortCode}`
                 : result?.doc_url;
               if (invoiceLink) {
                 await supabase
