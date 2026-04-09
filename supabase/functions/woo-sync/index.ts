@@ -91,15 +91,34 @@ serve(async (req) => {
     }
 
     if (action === "import_products") {
-      // Import products from WooCommerce
+      // Import products from WooCommerce - skip existing, only create new
       let page = 1;
       let imported = 0;
+      let skipped = 0;
       while (true) {
         const wooProd = await wooGet(`/products?per_page=50&page=${page}`);
         if (!wooProd.length) break;
 
         for (const p of wooProd) {
-          // Find category
+          // Check if product already exists by woo_id
+          const { data: byWoo } = await supabase
+            .from("products")
+            .select("id")
+            .eq("woo_id", p.id)
+            .maybeSingle();
+          if (byWoo) { skipped++; continue; }
+
+          // Check if product already exists by SKU
+          if (p.sku) {
+            const { data: bySku } = await supabase
+              .from("products")
+              .select("id")
+              .eq("sku", p.sku)
+              .maybeSingle();
+            if (bySku) { skipped++; continue; }
+          }
+
+          // Product doesn't exist - create it
           let categoryId = null;
           if (p.categories?.length) {
             const { data: cat } = await supabase
@@ -124,44 +143,19 @@ serve(async (req) => {
             category_id: categoryId,
           };
 
-          // Check by woo_id first
-          let existing: { id: string } | null = null;
-          const { data: byWoo } = await supabase
+          const { data: newProd } = await supabase
             .from("products")
+            .insert(productData)
             .select("id")
-            .eq("woo_id", p.id)
-            .maybeSingle();
-          existing = byWoo;
+            .single();
+          const productId = newProd!.id;
 
-          // If not found by woo_id, check by SKU
-          if (!existing && p.sku) {
-            const { data: bySku } = await supabase
-              .from("products")
-              .select("id")
-              .eq("sku", p.sku)
-              .maybeSingle();
-            existing = bySku;
-          }
-
-          let productId: string;
-          if (existing) {
-            await supabase.from("products").update(productData).eq("id", existing.id);
-            productId = existing.id;
-          } else {
-            const { data: newProd } = await supabase
-              .from("products")
-              .insert(productData)
-              .select("id")
-              .single();
-            productId = newProd!.id;
-          }
-
-          // Import variations
+          // Import variations for new product
           if (p.type === "variable") {
             const wooVars = await wooGet(`/products/${p.id}/variations?per_page=100`);
             for (const v of wooVars) {
               const varName = v.attributes?.map((a: any) => a.option).join(" / ") || v.sku || "ברירת מחדל";
-              const varData = {
+              await supabase.from("product_variations").insert({
                 product_id: productId,
                 woo_id: v.id,
                 name: varName,
@@ -169,55 +163,23 @@ serve(async (req) => {
                 price: Number(v.price) || 0,
                 cost_price: 0,
                 image_url: v.image?.src || null,
-              };
-              // Check variation by woo_id first, then by SKU
-              let existingVar: { id: string } | null = null;
-              const { data: varByWoo } = await supabase
-                .from("product_variations")
-                .select("id")
-                .eq("woo_id", v.id)
-                .maybeSingle();
-              existingVar = varByWoo;
-
-              if (!existingVar && v.sku) {
-                const { data: varBySku } = await supabase
-                  .from("product_variations")
-                  .select("id")
-                  .eq("sku", v.sku)
-                  .eq("product_id", productId)
-                  .maybeSingle();
-                existingVar = varBySku;
-              }
-
-              if (existingVar) {
-                await supabase.from("product_variations").update(varData).eq("id", existingVar.id);
-              } else {
-                await supabase.from("product_variations").insert(varData);
-              }
+              });
             }
           } else {
             // Simple product - create default variation
-            const { data: existingVar } = await supabase
-              .from("product_variations")
-              .select("id")
-              .eq("product_id", productId)
-              .eq("name", "ברירת מחדל")
-              .maybeSingle();
-            if (!existingVar) {
-              await supabase.from("product_variations").insert({
-                product_id: productId,
-                name: "ברירת מחדל",
-                sku: p.sku || null,
-                price: Number(p.price) || 0,
-                cost_price: 0,
-              });
-            }
+            await supabase.from("product_variations").insert({
+              product_id: productId,
+              name: "ברירת מחדל",
+              sku: p.sku || null,
+              price: Number(p.price) || 0,
+              cost_price: 0,
+            });
           }
           imported++;
         }
         page++;
       }
-      return new Response(JSON.stringify({ success: true, imported }), {
+      return new Response(JSON.stringify({ success: true, imported, skipped }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
