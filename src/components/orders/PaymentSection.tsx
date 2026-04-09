@@ -111,6 +111,27 @@ const PaymentSection = ({
 
   const linesTotal = lines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
 
+  const handleSendPaymentLink = async () => {
+    setSendingPaymentLink(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("hyp-payment-link", {
+        body: { order_id: orderId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.sms_sent) {
+        toast.success("לינק תשלום נשלח ללקוח בהצלחה");
+      } else {
+        toast.warning(`לינק תשלום נוצר אך ה-SMS לא נשלח: ${data?.sms_error || "שגיאה"}`);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "שגיאה ביצירת לינק תשלום");
+    } finally {
+      setSendingPaymentLink(false);
+    }
+  };
+
   const handleSubmit = () => {
     const payments = lines
       .filter((l) => parseFloat(l.amount) > 0)
@@ -345,6 +366,23 @@ const PaymentSection = ({
               </div>
             </DialogContent>
           </Dialog>
+        )}
+
+        {/* Send payment link via SMS button */}
+        {!isCancelled && !isCompleted && remaining > 0 && customerPhone && (
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={handleSendPaymentLink}
+            disabled={sendingPaymentLink}
+          >
+            {sendingPaymentLink ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {sendingPaymentLink ? "שולח לינק..." : "שלח לינק תשלום באשראי"}
+          </Button>
         )}
 
         {!isCancelled && !isCompleted && !isDelivered && !hasPayments && remaining > 0 && (
