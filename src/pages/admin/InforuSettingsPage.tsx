@@ -55,11 +55,10 @@ const InforuSettingsPage = () => {
         body: { phone: testPhone, message: "הודעת בדיקה מהמערכת ✓" },
       });
       if (error) throw error;
-      const result = data?.result || "";
-      if (result.includes("Status>1<") || result.includes("Status>1&")) {
+      if (data?.success) {
         toast.success("הודעת בדיקה נשלחה בהצלחה!");
       } else {
-        toast.error("שגיאה בשליחה: " + result);
+        toast.error("שגיאה בשליחה: " + (data?.error || JSON.stringify(data?.result)));
       }
     } catch (err: any) {
       toast.error("שגיאה: " + err.message);
