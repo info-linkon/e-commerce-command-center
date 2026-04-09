@@ -1,67 +1,38 @@
 
 
-## Plan: Short Invoice URLs via Public Redirect Route
+## Plan: Three Fixes — Picking Bundle Breakdown, Arabic Names in POS/Management, Product Images in POS
 
-### What
-Create a short, public URL system for invoice links. Instead of saving the long EZCount PDF URL directly, save a short link like `https://your-domain.com/inv/ABC123` that redirects to the full EZCount document.
+### 1. Picking Checklist — Expand Bundles to Components
 
-### How It Works
-1. When an invoice is created (cash or credit), generate a short random code (e.g. 8 chars)
-2. Save the short code + full EZCount URL in the `documents` table
-3. Save the short URL (e.g. `/inv/ABC123`) as `invoice_url` on the order
-4. Add a public route `/inv/:code` that looks up the code and redirects to the full URL
+**Problem:** When a bundle is ordered, the picking list shows only the bundle name, not its individual component items. Workers might forget items.
 
-### Changes
+**Solution:** In `PickingChecklist.tsx`, after fetching picking items, detect which items are bundles (by checking `bundles` table via product_id). For each bundle item, fetch its `bundle_items` with their `product_variations(name, products(name, name_ar))` and display them as indented sub-items under the bundle name.
 
-#### 1. Database Migration
-Add `short_code` column to `documents` table:
-```sql
-ALTER TABLE public.documents ADD COLUMN short_code text UNIQUE;
-```
+**Changes:**
+- `src/components/orders/PickingChecklist.tsx` — Add a secondary query to fetch bundle components for any bundle products in the picking list. Render them as nested items under the bundle parent (visually indented, with quantity × bundle quantity).
 
-#### 2. New Public Page: `src/pages/web/InvoiceRedirect.tsx`
-- Route: `/inv/:code`
-- Fetches `doc_url` from `documents` where `short_code = code`
-- Redirects to the full EZCount PDF URL
-- Shows a loading spinner while fetching
-- No auth required — fully public
+### 2. Arabic Names as Primary in POS & Management
 
-#### 3. Update `src/App.tsx`
-- Add public route `/inv/:code` → `InvoiceRedirect`
+**Problem:** Product names in POS cards and management pages show Hebrew (`name`). User wants Arabic (`name_ar`) as the primary display name.
 
-#### 4. Update `supabase/functions/ezcount-doc/index.ts`
-- After successful doc creation, generate a random 8-char short code
-- Save it in `documents.short_code`
-- Return the short code in the response alongside `doc_url`
+**Changes:**
+- `src/pages/PosPage.tsx` — Update the variations query to also fetch `name_ar` from products. Change `product_name` in `GroupedProduct` to use `name_ar || name`. Update all display points (product cards, cart items, variation picker).
+- `src/pages/inventory/ProductsPage.tsx` — Show `name_ar || name` in the product list table and mobile cards.
 
-#### 5. Update `PaymentSection.tsx` (cash flow)
-- Use the short URL (`/inv/{short_code}`) when saving `invoice_url` to the order
+### 3. Product Images in POS
 
-#### 6. Update `hyp-verify-payment/index.ts` (credit flow)
-- Use the short URL from the ezcount-doc response when saving `invoice_url` to the order
+**Problem:** POS product cards are text-only. User wants product images next to names.
 
-### Technical Details
+**Changes:**
+- `src/pages/PosPage.tsx` — Fetch `image_url` from products in the query. Add `image_url` to `GroupedProduct` interface. Display a small thumbnail (e.g. 40×40px) in each product card above/beside the name.
 
-**Short code generation (in edge function):**
-```typescript
-const shortCode = crypto.randomUUID().replace(/-/g, "").substring(0, 8);
-```
+### Files to Modify
+1. `src/components/orders/PickingChecklist.tsx` — bundle expansion in picking
+2. `src/pages/PosPage.tsx` — Arabic names + product images
+3. `src/pages/inventory/ProductsPage.tsx` — Arabic names as primary
 
-**Redirect page:**
-```tsx
-// Fetches doc_url by short_code, then window.location.replace(doc_url)
-```
-
-**Short URL format:**
-```
-https://your-domain.com/inv/a1b2c3d4
-```
-
-### Files
-1. **Migration** — add `short_code` to documents
-2. `src/pages/web/InvoiceRedirect.tsx` (new)
-3. `src/App.tsx` — add route
-4. `supabase/functions/ezcount-doc/index.ts` — generate short code + return it
-5. `src/components/orders/PaymentSection.tsx` — use short URL
-6. `supabase/functions/hyp-verify-payment/index.ts` — use short URL
+### Technical Notes
+- Bundle detection: join `order_items.variation_id → product_variations.product_id → bundles.product_id`
+- For bundle components: query `bundle_items` with `product_variations(name, products(name, name_ar))` where `bundle_id` matches
+- POS query change: `products(name, name_ar, image_url, category_id, is_published)`
 
