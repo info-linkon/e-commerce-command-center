@@ -1,81 +1,67 @@
 
 
-## Plan: Invoice Receipt Integration in Payment Flow + Save to Order
+## Plan: Short Invoice URLs via Public Redirect Route
 
 ### What
-1. Add `invoice_url` column to `orders` table to store the EZCount document link
-2. In the cash payment dialog, add a toggle to issue a tax invoice/receipt (חשבונית מס קבלה) -- only if no existing invoice_receipt (type 320) document exists for that order
-3. After successful payment + invoice creation, save the `doc_url` to `orders.invoice_url`
-4. In the credit card flow (`hyp-verify-payment`), automatically issue an invoice_receipt via EZCount and save the URL to the order
-5. Display the invoice link in the order detail page
+Create a short, public URL system for invoice links. Instead of saving the long EZCount PDF URL directly, save a short link like `https://your-domain.com/inv/ABC123` that redirects to the full EZCount document.
+
+### How It Works
+1. When an invoice is created (cash or credit), generate a short random code (e.g. 8 chars)
+2. Save the short code + full EZCount URL in the `documents` table
+3. Save the short URL (e.g. `/inv/ABC123`) as `invoice_url` on the order
+4. Add a public route `/inv/:code` that looks up the code and redirects to the full URL
 
 ### Changes
 
 #### 1. Database Migration
-Add `invoice_url` column to `orders`:
+Add `short_code` column to `documents` table:
 ```sql
-ALTER TABLE orders ADD COLUMN invoice_url text;
+ALTER TABLE public.documents ADD COLUMN short_code text UNIQUE;
 ```
 
-#### 2. `PaymentSection.tsx` - Add invoice toggle for cash payments
-- Accept new props: `customerName`, `customerEmail`, `customerPhone`, `orderNumber`, `orderItems` (from order data)
-- Query existing documents for this order to check if a type 320 doc already exists
-- Add a `Switch` toggle "הנפק חשבונית מס קבלה" that appears only when:
-  - At least one payment line is cash
-  - No existing invoice_receipt (type 320) for this order
-- On submit success, if toggle is on, call `useCreateDocument` with the order data, then save `doc_url` to `orders.invoice_url`
+#### 2. New Public Page: `src/pages/web/InvoiceRedirect.tsx`
+- Route: `/inv/:code`
+- Fetches `doc_url` from `documents` where `short_code = code`
+- Redirects to the full EZCount PDF URL
+- Shows a loading spinner while fetching
+- No auth required — fully public
 
-#### 3. `OrderDetail.tsx` - Pass order data to PaymentSection
-Pass `customerName`, `customerEmail`, `customerPhone`, `orderNumber`, `orderItems` props
+#### 3. Update `src/App.tsx`
+- Add public route `/inv/:code` → `InvoiceRedirect`
 
-#### 4. `OrderDetail.tsx` - Show invoice link
-Display a link/badge when `order.invoice_url` is set
+#### 4. Update `supabase/functions/ezcount-doc/index.ts`
+- After successful doc creation, generate a random 8-char short code
+- Save it in `documents.short_code`
+- Return the short code in the response alongside `doc_url`
 
-#### 5. `hyp-verify-payment/index.ts` - Auto-issue invoice on credit payment
-After verifying credit payment successfully:
-- Fetch order items from DB
-- Call the `ezcount-doc` function internally to create an invoice_receipt (type 320)
-- Save the returned `doc_url` to `orders.invoice_url`
+#### 5. Update `PaymentSection.tsx` (cash flow)
+- Use the short URL (`/inv/{short_code}`) when saving `invoice_url` to the order
 
-#### 6. `ezcount-doc/index.ts` - Return doc_url in response
-Already returns `doc_url` — just ensure it's used correctly by callers
+#### 6. Update `hyp-verify-payment/index.ts` (credit flow)
+- Use the short URL from the ezcount-doc response when saving `invoice_url` to the order
 
 ### Technical Details
 
-**Check for existing invoice:**
-```tsx
-const { data: existingDocs } = useQuery({
-  queryKey: ["documents", orderId, "invoice_receipt"],
-  queryFn: async () => {
-    const { data } = await supabase.from("documents")
-      .select("id, doc_url").eq("order_id", orderId).eq("doc_type", 320).eq("status", "issued");
-    return data;
-  }
-});
-const hasInvoiceReceipt = existingDocs && existingDocs.length > 0;
+**Short code generation (in edge function):**
+```typescript
+const shortCode = crypto.randomUUID().replace(/-/g, "").substring(0, 8);
 ```
 
-**Auto-invoice in hyp-verify-payment (credit):**
-```typescript
-// After payment verified, call ezcount-doc internally
-const ezRes = await fetch(`${supabaseUrl}/functions/v1/ezcount-doc`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
-  body: JSON.stringify({
-    doc_type: "invoice_receipt",
-    order_id, customer_name, items, payments: [{ type: "credit", amount }]
-  })
-});
-const ezData = await ezRes.json();
-if (ezData.success) {
-  await supabase.from("orders").update({ invoice_url: ezData.doc_url }).eq("id", order_id);
-}
+**Redirect page:**
+```tsx
+// Fetches doc_url by short_code, then window.location.replace(doc_url)
+```
+
+**Short URL format:**
+```
+https://your-domain.com/inv/a1b2c3d4
 ```
 
 ### Files
-1. **Migration** — add `invoice_url` to orders
-2. `src/components/orders/PaymentSection.tsx` — add invoice toggle + logic
-3. `src/pages/orders/OrderDetail.tsx` — pass props + show invoice link
-4. `supabase/functions/hyp-verify-payment/index.ts` — auto-issue invoice on credit
-5. `src/hooks/usePayments.ts` — save invoice_url after document creation
+1. **Migration** — add `short_code` to documents
+2. `src/pages/web/InvoiceRedirect.tsx` (new)
+3. `src/App.tsx` — add route
+4. `supabase/functions/ezcount-doc/index.ts` — generate short code + return it
+5. `src/components/orders/PaymentSection.tsx` — use short URL
+6. `supabase/functions/hyp-verify-payment/index.ts` — use short URL
 
