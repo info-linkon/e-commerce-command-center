@@ -46,29 +46,17 @@ Deno.serve(async (req) => {
 
     const sender = INFORU_SENDER || "ELWEJHA";
 
-    const xmlPayload = `<?xml version="1.0" encoding="utf-8"?>
-<Inforu>
-<User>
-<Username>${escapeXml(INFORU_USERNAME)}</Username>
-<Token>${escapeXml(INFORU_TOKEN)}</Token>
-</User>
-<Content Type="sms">
-<Message>${escapeXml(message)}</Message>
-</Content>
-<Recipients>
-<PhoneNumber>${formattedPhone}</PhoneNumber>
-</Recipients>
-<Settings>
-<Sender>${escapeXml(sender)}</Sender>
-</Settings>
-</Inforu>`;
+    const xmlPayload = `<Inforu><User><Username>${escapeXml(INFORU_USERNAME)}</Username><Token>${escapeXml(INFORU_TOKEN)}</Token></User><Content Type="sms"><Message>${escapeXml(message)}</Message></Content><Recipients><PhoneNumber>${formattedPhone}</PhoneNumber></Recipients><Settings><Sender>${escapeXml(sender)}</Sender></Settings></Inforu>`;
 
-    console.log("Sending SMS to:", formattedPhone);
+    console.log("Sending SMS to:", formattedPhone, "XML length:", xmlPayload.length);
+
+    // Try sending as form-encoded with InforuXML parameter
+    const formBody = "InforuXML=" + encodeURIComponent(xmlPayload);
 
     const response = await fetch("https://uapi.inforu.co.il/SendMessageXml.ashx", {
       method: "POST",
-      headers: { "Content-Type": "application/xml; charset=utf-8" },
-      body: xmlPayload,
+      headers: { "Content-Type": "application/x-www-form-urlencoded; charset=utf-8" },
+      body: formBody,
     });
 
     const result = await response.text();
