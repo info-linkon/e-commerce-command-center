@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, Plus, Trash2, CheckCircle2, Banknote, Smartphone, FileText, ExternalLink } from "lucide-react";
+import { CreditCard, Plus, Trash2, CheckCircle2, Banknote, Smartphone, FileText, ExternalLink, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { useOrderPayments, useRecordPayment } from "@/hooks/usePayments";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
 import { useCreateDocument } from "@/hooks/useDocuments";
@@ -37,6 +38,7 @@ interface OrderItemForInvoice {
 interface PaymentSectionProps {
   orderId: string;
   orderTotal: number;
+  orderNumber?: number;
   isDelivered: boolean;
   isCancelled: boolean;
   isCompleted: boolean;
@@ -48,7 +50,7 @@ interface PaymentSectionProps {
 }
 
 const PaymentSection = ({
-  orderId, orderTotal, isDelivered, isCancelled, isCompleted,
+  orderId, orderTotal, orderNumber, isDelivered, isCancelled, isCompleted,
   customerName, customerEmail, customerPhone, orderItems, invoiceUrl,
 }: PaymentSectionProps) => {
   const { data: existingPayments } = useOrderPayments(orderId);
@@ -60,6 +62,7 @@ const PaymentSection = ({
   const [open, setOpen] = useState(false);
   const [completeOrder, setCompleteOrder] = useState(true);
   const [issueInvoice, setIssueInvoice] = useState(false);
+  const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
   const [lines, setLines] = useState<PaymentLine[]>([
     { amount: String(orderTotal), method: "cash", cash_register_id: "", reference: "" },
   ]);
