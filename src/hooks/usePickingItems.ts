@@ -33,22 +33,25 @@ async function rebuildMissingPickingItems(orderId: string) {
   );
 
   const bundleIdByProductId: Record<string, string> = {};
+  const bundleTypeByProductId: Record<string, string> = {};
   if (productIds.length > 0) {
     const { data: bundles, error: bundlesError } = await supabase
       .from("bundles")
-      .select("id, product_id")
+      .select("id, product_id, bundle_type")
       .in("product_id", productIds);
 
     if (bundlesError) throw bundlesError;
 
     for (const bundle of bundles || []) {
       bundleIdByProductId[bundle.product_id] = bundle.id;
+      bundleTypeByProductId[bundle.product_id] = bundle.bundle_type;
     }
   }
 
   const bundleIds = Object.values(bundleIdByProductId);
   const componentsByBundleId: Record<string, any[]> = {};
   if (bundleIds.length > 0) {
+    // Simple bundles: bundle_items
     const { data: bundleItems, error: bundleItemsError } = await supabase
       .from("bundle_items")
       .select("bundle_id, variation_id, quantity")
@@ -61,6 +64,44 @@ async function rebuildMissingPickingItems(orderId: string) {
         componentsByBundleId[bundleItem.bundle_id] = [];
       }
       componentsByBundleId[bundleItem.bundle_id].push(bundleItem);
+    }
+
+    // Variable bundles: bundle_variation_items (use first variation per bundle)
+    const variableBundleIds = bundleIds.filter((bid) => {
+      const pid = Object.entries(bundleIdByProductId).find(([, v]) => v === bid)?.[0];
+      return pid && bundleTypeByProductId[pid] === "variable_bundle";
+    });
+
+    if (variableBundleIds.length > 0) {
+      const { data: bvs } = await supabase
+        .from("bundle_variations")
+        .select("id, bundle_id")
+        .in("bundle_id", variableBundleIds);
+
+      // Pick first variation per bundle
+      const firstBvPerBundle: Record<string, string> = {};
+      for (const bv of bvs || []) {
+        if (!firstBvPerBundle[bv.bundle_id]) {
+          firstBvPerBundle[bv.bundle_id] = bv.id;
+        }
+      }
+
+      const bvIds = Object.values(firstBvPerBundle);
+      if (bvIds.length > 0) {
+        const { data: bvItems } = await supabase
+          .from("bundle_variation_items")
+          .select("bundle_variation_id, variation_id, quantity")
+          .in("bundle_variation_id", bvIds);
+
+        for (const bvi of bvItems || []) {
+          // Find which bundle this belongs to
+          const bundleId = Object.entries(firstBvPerBundle).find(([, v]) => v === bvi.bundle_variation_id)?.[0];
+          if (bundleId) {
+            if (!componentsByBundleId[bundleId]) componentsByBundleId[bundleId] = [];
+            componentsByBundleId[bundleId].push(bvi);
+          }
+        }
+      }
     }
   }
 
