@@ -124,11 +124,24 @@ serve(async (req) => {
             category_id: categoryId,
           };
 
-          const { data: existing } = await supabase
+          // Check by woo_id first
+          let existing: { id: string } | null = null;
+          const { data: byWoo } = await supabase
             .from("products")
             .select("id")
             .eq("woo_id", p.id)
             .maybeSingle();
+          existing = byWoo;
+
+          // If not found by woo_id, check by SKU
+          if (!existing && p.sku) {
+            const { data: bySku } = await supabase
+              .from("products")
+              .select("id")
+              .eq("sku", p.sku)
+              .maybeSingle();
+            existing = bySku;
+          }
 
           let productId: string;
           if (existing) {
