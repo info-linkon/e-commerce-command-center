@@ -252,7 +252,7 @@ const PosPage = () => {
     const { data: { user } } = await supabase.auth.getUser();
 
     try {
-      await createOrder.mutateAsync({
+      const newOrder = await createOrder.mutateAsync({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
         total,
@@ -272,6 +272,11 @@ const PosPage = () => {
           total_price: c.quantity * c.unit_price,
         })),
       } as any);
+
+      // Trigger SMS for new POS order
+      supabase.functions.invoke("order-sms-trigger", {
+        body: { order_id: newOrder.id, trigger_type: "order_created" },
+      }).catch(console.error);
 
       setCart([]);
       setShowCreateOrder(false);
