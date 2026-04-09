@@ -91,8 +91,13 @@ const WooSyncPage = () => {
       if (data?.error) throw new Error(data.error);
 
       const count = data?.imported || data?.exported || 0;
+      const skippedCount = data?.skipped || 0;
       setResults((prev) => [{ action, success: true, count, timestamp: new Date() }, ...prev]);
-      toast.success(`${action.includes("import") ? "ייבוא" : "ייצוא"} הושלם: ${count} פריטים`);
+      const label = action.includes("import") ? "ייבוא" : "ייצוא";
+      const msg = skippedCount > 0
+        ? `${label} הושלם: ${count} חדשים, ${skippedCount} דולגו (קיימים)`
+        : `${label} הושלם: ${count} פריטים`;
+      toast.success(msg);
     } catch (e: any) {
       setResults((prev) => [{ action, success: false, error: e.message, timestamp: new Date() }, ...prev]);
       toast.error(`שגיאה: ${e.message}`);
