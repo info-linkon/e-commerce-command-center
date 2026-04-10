@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import ImageWebpConverter from "@/components/admin/ImageWebpConverter";
+import WpImageMigrator from "@/components/admin/WpImageMigrator";
 const settingsSections = [
   {
     title: "אמצעי תשלום באתר",
@@ -90,6 +91,9 @@ const SettingsPage = () => {
           </Card>
         ))}
       </div>
+
+      {/* כלי העברת תמונות מ-WordPress */}
+      <WpImageMigrator />
 
       {/* כלי המרת תמונות */}
       <ImageWebpConverter />

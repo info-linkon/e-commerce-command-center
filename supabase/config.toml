@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.hyp-payment-link]
 verify_jwt = false
+
+[functions.migrate-wp-images]
+verify_jwt = false
