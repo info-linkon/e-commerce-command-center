@@ -137,7 +137,7 @@ export default function CashflowTab({ startDate }: Props) {
                 <TableRow key={p.id}>
                   <TableCell className="text-xs">{new Date(p.created_at).toLocaleDateString("he-IL")}</TableCell>
                   <TableCell>
-                    <Link to={`/orders/${p.order_id}`} className="text-primary hover:underline flex items-center gap-1">
+                    <Link to={`/crm/orders/${p.order_id}`} className="text-primary hover:underline flex items-center gap-1">
                       #{p.orders?.order_number} <ExternalLink className="h-3 w-3" />
                     </Link>
                   </TableCell>

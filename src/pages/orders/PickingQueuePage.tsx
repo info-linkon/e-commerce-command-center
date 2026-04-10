@@ -63,7 +63,7 @@ const PickingQueuePage = () => {
                   <TableCell>{new Date(order.created_at).toLocaleDateString("he-IL")}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" asChild>
-                      <Link to={`/orders/${order.id}`}><Eye className="h-4 w-4" /></Link>
+                      <Link to={`/crm/orders/${order.id}`}><Eye className="h-4 w-4" /></Link>
                     </Button>
                   </TableCell>
                 </TableRow>

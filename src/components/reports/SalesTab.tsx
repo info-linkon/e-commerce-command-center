@@ -115,7 +115,7 @@ export default function SalesTab({ startDate }: Props) {
               {(orders || []).map((o) => (
                 <TableRow key={o.id}>
                   <TableCell>
-                    <Link to={`/orders/${o.id}`} className="text-primary hover:underline flex items-center gap-1">
+                    <Link to={`/crm/orders/${o.id}`} className="text-primary hover:underline flex items-center gap-1">
                       #{o.order_number} <ExternalLink className="h-3 w-3" />
                     </Link>
                   </TableCell>

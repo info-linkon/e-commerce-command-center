@@ -103,7 +103,7 @@ export default function InventoryLogTab({ startDate }: Props) {
                   <TableCell>{log.quantity_after}</TableCell>
                   <TableCell>
                     {log.reference_id && (log.action_type === "sale") ? (
-                      <Link to={`/orders/${log.reference_id}`} className="text-primary hover:underline flex items-center gap-1">
+                      <Link to={`/crm/orders/${log.reference_id}`} className="text-primary hover:underline flex items-center gap-1">
                         הזמנה <ExternalLink className="h-3 w-3" />
                       </Link>
                     ) : log.reference_id ? (

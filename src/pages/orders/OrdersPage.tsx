@@ -78,7 +78,7 @@ const OrdersPage = () => {
       <div className="flex justify-between items-center flex-wrap gap-2">
         <h1 className="text-2xl font-bold">הזמנות</h1>
         <Button asChild>
-          <Link to="/orders/new"><Plus className="ml-2 h-4 w-4" />הזמנה חדשה</Link>
+          <Link to="/crm/orders/new"><Plus className="ml-2 h-4 w-4" />הזמנה חדשה</Link>
         </Button>
       </div>
 
@@ -108,7 +108,7 @@ const OrdersPage = () => {
         mobileCard={(order) => {
           const status = order.status as OrderStatus;
           return (
-            <Link to={`/orders/${order.id}`} className="block">
+            <Link to={`/crm/orders/${order.id}`} className="block">
               <div className="flex justify-between items-start">
                 <Badge className={`${statusColors[status]} border-0 text-xs`}>{statusLabels[status]}</Badge>
                 <span className="font-bold">#{order.order_number}</span>
@@ -120,7 +120,7 @@ const OrdersPage = () => {
               <div className="flex justify-between items-center mt-1">
                 <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                   <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                    <Link to={`/orders/${order.id}`}><Eye className="h-3.5 w-3.5" /></Link>
+                    <Link to={`/crm/orders/${order.id}`}><Eye className="h-3.5 w-3.5" /></Link>
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -146,7 +146,7 @@ const OrdersPage = () => {
         actions={(order) => (
           <div className="flex gap-1">
             <Button variant="ghost" size="icon" asChild>
-              <Link to={`/orders/${order.id}`}><Eye className="h-4 w-4" /></Link>
+              <Link to={`/crm/orders/${order.id}`}><Eye className="h-4 w-4" /></Link>
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
