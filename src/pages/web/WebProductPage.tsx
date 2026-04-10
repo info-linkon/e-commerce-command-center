@@ -330,3 +330,34 @@ export default function WebProductPage() {
     </div>
   );
 }
+
+function ShareProductButton({ productNumber, productName }: { productNumber: number; productName: string }) {
+  const [copied, setCopied] = useState(false);
+  const { t } = useLanguage();
+  const shareUrl = `https://gboskpvfvwrsiqwzpctk.supabase.co/functions/v1/product-share/${productNumber}`;
+
+  const handleShare = async () => {
+    // Try native share first (mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: productName, url: shareUrl });
+        return;
+      } catch {}
+    }
+    // Fallback: copy to clipboard
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    toast.success(t("تم نسخ رابط المنتج", "הקישור הועתק"));
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      className="p-2 rounded-lg border border-border hover:bg-accent transition-colors shrink-0"
+      title={t("مشاركة المنتج", "שתף מוצר")}
+    >
+      {copied ? <Check className="h-5 w-5 text-green-500" /> : <Share2 className="h-5 w-5" />}
+    </button>
+  );
+}
