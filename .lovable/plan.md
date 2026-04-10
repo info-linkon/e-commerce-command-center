@@ -1,21 +1,15 @@
 
 
-## Plan: Fix Broken Internal Links Missing `/crm/` Prefix
+## Plan: Fix Bundle Shipping Price Not Saving
 
-### Broken Links Found
+### Problem
+The `useBundle` and `useBundles` hooks fetch specific product fields but **don't include `shipping_price`** in the select query. When editing a bundle, the shipping price loads as `0` (default) instead of the saved value, and even if you set it, the form resets it on load.
 
-All broken links are admin/CRM pages using `/orders/` instead of `/crm/orders/`:
+### Fix
+Two lines to change in `src/hooks/useBundles.ts`:
 
-| File | Line(s) | Broken Link | Fix |
-|------|---------|-------------|-----|
-| `src/pages/orders/OrdersPage.tsx` | 81, 111, 123, 149 | `/orders/new`, `/orders/${id}` | `/crm/orders/new`, `/crm/orders/${id}` |
-| `src/pages/orders/PickingQueuePage.tsx` | 66 | `/orders/${id}` | `/crm/orders/${id}` |
-| `src/pages/orders/InDeliveryPage.tsx` | 79 | `/orders/${id}` | `/crm/orders/${id}` |
-| `src/pages/deliveries/DeliveriesPage.tsx` | 34, 85 | `/orders/${id}` | `/crm/orders/${id}` |
-| `src/components/reports/SalesTab.tsx` | 118 | `/orders/${id}` | `/crm/orders/${id}` |
-| `src/components/reports/InventoryLogTab.tsx` | 106 | `/orders/${id}` | `/crm/orders/${id}` |
-| `src/components/reports/CashflowTab.tsx` | 140 | `/orders/${id}` | `/crm/orders/${id}` |
+1. **Line 12** (`useBundles` select): Add `shipping_price` to the products fields
+2. **Line 27** (`useBundle` select): Add `shipping_price` to the products fields
 
-### Changes
-- 7 files, simple prefix addition of `/crm` to all `to={...}` and `navigate(...)` paths pointing to `/orders/...`
+Both select strings need `shipping_price` added after `cost_price` in the products sub-select.
 
