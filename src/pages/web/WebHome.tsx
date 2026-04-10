@@ -107,7 +107,7 @@ export default function WebHome() {
                           {slide.subtitle && (
                             <>
                               <br />
-                              <span className="text-gradient-gold">{slide.subtitle}</span>
+                              <span className="text-gradient-gold my-0 py-px">{slide.subtitle}</span>
                             </>
                           )}
                         </h1>
