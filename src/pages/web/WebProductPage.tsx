@@ -223,7 +223,10 @@ export default function WebProductPage() {
 
         {/* Details */}
         <div className="flex flex-col justify-center">
-          <h1 className="text-2xl md:text-3xl font-bold mb-4">{displayName}</h1>
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <h1 className="text-2xl md:text-3xl font-bold">{displayName}</h1>
+            <ShareProductButton productNumber={product.product_number} productName={displayName} />
+          </div>
           {lang === "he" ? (
             (product.description || product.description_ar) && (
               <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
