@@ -81,8 +81,8 @@ Deno.serve(async (req) => {
     const siteContent = siteRow?.content as Record<string, string> | null;
     const siteUrl = siteContent?.site_url || siteContent?.siteUrl || "https://id-preview--6d29c5db-afa3-4add-850c-d1529a146c7c.lovable.app";
 
-    const successUrl = `${siteUrl}/order-confirmation?order_id=${order.id}`;
-    const errorUrl = `${siteUrl}/order-confirmation?order_id=${order.id}&error=1`;
+    const successUrl = `${siteUrl}/order-confirmation`;
+    const errorUrl = `${siteUrl}/order-confirmation`;
 
     // Step 1: Generate HYP payment URL via APISign
     const signParams = new URLSearchParams({

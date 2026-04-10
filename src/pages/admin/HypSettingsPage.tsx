@@ -131,7 +131,7 @@ const HypSettingsPage = () => {
           <div className="bg-muted rounded-lg p-4 text-sm" dir="ltr">
             <span className="font-bold text-foreground">Good URL + Bad URL (אותו לינק לשניהם):</span>
             <br />
-            <code className="text-primary">https://YOUR-DOMAIN/web/order-confirmation</code>
+            <code className="text-primary">https://YOUR-DOMAIN/order-confirmation</code>
           </div>
           <p className="text-xs text-muted-foreground" dir="rtl">
             החלף את <code className="font-mono">YOUR-DOMAIN</code> בכתובת האתר שלך (לדוגמה: www.myshop.com).
