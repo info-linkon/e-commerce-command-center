@@ -1,15 +1,37 @@
 
 
-## Plan: Fix Bundle Shipping Price Not Saving
+## Plan: Fix Meta Tags & Block CRM from Google Indexing
 
-### Problem
-The `useBundle` and `useBundles` hooks fetch specific product fields but **don't include `shipping_price`** in the select query. When editing a bundle, the shipping price loads as `0` (default) instead of the saved value, and even if you set it, the form resets it on load.
+### Changes
 
-### Fix
-Two lines to change in `src/hooks/useBundles.ts`:
+**1. `index.html` — Update title and meta tags**
+- Title: `ELWEJHA - מערכת ניהול עסקית` → `ELWEJHA - الوجهة | חנות ציוד טבע והרפתקאות`
+- Description: `ELWEJHA - מערכת ניהול עסקית משולבת` → `ELWEJHA - وجهتك الأولى لعالم الطبيعة والمغامرات | היעד שלך לציוד טבע והרפתקאות`
+- OG title & description: same updates
 
-1. **Line 12** (`useBundles` select): Add `shipping_price` to the products fields
-2. **Line 27** (`useBundle` select): Add `shipping_price` to the products fields
+**2. `public/robots.txt` — Block `/crm` from indexing**
+```text
+User-agent: *
+Allow: /
+Disallow: /crm
+Disallow: /crm/
 
-Both select strings need `shipping_price` added after `cost_price` in the products sub-select.
+User-agent: Googlebot
+Allow: /
+Disallow: /crm
+Disallow: /crm/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /crm
+Disallow: /crm/
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+```
+
+Two files, straightforward text updates.
 
