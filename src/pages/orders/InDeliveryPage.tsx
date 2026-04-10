@@ -76,7 +76,7 @@ const InDeliveryPage = () => {
                     </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" asChild>
-                        <Link to={`/orders/${d.order_id}`}><Eye className="h-4 w-4" /></Link>
+                        <Link to={`/crm/orders/${d.order_id}`}><Eye className="h-4 w-4" /></Link>
                       </Button>
                     </TableCell>
                   </TableRow>

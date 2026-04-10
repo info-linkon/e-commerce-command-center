@@ -31,7 +31,7 @@ const DeliveriesPage = () => {
     {
       label: "הזמנה",
       render: (d) => (
-        <Button variant="link" className="p-0 h-auto" onClick={() => navigate(`/orders/${d.order_id}`)}>
+        <Button variant="link" className="p-0 h-auto" onClick={() => navigate(`/crm/orders/${d.order_id}`)}>
           #{d.orders?.order_number}
         </Button>
       ),
@@ -82,7 +82,7 @@ const DeliveriesPage = () => {
           <div>
             <div className="flex justify-between items-start">
               <Badge className={`${statusColors[d.status]} border-0 text-xs`}>{statusLabels[d.status]}</Badge>
-              <Button variant="link" className="p-0 h-auto font-bold" onClick={() => navigate(`/orders/${d.order_id}`)}>
+              <Button variant="link" className="p-0 h-auto font-bold" onClick={() => navigate(`/crm/orders/${d.order_id}`)}>
                 #{d.orders?.order_number}
               </Button>
             </div>
