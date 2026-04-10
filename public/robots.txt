@@ -1,14 +1,20 @@
+User-agent: *
+Allow: /
+Disallow: /crm
+Disallow: /crm/
+
 User-agent: Googlebot
 Allow: /
+Disallow: /crm
+Disallow: /crm/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /crm
+Disallow: /crm/
 
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
 Allow: /
