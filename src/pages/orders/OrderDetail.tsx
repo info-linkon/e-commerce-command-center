@@ -287,7 +287,7 @@ const OrderDetail = () => {
           paymentLinkUrl={(order as any).payment_link_url || null}
           hypTransactionId={(order as any).hyp_transaction_id || null}
           orderItems={items.map((item: any) => ({
-            details: `${item.product_variations?.products?.name || ""} - ${item.product_variations?.name || ""}`.trim().replace(/^- /, ""),
+            details: `${item.product_variations?.products?.name_ar || item.product_variations?.products?.name || ""}${item.product_variations?.name && !["ברירת מחדל", "default"].includes(item.product_variations.name.toLowerCase()) ? ` - ${item.product_variations.name}` : ""}`.trim(),
             amount: item.quantity,
             price: Number(item.unit_price),
             catalog_number: item.product_variations?.sku || undefined,
@@ -312,8 +312,8 @@ const OrderDetail = () => {
             <TableBody>
               {items.map((item: any) => (
                 <TableRow key={item.id}>
-                  <TableCell>{item.product_variations?.products?.name || "—"}</TableCell>
-                  <TableCell>{item.product_variations?.name || "—"}</TableCell>
+                  <TableCell>{item.product_variations?.products?.name_ar || item.product_variations?.products?.name || "—"}</TableCell>
+                  <TableCell>{item.product_variations?.name && !["ברירת מחדל", "default"].includes(item.product_variations.name.toLowerCase()) ? item.product_variations.name : "—"}</TableCell>
                   <TableCell>{item.quantity}</TableCell>
                   <TableCell>₪{Number(item.unit_price).toFixed(2)}</TableCell>
                   <TableCell className="font-medium">₪{Number(item.total_price).toFixed(2)}</TableCell>
