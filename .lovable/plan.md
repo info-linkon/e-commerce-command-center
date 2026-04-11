@@ -1,31 +1,25 @@
 
-## Plan: Fix Order Confirmation Redirect Issue
 
-### Root Cause
-In `WebCheckoutPage.tsx` line 254, there's a guard that redirects to `/cart` when `items.length === 0`. For cash orders, `clearCart()` is called on line 213 **before** `navigate()` on line 214. The `clearCart()` triggers a re-render, the guard fires, and the user gets sent to the empty cart page instead of the confirmation page.
+## Plan: Fix spacing between hero title and subtitle lines
+
+### Problem
+The title line (`بكيجات الوجهة`) and the gold subtitle line (`رفيقك الأمثل في كل طشة`) are too close together. The subtitle `<span>` has `my-0 py-px` which removes vertical spacing.
 
 ### Fix
 
-**File: `src/pages/web/WebCheckoutPage.tsx`**
+**File: `src/pages/web/WebHome.tsx` (line 110)**
 
-1. **Move `clearCart()` after `navigate()`** for cash orders (swap lines 213-214)
-2. **Move `clearCart()` after `navigate()`** for the pending payment fallback (swap lines 238-239)  
-3. **Add a `submittedRef`** to prevent the empty-cart guard from firing during/after submission — the guard on line 254 should also check this ref
-
-```typescript
-const submittedRef = useRef(false);
-
-// In submit handler, before navigate:
-submittedRef.current = true;
-
-// In the guard:
-if (items.length === 0 && !hypPaymentUrl && !submittedRef.current) {
-  navigate("/cart");
-  return null;
-}
+Change the subtitle span from:
+```tsx
+<span className="text-gradient-gold my-0 py-px">
+```
+to:
+```tsx
+<span className="text-gradient-gold block mt-2 md:mt-4">
 ```
 
-This ensures the confirmation page is always shown after a successful order, for both cash and credit flows.
+This adds a clear margin-top between the title and subtitle lines, making it `block` so the margin applies properly, and removes the `my-0 py-px` that was suppressing spacing.
 
 ### Files Changed
-- `src/pages/web/WebCheckoutPage.tsx` — add ref guard + reorder clearCart/navigate calls
+- `src/pages/web/WebHome.tsx` — update subtitle span classes
+
