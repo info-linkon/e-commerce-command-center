@@ -941,6 +941,7 @@ export type Database = {
           invoice_url: string | null
           notes: string | null
           order_number: number
+          payment_link_url: string | null
           payment_method: string | null
           picking_status: Database["public"]["Enums"]["picking_status"] | null
           shipping_address: string | null
@@ -973,6 +974,7 @@ export type Database = {
           invoice_url?: string | null
           notes?: string | null
           order_number?: number
+          payment_link_url?: string | null
           payment_method?: string | null
           picking_status?: Database["public"]["Enums"]["picking_status"] | null
           shipping_address?: string | null
@@ -1005,6 +1007,7 @@ export type Database = {
           invoice_url?: string | null
           notes?: string | null
           order_number?: number
+          payment_link_url?: string | null
           payment_method?: string | null
           picking_status?: Database["public"]["Enums"]["picking_status"] | null
           shipping_address?: string | null
