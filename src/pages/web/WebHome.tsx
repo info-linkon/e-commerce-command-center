@@ -163,10 +163,10 @@ export default function WebHome() {
         <div className="container py-4 md:py-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {[
-              { icon: Shield, title: "رضاك مضمون", desc: "ضمان 100% على جميع المنتجات" },
-              { icon: ShoppingBag, title: "سهولة الشراء", desc: "تجربة تسوق سهلة وسريعة" },
-              { icon: Truck, title: "توصيل سريع", desc: "توصيل لكافة المناطق" },
-              { icon: RefreshCw, title: "إمكانية الإرجاع", desc: "إرجاع سهل ومريح" },
+              { icon: Shield, title: t("رضاك مضمون", "שביעות רצון מובטחת"), desc: t("ضمان 100% على جميع المنتجات", "אחריות 100% על כל המוצרים") },
+              { icon: ShoppingBag, title: t("سهولة الشراء", "קנייה קלה"), desc: t("تجربة تسوق سهلة وسريعة", "חווית קנייה קלה ומהירה") },
+              { icon: Truck, title: t("توصيل سريع", "משלוח מהיר"), desc: t("توصيل لكافة المناطق", "משלוח לכל האזורים") },
+              { icon: RefreshCw, title: t("إمكانية الإرجاع", "אפשרות החזרה"), desc: t("إرجاع سهل ومريح", "החזרה קלה ונוחה") },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-center gap-3 justify-center">
                 <div className="p-2 bg-gold/10 rounded-lg">

@@ -2,18 +2,20 @@ import { useCartStore } from "@/lib/web-cart-store";
 import { Link } from "react-router-dom";
 import { Trash2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function WebCartPage() {
   const { items, removeItem, updateQuantity, clearCart, totalPrice, shippingCost } = useCartStore();
+  const { t } = useLanguage();
 
   if (items.length === 0) {
     return (
       <div className="container py-16 text-center">
         <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-        <h1 className="text-2xl font-bold mb-2">السلة فارغة</h1>
-        <p className="text-muted-foreground mb-6">لم تقم بإضافة أي منتجات بعد</p>
+        <h1 className="text-2xl font-bold mb-2">{t("السلة فارغة", "הסל ריק")}</h1>
+        <p className="text-muted-foreground mb-6">{t("لم تقم بإضافة أي منتجات بعد", "עדיין לא הוספת מוצרים")}</p>
         <Button asChild className="bg-gold text-gold-foreground hover:bg-gold/90">
-          <Link to="/shop">تصفح المنتجات</Link>
+          <Link to="/shop">{t("تصفح المنتجات", "עיון במוצרים")}</Link>
         </Button>
       </div>
     );
@@ -21,7 +23,7 @@ export default function WebCartPage() {
 
   return (
     <div className="container py-8 md:py-12">
-      <h1 className="text-2xl md:text-3xl font-bold mb-8">سلة التسوق</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-8">{t("سلة التسوق", "סל קניות")}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
@@ -61,28 +63,28 @@ export default function WebCartPage() {
         </div>
 
         <div className="bg-card p-4 md:p-6 rounded-xl border border-border h-fit lg:sticky lg:top-24">
-          <h2 className="font-bold text-lg mb-4">ملخص الطلب</h2>
+          <h2 className="font-bold text-lg mb-4">{t("ملخص الطلب", "סיכום הזמנה")}</h2>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">المجموع الفرعي</span>
+              <span className="text-muted-foreground">{t("المجموع الفرعي", "סכום ביניים")}</span>
               <span className="font-medium">₪{totalPrice().toFixed(2)}</span>
             </div>
             {shippingCost() > 0 && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">تكلفة التوصيل</span>
+                <span className="text-muted-foreground">{t("تكلفة التوصيل", "עלות משלוח")}</span>
                 <span className="font-medium">₪{shippingCost().toFixed(2)}</span>
               </div>
             )}
             <div className="border-t border-border pt-3 flex justify-between">
-              <span className="font-bold">المجموع</span>
+              <span className="font-bold">{t("المجموع", "סה״כ")}</span>
               <span className="font-black text-lg text-primary">₪{(totalPrice() + shippingCost()).toFixed(2)}</span>
             </div>
           </div>
           <Button asChild size="lg" className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold">
-            <Link to="/checkout">إتمام الطلب</Link>
+            <Link to="/checkout">{t("إتمام الطلب", "לסיום הזמנה")}</Link>
           </Button>
           <button onClick={clearCart} className="w-full text-sm text-muted-foreground hover:text-destructive mt-3 transition-colors">
-            إفراغ السلة
+            {t("إفراغ السلة", "רוקן סל")}
           </button>
         </div>
       </div>

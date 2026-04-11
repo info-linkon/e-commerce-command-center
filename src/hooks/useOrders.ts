@@ -26,7 +26,7 @@ async function syncOrderStatusToWoo(orderId: string) {
   }
 }
 
-export type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
+export type OrderStatus = "pending" | "processing" | "picking" | "shipping" | "completed" | "cancelled";
 
 export interface OrderItem {
   variation_id: string;

@@ -69,7 +69,7 @@ const InventoryIndex = () => {
       } else {
         map.set(key, {
           variation_id: item.variation_id,
-          product_name: product?.name || "—",
+          product_name: product?.name_ar || product?.name || "—",
           variation_name: variation?.name || "—",
           total_qty: item.quantity,
           warehouses: warehouse?.name ? [`${warehouse.name}: ${item.quantity}`] : [],
@@ -80,7 +80,7 @@ const InventoryIndex = () => {
   }, [filtered, viewMode]);
 
   const warehouseColumns: ColumnDef<any>[] = [
-    { label: "מוצר", render: (item) => <span className="font-medium">{(item.product_variations as any)?.products?.name || "—"}</span> },
+    { label: "מוצר", render: (item) => <span className="font-medium">{(item.product_variations as any)?.products?.name_ar || (item.product_variations as any)?.products?.name || "—"}</span> },
     { label: "וריאציה", render: (item) => (item.product_variations as any)?.name || "—" },
     { label: "מחסן", render: (item) => (item.warehouses as any)?.name || "—", hideOnMobile: true },
     { label: "כמות", render: (item) => <span className="font-medium">{item.quantity}</span> },

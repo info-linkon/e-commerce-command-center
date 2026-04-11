@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { WebHeader } from "./WebHeader";
 import { WebFooter } from "./WebFooter";
 import { WebBottomNav } from "./WebBottomNav";
@@ -7,6 +7,12 @@ import { useEffect } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { fbqPageView } from "@/lib/meta-pixel";
 import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 
 function WebLayoutInner() {
   const { data: pixelSettings } = useSiteSection("settings", "meta_pixel");
@@ -26,6 +32,7 @@ function WebLayoutInner() {
 
   return (
     <div className="min-h-screen flex flex-col bg-sand" dir="rtl">
+      <ScrollToTop />
       <WebHeader />
       <main className="flex-1 pb-14 md:pb-0">
         <Outlet />

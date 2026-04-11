@@ -4,17 +4,18 @@ import { useEffect, useState } from "react";
 import { fbq } from "@/lib/meta-pixel";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/web-cart-store";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function WebOrderConfirmation() {
   const { orderNumber: routeOrderNumber } = useParams();
   const [searchParams] = useSearchParams();
   const clearCart = useCartStore((s) => s.clearCart);
+  const { t } = useLanguage();
   const orderNumber = routeOrderNumber || searchParams.get("Order");
   const [status, setStatus] = useState<"loading" | "success" | "error" | "pending">("loading");
 
   const isIframe = window.self !== window.top;
 
-  // If loaded inside iframe, redirect parent to this URL and do nothing else
   useEffect(() => {
     if (isIframe) {
       try {
@@ -37,13 +38,11 @@ export default function WebOrderConfirmation() {
       return;
     }
 
-    // HYP redirect: CCode=0 means success, anything else is failure
     if (ccode !== null) {
       if (ccode === "0") {
         setStatus("success");
         clearCart();
 
-        // Fire verify in background to update order status (fire-and-forget)
         const orderId = sessionStorage.getItem("hyp_order_id");
         if (orderId) {
           const hypParams: Record<string, string> = {};
@@ -55,7 +54,6 @@ export default function WebOrderConfirmation() {
           supabase.functions.invoke("hyp-verify-payment", {
             body: { ...hypParams, order_id: orderId },
           }).then(() => {
-            // Trigger SMS for new order after successful payment
             supabase.functions.invoke("order-sms-trigger", {
               body: { order_id: orderId, trigger_type: "order_created" },
             }).catch(console.error);
@@ -64,7 +62,6 @@ export default function WebOrderConfirmation() {
           }).catch((err) => console.error("Background verify error:", err));
         }
 
-        // Meta Pixel
         const amount = searchParams.get("Amount");
         if (amount) {
           fbq("Purchase", {
@@ -79,7 +76,6 @@ export default function WebOrderConfirmation() {
       return;
     }
 
-    // No HYP params — cash order or direct visit
     setStatus("success");
     clearCart();
 
@@ -99,8 +95,8 @@ export default function WebOrderConfirmation() {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center animate-fade-in">
         <Loader2 className="h-16 w-16 text-primary mx-auto mb-6 animate-spin" />
-        <h1 className="text-2xl font-bold text-foreground mb-3">جاري التحقق...</h1>
-        <p className="text-muted-foreground">يرجى الانتظار</p>
+        <h1 className="text-2xl font-bold text-foreground mb-3">{t("جاري التحقق...", "מאמת...")}</h1>
+        <p className="text-muted-foreground">{t("يرجى الانتظار", "אנא המתן")}</p>
       </div>
     );
   }
@@ -109,14 +105,14 @@ export default function WebOrderConfirmation() {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center animate-fade-in">
         <AlertCircle className="h-20 w-20 text-destructive mx-auto mb-6" />
-        <h1 className="text-3xl font-bold text-foreground mb-3">שגיאה בתשלום</h1>
-        <p className="text-muted-foreground mb-2">מספר הזמנה: <span className="font-bold text-primary">#{orderNumber}</span></p>
-        <p className="text-muted-foreground mb-8">התשלום לא הצליח. אם חויבת, נציג יצור איתך קשר.</p>
+        <h1 className="text-3xl font-bold text-foreground mb-3">{t("خطأ في الدفع", "שגיאה בתשלום")}</h1>
+        <p className="text-muted-foreground mb-2">{t("رقم الطلب:", "מספר הזמנה:")} <span className="font-bold text-primary">#{orderNumber}</span></p>
+        <p className="text-muted-foreground mb-8">{t("فشل الدفع. إذا تم الخصم، سيتواصل معك ممثلنا.", "התשלום לא הצליח. אם חויבת, נציג יצור איתך קשר.")}</p>
         <Link
           to="/"
           className="px-6 py-3 web-gold-gradient text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-md"
         >
-          العودة للرئيسية
+          {t("العودة للرئيسية", "חזרה לדף הבית")}
         </Link>
       </div>
     );
@@ -126,20 +122,22 @@ export default function WebOrderConfirmation() {
     <div className="max-w-xl mx-auto px-4 py-16 text-center animate-fade-in">
       <CheckCircle className="h-20 w-20 text-green-500 mx-auto mb-6" />
       <h1 className="text-3xl font-bold text-foreground mb-3">
-        {status === "pending" ? "تم استلام طلبك!" : "تم الدفع بنجاح!"}
+        {status === "pending"
+          ? t("تم استلام طلبك!", "ההזמנה התקבלה!")
+          : t("تم الدفع بنجاح!", "התשלום בוצע בהצלחה!")}
       </h1>
-      <p className="text-muted-foreground mb-2">رقم الطلب: <span className="font-bold text-gold">#{orderNumber}</span></p>
+      <p className="text-muted-foreground mb-2">{t("رقم الطلب:", "מספר הזמנה:")} <span className="font-bold text-gold">#{orderNumber}</span></p>
       <p className="text-muted-foreground mb-8">
         {status === "pending"
-          ? "سنتواصل معك قريباً لتأكيد الدفع"
-          : "سنتواصل معك قريباً لتأكيد الطلب"}
+          ? t("سنتواصل معك قريباً لتأكيد الدفع", "ניצור איתך קשר בקרוב לאישור התשלום")
+          : t("سنتواصل معك قريباً لتأكيد الطلب", "ניצור איתך קשר בקרוב לאישור ההזמנה")}
       </p>
       <div className="flex gap-4 justify-center">
         <Link
           to="/"
           className="px-6 py-3 web-gold-gradient text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-md"
         >
-          العودة للرئيسية
+          {t("العودة للرئيسية", "חזרה לדף הבית")}
         </Link>
       </div>
     </div>

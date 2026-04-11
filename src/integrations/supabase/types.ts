@@ -1102,6 +1102,36 @@ export type Database = {
           },
         ]
       }
+      product_categories: {
+        Row: {
+          category_id: string
+          product_id: string
+        }
+        Insert: {
+          category_id: string
+          product_id: string
+        }
+        Update: {
+          category_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_categories_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variations: {
         Row: {
           cost_price: number
@@ -1408,10 +1438,17 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "pending_payment"
+        | "picking"
+        | "shipping"
       payment_method: "cash" | "bit" | "credit"
       picking_status: "not_started" | "in_progress" | "completed"
       product_type: "simple" | "variable"
-      sms_trigger: "order_created" | "order_shipped" | "order_completed"
+      sms_trigger:
+        | "order_created"
+        | "order_shipped"
+        | "order_completed"
+        | "order_picking"
+        | "order_shipping"
       transfer_status: "pending" | "completed"
     }
     CompositeTypes: {
@@ -1560,11 +1597,19 @@ export const Constants = {
         "completed",
         "cancelled",
         "pending_payment",
+        "picking",
+        "shipping",
       ],
       payment_method: ["cash", "bit", "credit"],
       picking_status: ["not_started", "in_progress", "completed"],
       product_type: ["simple", "variable"],
-      sms_trigger: ["order_created", "order_shipped", "order_completed"],
+      sms_trigger: [
+        "order_created",
+        "order_shipped",
+        "order_completed",
+        "order_picking",
+        "order_shipping",
+      ],
       transfer_status: ["pending", "completed"],
     },
   },

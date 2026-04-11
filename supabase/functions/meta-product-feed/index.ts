@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
 
   const { data: products, error } = await supabase
     .from("products")
-    .select("id, name, name_ar, description, description_ar, short_description, short_description_ar, sale_price, image_url, sku, is_published, category_id, categories(name), shipping_price")
+    .select("id, product_number, name, name_ar, description, description_ar, short_description, short_description_ar, sale_price, image_url, sku, is_published, category_id, categories(name), shipping_price")
     .eq("is_published", true);
 
   if (error) {
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     const availability = stock > 0 ? "in stock" : "out of stock";
     const category = p.categories?.name || "General";
     const imageUrl = p.image_url || "";
-    const link = `${siteUrl}/product/${p.id}`;
+    const link = `${siteUrl}/product/${p.product_number}`;
 
     return `    <item>
       <g:id>${p.id}</g:id>
