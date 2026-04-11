@@ -33,6 +33,7 @@ export interface OrderItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  bundle_variation_id?: string;
 }
 
 export function useOrders(status?: OrderStatus) {
