@@ -39,7 +39,7 @@ serve(async (req) => {
     // 1. Get product from Supabase
     const { data: product, error: pErr } = await supabase
       .from("products")
-      .select("*, categories(name, woo_id)")
+      .select("*, categories!products_category_id_fkey(name, woo_id)")
       .eq("id", product_id)
       .single();
 

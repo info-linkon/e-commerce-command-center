@@ -13,7 +13,7 @@ export function useProducts(categoryId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("products")
-        .select("*, categories(name)")
+        .select("*, categories!products_category_id_fkey(name)")
         .order("name");
       if (categoryId) query = query.eq("category_id", categoryId);
       const { data, error } = await query;
@@ -30,7 +30,7 @@ export function useProduct(id: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*, categories(name)")
+        .select("*, categories!products_category_id_fkey(name)")
         .eq("id", id!)
         .single();
       if (error) throw error;
