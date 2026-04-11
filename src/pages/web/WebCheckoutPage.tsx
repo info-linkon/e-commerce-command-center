@@ -343,13 +343,13 @@ export default function WebCheckoutPage() {
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/cart" className="hover:text-foreground transition-colors flex items-center gap-1">
             <ShoppingBag className="w-4 h-4" />
-            السلة
+            {t("السلة", "הסל")}
           </Link>
           <ChevronLeft className="w-4 h-4" />
-          <span className="text-foreground font-medium">إتمام الطلب</span>
+          <span className="text-foreground font-medium">{t("إتمام الطلب", "השלמת הזמנה")}</span>
         </div>
 
-        <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center">إتمام الطلب</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center">{t("إتمام الطلب", "השלמת הזמנה")}</h1>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
@@ -649,16 +649,16 @@ export default function WebCheckoutPage() {
       </div>
 
       {/* Mobile Sticky Bottom Bar */}
-      <div className="fixed bottom-0 inset-x-0 bg-card border-t border-border p-4 md:hidden z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+      <div className="fixed bottom-14 inset-x-0 bg-card border-t border-border p-4 md:hidden z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-muted-foreground">المجموع</span>
+          <span className="text-sm text-muted-foreground">{t("المجموع", "סה״כ")}</span>
           <span className="text-lg font-black text-primary">₪{finalTotal.toFixed(2)}</span>
         </div>
         <Button
           type="submit"
           form=""
           size="lg"
-          className="w-full h-12 bg-gold text-gold-foreground hover:bg-gold/90 font-bold rounded-xl shadow-lg"
+          className="w-full h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold rounded-xl shadow-lg text-base"
           disabled={loading}
           onClick={() => {
             const form = document.querySelector("form");
@@ -668,18 +668,18 @@ export default function WebCheckoutPage() {
           {loading ? (
             <span className="flex items-center gap-2">
               <Loader2 className="w-5 h-5 animate-spin" />
-              جاري المعالجة...
+              {t("جاري المعالجة...", "מעבד...")}
             </span>
           ) : (
             <span className="flex items-center gap-2">
               <Lock className="w-4 h-4" />
-              {selectedPayment === "cash" ? "تأكيد الطلب" : "ادفع الآن"}
+              {selectedPayment === "cash" ? t("تأكيد الطلب", "אישור הזמנה") : t("ادفع الآن", "שלם עכשיו")}
             </span>
           )}
         </Button>
         <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mt-2">
           <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-          تشلום مאובטח
+          {t("تشلום مאובטח", "תשלום מאובטח")}
         </div>
       </div>
     </div>
