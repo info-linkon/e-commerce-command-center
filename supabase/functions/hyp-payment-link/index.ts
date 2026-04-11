@@ -129,8 +129,8 @@ Deno.serve(async (req) => {
       .update({ payment_link_url: fullPaymentUrl } as any)
       .eq("id", order_id);
 
-    // Short URL: /pay/<order_number>
-    const shortPaymentUrl = `${siteUrl}/pay/${order.order_number}`;
+    // Short URL via edge function (works regardless of custom domain SPA config)
+    const shortPaymentUrl = `${supabaseUrl}/functions/v1/pay-redirect?order=${order.order_number}`;
 
     // Step 2: Send SMS with SHORT payment link
     const { data: smsConfig } = await supabase
