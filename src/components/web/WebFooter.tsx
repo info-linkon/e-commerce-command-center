@@ -8,16 +8,14 @@ import logo from "@/assets/logo.webp";
 export function WebFooter() {
   const { data: categories } = useWebCategories();
   const { lang, t } = useLanguage();
-  const { data: contactDetails } = useSiteSection("contact", "info");
   const { data: settingsData } = useSiteSection("settings", "general");
   const settings = (settingsData?.content || {}) as any;
   const storeName = t(settings.store_name || "الوجهة", settings.store_name_he || "");
-  const contact = (contactDetails?.content || {}) as any;
-  const phone = contact.phone || "0526213999";
-  const email = contact.email || "info@elwejha.co.il";
-  const whatsapp = contact.whatsapp || "972526573185";
-  const instagramUrl = contact.instagram || "https://www.instagram.com/elwejha.outdoors";
-  const facebookUrl = contact.facebook || "https://www.facebook.com/1094362587370591";
+  const phone = settings.phone || "0526213999";
+  const email = settings.email || "info@elwejha.co.il";
+  const whatsapp = settings.whatsapp || "972526573185";
+  const instagramUrl = settings.instagram || "https://www.instagram.com/elwejha.outdoors";
+  const facebookUrl = settings.facebook || "https://www.facebook.com/1094362587370591";
 
   return (
     <footer className="bg-desert text-sand border-t border-desert-light" dir="rtl">
@@ -94,8 +92,8 @@ export function WebFooter() {
               </a>
               <p className="text-sand/50 text-xs mt-1">
                 {t(
-                  contact.address || "زيمر — نعمل أونلاين، زيارة المخازن بموعد مسبق",
-                  contact.address_he || "זמר — עובדים אונליין, ביקור במחסנים בתיאום מראש"
+                  settings.address || "زيمر — نعمل أونلاين، زيارة المخازن بموعد مسبق",
+                  settings.address_he || "זמר — עובדים אונליין, ביקור במחסנים בתיאום מראש"
                 )}
               </p>
             </div>
