@@ -76,7 +76,7 @@ export default function WebHome() {
   return (
     <div>
       {/* Hero Carousel */}
-      <section className="relative overflow-hidden aspect-[3/2]">
+      <section className="relative overflow-hidden aspect-[16/9] md:aspect-[21/9]">
         <Carousel
           opts={{ loop: true, direction: "rtl" }}
           plugins={[plugin.current]}
@@ -102,15 +102,14 @@ export default function WebHome() {
                         ✨ {t("أهلاً بك في الوجهة", "ברוכים הבאים ליעד")}
                       </span>
                       {slide.title && (
-                        <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-tight mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                        <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-normal mb-2 md:mb-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                           {slide.title}
-                          {slide.subtitle && (
-                            <>
-                              <br />
-                              <span className="text-gradient-gold mt-2 block">{slide.subtitle}</span>
-                            </>
-                          )}
                         </h1>
+                        {slide.subtitle && (
+                          <h2 className="text-gradient-gold text-xl md:text-3xl lg:text-4xl font-bold mt-3 md:mt-4 mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.15s' }}>
+                            {slide.subtitle}
+                          </h2>
+                        )}
                       )}
                       <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
                         {t("مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق", "ציוד קמפינג וטיולים בסגנון מזרחי מקורי — משלוחים לכל האזורים")}
