@@ -89,7 +89,7 @@ const PaymentSection = ({
 
   const totalPaid = existingPayments?.reduce((s, p) => s + Number(p.amount), 0) || 0;
   const hasCreditPayment = existingPayments?.some((p: any) => p.payment_method === "credit") || false;
-  const isPaidByCredit = !!hypTransactionId || hasCreditPayment;
+  const isPaidByCredit = !!hypTransactionId;
   const isPaymentLinkSent = !!paymentLinkUrl;
   const remaining = orderTotal - totalPaid;
 
