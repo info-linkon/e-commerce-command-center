@@ -313,7 +313,12 @@ const OrderDetail = () => {
             <TableBody>
               {items.map((item: any) => (
                 <TableRow key={item.id}>
-                  <TableCell>{item.product_variations?.products?.name_ar || item.product_variations?.products?.name || "—"}</TableCell>
+                  <TableCell>
+                    <div>{item.product_variations?.products?.name_ar || item.product_variations?.products?.name || "—"}</div>
+                    {item.product_variations?.products?.name_ar && item.product_variations?.products?.name && (
+                      <div className="text-xs text-muted-foreground">{item.product_variations?.products?.name}</div>
+                    )}
+                  </TableCell>
                   <TableCell>{item.product_variations?.name || "—"}</TableCell>
                   <TableCell>{item.product_variations?.sku || "—"}</TableCell>
                   <TableCell>{item.quantity}</TableCell>
