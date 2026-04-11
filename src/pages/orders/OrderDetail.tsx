@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2, Loader2, AlertCircle, FileText, ExternalLink } from "lucide-react";
 import DeliveryAssignment from "@/components/orders/DeliveryAssignment";
 import PaymentSection from "@/components/orders/PaymentSection";
 import { useOrderDelivery } from "@/hooks/useDeliveries";
@@ -256,6 +256,8 @@ const OrderDetail = () => {
                 </Badge>
               </a>
             )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Picking Checklist */}
