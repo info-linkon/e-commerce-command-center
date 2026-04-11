@@ -1,27 +1,31 @@
 
+## Plan: Fix Order Confirmation Redirect Issue
 
-## Plan: Fix Social Sharing (WhatsApp/Facebook/Twitter) Preview
+### Root Cause
+In `WebCheckoutPage.tsx` line 254, there's a guard that redirects to `/cart` when `items.length === 0`. For cash orders, `clearCart()` is called on line 213 **before** `navigate()` on line 214. The `clearCart()` triggers a re-render, the guard fires, and the user gets sent to the empty cart page instead of the confirmation page.
 
-### Problem
-When sharing the site link on WhatsApp or other platforms, no preview appears because:
-1. **OG image uses relative path** (`/logo.webp`) — social crawlers need an **absolute URL**
-2. **Missing `og:url`** tag
-3. **WhatsApp prefers PNG/JPG** — `.webp` has limited support on older WhatsApp versions
-4. **Twitter card is `summary`** — should be `summary_large_image` for better visibility
-5. **No site name** (`og:site_name`) tag
+### Fix
 
-### Changes
+**File: `src/pages/web/WebCheckoutPage.tsx`**
 
-**1. Create an OG share image** (`public/og-image.png`)
-- Convert the existing `logo.webp` to a proper OG image (1200x630px PNG with brand background)
-- This ensures compatibility across all platforms
+1. **Move `clearCart()` after `navigate()`** for cash orders (swap lines 213-214)
+2. **Move `clearCart()` after `navigate()`** for the pending payment fallback (swap lines 238-239)  
+3. **Add a `submittedRef`** to prevent the empty-cart guard from firing during/after submission — the guard on line 254 should also check this ref
 
-**2. Update `index.html` meta tags**
-- Add `og:url` with absolute site URL (`https://elwejha.co.il`)
-- Add `og:site_name` = `ELWEJHA - الوجهة`
-- Change all image paths to absolute: `https://elwejha.co.il/og-image.png`
-- Change Twitter card to `summary_large_image`
-- Add `twitter:title` and `twitter:description`
+```typescript
+const submittedRef = useRef(false);
 
-**Result**: Full preview on WhatsApp, Facebook, Twitter, Telegram with image, title, and description. No Lovable references anywhere (badge already hidden, no code references found).
+// In submit handler, before navigate:
+submittedRef.current = true;
 
+// In the guard:
+if (items.length === 0 && !hypPaymentUrl && !submittedRef.current) {
+  navigate("/cart");
+  return null;
+}
+```
+
+This ensures the confirmation page is always shown after a successful order, for both cash and credit flows.
+
+### Files Changed
+- `src/pages/web/WebCheckoutPage.tsx` — add ref guard + reorder clearCart/navigate calls
