@@ -47,6 +47,7 @@ import WebSearchPage from "./pages/web/WebSearchPage";
 import WebAboutPage from "./pages/web/WebAboutPage";
 import WebContactPage from "./pages/web/WebContactPage";
 import InvoiceRedirect from "./pages/web/InvoiceRedirect";
+import PaymentRedirect from "./pages/web/PaymentRedirect";
 
 // Admin website management
 import WebContentPage from "./pages/admin/WebContentPage";
@@ -91,6 +92,7 @@ const App = () => (
 
             {/* Public invoice short link */}
             <Route path="/inv/:code" element={<InvoiceRedirect />} />
+            <Route path="/pay/:orderNumber" element={<PaymentRedirect />} />
 
             {/* CRM Auth */}
             <Route path="/crm/auth" element={<Auth />} />
