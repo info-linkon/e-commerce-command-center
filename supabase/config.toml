@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.migrate-wp-images]
 verify_jwt = false
+
+[functions.pay-redirect]
+verify_jwt = false
