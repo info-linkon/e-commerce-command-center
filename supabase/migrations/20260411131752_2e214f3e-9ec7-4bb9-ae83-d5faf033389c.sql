@@ -1,0 +1,1 @@
+DELETE FROM payments WHERE id IN ('e6f6f73b-75ec-4d99-9709-a5a7805a9343', 'ef5c9f63-f7dd-48a9-b632-eadd2f4829c6');
