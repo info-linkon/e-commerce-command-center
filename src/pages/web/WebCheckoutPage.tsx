@@ -421,20 +421,20 @@ export default function WebCheckoutPage() {
                     <div className="p-2 rounded-lg bg-primary/10">
                       {shippingMethod === "delivery" ? <MapPin className="h-4 w-4 text-primary" /> : <User className="h-4 w-4 text-primary" />}
                     </div>
-                    {shippingMethod === "delivery" ? "معلومات التوصيل" : "معلومات الزبون"}
+                    {shippingMethod === "delivery" ? t("معلومات التوصيل", "פרטי משלוח") : t("معلومات الزبون", "פרטי לקוח")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">الاسم الكامل *</Label>
+                      <Label htmlFor="name">{t("الاسم الكامل *", "שם מלא *")}</Label>
                       <div className="relative">
                         <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input id="name" name="name" required className="pr-10 rounded-xl" placeholder="أدخل اسمك الكامل" />
+                        <Input id="name" name="name" required className="pr-10 rounded-xl" placeholder={t("أدخل اسمك الكامل", "הזן שם מלא")} />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">رقم الهاتف *</Label>
+                      <Label htmlFor="phone">{t("رقم الهاتف *", "מספר טלפון *")}</Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input id="phone" name="phone" type="tel" required className="pl-10 rounded-xl" placeholder="05X-XXX-XXXX" dir="ltr" />
@@ -442,7 +442,7 @@ export default function WebCheckoutPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">البريد الإلكتروني</Label>
+                    <Label htmlFor="email">{t("البريد الإلكتروني", "אימייל")}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input id="email" name="email" type="email" className="pl-10 rounded-xl" placeholder="email@example.com" dir="ltr" />
@@ -451,26 +451,26 @@ export default function WebCheckoutPage() {
                   {shippingMethod === "delivery" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="city">المدينة *</Label>
+                        <Label htmlFor="city">{t("المدينة *", "עיר *")}</Label>
                         <div className="relative">
                           <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input id="city" name="city" required className="pr-10 rounded-xl" placeholder="المدينة" />
+                          <Input id="city" name="city" required className="pr-10 rounded-xl" placeholder={t("المدينة", "עיר")} />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="address">العنوان التفصيلي *</Label>
+                        <Label htmlFor="address">{t("العنوان التفصيلي *", "כתובת מפורטת *")}</Label>
                         <div className="relative">
                           <Home className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input id="address" name="address" required className="pr-10 rounded-xl" placeholder="الشارع، رقم البيت" />
+                          <Input id="address" name="address" required className="pr-10 rounded-xl" placeholder={t("الشارع، رقم البيت", "רחוב, מספר בית")} />
                         </div>
                       </div>
                     </div>
                   )}
                   <div className="space-y-2">
-                    <Label htmlFor="notes">ملاحظات</Label>
+                    <Label htmlFor="notes">{t("ملاحظات", "הערות")}</Label>
                     <div className="relative">
                       <MessageSquare className="absolute right-3 top-3 w-4 h-4 text-muted-foreground" />
-                      <Input id="notes" name="notes" className="pr-10 rounded-xl" placeholder="ملاحظات إضافية (اختياري)" />
+                      <Input id="notes" name="notes" className="pr-10 rounded-xl" placeholder={t("ملاحظات إضافية (اختياري)", "הערות נוספות (אופציונלי)")} />
                     </div>
                   </div>
                 </CardContent>
@@ -483,7 +483,7 @@ export default function WebCheckoutPage() {
                     <div className="p-2 rounded-lg bg-primary/10">
                       <CreditCard className="h-4 w-4 text-primary" />
                     </div>
-                    طريقة الدفع
+                    {t("طريقة الدفع", "אופן תשלום")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -530,7 +530,7 @@ export default function WebCheckoutPage() {
                       <div className="p-2 rounded-lg bg-primary/10">
                         <ShoppingBag className="h-4 w-4 text-primary" />
                       </div>
-                      ملخص الطلب ({items.length} منتج)
+                      {t("ملخص الطلب", "סיכום הזמנה")} ({items.length} {t("منتج", "מוצרים")})
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -575,12 +575,12 @@ export default function WebCheckoutPage() {
                           <Input
                             value={couponCode}
                             onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
-                            placeholder="كود الخصم"
+                            placeholder={t("كود الخصم", "קוד הנחה")}
                             className="font-mono text-sm rounded-xl"
                             dir="ltr"
                           />
                           <Button type="button" variant="outline" onClick={handleApplyCoupon} disabled={couponLoading} className="shrink-0 rounded-xl">
-                            {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
+                            {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("تطبيق", "החל")}
                           </Button>
                         </div>
                       )}
@@ -590,25 +590,25 @@ export default function WebCheckoutPage() {
                     {/* Totals */}
                     <div className="border-t border-border pt-3 space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">المجموع الفرعي</span>
+                        <span className="text-muted-foreground">{t("المجموع الفرعي", "סכום ביניים")}</span>
                         <span className="font-medium">₪{subtotal.toFixed(2)}</span>
                       </div>
                       {discount > 0 && (
                         <div className="flex justify-between text-primary">
-                          <span>خصم</span>
+                          <span>{t("خصم", "הנחה")}</span>
                           <span className="font-semibold">-₪{discount.toFixed(2)}</span>
                         </div>
                       )}
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">
-                          {shippingMethod === "pickup" ? "איסוף עצמי" : "تكلفة التوصيل"}
+                          {shippingMethod === "pickup" ? t("استلام ذاتي", "איסוף עצמי") : t("تكلفة التوصيل", "עלות משלוח")}
                         </span>
                         <span className={`font-medium ${shippingMethod === "pickup" ? "text-primary" : ""}`}>
-                          {shippingMethod === "pickup" ? "مجاناً" : `₪${shipping.toFixed(2)}`}
+                          {shippingMethod === "pickup" ? t("مجاناً", "חינם") : `₪${shipping.toFixed(2)}`}
                         </span>
                       </div>
                       <div className="flex justify-between text-lg font-black pt-3 border-t border-border">
-                        <span>المجموع</span>
+                        <span>{t("المجموع", "סה״כ")}</span>
                         <span className="text-primary">₪{finalTotal.toFixed(2)}</span>
                       </div>
                     </div>
@@ -624,20 +624,20 @@ export default function WebCheckoutPage() {
                         {loading ? (
                           <span className="flex items-center gap-2">
                             <Loader2 className="w-5 h-5 animate-spin" />
-                            جاري المعالجة...
+                            {t("جاري المعالجة...", "מעבד...")}
                           </span>
                         ) : (
                           <span className="flex items-center gap-2">
                             <Lock className="w-4 h-4" />
                             {selectedPayment === "cash"
-                              ? `تأكيد الطلب — ₪${finalTotal.toFixed(2)}`
-                              : `ادفع الآن — ₪${finalTotal.toFixed(2)}`}
+                              ? `${t("تأكيد الطلب", "אישור הזמנה")} — ₪${finalTotal.toFixed(2)}`
+                              : `${t("ادفع الآن", "שלם עכשיו")} — ₪${finalTotal.toFixed(2)}`}
                           </span>
                         )}
                       </Button>
                       <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
                         <ShieldCheck className="w-4 h-4 text-primary" />
-                        {selectedPayment === "credit" ? "تشفير SSL — تحويل آمن لصفحة الدفع" : "تأكيد فوري — الدفع عند الاستلام"}
+                        {selectedPayment === "credit" ? t("تشفير SSL — تحويل آمن لصفحة الدفع", "הצפנת SSL — מעבר מאובטח לדף תשלום") : t("تأكيد فوري — الدفع عند الاستلام", "אישור מיידי — תשלום בעת קבלה")}
                       </div>
                     </div>
                   </CardContent>
