@@ -65,8 +65,8 @@ export default function WebHome() {
   const slides = banners && banners.length > 0
     ? banners.map((b) => ({
         image: b.image_url || heroBg,
-        title: b.title || "",
-        subtitle: b.subtitle || "",
+        title: lang === "he" ? (b.title_he || b.title || "") : (b.title || ""),
+        subtitle: lang === "he" ? (b.subtitle_he || b.subtitle || "") : (b.subtitle || ""),
         link: b.link || "",
       }))
     : [{
