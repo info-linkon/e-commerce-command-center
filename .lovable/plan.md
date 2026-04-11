@@ -1,22 +1,24 @@
 
 
-## Plan: Fix Hero Section Line Spacing
+## Plan: Fix Hero Section Text Spacing and Clipping
 
-### Problem
-In the Hero section, the title and subtitle text lines have no spacing between them. The subtitle `<span>` on line 110 has `my-0 py-px` classes that collapse the vertical gap.
+### Problems
+1. **Text clipping**: The hero section uses `aspect-[3/2]` which constrains the height and can clip the subtitle text at the bottom, especially with longer banner text.
+2. **Inconsistent line spacing**: The `leading-tight` on the `h1` plus the subtitle being inside the `h1` causes inconsistent gaps between lines across different banners.
 
 ### Fix
 
-**File: `src/pages/web/WebHome.tsx`** (line 110)
+**File: `src/pages/web/WebHome.tsx`**
 
-Change the subtitle span classes from `my-0 py-px` to `mt-2 block` to add proper spacing between the lines:
+1. **Change hero aspect ratio** from `aspect-[3/2]` to a more appropriate responsive height using `aspect-[16/9] md:aspect-[21/9]` — this gives enough vertical space on mobile while keeping a cinematic look on desktop.
 
-```
-<span className="text-gradient-gold mt-2 block">{slide.subtitle}</span>
-```
+2. **Move subtitle out of the `h1`** and make it a separate `h2` with explicit `mt-3 md:mt-4` spacing — this ensures consistent gap regardless of font size or line count.
 
-Using `block` ensures it takes its own line with `mt-2` providing breathing room. The `leading-tight` on the parent `h1` will still keep things compact overall.
+3. **Add `leading-normal`** to the h1 instead of `leading-tight` to prevent internal line compression when title wraps.
+
+### Result
+Consistent spacing between title lines across all banners, no text clipping at the bottom.
 
 ### Files
-- `src/pages/web/WebHome.tsx` — one class change on line 110
+- `src/pages/web/WebHome.tsx` — hero section layout adjustments
 
