@@ -316,10 +316,25 @@ const OrderDetail = () => {
       {/* Actions */}
       {!isCancelled && !isCompleted && (
         <div className="flex gap-3 flex-wrap">
+          {/* Mark as completed button for shipping status */}
+          {status === "shipping" && (
+            <Button
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => {
+                updateStatus.mutate({ id: order.id, status: "completed" as OrderStatus });
+                supabase.functions.invoke("order-sms-trigger", {
+                  body: { order_id: order.id, trigger_type: "order_completed" },
+                }).catch(console.error);
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              סמן כהושלמה
+            </Button>
+          )}
+
           {!isAssigned && (
             <Select value={status} onValueChange={(v) => {
               updateStatus.mutate({ id: order.id, status: v as OrderStatus });
-              // Trigger SMS based on status change
               const triggerMap: Record<string, string> = { processing: "order_created", picking: "order_picking", shipping: "order_shipping", completed: "order_completed" };
               const smsTrigger = triggerMap[v];
               if (smsTrigger) {
