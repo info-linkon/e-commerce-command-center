@@ -319,8 +319,8 @@ const OrderDetail = () => {
                       <div className="text-xs text-muted-foreground">{item.product_variations?.products?.name}</div>
                     )}
                   </TableCell>
-                  <TableCell>{item.product_variations?.name || "—"}</TableCell>
-                  <TableCell>{item.product_variations?.sku || "—"}</TableCell>
+                  <TableCell>{item.bundle_variations?.name || item.product_variations?.name || "—"}</TableCell>
+                  <TableCell>{item.bundle_variations?.sku || item.product_variations?.sku || "—"}</TableCell>
                   <TableCell>{item.quantity}</TableCell>
                   <TableCell>₪{Number(item.unit_price).toFixed(2)}</TableCell>
                   <TableCell className="font-medium">₪{Number(item.total_price).toFixed(2)}</TableCell>
