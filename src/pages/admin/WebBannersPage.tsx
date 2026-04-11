@@ -19,6 +19,10 @@ interface BannerForm {
   title_he: string;
   subtitle: string;
   subtitle_he: string;
+  badge: string;
+  badge_he: string;
+  description: string;
+  description_he: string;
   image_url: string;
   link: string;
 }
@@ -30,7 +34,7 @@ const linkOptions = [
   { value: "/faq", label: "שאלות נפוצות" },
 ];
 
-const emptyForm: BannerForm = { title: "", title_he: "", subtitle: "", subtitle_he: "", image_url: "", link: "" };
+const emptyForm: BannerForm = { title: "", title_he: "", subtitle: "", subtitle_he: "", badge: "", badge_he: "", description: "", description_he: "", image_url: "", link: "" };
 
 export default function WebBannersPage() {
   const { data: banners, isLoading } = useBannersAdmin();
@@ -55,6 +59,10 @@ export default function WebBannersPage() {
       title_he: banner.title_he || "",
       subtitle: banner.subtitle || "",
       subtitle_he: banner.subtitle_he || "",
+      badge: banner.badge || "",
+      badge_he: banner.badge_he || "",
+      description: banner.description || "",
+      description_he: banner.description_he || "",
       image_url: banner.image_url || "",
       link: banner.link || "",
     });
