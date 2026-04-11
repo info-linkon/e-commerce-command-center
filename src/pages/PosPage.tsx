@@ -27,6 +27,7 @@ interface CartItem {
   product_name: string;
   quantity: number;
   unit_price: number;
+  bundle_variation_id?: string;
 }
 
 interface GroupedProduct {
@@ -34,7 +35,7 @@ interface GroupedProduct {
   product_name: string;
   category_id: string | null;
   image_url: string | null;
-  variations: { id: string; name: string; price: number }[];
+  variations: { id: string; name: string; price: number; bundle_variation_id?: string }[];
   isBundle?: boolean;
 }
 

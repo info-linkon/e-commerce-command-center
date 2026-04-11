@@ -10,6 +10,7 @@ export interface CartItem {
   quantity: number;
   imageUrl?: string | null;
   shippingPrice?: number;
+  bundleVariationId?: string;
 }
 
 interface CartStore {
