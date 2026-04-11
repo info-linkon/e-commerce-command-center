@@ -414,8 +414,8 @@ const PaymentSection = ({
           </Dialog>
         )}
 
-        {/* Standalone invoice button — for orders with payments but no invoice yet */}
-        {hasPayments && !hasInvoiceReceipt && customerName && orderItems && orderItems.length > 0 && (
+        {/* Standalone invoice button — only for cash/bit orders with payments but no invoice yet */}
+        {hasPayments && !hasInvoiceReceipt && customerName && orderItems && orderItems.length > 0 && orderPaymentMethod !== "credit" && (
           <Button
             variant="outline"
             className="w-full gap-2"
