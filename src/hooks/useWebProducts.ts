@@ -111,11 +111,11 @@ export function useWebFeaturedProducts() {
   return useQuery({
     queryKey: ["web-featured-products"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from("products")
-        .select("*, categories(name, slug)")
+        .select("*, categories(name, slug)") as any)
         .eq("is_published", true)
-        .eq("is_featured" as any, true)
+        .eq("is_featured", true)
         .order("name")
         .limit(12);
       if (error) throw error;
