@@ -1345,7 +1345,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_payment_links: {
+        Row: {
+          order_number: number | null
+          payment_link_url: string | null
+          status: Database["public"]["Enums"]["order_status"] | null
+        }
+        Insert: {
+          order_number?: number | null
+          payment_link_url?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+        }
+        Update: {
+          order_number?: number | null
+          payment_link_url?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
