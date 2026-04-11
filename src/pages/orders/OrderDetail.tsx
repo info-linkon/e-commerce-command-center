@@ -304,6 +304,7 @@ const OrderDetail = () => {
               <TableRow>
                 <TableHead className="text-right">מוצר</TableHead>
                 <TableHead className="text-right">וריאציה</TableHead>
+                <TableHead className="text-right">מק״ט</TableHead>
                 <TableHead className="text-right">כמות</TableHead>
                 <TableHead className="text-right">מחיר יחידה</TableHead>
                 <TableHead className="text-right">סה״כ</TableHead>
@@ -313,7 +314,8 @@ const OrderDetail = () => {
               {items.map((item: any) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.product_variations?.products?.name_ar || item.product_variations?.products?.name || "—"}</TableCell>
-                  <TableCell>{item.product_variations?.name && !["ברירת מחדל", "default"].includes(item.product_variations.name.toLowerCase()) ? item.product_variations.name : "—"}</TableCell>
+                  <TableCell>{item.product_variations?.name || "—"}</TableCell>
+                  <TableCell>{item.product_variations?.sku || "—"}</TableCell>
                   <TableCell>{item.quantity}</TableCell>
                   <TableCell>₪{Number(item.unit_price).toFixed(2)}</TableCell>
                   <TableCell className="font-medium">₪{Number(item.total_price).toFixed(2)}</TableCell>
