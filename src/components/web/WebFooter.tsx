@@ -92,8 +92,8 @@ export function WebFooter() {
               </a>
               <p className="text-sand/50 text-xs mt-1">
                 {t(
-                  contact.address || "زيمر — نعمل أونلاين، زيارة المخازن بموعد مسبق",
-                  contact.address_he || "זמר — עובדים אונליין, ביקור במחסנים בתיאום מראש"
+                  settings.address || "زيمر — نعمل أونلاين، زيارة المخازن بموعد مسبق",
+                  settings.address_he || "זמר — עובדים אונליין, ביקור במחסנים בתיאום מראש"
                 )}
               </p>
             </div>
