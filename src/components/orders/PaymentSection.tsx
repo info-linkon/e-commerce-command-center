@@ -88,6 +88,9 @@ const PaymentSection = ({
   const hasInvoiceReceipt = (existingInvoiceDocs && existingInvoiceDocs.length > 0) || !!invoiceUrl;
 
   const totalPaid = existingPayments?.reduce((s, p) => s + Number(p.amount), 0) || 0;
+  const hasCreditPayment = existingPayments?.some((p: any) => p.payment_method === "credit") || false;
+  const isPaidByCredit = !!hypTransactionId || hasCreditPayment;
+  const isPaymentLinkSent = !!paymentLinkUrl;
   const remaining = orderTotal - totalPaid;
 
   const hasCashLine = lines.some((l) => l.method === "cash" && parseFloat(l.amount) > 0);
@@ -129,6 +132,8 @@ const PaymentSection = ({
       } else {
         toast.warning(`לינק תשלום נוצר אך ה-SMS לא נשלח: ${data?.sms_error || "שגיאה"}`);
       }
+      qc.invalidateQueries({ queryKey: ["orders", orderId] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
     } catch (err: any) {
       toast.error(err?.message || "שגיאה ביצירת לינק תשלום");
     } finally {
