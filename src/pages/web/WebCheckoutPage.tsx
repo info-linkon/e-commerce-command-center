@@ -1,6 +1,6 @@
 import { useCartStore } from "@/lib/web-cart-store";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ export default function WebCheckoutPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
+  const submittedRef = useRef(false);
 
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
   const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
@@ -210,8 +211,9 @@ export default function WebCheckoutPage() {
         supabase.functions.invoke("order-sms-trigger", {
           body: { order_id: order.id, trigger_type: "order_created" },
         }).catch(console.error);
-        clearCart();
+        submittedRef.current = true;
         navigate(`/order-confirmation/${order.order_number}`);
+        clearCart();
         return;
       }
 
@@ -235,8 +237,9 @@ export default function WebCheckoutPage() {
       if (hypError || !hypData?.success) {
         console.error("HYP payment error:", hypError || hypData?.error);
         toast.error("שגיאה ביצירת דף תשלום — ההזמנה נשמרה ונציג יצור קשר");
-        clearCart();
+        submittedRef.current = true;
         navigate(`/order-confirmation/${order.order_number}?payment=pending`);
+        clearCart();
         return;
       }
 
@@ -251,7 +254,7 @@ export default function WebCheckoutPage() {
     }
   };
 
-  if (items.length === 0 && !hypPaymentUrl) {
+  if (items.length === 0 && !hypPaymentUrl && !submittedRef.current) {
     navigate("/cart");
     return null;
   }
