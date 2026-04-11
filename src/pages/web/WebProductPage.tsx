@@ -193,9 +193,9 @@ export default function WebProductPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
         {/* Image */}
         <div>
-          <div className="aspect-square bg-card rounded-xl border border-border overflow-hidden mb-4">
+          <div className="bg-card rounded-xl border border-border overflow-hidden mb-4 flex items-center justify-center min-h-[300px] md:min-h-[400px]">
             {displayImage ? (
-              <img src={displayImage} alt={displayName} className="w-full h-full object-cover" />
+              <img src={displayImage} alt={displayName} className="w-full h-auto max-h-[600px] object-contain rounded-xl" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                 <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24">
@@ -214,7 +214,7 @@ export default function WebProductPage() {
                     (mainImage || allImages[0]) === img ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img src={img} alt="" className="w-full h-full object-contain" />
                 </button>
               ))}
             </div>
