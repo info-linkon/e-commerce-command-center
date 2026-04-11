@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2, Loader2, AlertCircle, FileText, ExternalLink } from "lucide-react";
 import DeliveryAssignment from "@/components/orders/DeliveryAssignment";
 import PaymentSection from "@/components/orders/PaymentSection";
 import { useOrderDelivery } from "@/hooks/useDeliveries";
@@ -247,6 +247,15 @@ const OrderDetail = () => {
             <div className="text-sm text-muted-foreground">
               {(order as any).includes_vat === false ? "ללא מע״מ" : "כולל מע״מ"}
             </div>
+            {(order as any).invoice_url && (
+              <a href={(order as any).invoice_url} target="_blank" rel="noopener noreferrer" className="inline-flex">
+                <Badge className="bg-blue-100 text-blue-800 border-0 gap-1 cursor-pointer hover:bg-blue-200 mt-1">
+                  <FileText className="h-3 w-3" />
+                  חשבונית מס קבלה
+                  <ExternalLink className="h-3 w-3" />
+                </Badge>
+              </a>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -261,7 +270,7 @@ const OrderDetail = () => {
         <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} />
       )}
 
-      {/* Payment Section */}
+      {/* Payment Section — show always except cancelled */}
       {!isCancelled && (
         <PaymentSection
           orderId={order.id}
@@ -275,6 +284,8 @@ const OrderDetail = () => {
           customerPhone={order.customer_phone || undefined}
           invoiceUrl={(order as any).invoice_url || null}
           paymentMethod={(order as any).payment_method}
+          paymentLinkUrl={(order as any).payment_link_url || null}
+          hypTransactionId={(order as any).hyp_transaction_id || null}
           orderItems={items.map((item: any) => ({
             details: `${item.product_variations?.products?.name || ""} - ${item.product_variations?.name || ""}`.trim().replace(/^- /, ""),
             amount: item.quantity,

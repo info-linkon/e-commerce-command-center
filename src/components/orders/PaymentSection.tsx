@@ -48,11 +48,14 @@ interface PaymentSectionProps {
   orderItems?: OrderItemForInvoice[];
   invoiceUrl?: string | null;
   paymentMethod?: string | null;
+  paymentLinkUrl?: string | null;
+  hypTransactionId?: string | null;
 }
 
 const PaymentSection = ({
   orderId, orderTotal, orderNumber, isDelivered, isCancelled, isCompleted,
   customerName, customerEmail, customerPhone, orderItems, invoiceUrl, paymentMethod: orderPaymentMethod,
+  paymentLinkUrl, hypTransactionId,
 }: PaymentSectionProps) => {
   const { data: existingPayments } = useOrderPayments(orderId);
   const { data: registers } = useCashRegisters();
@@ -85,6 +88,9 @@ const PaymentSection = ({
   const hasInvoiceReceipt = (existingInvoiceDocs && existingInvoiceDocs.length > 0) || !!invoiceUrl;
 
   const totalPaid = existingPayments?.reduce((s, p) => s + Number(p.amount), 0) || 0;
+  const hasCreditPayment = existingPayments?.some((p: any) => p.payment_method === "credit") || false;
+  const isPaidByCredit = !!hypTransactionId || hasCreditPayment;
+  const isPaymentLinkSent = !!paymentLinkUrl;
   const remaining = orderTotal - totalPaid;
 
   const hasCashLine = lines.some((l) => l.method === "cash" && parseFloat(l.amount) > 0);
@@ -126,6 +132,8 @@ const PaymentSection = ({
       } else {
         toast.warning(`לינק תשלום נוצר אך ה-SMS לא נשלח: ${data?.sms_error || "שגיאה"}`);
       }
+      qc.invalidateQueries({ queryKey: ["orders", orderId] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
     } catch (err: any) {
       toast.error(err?.message || "שגיאה ביצירת לינק תשלום");
     } finally {
@@ -268,7 +276,21 @@ const PaymentSection = ({
           </Button>
         )}
 
-        {/* Payment button — show if not cancelled and there's remaining balance */}
+        {/* Payment status badges */}
+        {isPaidByCredit && (
+          <Badge className="bg-green-100 text-green-800 border-0 gap-1 w-fit">
+            <CheckCircle2 className="h-3 w-3" />
+            שולם באשראי ✓
+          </Badge>
+        )}
+        {isPaymentLinkSent && !isPaidByCredit && (
+          <Badge className="bg-orange-100 text-orange-800 border-0 gap-1 w-fit">
+            <Send className="h-3 w-3" />
+            לינק תשלום נשלח — ממתין לתשלום
+          </Badge>
+        )}
+
+
         {!isCancelled && !isCompleted && remaining > 0 && (
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) resetForm(); }}>
             <DialogTrigger asChild>
