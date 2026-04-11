@@ -835,6 +835,7 @@ export type Database = {
       }
       order_items: {
         Row: {
+          bundle_variation_id: string | null
           created_at: string
           id: string
           order_id: string
@@ -844,6 +845,7 @@ export type Database = {
           variation_id: string | null
         }
         Insert: {
+          bundle_variation_id?: string | null
           created_at?: string
           id?: string
           order_id: string
@@ -853,6 +855,7 @@ export type Database = {
           variation_id?: string | null
         }
         Update: {
+          bundle_variation_id?: string | null
           created_at?: string
           id?: string
           order_id?: string
@@ -862,6 +865,13 @@ export type Database = {
           variation_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "order_items_bundle_variation_id_fkey"
+            columns: ["bundle_variation_id"]
+            isOneToOne: false
+            referencedRelation: "bundle_variations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["order_id"]
