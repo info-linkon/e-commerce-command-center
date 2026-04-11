@@ -58,7 +58,7 @@ export function useOrder(id?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, order_items(*, product_variations(*, products(name))), warehouses(name)")
+        .select("*, order_items(*, product_variations(*, products(name, name_ar))), warehouses(name)")
         .eq("id", id!)
         .single();
       if (error) throw error;
@@ -165,7 +165,7 @@ export function useAssignWarehouse() {
       // 1. Get order with items
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .select("*, order_items(*, product_variations(*, products(name)))")
+        .select("*, order_items(*, product_variations(*, products(name, name_ar)))")
         .eq("id", orderId)
         .single();
       if (orderErr) throw orderErr;
