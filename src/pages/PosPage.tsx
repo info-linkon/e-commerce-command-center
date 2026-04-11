@@ -196,12 +196,12 @@ const PosPage = () => {
 
   const total = subtotal - discountAmount + shippingPrice;
 
-  const addToCart = (variation: { id: string; name: string; price: number }, productName: string) => {
-    const existing = cart.find((c) => c.variation_id === variation.id);
+  const addToCart = (variation: { id: string; name: string; price: number; bundle_variation_id?: string }, productName: string) => {
+    const existing = cart.find((c) => c.variation_id === variation.id && c.bundle_variation_id === variation.bundle_variation_id);
     if (existing) {
-      setCart(cart.map((c) => c.variation_id === variation.id ? { ...c, quantity: c.quantity + 1 } : c));
+      setCart(cart.map((c) => (c.variation_id === variation.id && c.bundle_variation_id === variation.bundle_variation_id) ? { ...c, quantity: c.quantity + 1 } : c));
     } else {
-      setCart([...cart, { variation_id: variation.id, variation_name: variation.name, product_name: productName, quantity: 1, unit_price: variation.price }]);
+      setCart([...cart, { variation_id: variation.id, variation_name: variation.name, product_name: productName, quantity: 1, unit_price: variation.price, bundle_variation_id: variation.bundle_variation_id }]);
     }
   };
 
@@ -264,6 +264,7 @@ const PosPage = () => {
           quantity: c.quantity,
           unit_price: c.unit_price,
           total_price: c.quantity * c.unit_price,
+          bundle_variation_id: c.bundle_variation_id || undefined,
         })),
       } as any);
 
