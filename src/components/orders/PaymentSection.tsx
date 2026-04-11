@@ -67,6 +67,7 @@ const PaymentSection = ({
   const [completeOrder, setCompleteOrder] = useState(true);
   const [issueInvoice, setIssueInvoice] = useState(false);
   const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
+  const [issuingInvoiceStandalone, setIssuingInvoiceStandalone] = useState(false);
   const [lines, setLines] = useState<PaymentLine[]>([
     { amount: String(orderTotal), method: "cash", cash_register_id: "", reference: "" },
   ]);
@@ -413,6 +414,48 @@ const PaymentSection = ({
           </Dialog>
         )}
 
+        {/* Standalone invoice button — for orders with payments but no invoice yet */}
+        {hasPayments && !hasInvoiceReceipt && customerName && orderItems && orderItems.length > 0 && (
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            disabled={issuingInvoiceStandalone || createDocument.isPending}
+            onClick={async () => {
+              setIssuingInvoiceStandalone(true);
+              try {
+                const docPayments = existingPayments!.map((p: any) => ({
+                  type: p.payment_method === "cash" ? "cash" : p.payment_method === "bit" ? "bit" : "credit",
+                  amount: Number(p.amount),
+                }));
+                const result = await createDocument.mutateAsync({
+                  doc_type: "invoice_receipt",
+                  order_id: orderId,
+                  customer_name: customerName,
+                  customer_email: customerEmail,
+                  customer_phone: customerPhone,
+                  items: orderItems,
+                  payments: docPayments,
+                });
+                const shortCode = result?.short_code;
+                const invoiceLink = shortCode ? `/inv/${shortCode}` : result?.doc_url;
+                if (invoiceLink) {
+                  await supabase.from("orders").update({ invoice_url: invoiceLink } as any).eq("id", orderId);
+                  qc.invalidateQueries({ queryKey: ["orders", orderId] });
+                  qc.invalidateQueries({ queryKey: ["orders"] });
+                }
+                toast.success("חשבונית מס קבלה הונפקה בהצלחה");
+              } catch (err: any) {
+                console.error("Invoice creation error:", err);
+                toast.error("שגיאה בהנפקת חשבונית");
+              } finally {
+                setIssuingInvoiceStandalone(false);
+              }
+            }}
+          >
+            <FileText className="h-4 w-4" />
+            {issuingInvoiceStandalone ? "מנפיק חשבונית..." : "הנפק חשבונית מס קבלה"}
+          </Button>
+        )}
 
         {!isCancelled && !isCompleted && !isDelivered && !hasPayments && remaining > 0 && (
           <p className="text-xs text-muted-foreground text-center">
