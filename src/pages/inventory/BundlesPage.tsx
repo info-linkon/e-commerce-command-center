@@ -61,7 +61,7 @@ const BundlesPage = () => {
       },
       hideOnMobile: true,
     },
-    { label: "שם", render: (b) => <span className="font-medium">{(b as any).products?.name}</span> },
+    { label: "שם", render: (b) => <span className="font-medium">{(b as any).products?.name_ar || (b as any).products?.name}</span> },
     { label: "קטגוריה", render: (b) => (b as any).products?.categories?.name || "—", hideOnMobile: true },
     { label: "מחיר", render: (b) => (b as any).products?.sale_price ? `₪${Number((b as any).products.sale_price).toFixed(0)}` : "—" },
     { label: "מלאי", render: (b) => <StockBadge stock={getStock(b)} /> },
@@ -98,7 +98,7 @@ const BundlesPage = () => {
                 <div className="w-12 h-12 rounded bg-muted shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">{product?.name}</div>
+                <div className="font-medium truncate">{product?.name_ar || product?.name}</div>
                 <div className="flex justify-between items-center mt-1">
                   <div className="flex gap-1 items-center">
                     <Badge variant="secondary" className="text-xs">{b.bundle_type === "simple_bundle" ? "פשוט" : "משתנה"}</Badge>
