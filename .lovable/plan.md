@@ -1,25 +1,16 @@
 
 
-## Plan: Fix spacing between hero title and subtitle lines
+## Plan: Remove Lovable favicon and replace with site logo
 
 ### Problem
-The title line (`بكيجات الوجهة`) and the gold subtitle line (`رفيقك الأمثل في كل طشة`) are too close together. The subtitle `<span>` has `my-0 py-px` which removes vertical spacing.
+The file `public/favicon.ico` contains the default Lovable logo. WhatsApp and other platforms auto-fetch `/favicon.ico` and display it in the share preview (the small icon at bottom-right of the card).
 
 ### Fix
 
-**File: `src/pages/web/WebHome.tsx` (line 110)**
+**1. Delete `public/favicon.ico`** — remove the Lovable-branded file.
 
-Change the subtitle span from:
-```tsx
-<span className="text-gradient-gold my-0 py-px">
-```
-to:
-```tsx
-<span className="text-gradient-gold block mt-2 md:mt-4">
-```
-
-This adds a clear margin-top between the title and subtitle lines, making it `block` so the margin applies properly, and removes the `my-0 py-px` that was suppressing spacing.
+**2. Generate a proper `.ico` favicon from the existing `logo.webp`** — convert `public/logo.webp` to `public/favicon.ico` so that any automatic `/favicon.ico` requests serve the ELWEJHA logo instead.
 
 ### Files Changed
-- `src/pages/web/WebHome.tsx` — update subtitle span classes
+- `public/favicon.ico` — replaced with ELWEJHA logo
 
