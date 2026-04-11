@@ -63,10 +63,12 @@ export default function WebHome() {
 
   // Build slides from banners, fallback to hero CMS data
   const slides = banners && banners.length > 0
-    ? banners.map((b) => ({
+    ? banners.map((b: any) => ({
         image: b.image_url || heroBg,
         title: lang === "he" ? (b.title_he || b.title || "") : (b.title || ""),
         subtitle: lang === "he" ? (b.subtitle_he || b.subtitle || "") : (b.subtitle || ""),
+        badge: lang === "he" ? (b.badge_he || b.badge || "") : (b.badge || ""),
+        description: lang === "he" ? (b.description_he || b.description || "") : (b.description || ""),
         link: b.link || "",
       }))
     : [{
