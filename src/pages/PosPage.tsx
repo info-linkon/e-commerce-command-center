@@ -54,6 +54,7 @@ const PosPage = () => {
   const [variationPicker, setVariationPicker] = useState<GroupedProduct | null>(null);
   const [discountType, setDiscountType] = useState<"none" | "percent" | "fixed">("none");
   const [discountValue, setDiscountValue] = useState<number>(0);
+  const [shippingPrice, setShippingPrice] = useState<number>(0);
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
@@ -200,7 +201,7 @@ const PosPage = () => {
     return Math.min(discountValue, subtotal);
   }, [discountType, discountValue, subtotal]);
 
-  const total = subtotal - discountAmount;
+  const total = subtotal - discountAmount + shippingPrice;
 
   const addToCart = (variation: { id: string; name: string; price: number }, productName: string) => {
     const existing = cart.find((c) => c.variation_id === variation.id);
@@ -287,6 +288,7 @@ const PosPage = () => {
       setCashRegisterId("");
       setDiscountType("none");
       setDiscountValue(0);
+      setShippingPrice(0);
       toast.success("ההזמנה נוצרה ונשלחה לתהליך ההזמנות");
       navigate("/crm/orders");
     } catch {
