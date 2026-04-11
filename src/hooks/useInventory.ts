@@ -10,7 +10,7 @@ export function useInventory(warehouseId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("inventory")
-        .select("*, product_variations(*, products(name, category_id, categories(name))), warehouses(name)");
+        .select("*, product_variations(*, products(name, category_id, categories!products_category_id_fkey(name))), warehouses(name)");
       if (warehouseId) query = query.eq("warehouse_id", warehouseId);
       const { data, error } = await query;
       if (error) throw error;

@@ -21,7 +21,7 @@ const WebsiteItemsPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*, categories(name), product_variations(id, name, price, woo_id)")
+        .select("*, categories!products_category_id_fkey(name), product_variations(id, name, price, woo_id)")
         .order("name");
       if (error) throw error;
       return data;

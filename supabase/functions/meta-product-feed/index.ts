@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
 
   const { data: products, error } = await supabase
     .from("products")
-    .select("id, product_number, name, name_ar, description, description_ar, short_description, short_description_ar, sale_price, image_url, sku, is_published, category_id, categories(name), shipping_price")
+    .select("id, product_number, name, name_ar, description, description_ar, short_description, short_description_ar, sale_price, image_url, sku, is_published, category_id, categories!products_category_id_fkey(name), shipping_price")
     .eq("is_published", true);
 
   if (error) {
