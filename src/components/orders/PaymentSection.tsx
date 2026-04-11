@@ -48,11 +48,14 @@ interface PaymentSectionProps {
   orderItems?: OrderItemForInvoice[];
   invoiceUrl?: string | null;
   paymentMethod?: string | null;
+  paymentLinkUrl?: string | null;
+  hypTransactionId?: string | null;
 }
 
 const PaymentSection = ({
   orderId, orderTotal, orderNumber, isDelivered, isCancelled, isCompleted,
   customerName, customerEmail, customerPhone, orderItems, invoiceUrl, paymentMethod: orderPaymentMethod,
+  paymentLinkUrl, hypTransactionId,
 }: PaymentSectionProps) => {
   const { data: existingPayments } = useOrderPayments(orderId);
   const { data: registers } = useCashRegisters();
