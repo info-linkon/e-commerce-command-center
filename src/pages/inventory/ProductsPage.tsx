@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, FolderOpen } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, FolderOpen, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
-import { useProducts, useDeleteProduct } from "@/hooks/useProducts";
+import { useProducts, useDeleteProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/useCategories";
 import { CategoryDialog } from "@/components/inventory/CategoryDialog";
 import { Tables } from "@/integrations/supabase/types";
@@ -25,6 +25,7 @@ const ProductsPage = () => {
   const { data: products, isLoading } = useProducts(categoryFilter === "all" ? undefined : categoryFilter);
   const { data: categories } = useCategories();
   const deleteProduct = useDeleteProduct();
+  const updateProduct = useUpdateProduct();
 
   const [catManagerOpen, setCatManagerOpen] = useState(false);
   const [catDialogOpen, setCatDialogOpen] = useState(false);
@@ -63,7 +64,17 @@ const ProductsPage = () => {
     });
   }, [products, bundleProductIds, search]);
 
+  const handleToggleFeatured = (p: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateProduct.mutate({ id: p.id, is_featured: !p.is_featured });
+  };
+
   const columns: ColumnDef<any>[] = [
+    { label: "⭐", render: (p) => (
+      <button onClick={(e) => handleToggleFeatured(p, e)} className="p-1">
+        <Star className={`h-4 w-4 ${p.is_featured ? "fill-gold text-gold" : "text-muted-foreground"}`} />
+      </button>
+    )},
     { label: "שם", render: (p) => <span className="font-medium">{p.name_ar || p.name}</span> },
     { label: "מק״ט", render: (p) => p.sku || "—", hideOnMobile: true },
     { label: "קטגוריה", render: (p) => (p as any).categories?.name || "—", hideOnMobile: true },

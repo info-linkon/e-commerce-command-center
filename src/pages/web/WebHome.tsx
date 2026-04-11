@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { WebProductCard } from "@/components/web/WebProductCard";
-import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
+import { useWebProducts, useWebCategories, useWebFeaturedProducts, useWebBestSellers } from "@/hooks/useWebProducts";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { useBannersPublic } from "@/hooks/useBannersPublic";
 import { defaultContent } from "@/lib/web-default-content";
@@ -36,6 +36,8 @@ const categoryImageMap: Record<string, string> = {
 
 export default function WebHome() {
   const { data: products } = useWebProducts();
+  const { data: featuredProducts } = useWebFeaturedProducts();
+  const { data: bestSellers } = useWebBestSellers();
   const { data: categories } = useWebCategories();
   const { lang, t } = useLanguage();
   const { data: banners } = useBannersPublic();
@@ -56,7 +58,8 @@ export default function WebHome() {
     api.on("select", () => setCurrent(api.selectedScrollSnap()));
   }, [api]);
 
-  const featured = products?.slice(0, 8) || [];
+  // Use featured products if available, otherwise fall back to latest 8
+  const featured = (featuredProducts && featuredProducts.length > 0) ? featuredProducts : (products?.slice(0, 8) || []);
 
   // Build slides from banners, fallback to hero CMS data
   const slides = banners && banners.length > 0
@@ -243,6 +246,38 @@ export default function WebHome() {
           </div>
         </div>
       </section>
+
+      {/* Best Sellers */}
+      {bestSellers && bestSellers.length > 0 && (
+        <section className="container py-8 md:py-16">
+          <div className="flex items-center justify-between mb-6 md:mb-8">
+            <div>
+              <h2 className="text-xl md:text-3xl font-bold">{t("الأكثر مبيعاً", "רב מכר")}</h2>
+              <p className="text-muted-foreground text-sm mt-1">{t("المنتجات الأكثر طلباً", "המוצרים הנמכרים ביותר")}</p>
+            </div>
+            <Button asChild variant="ghost" className="text-primary hover:text-gold">
+              <Link to="/shop">
+                {t("عرض الكل", "הצג הכל")}
+                <ArrowLeft className="w-4 h-4 mr-1" />
+              </Link>
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+            {bestSellers.map((product) => (
+              <WebProductCard
+                key={product.id}
+                id={product.id}
+                productNumber={(product as any).product_number}
+                name={product.name}
+                nameAr={product.name_ar}
+                price={product.sale_price}
+                imageUrl={product.image_url}
+                categoryName={(product as any).categories?.name}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="bg-desert-gradient text-desert-foreground">

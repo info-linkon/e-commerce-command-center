@@ -107,6 +107,76 @@ export function useWebBundleVariations(bundleId: string | undefined) {
   });
 }
 
+export function useWebFeaturedProducts() {
+  return useQuery({
+    queryKey: ["web-featured-products"],
+    queryFn: async () => {
+      const { data, error } = await (supabase
+        .from("products")
+        .select("*, categories(name, slug)") as any)
+        .eq("is_published", true)
+        .eq("is_featured", true)
+        .order("name")
+        .limit(12);
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useWebBestSellers() {
+  return useQuery({
+    queryKey: ["web-best-sellers"],
+    queryFn: async () => {
+      // Get order_items grouped by variation, then map to products
+      const { data: orderItems, error } = await supabase
+        .from("order_items")
+        .select("variation_id, quantity");
+      if (error) throw error;
+
+      // Sum quantities per variation_id
+      const variationTotals: Record<string, number> = {};
+      for (const item of orderItems || []) {
+        if (item.variation_id) {
+          variationTotals[item.variation_id] = (variationTotals[item.variation_id] || 0) + item.quantity;
+        }
+      }
+
+      // Get variation -> product mapping
+      const varIds = Object.keys(variationTotals);
+      if (varIds.length === 0) return [];
+
+      const { data: variations } = await supabase
+        .from("product_variations")
+        .select("id, product_id")
+        .in("id", varIds);
+
+      // Sum by product_id
+      const productTotals: Record<string, number> = {};
+      for (const v of variations || []) {
+        productTotals[v.product_id] = (productTotals[v.product_id] || 0) + (variationTotals[v.id] || 0);
+      }
+
+      // Get top 12 product IDs
+      const topProductIds = Object.entries(productTotals)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 12)
+        .map(([id]) => id);
+
+      if (topProductIds.length === 0) return [];
+
+      const { data: products } = await supabase
+        .from("products")
+        .select("*, categories(name, slug)")
+        .eq("is_published", true)
+        .in("id", topProductIds);
+
+      // Sort by sales
+      return (products || []).sort((a, b) => (productTotals[b.id] || 0) - (productTotals[a.id] || 0));
+    },
+  });
+}
+
 export function useWebSearch(query: string) {
   return useQuery({
     queryKey: ["web-search", query],
