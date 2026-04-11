@@ -105,11 +105,11 @@ export default function WebHome() {
                         <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-normal mb-2 md:mb-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                           {slide.title}
                         </h1>
-                        {slide.subtitle && (
-                          <h2 className="text-gradient-gold text-xl md:text-3xl lg:text-4xl font-bold mt-3 md:mt-4 mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.15s' }}>
-                            {slide.subtitle}
-                          </h2>
-                        )}
+                      )}
+                      {slide.subtitle && (
+                        <h2 className="text-gradient-gold text-xl md:text-3xl lg:text-4xl font-bold mt-3 md:mt-4 mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.15s' }}>
+                          {slide.subtitle}
+                        </h2>
                       )}
                       <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
                         {t("مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق", "ציוד קמפינג וטיולים בסגנון מזרחי מקורי — משלוחים לכל האזורים")}
