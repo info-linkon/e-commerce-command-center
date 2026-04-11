@@ -250,16 +250,34 @@ const PaymentSection = ({
           </div>
         )}
 
+        {/* Send payment link via SMS — shown prominently first */}
+        {!isCancelled && !isCompleted && remaining > 0 && customerPhone && (
+          <Button
+            variant="default"
+            className="w-full gap-2"
+            onClick={handleSendPaymentLink}
+            disabled={sendingPaymentLink}
+          >
+            {sendingPaymentLink ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {sendingPaymentLink ? "שולח לינק..." : "שלח לינק תשלום באשראי"}
+          </Button>
+        )}
+
         {/* Payment button — show if not cancelled and there's remaining balance */}
         {!isCancelled && !isCompleted && remaining > 0 && (
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) resetForm(); }}>
             <DialogTrigger asChild>
               <Button
+                variant="outline"
                 className="w-full gap-2"
                 disabled={!isDelivered && !hasPayments}
               >
                 <CreditCard className="h-4 w-4" />
-                {hasPayments ? "הוסף תשלום" : "רשום תשלום"}
+                {hasPayments ? "הוסף תשלום" : "רשום תשלום (שהתקבל)"}
               </Button>
             </DialogTrigger>
             <DialogContent dir="rtl" className="max-w-md">
@@ -323,6 +341,11 @@ const PaymentSection = ({
                         />
                       </div>
                     )}
+                    {line.method === "credit" && (
+                      <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded">
+                        שים לב: פעולה זו מסמנת תשלום שהתקבל. לשליחת לינק תשלום ללקוח, השתמש בכפתור &quot;שלח לינק תשלום באשראי&quot;.
+                      </p>
+                    )}
                   </div>
                 ))}
 
@@ -368,22 +391,6 @@ const PaymentSection = ({
           </Dialog>
         )}
 
-        {/* Send payment link via SMS button */}
-        {!isCancelled && !isCompleted && remaining > 0 && customerPhone && (
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleSendPaymentLink}
-            disabled={sendingPaymentLink}
-          >
-            {sendingPaymentLink ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-            {sendingPaymentLink ? "שולח לינק..." : "שלח לינק תשלום באשראי"}
-          </Button>
-        )}
 
         {!isCancelled && !isCompleted && !isDelivered && !hasPayments && remaining > 0 && (
           <p className="text-xs text-muted-foreground text-center">
