@@ -1,0 +1,1 @@
+SELECT order_number, customer_name, customer_phone, payment_link_url, status FROM public.orders WHERE id = '9ff33b70-c3b4-4345-b350-1db42026128e';
