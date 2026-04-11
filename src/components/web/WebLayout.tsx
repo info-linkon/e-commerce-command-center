@@ -10,10 +10,11 @@ import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
 
 function WebLayoutInner() {
   const { data: pixelSettings } = useSiteSection("settings", "meta_pixel");
-  const { data: contactHero } = useSiteSection("contact", "hero");
+  const { data: settingsData } = useSiteSection("settings", "general");
   const { lang } = useLanguage();
 
-  const whatsapp = (contactHero?.content as any)?.whatsapp || "972526573185";
+  const settings = (settingsData?.content || {}) as any;
+  const whatsapp = settings.whatsapp || "972526573185";
 
   useEffect(() => {
     const pixelId = (pixelSettings?.content as any)?.pixel_id;
