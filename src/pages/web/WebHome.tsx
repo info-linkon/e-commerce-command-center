@@ -75,6 +75,8 @@ export default function WebHome() {
         image: hero.backgroundImage || heroBg,
         title: hero.title || "وجهتك الأولى",
         subtitle: hero.subtitle || "لعالم الطبيعة والمغامرات",
+        badge: t("أهلاً بك في الوجهة", "ברוכים הבאים ליעד"),
+        description: t("مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق", "ציוד קמפינג וטיולים בסגנון מזרחי מקורי — משלוחים לכל האזורים"),
         link: "",
       }];
 
