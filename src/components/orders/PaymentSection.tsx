@@ -67,6 +67,7 @@ const PaymentSection = ({
   const [completeOrder, setCompleteOrder] = useState(true);
   const [issueInvoice, setIssueInvoice] = useState(false);
   const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
+  const [issuingInvoiceStandalone, setIssuingInvoiceStandalone] = useState(false);
   const [lines, setLines] = useState<PaymentLine[]>([
     { amount: String(orderTotal), method: "cash", cash_register_id: "", reference: "" },
   ]);
