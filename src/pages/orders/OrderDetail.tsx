@@ -247,8 +247,15 @@ const OrderDetail = () => {
             <div className="text-sm text-muted-foreground">
               {(order as any).includes_vat === false ? "ללא מע״מ" : "כולל מע״מ"}
             </div>
-          </CardContent>
-        </Card>
+            {(order as any).invoice_url && (
+              <a href={(order as any).invoice_url} target="_blank" rel="noopener noreferrer" className="inline-flex">
+                <Badge className="bg-blue-100 text-blue-800 border-0 gap-1 cursor-pointer hover:bg-blue-200 mt-1">
+                  <FileText className="h-3 w-3" />
+                  חשבונית מס קבלה
+                  <ExternalLink className="h-3 w-3" />
+                </Badge>
+              </a>
+            )}
       </div>
 
       {/* Picking Checklist */}
@@ -261,7 +268,7 @@ const OrderDetail = () => {
         <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} />
       )}
 
-      {/* Payment Section */}
+      {/* Payment Section — show always except cancelled */}
       {!isCancelled && (
         <PaymentSection
           orderId={order.id}
@@ -275,6 +282,8 @@ const OrderDetail = () => {
           customerPhone={order.customer_phone || undefined}
           invoiceUrl={(order as any).invoice_url || null}
           paymentMethod={(order as any).payment_method}
+          paymentLinkUrl={(order as any).payment_link_url || null}
+          hypTransactionId={(order as any).hyp_transaction_id || null}
           orderItems={items.map((item: any) => ({
             details: `${item.product_variations?.products?.name || ""} - ${item.product_variations?.name || ""}`.trim().replace(/^- /, ""),
             amount: item.quantity,
