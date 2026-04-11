@@ -1,0 +1,1 @@
+ALTER TABLE public.order_items ADD COLUMN bundle_variation_id uuid REFERENCES public.bundle_variations(id) ON DELETE SET NULL DEFAULT NULL;

@@ -27,6 +27,7 @@ interface CartItem {
   product_name: string;
   quantity: number;
   unit_price: number;
+  bundle_variation_id?: string;
 }
 
 interface GroupedProduct {
@@ -34,7 +35,7 @@ interface GroupedProduct {
   product_name: string;
   category_id: string | null;
   image_url: string | null;
-  variations: { id: string; name: string; price: number }[];
+  variations: { id: string; name: string; price: number; bundle_variation_id?: string }[];
   isBundle?: boolean;
 }
 
@@ -149,23 +150,15 @@ const PosPage = () => {
             });
           }
         } else {
-          // Variable bundle — use product_variations (they correspond to bundle_variations)
-          if (productVars.length > 0) {
+          // Variable bundle — use bundle_variations and map to default product_variation
+          const bvs = allBundles.bundleVars.filter(bv => bv.bundle_id === bundle.id);
+          const defaultProductVar = bpvs.find((pv: any) => pv.product_id === pid);
+          if (bvs.length > 0 && defaultProductVar) {
             map.set(pid, {
               product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
-              variations: productVars.map((pv: any) => ({ id: pv.id, name: pv.name, price: Number(pv.price) })),
+              variations: bvs.map(bv => ({ id: defaultProductVar.id, name: bv.name, price: Number(bv.price), bundle_variation_id: bv.id })),
               isBundle: true,
             });
-          } else {
-            // Fallback: use bundle_variations (won't work for order creation but shows in UI)
-            const bvs = allBundles.bundleVars.filter(bv => bv.bundle_id === bundle.id);
-            if (bvs.length > 0) {
-              map.set(pid, {
-                product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
-                variations: bvs.map(bv => ({ id: bv.id, name: bv.name, price: Number(bv.price) })),
-                isBundle: true,
-              });
-            }
           }
         }
       }
@@ -203,12 +196,12 @@ const PosPage = () => {
 
   const total = subtotal - discountAmount + shippingPrice;
 
-  const addToCart = (variation: { id: string; name: string; price: number }, productName: string) => {
-    const existing = cart.find((c) => c.variation_id === variation.id);
+  const addToCart = (variation: { id: string; name: string; price: number; bundle_variation_id?: string }, productName: string) => {
+    const existing = cart.find((c) => c.variation_id === variation.id && c.bundle_variation_id === variation.bundle_variation_id);
     if (existing) {
-      setCart(cart.map((c) => c.variation_id === variation.id ? { ...c, quantity: c.quantity + 1 } : c));
+      setCart(cart.map((c) => (c.variation_id === variation.id && c.bundle_variation_id === variation.bundle_variation_id) ? { ...c, quantity: c.quantity + 1 } : c));
     } else {
-      setCart([...cart, { variation_id: variation.id, variation_name: variation.name, product_name: productName, quantity: 1, unit_price: variation.price }]);
+      setCart([...cart, { variation_id: variation.id, variation_name: variation.name, product_name: productName, quantity: 1, unit_price: variation.price, bundle_variation_id: variation.bundle_variation_id }]);
     }
   };
 
@@ -271,6 +264,7 @@ const PosPage = () => {
           quantity: c.quantity,
           unit_price: c.unit_price,
           total_price: c.quantity * c.unit_price,
+          bundle_variation_id: c.bundle_variation_id || undefined,
         })),
       } as any);
 

@@ -199,6 +199,7 @@ export default function WebCheckoutPage() {
         quantity: item.quantity,
         unit_price: item.price,
         total_price: item.price * item.quantity,
+        ...(item.bundleVariationId ? { bundle_variation_id: item.bundleVariationId } : {}),
       }));
 
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);

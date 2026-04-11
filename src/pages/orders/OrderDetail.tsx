@@ -286,12 +286,16 @@ const OrderDetail = () => {
           paymentMethod={(order as any).payment_method}
           paymentLinkUrl={(order as any).payment_link_url || null}
           hypTransactionId={(order as any).hyp_transaction_id || null}
-          orderItems={items.map((item: any) => ({
-            details: `${item.product_variations?.products?.name_ar || item.product_variations?.products?.name || ""}${item.product_variations?.name && !["ברירת מחדל", "default"].includes(item.product_variations.name.toLowerCase()) ? ` - ${item.product_variations.name}` : ""}`.trim(),
-            amount: item.quantity,
-            price: Number(item.unit_price),
-            catalog_number: item.product_variations?.sku || undefined,
-          }))}
+          orderItems={items.map((item: any) => {
+            const varName = item.bundle_variations?.name || item.product_variations?.name || "";
+            const varSku = item.bundle_variations?.sku || item.product_variations?.sku || undefined;
+            return {
+              details: `${item.product_variations?.products?.name_ar || item.product_variations?.products?.name || ""}${varName && !["ברירת מחדל", "default"].includes(varName.toLowerCase()) ? ` - ${varName}` : ""}`.trim(),
+              amount: item.quantity,
+              price: Number(item.unit_price),
+              catalog_number: varSku,
+            };
+          })}
         />
       )}
 
@@ -319,8 +323,8 @@ const OrderDetail = () => {
                       <div className="text-xs text-muted-foreground">{item.product_variations?.products?.name}</div>
                     )}
                   </TableCell>
-                  <TableCell>{item.product_variations?.name || "—"}</TableCell>
-                  <TableCell>{item.product_variations?.sku || "—"}</TableCell>
+                  <TableCell>{item.bundle_variations?.name || item.product_variations?.name || "—"}</TableCell>
+                  <TableCell>{item.bundle_variations?.sku || item.product_variations?.sku || "—"}</TableCell>
                   <TableCell>{item.quantity}</TableCell>
                   <TableCell>₪{Number(item.unit_price).toFixed(2)}</TableCell>
                   <TableCell className="font-medium">₪{Number(item.total_price).toFixed(2)}</TableCell>

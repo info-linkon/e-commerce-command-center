@@ -33,6 +33,7 @@ export interface OrderItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  bundle_variation_id?: string;
 }
 
 export function useOrders(status?: OrderStatus) {
@@ -58,7 +59,7 @@ export function useOrder(id?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, order_items(*, product_variations(*, products(name, name_ar))), warehouses(name)")
+        .select("*, order_items(*, product_variations(*, products(name, name_ar)), bundle_variations(id, name, name_he, sku)), warehouses(name)")
         .eq("id", id!)
         .single();
       if (error) throw error;
