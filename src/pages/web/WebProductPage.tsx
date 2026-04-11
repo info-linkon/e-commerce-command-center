@@ -163,7 +163,7 @@ export default function WebProductPage() {
       return;
     }
 
-    const variationId = activeBundleVariation?.id || activeVariation?.id || variations?.[0]?.id || product.id;
+    const variationId = activeVariation?.id || variations?.[0]?.id || product.id;
     const variationName = activeBundleVariation?.name || activeVariation?.name_ar || activeVariation?.name || "";
 
     for (let i = 0; i < quantity; i++) {
@@ -175,6 +175,7 @@ export default function WebProductPage() {
         price,
         imageUrl: activeVariation?.image_url || product.image_url,
         shippingPrice: Number((product as any).shipping_price || 0),
+        bundleVariationId: activeBundleVariation?.id || undefined,
       }, 1);
     }
     // Meta Pixel: AddToCart
