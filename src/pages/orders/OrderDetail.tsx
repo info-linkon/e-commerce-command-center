@@ -258,7 +258,7 @@ const OrderDetail = () => {
       )}
 
       {/* Payment Section */}
-      {isAssigned && (
+      {!isCancelled && (
         <PaymentSection
           orderId={order.id}
           orderTotal={Number(order.total)}
