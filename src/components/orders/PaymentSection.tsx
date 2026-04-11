@@ -276,7 +276,21 @@ const PaymentSection = ({
           </Button>
         )}
 
-        {/* Payment button — show if not cancelled and there's remaining balance */}
+        {/* Payment status badges */}
+        {isPaidByCredit && (
+          <Badge className="bg-green-100 text-green-800 border-0 gap-1 w-fit">
+            <CheckCircle2 className="h-3 w-3" />
+            שולם באשראי ✓
+          </Badge>
+        )}
+        {isPaymentLinkSent && !isPaidByCredit && (
+          <Badge className="bg-orange-100 text-orange-800 border-0 gap-1 w-fit">
+            <Send className="h-3 w-3" />
+            לינק תשלום נשלח — ממתין לתשלום
+          </Badge>
+        )}
+
+
         {!isCancelled && !isCompleted && remaining > 0 && (
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) resetForm(); }}>
             <DialogTrigger asChild>
