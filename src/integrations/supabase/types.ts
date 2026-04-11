@@ -17,7 +17,11 @@ export type Database = {
       banners: {
         Row: {
           active: boolean
+          badge: string | null
+          badge_he: string | null
           created_at: string
+          description: string | null
+          description_he: string | null
           id: string
           image_url: string | null
           link: string | null
@@ -29,7 +33,11 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          badge?: string | null
+          badge_he?: string | null
           created_at?: string
+          description?: string | null
+          description_he?: string | null
           id?: string
           image_url?: string | null
           link?: string | null
@@ -41,7 +49,11 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          badge?: string | null
+          badge_he?: string | null
           created_at?: string
+          description?: string | null
+          description_he?: string | null
           id?: string
           image_url?: string | null
           link?: string | null
