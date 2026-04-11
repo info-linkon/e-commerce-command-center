@@ -165,6 +165,22 @@ export default function WebBannersPage() {
               <Input value={form.subtitle_he} onChange={(e) => setForm({ ...form, subtitle_he: e.target.value })} className="mt-1" dir="rtl" />
             </div>
             <div>
+              <Label>תג/באדג׳ (ערבית)</Label>
+              <Input value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} className="mt-1" dir="rtl" placeholder="أهلاً بك في الوجهة" />
+            </div>
+            <div>
+              <Label>תג/באדג׳ (עברית)</Label>
+              <Input value={form.badge_he} onChange={(e) => setForm({ ...form, badge_he: e.target.value })} className="mt-1" dir="rtl" placeholder="ברוכים הבאים ליעד" />
+            </div>
+            <div>
+              <Label>תיאור (ערבית)</Label>
+              <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1" dir="rtl" placeholder="مستلزمات تخييم ورحلات..." />
+            </div>
+            <div>
+              <Label>תיאור (עברית)</Label>
+              <Input value={form.description_he} onChange={(e) => setForm({ ...form, description_he: e.target.value })} className="mt-1" dir="rtl" placeholder="ציוד קמפינג וטיולים..." />
+            </div>
+            <div>
               <Label>תמונה</Label>
               <div className="flex items-center gap-3 mt-1">
                 {form.image_url && (
