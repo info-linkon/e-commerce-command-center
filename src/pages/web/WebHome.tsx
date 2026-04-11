@@ -63,16 +63,20 @@ export default function WebHome() {
 
   // Build slides from banners, fallback to hero CMS data
   const slides = banners && banners.length > 0
-    ? banners.map((b) => ({
+    ? banners.map((b: any) => ({
         image: b.image_url || heroBg,
         title: lang === "he" ? (b.title_he || b.title || "") : (b.title || ""),
         subtitle: lang === "he" ? (b.subtitle_he || b.subtitle || "") : (b.subtitle || ""),
+        badge: lang === "he" ? (b.badge_he || b.badge || "") : (b.badge || ""),
+        description: lang === "he" ? (b.description_he || b.description || "") : (b.description || ""),
         link: b.link || "",
       }))
     : [{
         image: hero.backgroundImage || heroBg,
         title: hero.title || "وجهتك الأولى",
         subtitle: hero.subtitle || "لعالم الطبيعة والمغامرات",
+        badge: t("أهلاً بك في الوجهة", "ברוכים הבאים ליעד"),
+        description: t("مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق", "ציוד קמפינג וטיולים בסגנון מזרחי מקורי — משלוחים לכל האזורים"),
         link: "",
       }];
 
@@ -101,9 +105,11 @@ export default function WebHome() {
                   <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/95 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/40" />
                   <div className="container relative z-10 text-desert-foreground py-10 md:py-28">
                     <div className="max-w-2xl">
-                      <span className="inline-block bg-gold/20 text-gold px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 md:mb-6 animate-fade-in">
-                        ✨ {t("أهلاً بك في الوجهة", "ברוכים הבאים ליעד")}
-                      </span>
+                      {slide.badge && (
+                        <span className="inline-block bg-gold/20 text-gold px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 md:mb-6 animate-fade-in">
+                          ✨ {slide.badge}
+                        </span>
+                      )}
                       {slide.title && (
                         <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-relaxed mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                           {slide.title}
@@ -115,9 +121,11 @@ export default function WebHome() {
                           )}
                         </h1>
                       )}
-                      <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                        {t("مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق", "ציוד קמפינג וטיולים בסגנון מזרחי מקורי — משלוחים לכל האזורים")}
-                      </p>
+                      {slide.description && (
+                        <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                          {slide.description}
+                        </p>
+                      )}
                       <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                         <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
                           <Link to={slide.link || hero.cta_link || "/shop"}>

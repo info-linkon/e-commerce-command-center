@@ -19,6 +19,10 @@ interface BannerForm {
   title_he: string;
   subtitle: string;
   subtitle_he: string;
+  badge: string;
+  badge_he: string;
+  description: string;
+  description_he: string;
   image_url: string;
   link: string;
 }
@@ -30,7 +34,7 @@ const linkOptions = [
   { value: "/faq", label: "שאלות נפוצות" },
 ];
 
-const emptyForm: BannerForm = { title: "", title_he: "", subtitle: "", subtitle_he: "", image_url: "", link: "" };
+const emptyForm: BannerForm = { title: "", title_he: "", subtitle: "", subtitle_he: "", badge: "", badge_he: "", description: "", description_he: "", image_url: "", link: "" };
 
 export default function WebBannersPage() {
   const { data: banners, isLoading } = useBannersAdmin();
@@ -55,6 +59,10 @@ export default function WebBannersPage() {
       title_he: banner.title_he || "",
       subtitle: banner.subtitle || "",
       subtitle_he: banner.subtitle_he || "",
+      badge: banner.badge || "",
+      badge_he: banner.badge_he || "",
+      description: banner.description || "",
+      description_he: banner.description_he || "",
       image_url: banner.image_url || "",
       link: banner.link || "",
     });
@@ -155,6 +163,22 @@ export default function WebBannersPage() {
             <div>
               <Label>תת כותרת (עברית)</Label>
               <Input value={form.subtitle_he} onChange={(e) => setForm({ ...form, subtitle_he: e.target.value })} className="mt-1" dir="rtl" />
+            </div>
+            <div>
+              <Label>תג/באדג׳ (ערבית)</Label>
+              <Input value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} className="mt-1" dir="rtl" placeholder="أهلاً بك في الوجهة" />
+            </div>
+            <div>
+              <Label>תג/באדג׳ (עברית)</Label>
+              <Input value={form.badge_he} onChange={(e) => setForm({ ...form, badge_he: e.target.value })} className="mt-1" dir="rtl" placeholder="ברוכים הבאים ליעד" />
+            </div>
+            <div>
+              <Label>תיאור (ערבית)</Label>
+              <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1" dir="rtl" placeholder="مستلزمات تخييم ورحلات..." />
+            </div>
+            <div>
+              <Label>תיאור (עברית)</Label>
+              <Input value={form.description_he} onChange={(e) => setForm({ ...form, description_he: e.target.value })} className="mt-1" dir="rtl" placeholder="ציוד קמפינג וטיולים..." />
             </div>
             <div>
               <Label>תמונה</Label>
