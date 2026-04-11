@@ -571,8 +571,7 @@ const PosPage = () => {
                 <SelectTrigger dir="rtl" className="text-right"><SelectValue /></SelectTrigger>
                 <SelectContent dir="rtl">
                   <SelectItem value="cash">מזומן</SelectItem>
-                  <SelectItem value="credit">אשראי</SelectItem>
-                  <SelectItem value="bit">ביט</SelectItem>
+                  <SelectItem value="credit">תשלום דיגיטלי</SelectItem>
                 </SelectContent>
               </Select>
             </div>

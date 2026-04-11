@@ -14,18 +14,18 @@ const PaymentRedirect = () => {
         return;
       }
 
-      const { data: order, error: fetchError } = await supabase
-        .from("orders")
+      const { data: link, error: fetchError } = await supabase
+        .from("public_payment_links")
         .select("payment_link_url")
         .eq("order_number", Number(orderNumber))
         .single();
 
-      if (fetchError || !order) {
+      if (fetchError || !link) {
         setError("הזמנה לא נמצאה");
         return;
       }
 
-      const paymentUrl = (order as any).payment_link_url;
+      const paymentUrl = link.payment_link_url;
       if (!paymentUrl) {
         setError("לינק תשלום לא זמין");
         return;

@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import { ExternalLink, Wallet } from "lucide-react";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "#e2a308", "#22c55e", "#ef4444", "#8b5cf6"];
-const methodLabels: Record<string, string> = { cash: "מזומן", bit: "ביט", credit: "אשראי" };
+const methodLabels: Record<string, string> = { cash: "מזומן", bit: "ביט", credit: "תשלום דיגיטלי" };
 
 interface Props {
   startDate: string;

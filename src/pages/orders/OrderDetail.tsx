@@ -236,7 +236,7 @@ const OrderDetail = () => {
               <div className="flex gap-2 items-center text-sm">
                 <span className="text-muted-foreground">תשלום:</span>
                 <Badge variant="outline" className="text-xs">
-                  {{ cash: "מזומן", credit: "אשראי", bit: "ביט" }[(order as any).payment_method] || (order as any).payment_method}
+                  {{ cash: "מזומן", credit: "תשלום דיגיטלי", bit: "ביט" }[(order as any).payment_method] || (order as any).payment_method}
                 </Badge>
               </div>
             )}
@@ -270,6 +270,7 @@ const OrderDetail = () => {
           customerEmail={order.customer_email || undefined}
           customerPhone={order.customer_phone || undefined}
           invoiceUrl={(order as any).invoice_url || null}
+          paymentMethod={(order as any).payment_method}
           orderItems={items.map((item: any) => ({
             details: `${item.product_variations?.products?.name || ""} - ${item.product_variations?.name || ""}`.trim().replace(/^- /, ""),
             amount: item.quantity,

@@ -18,8 +18,8 @@ import type { Database } from "@/integrations/supabase/types";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
 
-const methodLabels: Record<PaymentMethod, string> = { cash: "מזומן", bit: "ביט", credit: "אשראי" };
-const methodIcons: Record<PaymentMethod, any> = { cash: Banknote, bit: Smartphone, credit: CreditCard };
+const methodLabels: Record<string, string> = { cash: "מזומן", bit: "ביט", credit: "תשלום דיגיטלי" };
+const methodIcons: Record<string, any> = { cash: Banknote, bit: Smartphone, credit: CreditCard };
 
 interface PaymentLine {
   amount: string;
@@ -47,11 +47,12 @@ interface PaymentSectionProps {
   customerPhone?: string;
   orderItems?: OrderItemForInvoice[];
   invoiceUrl?: string | null;
+  paymentMethod?: string | null;
 }
 
 const PaymentSection = ({
   orderId, orderTotal, orderNumber, isDelivered, isCancelled, isCompleted,
-  customerName, customerEmail, customerPhone, orderItems, invoiceUrl,
+  customerName, customerEmail, customerPhone, orderItems, invoiceUrl, paymentMethod: orderPaymentMethod,
 }: PaymentSectionProps) => {
   const { data: existingPayments } = useOrderPayments(orderId);
   const { data: registers } = useCashRegisters();
@@ -250,8 +251,8 @@ const PaymentSection = ({
           </div>
         )}
 
-        {/* Send payment link via SMS — shown prominently first */}
-        {!isCancelled && !isCompleted && customerPhone && (
+        {/* Send payment link via SMS — shown only for digital payment orders */}
+        {!isCancelled && !isCompleted && customerPhone && orderPaymentMethod !== "cash" && (
           <Button
             variant="default"
             className="w-full gap-2"
@@ -312,8 +313,7 @@ const PaymentSection = ({
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="cash">מזומן</SelectItem>
-                            <SelectItem value="bit">ביט</SelectItem>
-                            <SelectItem value="credit">אשראי</SelectItem>
+                            <SelectItem value="credit">תשלום דיגיטלי</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
