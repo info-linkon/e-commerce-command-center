@@ -70,16 +70,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Read site URL from site_content or use preview URL
-    const { data: siteRow } = await supabase
-      .from("site_content")
-      .select("content")
-      .eq("page", "settings")
-      .eq("section", "general")
-      .maybeSingle();
-
-    const siteContent = siteRow?.content as Record<string, string> | null;
-    const siteUrl = siteContent?.site_url || siteContent?.siteUrl || "https://id-preview--6d29c5db-afa3-4add-850c-d1529a146c7c.lovable.app";
+    // Use custom domain
+    const siteUrl = "https://elwijha.co.il";
 
     const successUrl = `${siteUrl}/order-confirmation`;
     const errorUrl = `${siteUrl}/order-confirmation`;
@@ -129,9 +121,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const paymentUrl = `https://pay.hyp.co.il/p/?${signResult}`;
+    const fullPaymentUrl = `https://pay.hyp.co.il/p/?${signResult}`;
 
-    // Step 2: Send SMS with payment link
+    // Save payment link on order and create a short redirect URL
+    await supabase
+      .from("orders")
+      .update({ payment_link_url: fullPaymentUrl } as any)
+      .eq("id", order_id);
+
+    // Short URL: /pay/<order_number>
+    const shortPaymentUrl = `${siteUrl}/pay/${order.order_number}`;
+
+    // Step 2: Send SMS with SHORT payment link
     const { data: smsConfig } = await supabase
       .from("site_content")
       .select("content")
@@ -145,10 +146,9 @@ Deno.serve(async (req) => {
     const sender = inforuConfig?.sender || Deno.env.get("INFORU_SENDER") || "ELWEJHA";
 
     if (!username || !token) {
-      // HYP link generated but SMS failed — return the link anyway
       return new Response(JSON.stringify({
         success: true,
-        payment_url: paymentUrl,
+        payment_url: shortPaymentUrl,
         sms_sent: false,
         sms_error: "הגדרות SMS לא מוגדרות",
       }), {
@@ -165,9 +165,9 @@ Deno.serve(async (req) => {
       formattedPhone = "972" + formattedPhone;
     }
 
-    const smsMessage = `שלום ${order.customer_name || ""}, לתשלום הזמנה #${order.order_number} בסך ₪${order.total} לחץ כאן: ${paymentUrl}`;
+    const smsMessage = `שלום ${order.customer_name || ""}, לתשלום הזמנה #${order.order_number} בסך ₪${order.total} לחץ כאן: ${shortPaymentUrl}`;
 
-    console.log("Sending payment link SMS to:", formattedPhone);
+    console.log("Sending payment link SMS to:", formattedPhone, "URL:", shortPaymentUrl);
 
     const basicAuth = btoa(`${username}:${token}`);
     const smsBody = {
@@ -195,7 +195,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      payment_url: paymentUrl,
+      payment_url: shortPaymentUrl,
       sms_sent: smsSent,
       sms_error: smsSent ? null : (smsResult?.StatusDescription || smsResult?.Message || "שגיאה בשליחת SMS"),
     }), {
