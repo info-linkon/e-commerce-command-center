@@ -238,9 +238,6 @@ const OrderDetail = () => {
                 <Badge variant="outline" className="text-xs">
                   {{ cash: "מזומן", credit: "אשראי", bit: "ביט" }[(order as any).payment_method] || (order as any).payment_method}
                 </Badge>
-                {((order as any).payment_method === "credit" || (order as any).payment_method === "bit") && (
-                  <Badge className="bg-green-100 text-green-800 border-0 text-xs">שולם</Badge>
-                )}
               </div>
             )}
             <div className="text-sm text-muted-foreground">
