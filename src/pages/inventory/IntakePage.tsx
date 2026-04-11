@@ -44,7 +44,7 @@ const IntakePage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_variations")
-        .select("*, products(name)")
+        .select("*, products(name, name_ar, sku)")
         .order("name");
       if (error) throw error;
       return data;
@@ -62,7 +62,7 @@ const IntakePage = () => {
     setItems([...items, {
       variation_id: v.id,
       variation_name: v.name,
-      product_name: (v.products as any)?.name || "",
+        product_name: (v.products as any)?.name_ar || (v.products as any)?.name || "",
       quantity: 1,
       cost_price: Number(v.cost_price) || 0,
     }]);
@@ -249,7 +249,7 @@ const IntakePage = () => {
                     setItems([...items, {
                       variation_id: v.id,
                       variation_name: v.name,
-                      product_name: (v.products as any)?.name || "",
+                      product_name: (v.products as any)?.name_ar || (v.products as any)?.name || "",
                       quantity: 1,
                       cost_price: Number(v.cost_price) || 0,
                     }]);
@@ -493,9 +493,17 @@ function VariationSearch({ variations, excludeIds, onSelect }: {
       .filter((v) => !excludeIds.includes(v.id))
       .filter((v) => {
         const productName = (v.products as any)?.name?.toLowerCase() || "";
+        const productNameAr = (v.products as any)?.name_ar?.toLowerCase() || "";
+        const productSku = (v.products as any)?.sku?.toLowerCase() || "";
         const varName = v.name?.toLowerCase() || "";
+        const varNameAr = v.name_ar?.toLowerCase() || "";
         const sku = v.sku?.toLowerCase() || "";
-        return productName.includes(q) || varName.includes(q) || sku.includes(q);
+        return productName.includes(q) ||
+          productNameAr.includes(q) ||
+          productSku.includes(q) ||
+          varName.includes(q) ||
+          varNameAr.includes(q) ||
+          sku.includes(q);
       })
       .slice(0, 20);
   }, [variations, excludeIds, search]);
@@ -523,8 +531,10 @@ function VariationSearch({ variations, excludeIds, onSelect }: {
                 className="w-full text-right px-3 py-2 hover:bg-muted/50 text-sm border-b last:border-b-0 flex justify-between items-center"
                 onClick={() => { onSelect(v); setSearch(""); }}
               >
-                <span>{(v.products as any)?.name} — {v.name}</span>
-                {v.sku && <span className="text-muted-foreground text-xs">{v.sku}</span>}
+                <span>{(v.products as any)?.name_ar || (v.products as any)?.name} — {v.name_ar || v.name}</span>
+                <span className="text-muted-foreground text-xs">
+                  {[v.sku, (v.products as any)?.sku].filter(Boolean).join(" / ")}
+                </span>
               </button>
             ))
           )}
