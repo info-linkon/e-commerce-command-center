@@ -1150,6 +1150,7 @@ export type Database = {
           gallery_images: Json | null
           id: string
           image_url: string | null
+          is_featured: boolean
           is_published: boolean
           name: string
           name_ar: string | null
@@ -1172,6 +1173,7 @@ export type Database = {
           gallery_images?: Json | null
           id?: string
           image_url?: string | null
+          is_featured?: boolean
           is_published?: boolean
           name: string
           name_ar?: string | null
@@ -1194,6 +1196,7 @@ export type Database = {
           gallery_images?: Json | null
           id?: string
           image_url?: string | null
+          is_featured?: boolean
           is_published?: boolean
           name?: string
           name_ar?: string | null
