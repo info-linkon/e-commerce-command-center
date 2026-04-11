@@ -54,6 +54,7 @@ const PosPage = () => {
   const [variationPicker, setVariationPicker] = useState<GroupedProduct | null>(null);
   const [discountType, setDiscountType] = useState<"none" | "percent" | "fixed">("none");
   const [discountValue, setDiscountValue] = useState<number>(0);
+  const [shippingPrice, setShippingPrice] = useState<number>(0);
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
@@ -200,7 +201,7 @@ const PosPage = () => {
     return Math.min(discountValue, subtotal);
   }, [discountType, discountValue, subtotal]);
 
-  const total = subtotal - discountAmount;
+  const total = subtotal - discountAmount + shippingPrice;
 
   const addToCart = (variation: { id: string; name: string; price: number }, productName: string) => {
     const existing = cart.find((c) => c.variation_id === variation.id);
@@ -287,6 +288,7 @@ const PosPage = () => {
       setCashRegisterId("");
       setDiscountType("none");
       setDiscountValue(0);
+      setShippingPrice(0);
       toast.success("ההזמנה נוצרה ונשלחה לתהליך ההזמנות");
       navigate("/crm/orders");
     } catch {
@@ -376,16 +378,24 @@ const PosPage = () => {
         </div>
 
         {/* Subtotal + discount display */}
-        {discountAmount > 0 && (
+        {(discountAmount > 0 || shippingPrice > 0) && (
           <div className="space-y-1 text-sm">
             <div className="flex justify-between text-muted-foreground">
               <span>₪{subtotal.toFixed(2)}</span>
               <span>סכום ביניים</span>
             </div>
-            <div className="flex justify-between text-green-600 font-medium">
-              <span>-₪{discountAmount.toFixed(2)}</span>
-              <span>הנחה {discountType === "percent" ? `(${discountValue}%)` : ""}</span>
-            </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-green-600 font-medium">
+                <span>-₪{discountAmount.toFixed(2)}</span>
+                <span>הנחה {discountType === "percent" ? `(${discountValue}%)` : ""}</span>
+              </div>
+            )}
+            {shippingPrice > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>₪{shippingPrice.toFixed(2)}</span>
+                <span>משלוח</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -588,6 +598,20 @@ const PosPage = () => {
                 </Select>
               </div>
             )}
+            <Separator />
+            <div>
+              <Label>מחיר משלוח (אופציונלי)</Label>
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                value={shippingPrice || ""}
+                onChange={(e) => setShippingPrice(Number(e.target.value))}
+                placeholder="0"
+                dir="ltr"
+                className="text-left"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button onClick={handleCreateOrder} disabled={createOrder.isPending} className="w-full">
