@@ -262,6 +262,7 @@ const IntakePage = () => {
               <CardContent className="space-y-4">
                 <VariationSearch
                   variations={variations || []}
+                  productsWithoutVariations={productsWithoutVariations || []}
                   excludeIds={items.map((i) => i.variation_id)}
                   onSelect={(v) => {
                     if (items.find((i) => i.variation_id === v.id)) {
