@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     }
 
     // Use custom domain
-    const siteUrl = "https://elwijha.co.il";
+    const siteUrl = "https://elwejha.co.il";
 
     const successUrl = `${siteUrl}/order-confirmation`;
     const errorUrl = `${siteUrl}/order-confirmation`;
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       .eq("id", order_id);
 
     // Short URL via edge function (works regardless of custom domain SPA config)
-    const shortPaymentUrl = `https://elwijha.co.il/pay/${order.order_number}`;
+    const shortPaymentUrl = `https://elwejha.co.il/pay/${order.order_number}`;
 
     // Step 2: Send SMS with SHORT payment link
     const { data: smsConfig } = await supabase
