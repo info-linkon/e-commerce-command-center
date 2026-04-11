@@ -102,7 +102,7 @@ export default function WebHome() {
                         ✨ {t("أهلاً بك في الوجهة", "ברוכים הבאים ליעד")}
                       </span>
                       {slide.title && (
-                        <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-tight mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                        <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-relaxed mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                           {slide.title}
                           {slide.subtitle && (
                             <>
