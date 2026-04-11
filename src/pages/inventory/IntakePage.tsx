@@ -51,6 +51,28 @@ const IntakePage = () => {
     },
   });
 
+  // Fetch products that have NO variations (so they also appear in search)
+  const { data: productsWithoutVariations } = useQuery({
+    queryKey: ["products-without-variations"],
+    queryFn: async () => {
+      // Get all product IDs that have at least one variation
+      const { data: varData } = await supabase
+        .from("product_variations")
+        .select("product_id");
+      const productIdsWithVars = new Set((varData || []).map(v => v.product_id));
+      
+      // Get all products
+      const { data: allProducts, error } = await supabase
+        .from("products")
+        .select("id, name, name_ar, sku, sale_price, cost_price")
+        .order("name");
+      if (error) throw error;
+      
+      // Return only products without variations
+      return (allProducts || []).filter(p => !productIdsWithVars.has(p.id));
+    },
+  });
+
   const addItem = () => {
     if (!selectedVariation) return;
     if (items.find((i) => i.variation_id === selectedVariation)) {
@@ -240,6 +262,7 @@ const IntakePage = () => {
               <CardContent className="space-y-4">
                 <VariationSearch
                   variations={variations || []}
+                  productsWithoutVariations={productsWithoutVariations || []}
                   excludeIds={items.map((i) => i.variation_id)}
                   onSelect={(v) => {
                     if (items.find((i) => i.variation_id === v.id)) {
@@ -479,17 +502,19 @@ function SessionDetails({ sessionId, notes }: { sessionId: string; notes: string
   );
 }
 
-function VariationSearch({ variations, excludeIds, onSelect }: {
+function VariationSearch({ variations, productsWithoutVariations, excludeIds, onSelect }: {
   variations: any[];
+  productsWithoutVariations: any[];
   excludeIds: string[];
   onSelect: (v: any) => void;
 }) {
   const [search, setSearch] = useState("");
+  const [creatingVariation, setCreatingVariation] = useState(false);
   
   const filtered = useMemo(() => {
     if (!search.trim()) return [];
     const q = search.toLowerCase();
-    return variations
+    const matchedVariations = variations
       .filter((v) => !excludeIds.includes(v.id))
       .filter((v) => {
         const productName = (v.products as any)?.name?.toLowerCase() || "";
@@ -506,7 +531,62 @@ function VariationSearch({ variations, excludeIds, onSelect }: {
           sku.includes(q);
       })
       .slice(0, 20);
-  }, [variations, excludeIds, search]);
+    
+    // Also match products without variations
+    const matchedProducts = productsWithoutVariations
+      .filter((p: any) => {
+        const name = p.name?.toLowerCase() || "";
+        const nameAr = p.name_ar?.toLowerCase() || "";
+        const sku = p.sku?.toLowerCase() || "";
+        return name.includes(q) || nameAr.includes(q) || sku.includes(q);
+      })
+      .map((p: any) => ({
+        id: `product-${p.id}`,
+        _isProductWithoutVariation: true,
+        _productData: p,
+        name: "ברירת מחדל",
+        name_ar: null,
+        sku: p.sku,
+        price: p.sale_price,
+        cost_price: p.cost_price,
+        product_id: p.id,
+        products: { name: p.name, name_ar: p.name_ar, sku: p.sku },
+      }));
+    
+    return [...matchedVariations, ...matchedProducts].slice(0, 20);
+  }, [variations, productsWithoutVariations, excludeIds, search]);
+
+  const handleSelect = async (v: any) => {
+    if (v._isProductWithoutVariation) {
+      // Auto-create a default variation for this product
+      setCreatingVariation(true);
+      try {
+        const p = v._productData;
+        const { data: newVar, error } = await supabase
+          .from("product_variations")
+          .insert({
+            product_id: p.id,
+            name: "ברירת מחדל",
+            sku: p.sku || null,
+            price: p.sale_price || 0,
+            cost_price: p.cost_price || 0,
+          })
+          .select("*, products(name, name_ar, sku)")
+          .single();
+        if (error) throw error;
+        toast.success("וריאציית ברירת מחדל נוצרה אוטומטית");
+        onSelect(newVar);
+        setSearch("");
+      } catch {
+        toast.error("שגיאה ביצירת וריאציה");
+      } finally {
+        setCreatingVariation(false);
+      }
+    } else {
+      onSelect(v);
+      setSearch("");
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -517,6 +597,7 @@ function VariationSearch({ variations, excludeIds, onSelect }: {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pr-9"
+          disabled={creatingVariation}
         />
       </div>
       {search.trim() && (
@@ -529,9 +610,13 @@ function VariationSearch({ variations, excludeIds, onSelect }: {
                 key={v.id}
                 type="button"
                 className="w-full text-right px-3 py-2 hover:bg-muted/50 text-sm border-b last:border-b-0 flex justify-between items-center"
-                onClick={() => { onSelect(v); setSearch(""); }}
+                onClick={() => handleSelect(v)}
+                disabled={creatingVariation}
               >
-                <span>{(v.products as any)?.name_ar || (v.products as any)?.name} — {v.name_ar || v.name}</span>
+                <span>
+                  {(v.products as any)?.name_ar || (v.products as any)?.name}
+                  {!v._isProductWithoutVariation && <> — {v.name_ar || v.name}</>}
+                </span>
                 <span className="text-muted-foreground text-xs">
                   {[v.sku, (v.products as any)?.sku].filter(Boolean).join(" / ")}
                 </span>
