@@ -15,7 +15,7 @@ const PaymentRedirect = () => {
       }
 
       const { data: link, error: fetchError } = await supabase
-        .from("public_payment_links")
+        .from("orders")
         .select("payment_link_url")
         .eq("order_number", Number(orderNumber))
         .single();
