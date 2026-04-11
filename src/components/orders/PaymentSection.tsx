@@ -251,7 +251,7 @@ const PaymentSection = ({
         )}
 
         {/* Send payment link via SMS — shown prominently first */}
-        {!isCancelled && !isCompleted && remaining > 0 && customerPhone && (
+        {!isCancelled && !isCompleted && customerPhone && (
           <Button
             variant="default"
             className="w-full gap-2"
