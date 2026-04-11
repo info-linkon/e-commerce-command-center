@@ -456,6 +456,8 @@ const PaymentSection = ({
             {issuingInvoiceStandalone ? "מנפיק חשבונית..." : "הנפק חשבונית מס קבלה"}
           </Button>
         )}
+
+        {!isCancelled && !isCompleted && !isDelivered && !hasPayments && remaining > 0 && (
           <p className="text-xs text-muted-foreground text-center">
             תשלום יהיה זמין לאחר שהמשלוח יסומן כנמסר
           </p>
