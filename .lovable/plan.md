@@ -1,24 +1,31 @@
 
+## Plan: Fix Order Confirmation Redirect Issue
 
-## Plan: Fix Hero Section Text Spacing and Clipping
-
-### Problems
-1. **Text clipping**: The hero section uses `aspect-[3/2]` which constrains the height and can clip the subtitle text at the bottom, especially with longer banner text.
-2. **Inconsistent line spacing**: The `leading-tight` on the `h1` plus the subtitle being inside the `h1` causes inconsistent gaps between lines across different banners.
+### Root Cause
+In `WebCheckoutPage.tsx` line 254, there's a guard that redirects to `/cart` when `items.length === 0`. For cash orders, `clearCart()` is called on line 213 **before** `navigate()` on line 214. The `clearCart()` triggers a re-render, the guard fires, and the user gets sent to the empty cart page instead of the confirmation page.
 
 ### Fix
 
-**File: `src/pages/web/WebHome.tsx`**
+**File: `src/pages/web/WebCheckoutPage.tsx`**
 
-1. **Change hero aspect ratio** from `aspect-[3/2]` to a more appropriate responsive height using `aspect-[16/9] md:aspect-[21/9]` — this gives enough vertical space on mobile while keeping a cinematic look on desktop.
+1. **Move `clearCart()` after `navigate()`** for cash orders (swap lines 213-214)
+2. **Move `clearCart()` after `navigate()`** for the pending payment fallback (swap lines 238-239)  
+3. **Add a `submittedRef`** to prevent the empty-cart guard from firing during/after submission — the guard on line 254 should also check this ref
 
-2. **Move subtitle out of the `h1`** and make it a separate `h2` with explicit `mt-3 md:mt-4` spacing — this ensures consistent gap regardless of font size or line count.
+```typescript
+const submittedRef = useRef(false);
 
-3. **Add `leading-normal`** to the h1 instead of `leading-tight` to prevent internal line compression when title wraps.
+// In submit handler, before navigate:
+submittedRef.current = true;
 
-### Result
-Consistent spacing between title lines across all banners, no text clipping at the bottom.
+// In the guard:
+if (items.length === 0 && !hypPaymentUrl && !submittedRef.current) {
+  navigate("/cart");
+  return null;
+}
+```
 
-### Files
-- `src/pages/web/WebHome.tsx` — hero section layout adjustments
+This ensures the confirmation page is always shown after a successful order, for both cash and credit flows.
 
+### Files Changed
+- `src/pages/web/WebCheckoutPage.tsx` — add ref guard + reorder clearCart/navigate calls
