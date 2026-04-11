@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       .eq("id", order_id);
 
     // Short URL via edge function (works regardless of custom domain SPA config)
-    const shortPaymentUrl = `${supabaseUrl}/functions/v1/pay-redirect?order=${order.order_number}`;
+    const shortPaymentUrl = `https://elwijha.co.il/pay/${order.order_number}`;
 
     // Step 2: Send SMS with SHORT payment link
     const { data: smsConfig } = await supabase
