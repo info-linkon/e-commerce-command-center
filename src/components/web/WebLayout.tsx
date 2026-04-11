@@ -3,7 +3,7 @@ import { WebHeader } from "./WebHeader";
 import { WebFooter } from "./WebFooter";
 import { WebBottomNav } from "./WebBottomNav";
 import { MessageCircle } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { fbqPageView } from "@/lib/meta-pixel";
 import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
@@ -18,17 +18,38 @@ function WebLayoutInner() {
   const { data: pixelSettings } = useSiteSection("settings", "meta_pixel");
   const { data: settingsData } = useSiteSection("settings", "general");
   const { lang } = useLanguage();
+  const { pathname } = useLocation();
+  const pixelInitialized = useRef(false);
 
   const settings = (settingsData?.content || {}) as any;
   const whatsapp = settings.whatsapp || "972526573185";
 
+  // Initialize pixel with retry
   useEffect(() => {
     const pixelId = (pixelSettings?.content as any)?.pixel_id;
-    if (pixelId && typeof window !== "undefined" && window.fbq) {
-      window.fbq("init", pixelId);
+    if (!pixelId || pixelInitialized.current) return;
+
+    const tryInit = (attempts = 0) => {
+      if (typeof window !== "undefined" && window.fbq) {
+        window.fbq("init", pixelId);
+        fbqPageView();
+        pixelInitialized.current = true;
+      } else if (attempts < 20) {
+        setTimeout(() => tryInit(attempts + 1), 500);
+      }
+    };
+    tryInit();
+  }, [pixelSettings]);
+
+  // Track page views on route change
+  useEffect(() => {
+    if (pixelInitialized.current) {
       fbqPageView();
     }
-  }, [pixelSettings]);
+  }, [pathname]);
+
+  // Render noscript pixel fallback
+  const pixelId = (pixelSettings?.content as any)?.pixel_id;
 
   return (
     <div className="min-h-screen flex flex-col bg-sand" dir="rtl">
@@ -39,6 +60,19 @@ function WebLayoutInner() {
       </main>
       <WebFooter />
       <WebBottomNav />
+
+      {/* Noscript pixel fallback */}
+      {pixelId && (
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
+            alt=""
+          />
+        </noscript>
+      )}
 
       {/* WhatsApp float */}
       <a
