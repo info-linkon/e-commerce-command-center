@@ -7,7 +7,7 @@ export function useWebProducts(categoryId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("products")
-        .select("*, categories(name, slug)")
+        .select("*, categories!products_category_id_fkey(name, slug)")
         .eq("is_published", true)
         .order("name");
       if (categoryId) query = query.eq("category_id", categoryId);
@@ -32,7 +32,7 @@ export function useWebProductsByCategoryNumber(categoryNumber: number | undefine
       if (!cat) return { products: [], category: null };
       const { data, error } = await supabase
         .from("products")
-        .select("*, categories(name, slug)")
+        .select("*, categories!products_category_id_fkey(name, slug)")
         .eq("is_published", true)
         .eq("category_id", cat.id)
         .order("name");
@@ -51,7 +51,7 @@ export function useWebProduct(productNumber: string | undefined) {
       if (isNaN(num)) return null;
       const { data, error } = await (supabase
         .from("products")
-        .select("*, categories(name, slug)") as any)
+        .select("*, categories!products_category_id_fkey(name, slug)") as any)
         .eq("product_number", num)
         .eq("is_published", true)
         .single();
@@ -113,7 +113,7 @@ export function useWebFeaturedProducts() {
     queryFn: async () => {
       const { data, error } = await (supabase
         .from("products")
-        .select("*, categories(name, slug)") as any)
+        .select("*, categories!products_category_id_fkey(name, slug)") as any)
         .eq("is_published", true)
         .eq("is_featured", true)
         .order("name")
@@ -167,7 +167,7 @@ export function useWebBestSellers() {
 
       const { data: products } = await supabase
         .from("products")
-        .select("*, categories(name, slug)")
+        .select("*, categories!products_category_id_fkey(name, slug)")
         .eq("is_published", true)
         .in("id", topProductIds);
 
@@ -184,7 +184,7 @@ export function useWebSearch(query: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*, categories(name, slug)")
+        .select("*, categories!products_category_id_fkey(name, slug)")
         .eq("is_published", true)
         .or(`name.ilike.%${query}%,name_ar.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(20);
