@@ -86,6 +86,8 @@ export const defaultContent: Record<string, Record<string, Record<string, any>>>
       instagram: "https://www.instagram.com/elwejha.outdoors",
       facebook: "https://www.facebook.com/1094362587370591",
       tiktok: "",
+      address: "زيمر — نعمل أونلاين، زيارة المخازن بموعد مسبق",
+      address_he: "זמר — עובדים אונליין, ביקור במחסנים בתיאום מראש",
     },
     shipping_methods: {
       delivery_enabled: true,
