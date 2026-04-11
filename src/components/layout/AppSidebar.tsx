@@ -11,12 +11,7 @@ import {
   LogOut,
   ChevronDown,
   Users,
-  ClipboardList,
-  PackageMinus,
-  FileText,
-  Image,
   Monitor,
-  Ticket,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
@@ -59,11 +54,9 @@ const webManagementSubItems = [
 ];
 
 const menuItems = [
-  { title: "דשבורד", url: "/crm/dashboard", icon: LayoutDashboard },
   { title: "פריטי אתר", url: "/crm/website-items", icon: Globe },
   { title: "לקוחות", url: "/crm/customers", icon: Users },
   { title: "משלוחים", url: "/crm/deliveries", icon: Truck },
-  { title: "קופה", url: "/crm/pos", icon: CreditCard },
   { title: "כספים", url: "/crm/finance", icon: Receipt },
   { title: "דוחות", url: "/crm/reports", icon: BarChart3 },
   { title: "הגדרות", url: "/crm/settings", icon: Settings },
@@ -93,6 +86,20 @@ export function AppSidebar() {
                   >
                     <LayoutDashboard className="ml-2 h-4 w-4" />
                     <span>דשבורד</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* POS - second item */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/crm/pos"
+                    className="hover:bg-sidebar-accent"
+                    activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                  >
+                    <CreditCard className="ml-2 h-4 w-4" />
+                    <span>קופה</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -209,7 +216,7 @@ export function AppSidebar() {
               </Collapsible>
 
               {/* Rest of menu items */}
-              {menuItems.slice(1).map((item) => (
+              {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
