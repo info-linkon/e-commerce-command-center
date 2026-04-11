@@ -378,16 +378,24 @@ const PosPage = () => {
         </div>
 
         {/* Subtotal + discount display */}
-        {discountAmount > 0 && (
+        {(discountAmount > 0 || shippingPrice > 0) && (
           <div className="space-y-1 text-sm">
             <div className="flex justify-between text-muted-foreground">
               <span>₪{subtotal.toFixed(2)}</span>
               <span>סכום ביניים</span>
             </div>
-            <div className="flex justify-between text-green-600 font-medium">
-              <span>-₪{discountAmount.toFixed(2)}</span>
-              <span>הנחה {discountType === "percent" ? `(${discountValue}%)` : ""}</span>
-            </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-green-600 font-medium">
+                <span>-₪{discountAmount.toFixed(2)}</span>
+                <span>הנחה {discountType === "percent" ? `(${discountValue}%)` : ""}</span>
+              </div>
+            )}
+            {shippingPrice > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>₪{shippingPrice.toFixed(2)}</span>
+                <span>משלוח</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -578,6 +586,32 @@ const PosPage = () => {
               </Select>
             </div>
             {paymentMethod === "cash" && (
+              <div>
+                <Label>קופה *</Label>
+                <Select value={cashRegisterId} onValueChange={setCashRegisterId} dir="rtl">
+                  <SelectTrigger dir="rtl" className="text-right"><SelectValue placeholder="בחר קופה..." /></SelectTrigger>
+                  <SelectContent dir="rtl">
+                    {cashRegisters?.filter(r => r.is_active).map((r) => (
+                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <Separator />
+            <div>
+              <Label>מחיר משלוח (אופציונלי)</Label>
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                value={shippingPrice || ""}
+                onChange={(e) => setShippingPrice(Number(e.target.value))}
+                placeholder="0"
+                dir="ltr"
+                className="text-left"
+              />
+            </div>
               <div>
                 <Label>קופה *</Label>
                 <Select value={cashRegisterId} onValueChange={setCashRegisterId} dir="rtl">
