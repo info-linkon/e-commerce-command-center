@@ -33,6 +33,7 @@ export default function WebCheckoutPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
+  const submittedRef = useRef(false);
 
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
   const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
