@@ -217,6 +217,8 @@ export const sectionFields: Record<string, Record<string, FieldConfig[]>> = {
       { key: 'instagram', label: 'Instagram', type: 'text' },
       { key: 'facebook', label: 'Facebook', type: 'text' },
       { key: 'tiktok', label: 'TikTok', type: 'text' },
+      { key: 'address', label: 'כתובת (ערבית)', type: 'text' },
+      { key: 'address_he', label: 'כתובת (עברית)', type: 'text' },
     ],
     shipping_methods: [
       { key: 'delivery_enabled', label: 'משלוח עד הבית — מופעל', type: 'toggle' },
