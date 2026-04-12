@@ -7,17 +7,20 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   startDate: string;
+  endDate?: string;
 }
 
-export default function ProfitabilityTab({ startDate }: Props) {
+export default function ProfitabilityTab({ startDate, endDate }: Props) {
   const { data: profitData } = useQuery({
-    queryKey: ["report-profitability", startDate],
+    queryKey: ["report-profitability", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("order_items")
         .select("quantity, total_price, product_variations(cost_price, name, products(name)), orders!inner(status, created_at)")
         .gte("orders.created_at", startDate)
         .eq("orders.status", "completed");
+      if (endDate) q = q.lte("orders.created_at", endDate);
+      const { data, error } = await q;
       if (error) throw error;
 
       let totalRevenue = 0, totalCost = 0;
@@ -44,8 +47,9 @@ export default function ProfitabilityTab({ startDate }: Props) {
         byProduct[key].cost += cost;
       }
 
-      // Get expenses
-      const { data: expData } = await supabase.from("expenses").select("amount").gte("created_at", startDate);
+      let expQ = supabase.from("expenses").select("amount").gte("created_at", startDate);
+      if (endDate) expQ = expQ.lte("created_at", endDate);
+      const { data: expData } = await expQ;
       const totalExpenses = expData?.reduce((s, e) => s + Number(e.amount), 0) || 0;
 
       return {

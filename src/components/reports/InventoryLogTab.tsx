@@ -23,9 +23,10 @@ const actionColors: Record<string, string> = {
 
 interface Props {
   startDate: string;
+  endDate?: string;
 }
 
-export default function InventoryLogTab({ startDate }: Props) {
+export default function InventoryLogTab({ startDate, endDate }: Props) {
   const [warehouseId, setWarehouseId] = useState("");
   const [actionType, setActionType] = useState("");
 
@@ -34,6 +35,7 @@ export default function InventoryLogTab({ startDate }: Props) {
     warehouseId: warehouseId || undefined,
     actionType: (actionType || undefined) as any,
     dateFrom: startDate.split("T")[0],
+    dateTo: endDate?.split("T")[0],
   });
 
   return (
