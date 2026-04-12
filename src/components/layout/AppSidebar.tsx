@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrderCounts } from "@/hooks/useOrderCounts";
 import {
   Sidebar,
   SidebarContent,
@@ -42,11 +43,11 @@ const inventorySubItems = [
 ];
 
 const ordersSubItems = [
-  { title: "כל ההזמנות", url: "/crm/orders" },
-  { title: "ממתינות", url: "/crm/orders/pending" },
-  { title: "תור ליקוט", url: "/crm/orders/picking" },
-  { title: "במשלוח", url: "/crm/orders/in-delivery" },
-  { title: "הושלמו", url: "/crm/orders/completed" },
+  { title: "כל ההזמנות", url: "/crm/orders", statusKey: null },
+  { title: "ממתינות", url: "/crm/orders/pending", statusKey: "pending" },
+  { title: "תור ליקוט", url: "/crm/orders/picking", statusKey: "picking" },
+  { title: "במשלוח", url: "/crm/orders/in-delivery", statusKey: "shipping" },
+  { title: "הושלמו", url: "/crm/orders/completed", statusKey: "completed" },
 ];
 
 const webManagementSubItems = [
@@ -66,7 +67,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const { signOut } = useAuth();
-
+  const { data: orderCounts } = useOrderCounts();
   return (
     <Sidebar side="right" className="border-l-0 border-r">
       <div className="p-4 border-b border-sidebar-border flex flex-col items-center gap-2">
@@ -153,20 +154,28 @@ export function AppSidebar() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {ordersSubItems.map((item) => (
-                        <SidebarMenuSubItem key={item.url}>
-                          <SidebarMenuSubButton asChild>
-                            <NavLink
-                              to={item.url}
-                              end={item.url === "/crm/orders"}
-                              className="hover:bg-sidebar-accent"
-                              activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                            >
-                              <span>{item.title}</span>
-                            </NavLink>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
+                      {ordersSubItems.map((item) => {
+                        const count = item.statusKey && orderCounts ? orderCounts[item.statusKey] || 0 : null;
+                        return (
+                          <SidebarMenuSubItem key={item.url}>
+                            <SidebarMenuSubButton asChild>
+                              <NavLink
+                                to={item.url}
+                                end={item.url === "/crm/orders"}
+                                className="hover:bg-sidebar-accent flex items-center justify-between w-full"
+                                activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                              >
+                                <span>{item.title}</span>
+                                {count !== null && count > 0 && (
+                                  <span className="mr-auto ml-2 text-[10px] leading-none bg-primary/15 text-primary font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                                    {count}
+                                  </span>
+                                )}
+                              </NavLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>
