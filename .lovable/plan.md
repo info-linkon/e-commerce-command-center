@@ -1,27 +1,39 @@
 
 
-## Fix: Tooltip labels all showing "רווח" in Overview profitability chart
+## Fix RTL (Right-to-Left) across all report tabs
 
-The `name` parameter passed to the Tooltip formatter is the Bar's `name` prop (Hebrew), not the `dataKey`. So the conditions `name === "revenue"` and `name === "cost"` never match, and all three labels fall through to "רווח".
+The report tabs have several LTR remnants: chart Y-axes appear on the left, some table headers lack right-alignment, and chart layouts read left-to-right. Here are the changes needed:
 
-### Change
+### Files to modify
 
-**File: `src/components/reports/OverviewTab.tsx` (line 134)**
+**1. `src/components/reports/OverviewTab.tsx`**
+- Add `dir="rtl"` to root div
+- Set `YAxis orientation="right"` on both charts
+- Reverse summary card layout: label on right, icon on left (already correct)
 
-Update the formatter to match against the Hebrew names that are actually passed:
+**2. `src/components/reports/SalesTab.tsx`**
+- Add `dir="rtl"` to root div
+- Set `YAxis orientation="right"` on the horizontal bar chart
+- For the vertical bar chart (`layout="vertical"`), set `XAxis` and `YAxis` appropriately for RTL
 
-```tsx
-<Tooltip formatter={(v: number, name: string) => [
-  `₪${v.toFixed(0)}`, 
-  name === "הכנסות" ? "הכנסות" : name === "עלות" ? "עלות" : "רווח"
-]} />
-```
+**3. `src/components/reports/ExpensesTab.tsx`**
+- Add `dir="rtl"` to root div
+- Set `YAxis orientation="right"` on the bar chart
 
-Or more simply, just pass the name through since the Bar `name` props already have the correct Hebrew labels:
+**4. `src/components/reports/CashflowTab.tsx`**
+- Add `dir="rtl"` to root div
+- Add `className="text-right"` to all TableHead elements (lines 99-104, 130-136)
 
-```tsx
-<Tooltip formatter={(v: number, name: string) => [`₪${v.toFixed(0)}`, name]} />
-```
+**5. `src/components/reports/ProfitabilityTab.tsx`**
+- Add `dir="rtl"` to root div
+- Set `YAxis orientation="right"` on the bar chart
 
-This single-line change fixes all three tooltip labels.
+**6. `src/components/reports/InventoryLogTab.tsx`**
+- Add `dir="rtl"` to the Card root (already has `text-right` on headers)
+
+### Summary of changes
+- 6 files edited
+- All YAxis moved to the right side of charts
+- All table headers aligned right
+- All tab root elements marked as RTL
 
