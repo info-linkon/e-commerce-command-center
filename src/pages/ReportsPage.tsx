@@ -47,7 +47,7 @@ const ReportsPage = () => {
       <div className="flex justify-between items-center flex-wrap gap-3">
         <h1 className="text-2xl font-bold">דוחות</h1>
         <div className="flex items-center gap-2 flex-wrap">
-          <ToggleGroup type="single" value={period} onValueChange={(v) => v && setPeriod(v)} variant="outline" className="gap-1">
+          <ToggleGroup type="single" value={period} onValueChange={(v) => v && setPeriod(v)} variant="outline" className="gap-1" dir="rtl">
             <ToggleGroupItem value="7" className="rounded-full px-3 h-8 text-xs">7 ימים</ToggleGroupItem>
             <ToggleGroupItem value="30" className="rounded-full px-3 h-8 text-xs">30 יום</ToggleGroupItem>
             <ToggleGroupItem value="90" className="rounded-full px-3 h-8 text-xs">90 יום</ToggleGroupItem>
@@ -85,7 +85,7 @@ const ReportsPage = () => {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full flex flex-wrap h-auto gap-1 justify-start">
+        <TabsList className="w-full flex flex-wrap h-auto gap-1 justify-start" dir="rtl">
           <TabsTrigger value="overview">סקירה כללית</TabsTrigger>
           <TabsTrigger value="sales">מכירות ומוצרים</TabsTrigger>
           <TabsTrigger value="inventory-log">תנועות מלאי</TabsTrigger>
