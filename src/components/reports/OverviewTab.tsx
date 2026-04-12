@@ -88,7 +88,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((s) => (
           <Card key={s.label}>
@@ -115,7 +115,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
             <LineChart data={salesData?.byDate || []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" fontSize={12} />
-              <YAxis />
+              <YAxis orientation="right" />
               <Tooltip formatter={(v) => [`₪${v}`, "מכירות"]} />
               <Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
@@ -130,7 +130,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
             <BarChart data={profitByDate || []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" fontSize={12} />
-              <YAxis />
+              <YAxis orientation="right" />
               <Tooltip formatter={(v: number, name: string) => [`₪${v.toFixed(0)}`, name]} />
               <Bar dataKey="revenue" name="הכנסות" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               <Bar dataKey="cost" name="עלות" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />

@@ -60,7 +60,7 @@ export default function CashflowTab({ startDate, endDate }: Props) {
   })();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {(registers || []).map((r) => (
           <Card key={r.id}>
@@ -96,11 +96,11 @@ export default function CashflowTab({ startDate, endDate }: Props) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>תאריך</TableHead>
-                  <TableHead>מקופה</TableHead>
-                  <TableHead>לקופה</TableHead>
-                  <TableHead>סכום</TableHead>
-                  <TableHead>הערות</TableHead>
+                  <TableHead className="text-right">תאריך</TableHead>
+                  <TableHead className="text-right">מקופה</TableHead>
+                  <TableHead className="text-right">לקופה</TableHead>
+                  <TableHead className="text-right">סכום</TableHead>
+                  <TableHead className="text-right">הערות</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -127,12 +127,12 @@ export default function CashflowTab({ startDate, endDate }: Props) {
           <Table>
             <TableHeader>
               <TableRow>
-                 <TableHead>תאריך</TableHead>
-                 <TableHead>הזמנה</TableHead>
-                 <TableHead>אמצעי</TableHead>
-                 <TableHead>קופה</TableHead>
-                 <TableHead>סכום</TableHead>
-                 <TableHead>הפניה</TableHead>
+                 <TableHead className="text-right">תאריך</TableHead>
+                 <TableHead className="text-right">הזמנה</TableHead>
+                 <TableHead className="text-right">אמצעי</TableHead>
+                 <TableHead className="text-right">קופה</TableHead>
+                 <TableHead className="text-right">סכום</TableHead>
+                 <TableHead className="text-right">הפניה</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
