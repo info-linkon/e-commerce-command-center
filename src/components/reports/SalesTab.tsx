@@ -66,7 +66,7 @@ export default function SalesTab({ startDate, endDate }: Props) {
               <BarChart data={topProducts || []} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={120} fontSize={12} />
+                <YAxis dataKey="name" type="category" width={120} fontSize={12} orientation="right" />
                 <Tooltip formatter={(v) => [`₪${v}`, "הכנסות"]} />
                 <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
               </BarChart>
