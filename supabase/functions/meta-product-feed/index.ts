@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     const link = `${siteUrl}/product/${p.product_number}`;
 
     return `    <item>
-      <g:id>${p.id}</g:id>
+      <g:id>${p.sku || p.product_number}</g:id>
       <g:title><![CDATA[${title}]]></g:title>
       <g:description><![CDATA[${cleanDesc}]]></g:description>
       <g:link>${link}</g:link>
