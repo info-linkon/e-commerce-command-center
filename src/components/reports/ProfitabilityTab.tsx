@@ -77,7 +77,7 @@ export default function ProfitabilityTab({ startDate, endDate }: Props) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {cards.map((s) => (
           <Card key={s.label}>
@@ -96,7 +96,7 @@ export default function ProfitabilityTab({ startDate, endDate }: Props) {
             <BarChart data={profitData.byDate}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" fontSize={12} />
-              <YAxis />
+              <YAxis orientation="right" />
               <Tooltip formatter={(v: number, name: string) => [`₪${v.toFixed(0)}`, name === "revenue" ? "הכנסות" : name === "cost" ? "עלות" : "רווח"]} />
               <Legend />
               <Bar dataKey="revenue" name="הכנסות" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />

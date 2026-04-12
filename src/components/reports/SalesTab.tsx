@@ -57,7 +57,7 @@ export default function SalesTab({ startDate, endDate }: Props) {
   const sourceLabels: Record<string, string> = { manual: "ידני", pos: "קופה", website: "אתר" };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader><CardTitle>מוצרים מובילים - הכנסות</CardTitle></CardHeader>

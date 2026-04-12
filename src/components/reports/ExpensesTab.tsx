@@ -42,7 +42,7 @@ export default function ExpensesTab({ startDate, endDate }: Props) {
   }, [expenses]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <Card>
         <CardContent className="p-4 flex items-center justify-between">
           <p className="text-2xl font-bold text-red-500">₪{total.toFixed(0)}</p>
@@ -60,7 +60,7 @@ export default function ExpensesTab({ startDate, endDate }: Props) {
             <BarChart data={byDate}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" fontSize={12} />
-              <YAxis />
+              <YAxis orientation="right" />
               <Tooltip formatter={(v) => [`₪${v}`, "הוצאות"]} />
               <Bar dataKey="amount" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
             </BarChart>

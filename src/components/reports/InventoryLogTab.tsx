@@ -39,7 +39,7 @@ export default function InventoryLogTab({ startDate, endDate }: Props) {
   });
 
   return (
-    <Card>
+    <Card dir="rtl">
       <CardHeader>
         <CardTitle className="flex justify-between items-center flex-wrap gap-3">
           <div className="flex gap-3 flex-wrap">

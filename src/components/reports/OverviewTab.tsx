@@ -88,7 +88,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((s) => (
           <Card key={s.label}>
