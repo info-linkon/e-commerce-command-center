@@ -11,17 +11,20 @@ const sourceLabels: Record<string, string> = { credit_card: "כרטיס אשרא
 
 interface Props {
   startDate: string;
+  endDate?: string;
 }
 
-export default function ExpensesTab({ startDate }: Props) {
+export default function ExpensesTab({ startDate, endDate }: Props) {
   const { data: expenses } = useQuery({
-    queryKey: ["report-expenses", startDate],
+    queryKey: ["report-expenses", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("expenses")
         .select("*, cash_registers(name)")
         .gte("created_at", startDate)
         .order("created_at", { ascending: false });
+      if (endDate) q = q.lte("created_at", endDate);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },

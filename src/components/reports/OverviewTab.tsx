@@ -9,20 +9,23 @@ import { DollarSign, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 
 interface Props {
   startDate: string;
+  endDate?: string;
 }
 
-export default function OverviewTab({ startDate }: Props) {
+export default function OverviewTab({ startDate, endDate }: Props) {
   const { data: registers } = useCashRegisters();
 
   const { data: salesData } = useQuery({
-    queryKey: ["report-overview-sales", startDate],
+    queryKey: ["report-overview-sales", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("orders")
         .select("total, created_at")
         .gte("created_at", startDate)
         .eq("status", "completed")
         .order("created_at");
+      if (endDate) q = q.lte("created_at", endDate);
+      const { data, error } = await q;
       if (error) throw error;
       const byDate: Record<string, number> = {};
       for (const o of data || []) {
@@ -34,25 +37,29 @@ export default function OverviewTab({ startDate }: Props) {
   });
 
   const { data: expensesTotal } = useQuery({
-    queryKey: ["report-overview-expenses", startDate],
+    queryKey: ["report-overview-expenses", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("expenses")
         .select("amount")
         .gte("created_at", startDate);
+      if (endDate) q = q.lte("created_at", endDate);
+      const { data, error } = await q;
       if (error) throw error;
       return data?.reduce((s, e) => s + Number(e.amount), 0) || 0;
     },
   });
 
   const { data: profitByDate } = useQuery({
-    queryKey: ["report-overview-profit", startDate],
+    queryKey: ["report-overview-profit", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("order_items")
         .select("quantity, total_price, product_variations(cost_price), orders!inner(status, created_at)")
         .gte("orders.created_at", startDate)
         .eq("orders.status", "completed");
+      if (endDate) q = q.lte("orders.created_at", endDate);
+      const { data, error } = await q;
       if (error) throw error;
       const byDate: Record<string, { revenue: number; cost: number }> = {};
       for (const item of data || []) {

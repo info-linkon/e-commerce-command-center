@@ -13,33 +13,38 @@ const methodLabels: Record<string, string> = { cash: "מזומן", bit: "ביט"
 
 interface Props {
   startDate: string;
+  endDate?: string;
 }
 
-export default function CashflowTab({ startDate }: Props) {
+export default function CashflowTab({ startDate, endDate }: Props) {
   const { data: registers } = useCashRegisters();
 
   const { data: payments } = useQuery({
-    queryKey: ["report-payments-list", startDate],
+    queryKey: ["report-payments-list", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("payments")
         .select("*, orders(order_number), cash_registers(name)")
         .gte("created_at", startDate)
         .order("created_at", { ascending: false })
         .limit(300);
+      if (endDate) q = q.lte("created_at", endDate);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
   });
 
   const { data: transfers } = useQuery({
-    queryKey: ["report-cash-transfers", startDate],
+    queryKey: ["report-cash-transfers", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("cash_transfers")
         .select("*, from:cash_registers!cash_transfers_from_register_id_fkey(name), to:cash_registers!cash_transfers_to_register_id_fkey(name)")
         .gte("created_at", startDate)
         .order("created_at", { ascending: false });
+      if (endDate) q = q.lte("created_at", endDate);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },

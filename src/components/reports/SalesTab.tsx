@@ -9,31 +9,36 @@ import { ExternalLink } from "lucide-react";
 
 interface Props {
   startDate: string;
+  endDate?: string;
 }
 
-export default function SalesTab({ startDate }: Props) {
+export default function SalesTab({ startDate, endDate }: Props) {
   const { data: orders } = useQuery({
-    queryKey: ["report-sales-orders", startDate],
+    queryKey: ["report-sales-orders", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("orders")
         .select("id, order_number, total, created_at, status, customer_name, source")
         .gte("created_at", startDate)
         .order("created_at", { ascending: false })
         .limit(200);
+      if (endDate) q = q.lte("created_at", endDate);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
   });
 
   const { data: topProducts } = useQuery({
-    queryKey: ["report-top-products", startDate],
+    queryKey: ["report-top-products", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("order_items")
         .select("quantity, total_price, product_variations(cost_price, name, products(name)), orders!inner(status, created_at)")
         .gte("orders.created_at", startDate)
         .eq("orders.status", "completed");
+      if (endDate) q = q.lte("orders.created_at", endDate);
+      const { data, error } = await q;
       if (error) throw error;
       const byProduct: Record<string, { name: string; quantity: number; revenue: number; cost: number }> = {};
       for (const item of data || []) {

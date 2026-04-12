@@ -20,8 +20,12 @@ const ReportsPage = () => {
   const [toDate, setToDate] = useState<Date | undefined>();
 
   const startDate = useMemo(() => {
-    if (period === "custom" && fromDate) {
-      return fromDate.toISOString();
+    if (period === "custom") {
+      if (fromDate) return fromDate.toISOString();
+      // Default to 30 days ago when custom dates not yet selected
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      return d.toISOString();
     }
     const d = new Date();
     d.setDate(d.getDate() - Number(period));
@@ -30,7 +34,10 @@ const ReportsPage = () => {
 
   const endDate = useMemo(() => {
     if (period === "custom" && toDate) {
-      return toDate.toISOString();
+      // Set to end of day
+      const end = new Date(toDate);
+      end.setHours(23, 59, 59, 999);
+      return end.toISOString();
     }
     return undefined;
   }, [period, toDate]);
@@ -91,22 +98,22 @@ const ReportsPage = () => {
         </TabsList>
 
         <TabsContent value="overview">
-          <OverviewTab startDate={startDate} />
+          <OverviewTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="sales">
-          <SalesTab startDate={startDate} />
+          <SalesTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="inventory-log">
-          <InventoryLogTab startDate={startDate} />
+          <InventoryLogTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="cashflow">
-          <CashflowTab startDate={startDate} />
+          <CashflowTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="expenses">
-          <ExpensesTab startDate={startDate} />
+          <ExpensesTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="profitability">
-          <ProfitabilityTab startDate={startDate} />
+          <ProfitabilityTab startDate={startDate} endDate={endDate} />
         </TabsContent>
       </Tabs>
     </div>
