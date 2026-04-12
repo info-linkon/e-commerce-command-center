@@ -20,8 +20,12 @@ const ReportsPage = () => {
   const [toDate, setToDate] = useState<Date | undefined>();
 
   const startDate = useMemo(() => {
-    if (period === "custom" && fromDate) {
-      return fromDate.toISOString();
+    if (period === "custom") {
+      if (fromDate) return fromDate.toISOString();
+      // Default to 30 days ago when custom dates not yet selected
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      return d.toISOString();
     }
     const d = new Date();
     d.setDate(d.getDate() - Number(period));
@@ -30,7 +34,10 @@ const ReportsPage = () => {
 
   const endDate = useMemo(() => {
     if (period === "custom" && toDate) {
-      return toDate.toISOString();
+      // Set to end of day
+      const end = new Date(toDate);
+      end.setHours(23, 59, 59, 999);
+      return end.toISOString();
     }
     return undefined;
   }, [period, toDate]);
