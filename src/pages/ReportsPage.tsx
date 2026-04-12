@@ -98,22 +98,22 @@ const ReportsPage = () => {
         </TabsList>
 
         <TabsContent value="overview">
-          <OverviewTab startDate={startDate} />
+          <OverviewTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="sales">
-          <SalesTab startDate={startDate} />
+          <SalesTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="inventory-log">
-          <InventoryLogTab startDate={startDate} />
+          <InventoryLogTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="cashflow">
-          <CashflowTab startDate={startDate} />
+          <CashflowTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="expenses">
-          <ExpensesTab startDate={startDate} />
+          <ExpensesTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="profitability">
-          <ProfitabilityTab startDate={startDate} />
+          <ProfitabilityTab startDate={startDate} endDate={endDate} />
         </TabsContent>
       </Tabs>
     </div>
