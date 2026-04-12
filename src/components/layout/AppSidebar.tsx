@@ -57,7 +57,7 @@ const menuItems = [
   { title: "פריטי אתר", url: "/crm/website-items", icon: Globe },
   { title: "לקוחות", url: "/crm/customers", icon: Users },
   { title: "משלוחים", url: "/crm/deliveries", icon: Truck },
-  { title: "כספים", url: "/crm/finance", icon: Receipt },
+  { title: "הוצאות", url: "/crm/finance", icon: Receipt },
   { title: "דוחות", url: "/crm/reports", icon: BarChart3 },
   { title: "הגדרות", url: "/crm/settings", icon: Settings },
 ];
