@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -47,16 +47,13 @@ const ReportsPage = () => {
       <div className="flex justify-between items-center flex-wrap gap-3">
         <h1 className="text-2xl font-bold">דוחות</h1>
         <div className="flex items-center gap-2 flex-wrap">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">7 ימים</SelectItem>
-              <SelectItem value="30">30 יום</SelectItem>
-              <SelectItem value="90">90 יום</SelectItem>
-              <SelectItem value="365">שנה</SelectItem>
-              <SelectItem value="custom">טווח מותאם</SelectItem>
-            </SelectContent>
-          </Select>
+          <ToggleGroup type="single" value={period} onValueChange={(v) => v && setPeriod(v)} variant="outline" className="gap-1">
+            <ToggleGroupItem value="7" className="rounded-full px-3 h-8 text-xs">7 ימים</ToggleGroupItem>
+            <ToggleGroupItem value="30" className="rounded-full px-3 h-8 text-xs">30 יום</ToggleGroupItem>
+            <ToggleGroupItem value="90" className="rounded-full px-3 h-8 text-xs">90 יום</ToggleGroupItem>
+            <ToggleGroupItem value="365" className="rounded-full px-3 h-8 text-xs">שנה</ToggleGroupItem>
+            <ToggleGroupItem value="custom" className="rounded-full px-3 h-8 text-xs">טווח מותאם</ToggleGroupItem>
+          </ToggleGroup>
 
           {period === "custom" && (
             <>
