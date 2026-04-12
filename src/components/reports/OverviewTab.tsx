@@ -131,7 +131,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" fontSize={12} />
               <YAxis />
-              <Tooltip formatter={(v: number, name: string) => [`₪${v.toFixed(0)}`, name === "revenue" ? "הכנסות" : name === "cost" ? "עלות" : "רווח"]} />
+              <Tooltip formatter={(v: number, name: string) => [`₪${v.toFixed(0)}`, name]} />
               <Bar dataKey="revenue" name="הכנסות" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               <Bar dataKey="cost" name="עלות" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
               <Bar dataKey="profit" name="רווח" fill="#22c55e" radius={[4, 4, 0, 0]} />
