@@ -33,8 +33,8 @@ const sourceLabels: Record<string, string> = {
   website: "אתר",
 };
 
-const OrdersPage = () => {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
+  const [statusFilter, setStatusFilter] = useState<string>(defaultStatus || "all");
   const [search, setSearch] = useState("");
   const { data: orders, isLoading } = useOrders(statusFilter === "all" ? undefined : statusFilter as OrderStatus);
   const deleteOrder = useDeleteOrder();

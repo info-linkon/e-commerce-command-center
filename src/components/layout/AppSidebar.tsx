@@ -43,8 +43,10 @@ const inventorySubItems = [
 
 const ordersSubItems = [
   { title: "כל ההזמנות", url: "/crm/orders" },
+  { title: "ממתינות", url: "/crm/orders/pending" },
   { title: "תור ליקוט", url: "/crm/orders/picking" },
   { title: "במשלוח", url: "/crm/orders/in-delivery" },
+  { title: "הושלמו", url: "/crm/orders/completed" },
 ];
 
 const webManagementSubItems = [
