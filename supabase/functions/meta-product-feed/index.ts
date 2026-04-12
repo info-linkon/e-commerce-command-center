@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
 
   // Get site URL from query param or default
   const url = new URL(req.url);
-  const siteUrl = url.searchParams.get("site_url") || "https://elwejha.com";
+  const siteUrl = url.searchParams.get("site_url") || "https://elwejha.co.il";
 
   const { data: products, error } = await supabase
     .from("products")
