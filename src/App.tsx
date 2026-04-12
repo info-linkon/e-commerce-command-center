@@ -113,8 +113,10 @@ const App = () => (
             <Route path="/crm/inventory/write-off" element={<Protected><InventoryWriteOffPage /></Protected>} />
             <Route path="/crm/orders" element={<Protected><OrdersPage /></Protected>} />
             <Route path="/crm/orders/new" element={<Protected><OrderForm /></Protected>} />
+            <Route path="/crm/orders/pending" element={<Protected><OrdersPage defaultStatus="pending" /></Protected>} />
             <Route path="/crm/orders/picking" element={<Protected><PickingQueuePage /></Protected>} />
             <Route path="/crm/orders/in-delivery" element={<Protected><InDeliveryPage /></Protected>} />
+            <Route path="/crm/orders/completed" element={<Protected><OrdersPage defaultStatus="completed" /></Protected>} />
             <Route path="/crm/orders/:id" element={<Protected><OrderDetail /></Protected>} />
             <Route path="/crm/pos" element={<Protected><PosPage /></Protected>} />
             <Route path="/crm/deliveries" element={<Protected><DeliveriesPage /></Protected>} />
