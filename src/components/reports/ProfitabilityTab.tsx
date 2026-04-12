@@ -98,6 +98,7 @@ export default function ProfitabilityTab({ startDate, endDate }: Props) {
               <XAxis dataKey="date" fontSize={12} />
               <YAxis />
               <Tooltip formatter={(v: number) => [`₪${v.toFixed(0)}`, ""]} />
+              <Legend />
               <Bar dataKey="revenue" name="הכנסות" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               <Bar dataKey="cost" name="עלות" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
               <Bar dataKey="profit" name="רווח" fill="#22c55e" radius={[4, 4, 0, 0]} />
