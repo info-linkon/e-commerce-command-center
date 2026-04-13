@@ -29,6 +29,14 @@ export function useRecordPayment() {
       payments: { amount: number; payment_method: PaymentMethod; cash_register_id?: string | null; reference?: string }[];
       completeOrder?: boolean;
     }) => {
+      // Validate: cash payments must have a cash register
+      const cashWithoutRegister = input.payments.some(
+        (p) => p.payment_method === "cash" && !p.cash_register_id
+      );
+      if (cashWithoutRegister) {
+        throw new Error("תשלום מזומן חייב להיות משויך לקופה");
+      }
+
       // 1. Insert all payment records
       const paymentRows = input.payments.map((p) => ({
         order_id: input.order_id,
