@@ -404,7 +404,7 @@ const PaymentSection = ({
 
                 <Button
                   onClick={handleSubmit}
-                  disabled={linesTotal <= 0 || recordPayment.isPending || createDocument.isPending}
+                  disabled={linesTotal <= 0 || hasCashWithoutRegister || recordPayment.isPending || createDocument.isPending}
                   className="w-full gap-2"
                 >
                   <CheckCircle2 className="h-4 w-4" />
