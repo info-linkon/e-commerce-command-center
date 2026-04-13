@@ -26,6 +26,7 @@ const placeholders = [
   { key: "{total}", desc: "סכום ההזמנה" },
   { key: "{phone}", desc: "טלפון הלקוח" },
   { key: "{status}", desc: "סטטוס ההזמנה" },
+  { key: "{order_link}", desc: "לינק סיכום הזמנה" },
 ];
 
 export default function SmsTemplatesPage() {
