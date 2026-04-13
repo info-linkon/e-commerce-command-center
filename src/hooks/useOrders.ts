@@ -395,12 +395,19 @@ export function useUpdateOrderStatus() {
       if (status === "completed") {
         const { data: payments } = await supabase
           .from("payments")
-          .select("amount")
+          .select("amount, payment_method, cash_register_id")
           .eq("order_id", id);
         const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
         const orderTotal = Number(order?.total || 0);
         if (totalPaid < orderTotal) {
           throw new Error(`לא ניתן להשלים הזמנה ללא תשלום מלא. שולם ₪${totalPaid.toFixed(2)} מתוך ₪${orderTotal.toFixed(2)}`);
+        }
+        // Cash payments must have a cash register assigned
+        const cashWithoutRegister = (payments || []).some(
+          (p: any) => p.payment_method === "cash" && !p.cash_register_id
+        );
+        if (cashWithoutRegister) {
+          throw new Error("לא ניתן להשלים הזמנה — תשלום מזומן חייב להיות משויך לקופה");
         }
       }
 
