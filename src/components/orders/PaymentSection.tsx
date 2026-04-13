@@ -95,6 +95,7 @@ const PaymentSection = ({
   const remaining = orderTotal - totalPaid;
 
   const hasCashLine = lines.some((l) => l.method === "cash" && parseFloat(l.amount) > 0);
+  const hasCashWithoutRegister = lines.some((l) => l.method === "cash" && parseFloat(l.amount) > 0 && !l.cash_register_id);
 
   const resetForm = () => {
     setLines([{ amount: String(remaining > 0 ? remaining : orderTotal), method: "cash", cash_register_id: "", reference: "" }]);
