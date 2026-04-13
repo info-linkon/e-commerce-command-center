@@ -157,6 +157,15 @@ const OrderDetail = () => {
             orderId={order.id}
           />
         )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="mr-auto"
+          onClick={() => window.open(`/order/${order.order_number}`, "_blank")}
+        >
+          <ExternalLink className="h-4 w-4 ml-1" />
+          סיכום הזמנה
+        </Button>
       </div>
 
       {/* Warehouse Assignment Card */}
