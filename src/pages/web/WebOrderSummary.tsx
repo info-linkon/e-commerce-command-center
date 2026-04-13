@@ -24,11 +24,6 @@ export default function WebOrderSummary() {
     queryKey: ["order-summary", orderNumber],
     enabled: !!orderNumber,
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("order-summary", {
-        body: null,
-        method: "GET",
-      });
-      // functions.invoke doesn't support query params easily, use fetch directly
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/order-summary?order_number=${orderNumber}`,
         {
