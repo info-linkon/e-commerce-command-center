@@ -115,6 +115,7 @@ const OrderDetail = () => {
   const { data: order, isLoading } = useOrder(id);
   const { data: warehouses } = useWarehouses();
   const { data: delivery } = useOrderDelivery(id);
+  const { data: payments } = useOrderPayments(id);
   const updateStatus = useUpdateOrderStatus();
   const assignWarehouse = useAssignWarehouse();
   const cancelOrder = useCancelOrder();
@@ -130,6 +131,10 @@ const OrderDetail = () => {
   const isCompleted = status === "completed";
   const warehouseName = (order as any).warehouses?.name;
 
+  const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+  const isPaid = totalPaid >= order.total && totalPaid > 0;
+  const isPartiallyPaid = totalPaid > 0 && totalPaid < order.total;
+
   const handleAssign = () => {
     if (!selectedWarehouse) return;
     assignWarehouse.mutate({ orderId: order.id, warehouseId: selectedWarehouse });
@@ -141,6 +146,39 @@ const OrderDetail = () => {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto" dir="rtl">
+      {/* Payment Status Banner */}
+      {!isCancelled && (
+        <div className={`flex items-center gap-3 p-4 rounded-xl border ${
+          isPaid 
+            ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/30 dark:border-green-800 dark:text-green-300" 
+            : isPartiallyPaid
+            ? "bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300"
+            : "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300"
+        }`}>
+          {isPaid ? (
+            <ShieldCheck className="h-6 w-6 shrink-0" />
+          ) : (
+            <ShieldAlert className="h-6 w-6 shrink-0" />
+          )}
+          <div className="flex-1">
+            <span className="font-bold text-base">
+              {isPaid ? "שולם במלואו ✓" : isPartiallyPaid ? "שולם חלקית" : "לא שולם"}
+            </span>
+            {(isPartiallyPaid || (!isPaid && totalPaid === 0)) && (
+              <span className="text-sm mr-2 opacity-80">
+                — {isPaid ? "" : isPartiallyPaid 
+                  ? `שולם ₪${totalPaid.toFixed(2)} מתוך ₪${Number(order.total).toFixed(2)}`
+                  : `סה״כ לתשלום: ₪${Number(order.total).toFixed(2)}`}
+              </span>
+            )}
+            {isPaid && (
+              <span className="text-sm mr-2 opacity-80">
+                — ₪{totalPaid.toFixed(2)}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="icon" onClick={() => navigate("/crm/orders")}>
