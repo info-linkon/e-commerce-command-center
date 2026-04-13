@@ -346,13 +346,18 @@ const PaymentSection = ({
                       <div>
                         <Label className="text-xs">קופה</Label>
                         <Select value={line.cash_register_id} onValueChange={(v) => updateLine(idx, "cash_register_id", v)}>
-                          <SelectTrigger><SelectValue placeholder="בחר קופה..." /></SelectTrigger>
+                          <SelectTrigger className={parseFloat(line.amount) > 0 && !line.cash_register_id ? "border-destructive" : ""}>
+                            <SelectValue placeholder="בחר קופה..." />
+                          </SelectTrigger>
                           <SelectContent>
                             {registers?.filter((r) => r.is_active).map((r) => (
                               <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                        {parseFloat(line.amount) > 0 && !line.cash_register_id && (
+                          <p className="text-xs text-destructive mt-1">חובה לבחור קופה לתשלום מזומן</p>
+                        )}
                       </div>
                     )}
                     {line.method !== "cash" && (
