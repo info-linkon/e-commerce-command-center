@@ -63,12 +63,15 @@ Deno.serve(async (req) => {
       }
 
       // Replace placeholders
+      const orderLink = `https://elwejha.co.il/order/${order.order_number}`;
+
       let message = template.template_text
         .replace(/{customer_name}/g, order.customer_name || "")
         .replace(/{order_number}/g, String(order.order_number))
         .replace(/{total}/g, Number(order.total).toFixed(2))
         .replace(/{status}/g, order.status)
-        .replace(/{phone}/g, order.customer_phone || "");
+        .replace(/{phone}/g, order.customer_phone || "")
+        .replace(/{order_link}/g, orderLink);
 
       // Call send-sms function
       const { error: smsErr } = await supabase.functions.invoke("send-sms", {
