@@ -389,10 +389,23 @@ export function useUpdateOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
-      const { data: order } = await supabase.from("orders").select("source").eq("id", id).single();
+      const { data: order } = await supabase.from("orders").select("source, total").eq("id", id).single();
+
+      // Prevent completing an order without full payment
+      if (status === "completed") {
+        const { data: payments } = await supabase
+          .from("payments")
+          .select("amount")
+          .eq("order_id", id);
+        const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+        const orderTotal = Number(order?.total || 0);
+        if (totalPaid < orderTotal) {
+          throw new Error(`לא ניתן להשלים הזמנה ללא תשלום מלא. שולם ₪${totalPaid.toFixed(2)} מתוך ₪${orderTotal.toFixed(2)}`);
+        }
+      }
+
       const { error } = await supabase.from("orders").update({ status }).eq("id", id);
       if (error) throw error;
-      // Sync status to WooCommerce only for website orders
       if (order?.source === "website") {
         syncOrderStatusToWoo(id);
       }
@@ -401,7 +414,7 @@ export function useUpdateOrderStatus() {
       qc.invalidateQueries({ queryKey: ["orders"] });
       toast.success("הסטטוס עודכן");
     },
-    onError: () => toast.error("שגיאה בעדכון סטטוס"),
+    onError: (err: any) => toast.error(err?.message || "שגיאה בעדכון סטטוס"),
   });
 }
 
