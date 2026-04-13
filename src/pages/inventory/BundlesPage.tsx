@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Copy, Globe } from "lucide-react";
+import { Plus, Trash2, Copy, Globe, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
@@ -39,6 +39,13 @@ const BundlesPage = () => {
     toast.success(!current ? "המארז פורסם" : "המארז הוסר מהאתר");
   };
 
+  const toggleFeatured = async (productId: string, current: boolean) => {
+    const { error } = await supabase.from("products").update({ is_featured: !current }).eq("id", productId);
+    if (error) { toast.error("שגיאה בעדכון"); return; }
+    qc.invalidateQueries({ queryKey: ["bundles"] });
+    toast.success(!current ? "המארז סומן כמועדף" : "המארז הוסר ממועדפים");
+  };
+
   const data = bundles || [];
 
   const StockBadge = ({ stock }: { stock: number | null }) => {
@@ -49,6 +56,14 @@ const BundlesPage = () => {
   };
 
   const columns: ColumnDef<any>[] = [
+    {
+      label: "⭐",
+      render: (b) => (
+        <button onClick={(e) => { e.stopPropagation(); toggleFeatured(b.product_id, (b as any).products?.is_featured); }} className="p-1">
+          <Star className={`h-4 w-4 ${(b as any).products?.is_featured ? "fill-gold text-gold" : "text-muted-foreground"}`} />
+        </button>
+      ),
+    },
     {
       label: "תמונה",
       render: (b) => {
