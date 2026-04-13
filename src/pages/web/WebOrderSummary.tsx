@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/hooks/useLanguage";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Package, MapPin, Calendar, CreditCard, Loader2, AlertCircle, CheckCircle, Clock, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
