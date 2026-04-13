@@ -9,7 +9,7 @@ export function useBundles() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bundles")
-        .select("*, products(name, name_ar, image_url, sale_price, cost_price, shipping_price, category_id, sku, is_published, categories!products_category_id_fkey(name)), bundle_items(*, product_variations(name, sku))")
+        .select("*, products(name, name_ar, image_url, sale_price, cost_price, shipping_price, category_id, sku, is_published, is_featured, categories!products_category_id_fkey(name)), bundle_items(*, product_variations(name, sku))")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
