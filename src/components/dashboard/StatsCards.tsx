@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, ShoppingCart, Package, TrendingUp } from "lucide-react";
+import { DollarSign, ShoppingCart, Package, TrendingUp, Wallet, CreditCard } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,7 +12,7 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
   const { data } = useQuery({
     queryKey: ["dashboard-stats", startDate, endDate],
     queryFn: async () => {
-      const [salesOrders, pendingOrders, lowStock] = await Promise.all([
+      const [salesOrders, pendingOrders, lowStock, payments] = await Promise.all([
         supabase
           .from("orders")
           .select("total")
@@ -28,26 +28,67 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
           .select("id", { count: "exact", head: true })
           .lte("quantity", 5)
           .gt("quantity", -1),
+        supabase
+          .from("payments")
+          .select("amount, payment_method")
+          .gte("created_at", startDate)
+          .lte("created_at", endDate),
       ]);
 
       const salesTotal = (salesOrders.data || []).reduce((s, o) => s + Number(o.total), 0);
       const ordersCount = salesOrders.data?.length || 0;
+
+      const paymentsList = payments.data || [];
+      const cashTotal = paymentsList
+        .filter((p) => p.payment_method === "cash")
+        .reduce((s, p) => s + Number(p.amount), 0);
+      const creditTotal = paymentsList
+        .filter((p) => p.payment_method === "credit")
+        .reduce((s, p) => s + Number(p.amount), 0);
+      const bitTotal = paymentsList
+        .filter((p) => p.payment_method === "bit")
+        .reduce((s, p) => s + Number(p.amount), 0);
+      const totalIncome = paymentsList.reduce((s, p) => s + Number(p.amount), 0);
 
       return {
         salesTotal,
         ordersCount,
         pendingCount: pendingOrders.count || 0,
         lowStockCount: lowStock.count || 0,
+        cashTotal,
+        creditTotal,
+        bitTotal,
+        totalIncome,
       };
     },
     refetchInterval: 30000,
   });
 
   const stats = [
-    { title: "מכירות", value: `₪${(data?.salesTotal || 0).toFixed(0)}`, icon: DollarSign, description: "סה״כ מכירות בתקופה" },
-    { title: "הזמנות שהושלמו", value: String(data?.ordersCount || 0), icon: TrendingUp, description: "הזמנות שהושלמו בתקופה" },
-    { title: "הזמנות ממתינות", value: String(data?.pendingCount || 0), icon: ShoppingCart, description: "הזמנות בהמתנה" },
-    { title: "מלאי נמוך", value: String(data?.lowStockCount || 0), icon: Package, description: "פריטים מתחת לסף" },
+    {
+      title: "מכירות",
+      value: `₪${(data?.salesTotal || 0).toFixed(0)}`,
+      icon: DollarSign,
+      description: `${data?.ordersCount || 0} הזמנות שהושלמו`,
+    },
+    {
+      title: "כסף נכנס",
+      value: `₪${(data?.totalIncome || 0).toFixed(0)}`,
+      icon: TrendingUp,
+      description: `מזומן ₪${(data?.cashTotal || 0).toFixed(0)} | אשראי ₪${(data?.creditTotal || 0).toFixed(0)} | ביט ₪${(data?.bitTotal || 0).toFixed(0)}`,
+    },
+    {
+      title: "הזמנות ממתינות",
+      value: String(data?.pendingCount || 0),
+      icon: ShoppingCart,
+      description: "הזמנות בהמתנה",
+    },
+    {
+      title: "מלאי נמוך",
+      value: String(data?.lowStockCount || 0),
+      icon: Package,
+      description: "פריטים מתחת לסף",
+    },
   ];
 
   return (
