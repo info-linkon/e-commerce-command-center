@@ -176,6 +176,7 @@ export default function WebProductPage() {
         imageUrl: activeVariation?.image_url || product.image_url,
         shippingPrice: Number((product as any).shipping_price || 0),
         bundleVariationId: activeBundleVariation?.id || undefined,
+        sku: activeVariation?.sku || product.sku || null,
       }, 1);
     }
     // Meta Pixel: AddToCart — use SKU
