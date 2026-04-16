@@ -116,26 +116,28 @@ export default function WebOrderConfirmation() {
 
     // Non-HYP: look up order items for SKUs
     if (orderNumber) {
-      const { data: orderRow } = await supabase
-        .from("orders")
-        .select("id, total")
-        .eq("order_number", Number(orderNumber))
-        .maybeSingle();
-      if (orderRow) {
-        const { data: items } = await supabase
-          .from("order_items")
-          .select("variation_id, bundle_variation_id, product_variations(sku), bundle_variations(sku)")
-          .eq("order_id", orderRow.id);
-        const skus = (items || []).map((i: any) =>
-          i.bundle_variations?.sku || i.product_variations?.sku || i.bundle_variation_id || i.variation_id
-        );
-        fbq("Purchase", {
-          content_ids: skus,
-          value: orderRow.total,
-          currency: "ILS",
-          content_type: "product",
-        });
-      }
+      (async () => {
+        const { data: orderRow } = await supabase
+          .from("orders")
+          .select("id, total")
+          .eq("order_number", Number(orderNumber))
+          .maybeSingle();
+        if (orderRow) {
+          const { data: items } = await supabase
+            .from("order_items")
+            .select("variation_id, bundle_variation_id, product_variations(sku), bundle_variations(sku)")
+            .eq("order_id", orderRow.id);
+          const skus = (items || []).map((i: any) =>
+            i.bundle_variations?.sku || i.product_variations?.sku || i.bundle_variation_id || i.variation_id
+          );
+          fbq("Purchase", {
+            content_ids: skus,
+            value: orderRow.total,
+            currency: "ILS",
+            content_type: "product",
+          });
+        }
+      })().catch(console.error);
     }
   }, []);
 
