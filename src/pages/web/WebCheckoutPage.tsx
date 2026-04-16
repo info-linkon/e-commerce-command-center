@@ -533,8 +533,29 @@ export default function WebCheckoutPage() {
                       <Label htmlFor="phone">{t("رقم الهاتف *", "מספר טלפון *")}</Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input id="phone" name="phone" type="tel" required className="pl-10 rounded-xl" placeholder="05X-XXX-XXXX" dir="ltr" />
+                        <Input
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          required
+                          className={`pl-10 ${otpVerified ? "pr-10" : ""} rounded-xl`}
+                          placeholder="05X-XXX-XXXX"
+                          dir="ltr"
+                          onBlur={handlePhoneBlur}
+                        />
+                        {otpVerified && (
+                          <ShieldCheck className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                        )}
                       </div>
+                      {otpSent && !otpVerified && (
+                        <button
+                          type="button"
+                          className="text-xs text-primary hover:underline mt-1"
+                          onClick={() => setOtpDialogOpen(true)}
+                        >
+                          {t("أدخل رمز التحقق", "הזן קוד אימות")}
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-2">
