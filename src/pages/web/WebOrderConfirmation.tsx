@@ -69,7 +69,7 @@ export default function WebOrderConfirmation() {
           return null;
         };
 
-        resolveOrderId().then((orderId) => {
+        resolveOrderId().then(async (orderId) => {
           if (!orderId) return;
           const hypParams: Record<string, string> = {};
           const paramNames = ["Id", "CCode", "Amount", "ACode", "Order", "Fild1", "Fild2", "Fild3", "Sign", "Bank", "Payments", "UserId", "Brand", "Issuer", "L4digit", "street", "city", "zip", "cell", "Coin", "Tmonth", "Tyear", "errMsg", "Hesh"];
@@ -86,16 +86,24 @@ export default function WebOrderConfirmation() {
             sessionStorage.removeItem("hyp_order_id");
             sessionStorage.removeItem("hyp_order_number");
           }).catch((err) => console.error("Background verify error:", err));
-        }).catch(console.error);
 
-        const amount = searchParams.get("Amount");
-        if (amount) {
-          fbq("Purchase", {
-            value: parseFloat(amount),
-            currency: "ILS",
-            content_type: "product",
-          });
-        }
+          // Fire Purchase pixel with SKUs
+          const amount = searchParams.get("Amount");
+          if (amount) {
+            const { data: items } = await supabase
+              .from("order_items")
+              .select("variation_id, bundle_variation_id, product_variations(sku), bundle_variations(sku)")
+              .eq("order_id", orderId);
+            const skus = (items || []).map((i: any) =>
+              i.bundle_variations?.sku || i.product_variations?.sku || i.bundle_variation_id || i.variation_id
+            );
+            fbq("Purchase", {
+              content_ids: skus,
+              value: parseFloat(amount),
+              currency: "ILS",
+              content_type: "product",
+            });
+          }
       } else {
         setStatus("error");
       }
