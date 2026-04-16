@@ -9,8 +9,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
 import { useOrders, useDeleteOrder, useUpdateOrderStatus, type OrderStatus } from "@/hooks/useOrders";
 
-const statusLabels: Record<OrderStatus, string> = {
+const statusLabels: Record<string, string> = {
   pending: "ממתינה",
+  pending_payment: "ממתינה לתשלום",
   processing: "בטיפול",
   picking: "בליקוט",
   shipping: "במשלוח",
@@ -18,8 +19,9 @@ const statusLabels: Record<OrderStatus, string> = {
   cancelled: "בוטלה",
 };
 
-const statusColors: Record<OrderStatus, string> = {
+const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
+  pending_payment: "bg-amber-100 text-amber-800",
   processing: "bg-blue-100 text-blue-800",
   picking: "bg-purple-100 text-purple-800",
   shipping: "bg-orange-100 text-orange-800",
