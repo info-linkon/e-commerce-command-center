@@ -818,6 +818,57 @@ export default function WebCheckoutPage() {
           {t("تشلום مאובטח", "תשלום מאובטח")}
         </div>
       </div>
+
+      {/* OTP Verification Dialog */}
+      {otpDialogOpen && (
+        <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-border space-y-4">
+            <div className="text-center">
+              <ShieldCheck className="w-10 h-10 text-primary mx-auto mb-2" />
+              <h3 className="font-bold text-lg">{t("رمز التحقق", "קוד אימות")}</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t("تم إرسال رمز التحقق إلى", "קוד אימות נשלח אל")} {otpPhone}
+              </p>
+            </div>
+            <Input
+              value={otpCode}
+              onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 4)); setOtpError(""); }}
+              placeholder="____"
+              className="text-center text-2xl tracking-[0.5em] font-mono rounded-xl"
+              dir="ltr"
+              maxLength={4}
+              autoFocus
+            />
+            {otpError && <p className="text-destructive text-xs text-center">{otpError}</p>}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 rounded-xl"
+                onClick={() => setOtpDialogOpen(false)}
+              >
+                {t("إلغاء", "ביטול")}
+              </Button>
+              <Button
+                type="button"
+                className="flex-1 rounded-xl bg-gold text-gold-foreground hover:bg-gold/90"
+                disabled={otpCode.length < 4 || otpLoading}
+                onClick={verifyOtp}
+              >
+                {otpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("تحقق", "אמת")}
+              </Button>
+            </div>
+            <button
+              type="button"
+              className="w-full text-xs text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => sendOtp(otpPhone)}
+              disabled={otpLoading}
+            >
+              {t("إعادة إرسال الرمز", "שלח קוד מחדש")}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
