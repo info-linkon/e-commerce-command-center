@@ -12,22 +12,13 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
   const { data } = useQuery({
     queryKey: ["dashboard-stats", startDate, endDate],
     queryFn: async () => {
-      const [salesOrders, pendingOrders, lowStock, payments] = await Promise.all([
+      const [salesOrders, payments] = await Promise.all([
         supabase
           .from("orders")
           .select("total")
           .gte("created_at", startDate)
           .lte("created_at", endDate)
-          .eq("status", "completed"),
-        supabase
-          .from("orders")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "pending"),
-        supabase
-          .from("inventory")
-          .select("id", { count: "exact", head: true })
-          .lte("quantity", 5)
-          .gt("quantity", -1),
+          .neq("status", "cancelled"),
         supabase
           .from("payments")
           .select("amount, payment_method")
@@ -53,8 +44,6 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
       return {
         salesTotal,
         ordersCount,
-        pendingCount: pendingOrders.count || 0,
-        lowStockCount: lowStock.count || 0,
         cashTotal,
         creditTotal,
         bitTotal,
