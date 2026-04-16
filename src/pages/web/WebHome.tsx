@@ -40,7 +40,7 @@ export default function WebHome() {
   const { data: bestSellers } = useWebBestSellers();
   const { data: categories } = useWebCategories();
   const { lang, t } = useLanguage();
-  const { data: banners } = useBannersPublic();
+  const { data: banners, isLoading: bannersLoading } = useBannersPublic();
 
   const { data: heroData } = useSiteSection("home", "hero");
   const hero = {
