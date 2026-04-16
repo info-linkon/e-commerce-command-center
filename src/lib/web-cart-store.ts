@@ -11,6 +11,7 @@ export interface CartItem {
   imageUrl?: string | null;
   shippingPrice?: number;
   bundleVariationId?: string;
+  sku?: string | null;
 }
 
 interface CartStore {

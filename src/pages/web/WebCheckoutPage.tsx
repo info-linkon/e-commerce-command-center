@@ -140,7 +140,7 @@ export default function WebCheckoutPage() {
 
   useEffect(() => {
     fbq("InitiateCheckout", {
-      content_ids: items.map((i) => i.variationId),
+      content_ids: items.map((i) => i.sku || i.variationId),
       num_items: items.length,
       value: totalPrice(),
       currency: "ILS",
