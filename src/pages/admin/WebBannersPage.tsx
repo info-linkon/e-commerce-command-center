@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, GripVertical, Pencil, ImagePlus, Loader2 } from "lucide-react";
+import { Plus, Trash2, GripVertical, Pencil, ImagePlus, Loader2, ChevronUp, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface BannerForm {
   title: string;
@@ -41,10 +42,12 @@ export default function WebBannersPage() {
   const createBanner = useCreateBanner();
   const updateBanner = useUpdateBanner();
   const deleteBanner = useDeleteBanner();
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<BannerForm>(emptyForm);
   const [uploading, setUploading] = useState(false);
+  const [reordering, setReordering] = useState(false);
 
   const openCreate = () => {
     setEditingId(null);
@@ -96,6 +99,32 @@ export default function WebBannersPage() {
     }
   };
 
+  const handleMoveUp = async (index: number) => {
+    if (!banners || index <= 0 || reordering) return;
+    setReordering(true);
+    const current = banners[index];
+    const prev = banners[index - 1];
+    await Promise.all([
+      supabase.from("banners").update({ sort_order: prev.sort_order }).eq("id", current.id),
+      supabase.from("banners").update({ sort_order: current.sort_order }).eq("id", prev.id),
+    ]);
+    queryClient.invalidateQueries({ queryKey: ["banners"] });
+    setReordering(false);
+  };
+
+  const handleMoveDown = async (index: number) => {
+    if (!banners || index >= banners.length - 1 || reordering) return;
+    setReordering(true);
+    const current = banners[index];
+    const next = banners[index + 1];
+    await Promise.all([
+      supabase.from("banners").update({ sort_order: next.sort_order }).eq("id", current.id),
+      supabase.from("banners").update({ sort_order: current.sort_order }).eq("id", next.id),
+    ]);
+    queryClient.invalidateQueries({ queryKey: ["banners"] });
+    setReordering(false);
+  };
+
   return (
     <div dir="rtl">
       <div className="flex items-center justify-between mb-6">
@@ -109,9 +138,28 @@ export default function WebBannersPage() {
         <p className="text-muted-foreground">אין באנרים עדיין</p>
       ) : (
         <div className="space-y-3">
-          {banners.map((banner) => (
+          {banners.map((banner, index) => (
             <div key={banner.id} className="flex items-center gap-4 bg-card p-4 rounded-lg border border-border">
-              <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab shrink-0" />
+              <div className="flex flex-col gap-0.5 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  disabled={index === 0 || reordering}
+                  onClick={() => handleMoveUp(index)}
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  disabled={index === banners.length - 1 || reordering}
+                  onClick={() => handleMoveDown(index)}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </div>
               {banner.image_url && (
                 <img src={banner.image_url} alt="" className="w-24 h-14 object-cover rounded" />
               )}
