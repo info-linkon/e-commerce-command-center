@@ -68,6 +68,20 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
     return acc;
   }, {});
 
+  const handleToggleBundleGroup = (group: any[]) => {
+    const allPicked = group.every((item: any) => item.picked);
+    const newPicked = !allPicked;
+    group.forEach((item: any) => {
+      if (item.picked !== newPicked) {
+        togglePicked.mutate({
+          pickingItemId: item.id,
+          picked: newPicked,
+          orderId,
+        });
+      }
+    });
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -91,19 +105,35 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
           {Object.values(groupedByOrderItem).map((group: any[], groupIndex) => {
             const first = group[0];
             const isBundle = group.length > 1;
-            // For bundles, use the order_item's own variation (the bundle product), not the component's product
             const orderItemVar = first?.order_items?.product_variations;
             const parentProductName = isBundle
               ? (orderItemVar?.products?.name_ar || orderItemVar?.products?.name || "מארז")
               : (first?.product_variations?.products?.name_ar || first?.product_variations?.products?.name || "—");
 
+            const allGroupPicked = group.every((item: any) => item.picked);
+            const someGroupPicked = group.some((item: any) => item.picked);
+
             return (
               <div key={`${first.order_item_id}-${groupIndex}`} className="space-y-2">
                 {isBundle && (
-                  <div className="flex items-center justify-between rounded-lg border border-dashed bg-muted/30 px-3 py-2 text-sm">
-                    <span className="font-medium">מארז</span>
+                  <label
+                    className={`flex items-center justify-between rounded-lg border border-dashed px-3 py-2 text-sm cursor-pointer transition-colors ${
+                      allGroupPicked
+                        ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800"
+                        : "bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={allGroupPicked}
+                        disabled={togglePicked.isPending}
+                        onCheckedChange={() => handleToggleBundleGroup(group)}
+                        className={someGroupPicked && !allGroupPicked ? "opacity-60" : ""}
+                      />
+                      <span className="font-medium">מארז</span>
+                    </div>
                     <span className="text-muted-foreground">{parentProductName}</span>
-                  </div>
+                  </label>
                 )}
 
                 <div className="space-y-2">

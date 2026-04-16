@@ -28,10 +28,12 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import logo from "@/assets/logo.webp";
+import { useCallback } from "react";
 
 const inventorySubItems = [
   { title: "תצוגת מלאי", url: "/crm/inventory" },
@@ -68,6 +70,12 @@ const menuItems = [
 export function AppSidebar() {
   const { signOut } = useAuth();
   const { data: orderCounts } = useOrderCounts();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const closeMobileSidebar = useCallback(() => {
+    if (isMobile) setOpenMobile(false);
+  }, [isMobile, setOpenMobile]);
+
   return (
     <Sidebar side="right" className="border-l-0 border-r">
       <div className="p-4 border-b border-sidebar-border flex flex-col items-center gap-2">
@@ -86,6 +94,7 @@ export function AppSidebar() {
                     end
                     className="hover:bg-sidebar-accent"
                     activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    onClick={closeMobileSidebar}
                   >
                     <LayoutDashboard className="ml-2 h-4 w-4" />
                     <span>דשבורד</span>
@@ -93,13 +102,14 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* POS - second item */}
+              {/* POS */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
                     to="/crm/pos"
                     className="hover:bg-sidebar-accent"
                     activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    onClick={closeMobileSidebar}
                   >
                     <CreditCard className="ml-2 h-4 w-4" />
                     <span>קופה</span>
@@ -129,6 +139,7 @@ export function AppSidebar() {
                               end={item.url === "/crm/inventory"}
                               className="hover:bg-sidebar-accent"
                               activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                              onClick={closeMobileSidebar}
                             >
                               <span>{item.title}</span>
                             </NavLink>
@@ -164,6 +175,7 @@ export function AppSidebar() {
                                 end={item.url === "/crm/orders"}
                                 className="hover:bg-sidebar-accent flex items-center justify-between w-full"
                                 activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                                onClick={closeMobileSidebar}
                               >
                                 <span>{item.title}</span>
                                 {count !== null && count > 0 && (
@@ -202,6 +214,7 @@ export function AppSidebar() {
                               to={item.url}
                               className="hover:bg-sidebar-accent"
                               activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                              onClick={closeMobileSidebar}
                             >
                               <span>{item.title}</span>
                             </NavLink>
@@ -234,6 +247,7 @@ export function AppSidebar() {
                       to={item.url}
                       className="hover:bg-sidebar-accent"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                      onClick={closeMobileSidebar}
                     >
                       <item.icon className="ml-2 h-4 w-4" />
                       <span>{item.title}</span>

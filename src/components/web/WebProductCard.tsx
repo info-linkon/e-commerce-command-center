@@ -9,22 +9,30 @@ interface WebProductCardProps {
   name: string;
   nameAr?: string | null;
   price: number;
+  originalPrice?: number | null;
   imageUrl?: string | null;
   categoryName?: string | null;
   outOfStock?: boolean;
 }
 
-export function WebProductCard({ id, productNumber, name, nameAr, price, imageUrl, categoryName, outOfStock }: WebProductCardProps) {
+export function WebProductCard({ id, productNumber, name, nameAr, price, originalPrice, imageUrl, categoryName, outOfStock }: WebProductCardProps) {
   const { lang } = useLanguage();
-  // name = Hebrew name, nameAr = Arabic name
   const displayName = lang === "he" ? (name || nameAr || "") : (nameAr || name);
   const linkId = productNumber || id;
+
+  const hasDiscount = originalPrice && originalPrice > price;
+  const discountPercent = hasDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
   return (
     <div className={`group relative bg-card rounded-xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${outOfStock ? "opacity-60" : ""}`}>
       {outOfStock && (
         <div className="absolute top-2 left-2 z-10 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
           {lang === "he" ? "אזל מהמלאי" : "غير متوفر"}
+        </div>
+      )}
+      {hasDiscount && !outOfStock && (
+        <div className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+          -{discountPercent}%
         </div>
       )}
       <Link to={`/product/${linkId}`} className="block relative overflow-hidden">
@@ -54,7 +62,12 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, imageUr
           </h3>
         </Link>
         <div className="flex items-center justify-between mt-3">
-          <span className="text-primary font-bold text-base md:text-lg">₪{price.toFixed(2)}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-primary font-bold text-base md:text-lg">₪{price.toFixed(2)}</span>
+            {hasDiscount && (
+              <span className="text-muted-foreground line-through text-xs md:text-sm">₪{originalPrice.toFixed(2)}</span>
+            )}
+          </div>
           <Button
             size="icon"
             variant="ghost"
