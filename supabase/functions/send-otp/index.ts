@@ -25,7 +25,13 @@ Deno.serve(async (req) => {
     }
 
     // Normalize phone
-    const normalizedPhone = phone.replace(/[\s\-()]/g, "");
+    let normalizedPhone = phone.replace(/[\s\-()]/g, "");
+    if (normalizedPhone.startsWith("0")) {
+      normalizedPhone = "972" + normalizedPhone.substring(1);
+    }
+    if (!normalizedPhone.startsWith("972")) {
+      normalizedPhone = "972" + normalizedPhone;
+    }
 
     if (action === "send") {
       // Generate 4-digit code
@@ -85,7 +91,7 @@ Deno.serve(async (req) => {
 
       const basicAuth = btoa(`${username}:${token}`);
       const smsResponse = await fetch(
-        "https://api.linkon.co.il/api/rest/v2/message/send",
+        "https://capi.inforu.co.il/api/v2/SMS/SendSms",
         {
           method: "POST",
           headers: {
