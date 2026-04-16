@@ -261,8 +261,8 @@ const PaymentSection = ({
           </div>
         )}
 
-        {/* Send payment link via SMS — shown only for digital payment orders */}
-        {!isCancelled && !isCompleted && customerPhone && orderPaymentMethod !== "cash" && (
+        {/* Send payment link via SMS — hidden if already paid by credit or fully paid */}
+        {!isCancelled && !isCompleted && !isPaidByCredit && remaining > 0 && customerPhone && orderPaymentMethod !== "cash" && (
           <Button
             variant="default"
             className="w-full gap-2"

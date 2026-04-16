@@ -1,6 +1,6 @@
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { fbq } from "@/lib/meta-pixel";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/web-cart-store";
@@ -13,6 +13,7 @@ export default function WebOrderConfirmation() {
   const { t } = useLanguage();
   const orderNumber = routeOrderNumber || searchParams.get("Order");
   const [status, setStatus] = useState<"loading" | "success" | "error" | "pending">("loading");
+  const verifyCalledRef = useRef(false);
 
   const isIframe = window.self !== window.top;
 
@@ -28,6 +29,9 @@ export default function WebOrderConfirmation() {
 
   useEffect(() => {
     if (isIframe) return;
+    // Prevent double-invocation on re-renders / StrictMode
+    if (verifyCalledRef.current) return;
+    verifyCalledRef.current = true;
 
     const ccode = searchParams.get("CCode");
     const paymentParam = searchParams.get("payment");
@@ -40,14 +44,12 @@ export default function WebOrderConfirmation() {
 
     if (ccode !== null) {
       if (ccode === "0") {
-        setStatus("success");
+        // Don't show success yet — wait for server verification
         clearCart();
 
-        // Try sessionStorage first, fallback to looking up by Order param (order_number)
         const resolveOrderId = async (): Promise<string | null> => {
           const stored = sessionStorage.getItem("hyp_order_id");
           if (stored) return stored;
-          // Fallback: HYP returns the Order param which is our order_number
           const hypOrderNum = searchParams.get("Order");
           if (hypOrderNum) {
             const { data } = await supabase
@@ -57,7 +59,6 @@ export default function WebOrderConfirmation() {
               .maybeSingle();
             return data?.id || null;
           }
-          // Last resort: use the route order number
           if (orderNumber) {
             const { data } = await supabase
               .from("orders")
@@ -70,51 +71,80 @@ export default function WebOrderConfirmation() {
         };
 
         resolveOrderId().then(async (orderId) => {
-          if (!orderId) return;
+          if (!orderId) {
+            setStatus("success"); // fallback — can't verify without order
+            return;
+          }
+
           const hypParams: Record<string, string> = {};
           const paramNames = ["Id", "CCode", "Amount", "ACode", "Order", "Fild1", "Fild2", "Fild3", "Sign", "Bank", "Payments", "UserId", "Brand", "Issuer", "L4digit", "street", "city", "zip", "cell", "Coin", "Tmonth", "Tyear", "errMsg", "Hesh"];
           for (const name of paramNames) {
             const val = searchParams.get(name);
             if (val !== null) hypParams[name] = val;
           }
-          supabase.functions.invoke("hyp-verify-payment", {
-            body: { ...hypParams, order_id: orderId },
-          }).then(() => {
-            supabase.functions.invoke("order-sms-trigger", {
-              body: { order_id: orderId, trigger_type: "order_created" },
-            }).catch(console.error);
-            sessionStorage.removeItem("hyp_order_id");
-            sessionStorage.removeItem("hyp_order_number");
-          }).catch((err) => console.error("Background verify error:", err));
 
-          // Fire Purchase pixel with SKUs
-          const amount = searchParams.get("Amount");
-          if (amount) {
-            const { data: items } = await supabase
-              .from("order_items")
-              .select("variation_id, bundle_variation_id, product_variations(sku), bundle_variations(sku)")
-              .eq("order_id", orderId);
-            const skus = (items || []).map((i: any) =>
-              i.bundle_variations?.sku || i.product_variations?.sku || i.bundle_variation_id || i.variation_id
-            );
-            fbq("Purchase", {
-              content_ids: skus,
-              value: parseFloat(amount),
-              currency: "ILS",
-              content_type: "product",
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("hyp-verify-payment", {
+              body: { ...hypParams, order_id: orderId },
             });
+
+            if (verifyError) {
+              console.error("Verify error:", verifyError);
+              setStatus("error");
+              return;
+            }
+
+            if (verifyData?.verified) {
+              setStatus("success");
+
+              // Fire order_created SMS only if it's a fresh verification (not already_processed)
+              if (!verifyData.already_processed) {
+                supabase.functions.invoke("order-sms-trigger", {
+                  body: { order_id: orderId, trigger_type: "order_created" },
+                }).catch(console.error);
+              }
+
+              sessionStorage.removeItem("hyp_order_id");
+              sessionStorage.removeItem("hyp_order_number");
+
+              // Fire Purchase pixel with SKUs
+              const amount = searchParams.get("Amount");
+              if (amount) {
+                const { data: items } = await supabase
+                  .from("order_items")
+                  .select("variation_id, bundle_variation_id, product_variations(sku), bundle_variations(sku)")
+                  .eq("order_id", orderId);
+                const skus = (items || []).map((i: any) =>
+                  i.bundle_variations?.sku || i.product_variations?.sku || i.bundle_variation_id || i.variation_id
+                );
+                fbq("Purchase", {
+                  content_ids: skus,
+                  value: parseFloat(amount),
+                  currency: "ILS",
+                  content_type: "product",
+                });
+              }
+            } else {
+              setStatus("error");
+            }
+          } catch (err) {
+            console.error("Background verify error:", err);
+            setStatus("error");
           }
-        }).catch(console.error);
+        }).catch((err) => {
+          console.error("Order resolve error:", err);
+          setStatus("error");
+        });
       } else {
         setStatus("error");
       }
       return;
     }
 
+    // Non-HYP flow (cash/pending)
     setStatus("success");
     clearCart();
 
-    // Non-HYP: look up order items for SKUs
     if (orderNumber) {
       (async () => {
         const { data: orderRow } = await supabase
@@ -145,8 +175,8 @@ export default function WebOrderConfirmation() {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center animate-fade-in">
         <Loader2 className="h-16 w-16 text-primary mx-auto mb-6 animate-spin" />
-        <h1 className="text-2xl font-bold text-foreground mb-3">{t("جاري التحقق...", "מאמת...")}</h1>
-        <p className="text-muted-foreground">{t("يرجى الانتظار", "אנא המתן")}</p>
+        <h1 className="text-2xl font-bold text-foreground mb-3">{t("جاري التحقق من الدفع...", "מאמת תשלום...")}</h1>
+        <p className="text-muted-foreground">{t("يرجى الانتظار، لا تغلق الصفحة", "אנא המתן, אל תסגור את הדף")}</p>
       </div>
     );
   }
