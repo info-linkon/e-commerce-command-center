@@ -166,8 +166,7 @@ const OrderDetail = () => {
     toast.success("הפריט הוסר");
   };
 
-
-
+  return (
     <div className="space-y-6 max-w-4xl mx-auto" dir="rtl">
       {/* Payment Status Banner */}
       {!isCancelled && (
