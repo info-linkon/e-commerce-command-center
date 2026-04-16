@@ -72,7 +72,7 @@ export default function WebProductPage() {
   useEffect(() => {
     if (product) {
       fbq("ViewContent", {
-        content_ids: [product.id],
+        content_ids: [product.sku || product.id],
         content_name: product.name_ar || product.name,
         content_type: "product",
         value: product.sale_price,
@@ -178,9 +178,10 @@ export default function WebProductPage() {
         bundleVariationId: activeBundleVariation?.id || undefined,
       }, 1);
     }
-    // Meta Pixel: AddToCart
+    // Meta Pixel: AddToCart — use SKU
+    const pixelId = activeVariation?.sku || product.sku || variationId;
     fbq("AddToCart", {
-      content_ids: [variationId],
+      content_ids: [pixelId],
       content_name: displayName,
       content_type: "product",
       value: price * quantity,
