@@ -1,0 +1,1 @@
+UPDATE public.orders SET shipping_cost = 20 WHERE order_number = 166;
