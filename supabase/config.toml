@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.pay-redirect]
 verify_jwt = false
+
+[functions.order-email-notify]
+verify_jwt = false
+
+[functions.hyp-verify-payment]
+verify_jwt = false

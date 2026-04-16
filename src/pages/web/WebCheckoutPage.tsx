@@ -307,6 +307,10 @@ export default function WebCheckoutPage() {
         supabase.functions.invoke("order-sms-trigger", {
           body: { order_id: order.id, trigger_type: "order_created" },
         }).catch(console.error);
+        // Trigger email notification
+        supabase.functions.invoke("order-email-notify", {
+          body: { order_id: order.id },
+        }).catch(console.error);
         submittedRef.current = true;
         navigate(`/order-confirmation/${order.order_number}`);
         clearCart();

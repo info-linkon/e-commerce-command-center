@@ -174,6 +174,20 @@ Deno.serve(async (req) => {
           } catch (smsErr) {
             console.error("SMS trigger error (non-blocking):", smsErr);
           }
+
+          // Trigger email notification
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/order-email-notify`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${supabaseKey}`,
+              },
+              body: JSON.stringify({ order_id }),
+            });
+          } catch (emailErr) {
+            console.error("Email notify error (non-blocking):", emailErr);
+          }
         }
       }
 

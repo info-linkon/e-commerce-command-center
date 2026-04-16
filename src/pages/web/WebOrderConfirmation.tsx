@@ -43,8 +43,34 @@ export default function WebOrderConfirmation() {
         setStatus("success");
         clearCart();
 
-        const orderId = sessionStorage.getItem("hyp_order_id");
-        if (orderId) {
+        // Try sessionStorage first, fallback to looking up by Order param (order_number)
+        const resolveOrderId = async (): Promise<string | null> => {
+          const stored = sessionStorage.getItem("hyp_order_id");
+          if (stored) return stored;
+          // Fallback: HYP returns the Order param which is our order_number
+          const hypOrderNum = searchParams.get("Order");
+          if (hypOrderNum) {
+            const { data } = await supabase
+              .from("orders")
+              .select("id")
+              .eq("order_number", Number(hypOrderNum))
+              .maybeSingle();
+            return data?.id || null;
+          }
+          // Last resort: use the route order number
+          if (orderNumber) {
+            const { data } = await supabase
+              .from("orders")
+              .select("id")
+              .eq("order_number", Number(orderNumber))
+              .maybeSingle();
+            return data?.id || null;
+          }
+          return null;
+        };
+
+        resolveOrderId().then((orderId) => {
+          if (!orderId) return;
           const hypParams: Record<string, string> = {};
           const paramNames = ["Id", "CCode", "Amount", "ACode", "Order", "Fild1", "Fild2", "Fild3", "Sign", "Bank", "Payments", "UserId", "Brand", "Issuer", "L4digit", "street", "city", "zip", "cell", "Coin", "Tmonth", "Tyear", "errMsg", "Hesh"];
           for (const name of paramNames) {
@@ -60,7 +86,7 @@ export default function WebOrderConfirmation() {
             sessionStorage.removeItem("hyp_order_id");
             sessionStorage.removeItem("hyp_order_number");
           }).catch((err) => console.error("Background verify error:", err));
-        }
+        }).catch(console.error);
 
         const amount = searchParams.get("Amount");
         if (amount) {
