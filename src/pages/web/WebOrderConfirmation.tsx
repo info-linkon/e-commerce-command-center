@@ -104,6 +104,7 @@ export default function WebOrderConfirmation() {
               content_type: "product",
             });
           }
+        }).catch(console.error);
       } else {
         setStatus("error");
       }
