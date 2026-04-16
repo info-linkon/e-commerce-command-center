@@ -33,9 +33,39 @@ Deno.serve(async (req) => {
     const config = configRow.content as Record<string, string>;
     const { masof, api_key, passp } = config;
 
-    // Get all HYP return params from the request body
     const body = await req.json();
     const { Id, CCode, Amount, ACode, Order, Fild1, Fild2, Fild3, Sign, Bank, Payments, UserId, Brand, Issuer, L4digit, street, city, zip, cell, Coin, Tmonth, Tyear, errMsg, Hesh, order_id } = body;
+
+    // ── Idempotency: if this transaction was already processed, return success without duplicating ──
+    if (order_id && Id) {
+      const { data: existingOrder } = await supabase
+        .from("orders")
+        .select("hyp_transaction_id")
+        .eq("id", order_id)
+        .maybeSingle();
+
+      if (existingOrder?.hyp_transaction_id === Id) {
+        console.log(`HYP transaction ${Id} already processed for order ${order_id} — skipping`);
+        return new Response(JSON.stringify({ verified: true, CCode: "0", already_processed: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Also check payments table for duplicate reference
+      const { data: existingPayment } = await supabase
+        .from("payments")
+        .select("id")
+        .eq("order_id", order_id)
+        .eq("reference", `HYP-${Id}`)
+        .maybeSingle();
+
+      if (existingPayment) {
+        console.log(`Payment with reference HYP-${Id} already exists — skipping`);
+        return new Response(JSON.stringify({ verified: true, CCode: "0", already_processed: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     // Build verification URL
     const verifyParams = new URLSearchParams({
@@ -46,7 +76,6 @@ Deno.serve(async (req) => {
       PassP: passp,
     });
 
-    // Add all return params
     if (Id) verifyParams.set("Id", Id);
     if (CCode !== undefined) verifyParams.set("CCode", String(CCode));
     if (Amount) verifyParams.set("Amount", String(Amount));
@@ -79,14 +108,11 @@ Deno.serve(async (req) => {
     const verifyResult = await verifyResponse.text();
     console.log("HYP Verify response:", verifyResult);
 
-    // Parse response — CCode=0 means verified
     const resultParams = new URLSearchParams(verifyResult);
     const resultCCode = resultParams.get("CCode");
 
     if (resultCCode === "0") {
-      // Payment verified — update order
       if (order_id) {
-        // Fetch order data for invoice
         const { data: orderData } = await supabase
           .from("orders")
           .select("total, customer_name, customer_email, customer_phone")
@@ -102,7 +128,6 @@ Deno.serve(async (req) => {
           })
           .eq("id", order_id);
 
-        // Create payment record
         if (orderData) {
           await supabase.from("payments").insert({
             order_id,
@@ -111,9 +136,8 @@ Deno.serve(async (req) => {
             reference: `HYP-${Id || ""}`,
           });
 
-          // Auto-issue invoice receipt (type 320) via ezcount-doc
+          // Auto-issue invoice receipt (type 320)
           try {
-            // Fetch order items
             const { data: orderItems } = await supabase
               .from("order_items")
               .select("quantity, unit_price, variation_id, product_variations(name, sku, products(name))")
@@ -161,7 +185,7 @@ Deno.serve(async (req) => {
             console.error("Auto-invoice error (non-blocking):", ezErr);
           }
 
-          // Trigger SMS notification for completed payment
+          // Trigger SMS
           try {
             await fetch(`${supabaseUrl}/functions/v1/order-sms-trigger`, {
               method: "POST",
@@ -175,7 +199,7 @@ Deno.serve(async (req) => {
             console.error("SMS trigger error (non-blocking):", smsErr);
           }
 
-          // Trigger email notification
+          // Trigger email
           try {
             await fetch(`${supabaseUrl}/functions/v1/order-email-notify`, {
               method: "POST",
