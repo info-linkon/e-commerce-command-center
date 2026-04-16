@@ -166,30 +166,8 @@ const OrderDetail = () => {
     toast.success("הפריט הוסר");
   };
 
-  if (isLoading) return <div className="py-12 text-center text-muted-foreground">טוען...</div>;
-  if (!order) return <div className="py-12 text-center text-muted-foreground">הזמנה לא נמצאה</div>;
 
-  const status = order.status as OrderStatus;
-  const items = (order.order_items as any[]) || [];
-  const isAssigned = !!order.assigned_warehouse_id;
-  const isCancelled = status === "cancelled";
-  const isCompleted = status === "completed";
-  const warehouseName = (order as any).warehouses?.name;
 
-  const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
-  const isPaid = totalPaid >= order.total && totalPaid > 0;
-  const isPartiallyPaid = totalPaid > 0 && totalPaid < order.total;
-
-  const handleAssign = () => {
-    if (!selectedWarehouse) return;
-    assignWarehouse.mutate({ orderId: order.id, warehouseId: selectedWarehouse });
-  };
-
-  const handleCancel = () => {
-    cancelOrder.mutate(order.id);
-  };
-
-  return (
     <div className="space-y-6 max-w-4xl mx-auto" dir="rtl">
       {/* Payment Status Banner */}
       {!isCancelled && (
