@@ -40,7 +40,7 @@ export default function WebHome() {
   const { data: bestSellers } = useWebBestSellers();
   const { data: categories } = useWebCategories();
   const { lang, t } = useLanguage();
-  const { data: banners } = useBannersPublic();
+  const { data: banners, isLoading: bannersLoading } = useBannersPublic();
 
   const { data: heroData } = useSiteSection("home", "hero");
   const hero = {
@@ -61,7 +61,7 @@ export default function WebHome() {
   // Use featured products if available, otherwise fall back to latest 8
   const featured = (featuredProducts && featuredProducts.length > 0) ? featuredProducts : (products?.slice(0, 8) || []);
 
-  // Build slides from banners, fallback to hero CMS data
+  // Build slides from banners only (no fallback hero during loading)
   const slides = banners && banners.length > 0
     ? banners.map((b: any) => ({
         image: b.image_url || heroBg,
@@ -71,92 +71,89 @@ export default function WebHome() {
         description: lang === "he" ? (b.description_he || b.description || "") : (b.description || ""),
         link: b.link || "",
       }))
-    : [{
-        image: hero.backgroundImage || heroBg,
-        title: hero.title || "وجهتك الأولى",
-        subtitle: hero.subtitle || "لعالم الطبيعة والمغامرات",
-        badge: t("أهلاً بك في الوجهة", "ברוכים הבאים ליעד"),
-        description: t("مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق", "ציוד קמפינג וטיולים בסגנון מזרחי מקורי — משלוחים לכל האזורים"),
-        link: "",
-      }];
+    : [];
 
   return (
     <div>
       {/* Hero Carousel */}
-      <section className="relative overflow-hidden aspect-[3/2]">
-        <Carousel
-          opts={{ loop: true, direction: "rtl" }}
-          plugins={[plugin.current]}
-          setApi={setApi}
-          className="w-full h-full"
-        >
-          <CarouselContent className="-ml-0 h-full">
-            {slides.map((slide, i) => (
-              <CarouselItem key={i} className="pl-0 h-full">
-                <div className="relative w-full h-full flex items-center">
-                  <img
-                    src={slide.image}
-                    alt={slide.title || "באנר"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    width={1920}
-                    height={1080}
-                    loading={i === 0 ? "eager" : "lazy"}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/95 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/40" />
-                  <div className="container relative z-10 text-desert-foreground py-10 md:py-28">
-                    <div className="max-w-2xl">
-                      {slide.badge && (
-                        <span className="inline-block bg-gold/20 text-gold px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 md:mb-6 animate-fade-in">
-                          ✨ {slide.badge}
-                        </span>
-                      )}
-                      {slide.title && (
-                        <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-relaxed mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                          {slide.title}
-                          {slide.subtitle && (
-                            <>
-                              <br />
-                              <span className="text-gradient-gold block mt-2 md:mt-4">{slide.subtitle}</span>
-                            </>
-                          )}
-                        </h1>
-                      )}
-                      {slide.description && (
-                        <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                          {slide.description}
-                        </p>
-                      )}
-                      <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                        <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
-                          <Link to={slide.link || hero.cta_link || "/shop"}>
-                            {t(hero.cta_text || "تسوق الآن", hero.cta_text_he || "קנה עכשיו")}
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                          </Link>
-                        </Button>
+      {bannersLoading ? (
+        <section className="relative overflow-hidden aspect-[3/2] bg-muted animate-pulse" />
+      ) : slides.length > 0 ? (
+        <section className="relative overflow-hidden aspect-[3/2]">
+          <Carousel
+            opts={{ loop: true, direction: "rtl" }}
+            plugins={[plugin.current]}
+            setApi={setApi}
+            className="w-full h-full"
+          >
+            <CarouselContent className="-ml-0 h-full">
+              {slides.map((slide, i) => (
+                <CarouselItem key={i} className="pl-0 h-full">
+                  <div className="relative w-full h-full flex items-center">
+                    <img
+                      src={slide.image}
+                      alt={slide.title || "באנר"}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      width={1920}
+                      height={1080}
+                      loading={i === 0 ? "eager" : "lazy"}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-l from-[hsl(30,30%,15%)]/95 via-[hsl(30,30%,15%)]/70 to-[hsl(30,30%,15%)]/40" />
+                    <div className="container relative z-10 text-desert-foreground py-10 md:py-28">
+                      <div className="max-w-2xl">
+                        {slide.badge && (
+                          <span className="inline-block bg-gold/20 text-gold px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 md:mb-6 animate-fade-in">
+                            ✨ {slide.badge}
+                          </span>
+                        )}
+                        {slide.title && (
+                          <h1 className="text-2xl md:text-5xl lg:text-6xl font-black leading-relaxed mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                            {slide.title}
+                            {slide.subtitle && (
+                              <>
+                                <br />
+                                <span className="text-gradient-gold block mt-2 md:mt-4">{slide.subtitle}</span>
+                              </>
+                            )}
+                          </h1>
+                        )}
+                        {slide.description && (
+                          <p className="text-desert-foreground/70 text-sm md:text-xl mb-6 md:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                            {slide.description}
+                          </p>
+                        )}
+                        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                          <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
+                            <Link to={slide.link || hero.cta_link || "/shop"}>
+                              {t(hero.cta_text || "تسوق الآن", hero.cta_text_he || "קנה עכשיו")}
+                              <ArrowLeft className="w-4 h-4 mr-2" />
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
 
-          {/* Navigation arrows + dots */}
-          {slides.length > 1 && (
-            <>
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => api?.scrollTo(i)}
-                    className={`w-2.5 h-2.5 rounded-full transition-colors ${i === current ? 'bg-gold' : 'bg-white/50'}`}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </Carousel>
-      </section>
+            {/* Navigation arrows + dots */}
+            {slides.length > 1 && (
+              <>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                  {slides.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => api?.scrollTo(i)}
+                      className={`w-2.5 h-2.5 rounded-full transition-colors ${i === current ? 'bg-gold' : 'bg-white/50'}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </Carousel>
+        </section>
+      ) : null}
 
       {/* Features Strip */}
       <section className="bg-card border-b border-border">
