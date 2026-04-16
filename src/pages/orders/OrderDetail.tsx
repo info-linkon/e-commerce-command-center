@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2, Loader2, AlertCircle, FileText, ExternalLink, ShieldCheck, ShieldAlert } from "lucide-react";
+import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2, Loader2, AlertCircle, FileText, ExternalLink, ShieldCheck, ShieldAlert, Plus, Minus, Trash2, Edit3 } from "lucide-react";
 import { useOrderPayments } from "@/hooks/usePayments";
 import DeliveryAssignment from "@/components/orders/DeliveryAssignment";
 import PaymentSection from "@/components/orders/PaymentSection";
@@ -349,7 +349,15 @@ const OrderDetail = () => {
 
       {/* Items Table */}
       <Card>
-        <CardHeader><CardTitle>פריטים</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>פריטים</CardTitle>
+          {!isCancelled && !isCompleted && (
+            <Button variant="outline" size="sm" className="gap-1" onClick={() => setEditingItems(!editingItems)}>
+              <Edit3 className="h-3.5 w-3.5" />
+              {editingItems ? "סיום עריכה" : "ערוך פריטים"}
+            </Button>
+          )}
+        </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
@@ -360,6 +368,7 @@ const OrderDetail = () => {
                 <TableHead className="text-right">כמות</TableHead>
                 <TableHead className="text-right">מחיר יחידה</TableHead>
                 <TableHead className="text-right">סה״כ</TableHead>
+                {editingItems && <TableHead className="text-right w-20">פעולות</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -373,9 +382,46 @@ const OrderDetail = () => {
                   </TableCell>
                   <TableCell>{item.bundle_variations?.name || item.product_variations?.name || "—"}</TableCell>
                   <TableCell>{item.bundle_variations?.sku || item.product_variations?.sku || "—"}</TableCell>
-                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell>
+                    {editingItems ? (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => handleUpdateItemQty(item.id, item.quantity - 1, item.unit_price)}
+                          disabled={item.quantity <= 1}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center font-medium">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => handleUpdateItemQty(item.id, item.quantity + 1, item.unit_price)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      item.quantity
+                    )}
+                  </TableCell>
                   <TableCell>₪{Number(item.unit_price).toFixed(2)}</TableCell>
-                  <TableCell className="font-medium">₪{Number(item.total_price).toFixed(2)}</TableCell>
+                  <TableCell className="font-medium">₪{(editingItems ? Number(item.unit_price) * item.quantity : Number(item.total_price)).toFixed(2)}</TableCell>
+                  {editingItems && (
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteItem(item.id, item.unit_price * item.quantity)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -386,7 +432,33 @@ const OrderDetail = () => {
       {/* Actions */}
       {!isCancelled && !isCompleted && (
         <div className="flex gap-3 flex-wrap">
-          {/* Mark as completed button for shipping status */}
+          {/* Status flow buttons for assigned orders */}
+          {isAssigned && status === "processing" && (
+            <Button
+              className="gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+              onClick={() => {
+                updateStatus.mutate({ id: order.id, status: "picking" as OrderStatus });
+                supabase.functions.invoke("order-sms-trigger", {
+                  body: { order_id: order.id, trigger_type: "order_picking" },
+                }).catch(console.error);
+              }}
+            >
+              העבר לליקוט
+            </Button>
+          )}
+          {isAssigned && status === "picking" && (
+            <Button
+              className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={() => {
+                updateStatus.mutate({ id: order.id, status: "shipping" as OrderStatus });
+                supabase.functions.invoke("order-sms-trigger", {
+                  body: { order_id: order.id, trigger_type: "order_shipping" },
+                }).catch(console.error);
+              }}
+            >
+              העבר למשלוח
+            </Button>
+          )}
           {status === "shipping" && (
             <Button
               className="gap-2 bg-green-600 hover:bg-green-700 text-white"
@@ -402,27 +474,26 @@ const OrderDetail = () => {
             </Button>
           )}
 
-          {!isAssigned && (
-            <Select value={status} onValueChange={(v) => {
-              updateStatus.mutate({ id: order.id, status: v as OrderStatus });
-              const triggerMap: Record<string, string> = { processing: "order_created", picking: "order_picking", shipping: "order_shipping", completed: "order_completed" };
-              const smsTrigger = triggerMap[v];
-              if (smsTrigger) {
-                supabase.functions.invoke("order-sms-trigger", {
-                  body: { order_id: order.id, trigger_type: smsTrigger },
-                }).catch(console.error);
-              }
-            }}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="שנה סטטוס" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(statusLabels).filter(([k]) => k !== "cancelled").map(([k, v]) => (
-                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          {/* Status selector for non-assigned orders or general override */}
+          <Select value={status} onValueChange={(v) => {
+            updateStatus.mutate({ id: order.id, status: v as OrderStatus });
+            const triggerMap: Record<string, string> = { processing: "order_created", picking: "order_picking", shipping: "order_shipping", completed: "order_completed" };
+            const smsTrigger = triggerMap[v];
+            if (smsTrigger) {
+              supabase.functions.invoke("order-sms-trigger", {
+                body: { order_id: order.id, trigger_type: smsTrigger },
+              }).catch(console.error);
+            }
+          }}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="שנה סטטוס" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(statusLabels).filter(([k]) => k !== "cancelled").map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
