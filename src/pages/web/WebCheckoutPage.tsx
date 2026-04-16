@@ -37,6 +37,73 @@ export default function WebCheckoutPage() {
   const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
   const submittedRef = useRef(false);
 
+  // OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpPhone, setOtpPhone] = useState("");
+  const [otpDialogOpen, setOtpDialogOpen] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+
+  const sendOtp = async (phone: string) => {
+    if (!phone || phone.replace(/[\s\-()]/g, "").length < 9) return;
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      const { data, error } = await supabase.functions.invoke("send-otp", {
+        body: { action: "send", phone },
+      });
+      if (error) throw error;
+      if (data?.error) { setOtpError(data.error); setOtpLoading(false); return; }
+      setOtpSent(true);
+      setOtpPhone(phone);
+      setOtpDialogOpen(true);
+    } catch (err) {
+      console.error("OTP send error:", err);
+      setOtpError(t("حدث خطأ في إرسال الرمز", "שגיאה בשליחת הקוד"));
+    }
+    setOtpLoading(false);
+  };
+
+  const verifyOtp = async () => {
+    if (!otpCode || otpCode.length < 4) return;
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      const { data, error } = await supabase.functions.invoke("send-otp", {
+        body: { action: "verify", phone: otpPhone, code: otpCode },
+      });
+      if (error) throw error;
+      if (data?.valid) {
+        setOtpVerified(true);
+        setOtpDialogOpen(false);
+        toast.success(t("تم التحقق بنجاح", "האימות הצליח"));
+      } else {
+        setOtpError(data?.error || t("رمز غير صحيح", "קוד שגוי"));
+      }
+    } catch (err) {
+      console.error("OTP verify error:", err);
+      setOtpError(t("حدث خطأ في التحقق", "שגיאה באימות"));
+    }
+    setOtpLoading(false);
+  };
+
+  const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const phone = e.target.value.trim();
+    if (phone && phone.replace(/[\s\-()]/g, "").length >= 9 && !otpVerified) {
+      // Reset if phone changed
+      if (phone !== otpPhone) {
+        setOtpVerified(false);
+        setOtpSent(false);
+        setOtpCode("");
+      }
+      if (!otpSent || phone !== otpPhone) {
+        sendOtp(phone);
+      }
+    }
+  };
+
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
   const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
   const { t } = useLanguage();
@@ -120,6 +187,10 @@ export default function WebCheckoutPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (items.length === 0) { toast.error("السلة فارغة"); return; }
+    if (!otpVerified) {
+      toast.error(t("يرجى التحقق من رقم الهاتف أولاً", "יש לאמת את מספר הטלפון קודם"));
+      return;
+    }
 
     // Geo-blocking validation
     if (shippingMethod === "delivery") {
@@ -462,8 +533,29 @@ export default function WebCheckoutPage() {
                       <Label htmlFor="phone">{t("رقم الهاتف *", "מספר טלפון *")}</Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input id="phone" name="phone" type="tel" required className="pl-10 rounded-xl" placeholder="05X-XXX-XXXX" dir="ltr" />
+                        <Input
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          required
+                          className={`pl-10 ${otpVerified ? "pr-10" : ""} rounded-xl`}
+                          placeholder="05X-XXX-XXXX"
+                          dir="ltr"
+                          onBlur={handlePhoneBlur}
+                        />
+                        {otpVerified && (
+                          <ShieldCheck className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                        )}
                       </div>
+                      {otpSent && !otpVerified && (
+                        <button
+                          type="button"
+                          className="text-xs text-primary hover:underline mt-1"
+                          onClick={() => setOtpDialogOpen(true)}
+                        >
+                          {t("أدخل رمز التحقق", "הזן קוד אימות")}
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -726,6 +818,57 @@ export default function WebCheckoutPage() {
           {t("تشلום مאובטח", "תשלום מאובטח")}
         </div>
       </div>
+
+      {/* OTP Verification Dialog */}
+      {otpDialogOpen && (
+        <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-border space-y-4">
+            <div className="text-center">
+              <ShieldCheck className="w-10 h-10 text-primary mx-auto mb-2" />
+              <h3 className="font-bold text-lg">{t("رمز التحقق", "קוד אימות")}</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t("تم إرسال رمز التحقق إلى", "קוד אימות נשלח אל")} {otpPhone}
+              </p>
+            </div>
+            <Input
+              value={otpCode}
+              onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 4)); setOtpError(""); }}
+              placeholder="____"
+              className="text-center text-2xl tracking-[0.5em] font-mono rounded-xl"
+              dir="ltr"
+              maxLength={4}
+              autoFocus
+            />
+            {otpError && <p className="text-destructive text-xs text-center">{otpError}</p>}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 rounded-xl"
+                onClick={() => setOtpDialogOpen(false)}
+              >
+                {t("إلغاء", "ביטול")}
+              </Button>
+              <Button
+                type="button"
+                className="flex-1 rounded-xl bg-gold text-gold-foreground hover:bg-gold/90"
+                disabled={otpCode.length < 4 || otpLoading}
+                onClick={verifyOtp}
+              >
+                {otpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("تحقق", "אמת")}
+              </Button>
+            </div>
+            <button
+              type="button"
+              className="w-full text-xs text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => sendOtp(otpPhone)}
+              disabled={otpLoading}
+            >
+              {t("إعادة إرسال الرمز", "שלח קוד מחדש")}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
