@@ -968,6 +968,7 @@ export type Database = {
           picking_status: Database["public"]["Enums"]["picking_status"] | null
           shipping_address: string | null
           shipping_city: string | null
+          shipping_cost: number | null
           shipping_country: string | null
           shipping_postcode: string | null
           source: Database["public"]["Enums"]["order_source"]
@@ -1001,6 +1002,7 @@ export type Database = {
           picking_status?: Database["public"]["Enums"]["picking_status"] | null
           shipping_address?: string | null
           shipping_city?: string | null
+          shipping_cost?: number | null
           shipping_country?: string | null
           shipping_postcode?: string | null
           source?: Database["public"]["Enums"]["order_source"]
@@ -1034,6 +1036,7 @@ export type Database = {
           picking_status?: Database["public"]["Enums"]["picking_status"] | null
           shipping_address?: string | null
           shipping_city?: string | null
+          shipping_cost?: number | null
           shipping_country?: string | null
           shipping_postcode?: string | null
           source?: Database["public"]["Enums"]["order_source"]
