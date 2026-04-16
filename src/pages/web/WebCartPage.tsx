@@ -83,6 +83,7 @@ export default function WebCartPage() {
               <span className="font-bold">{t("المجموع", "סה״כ")}</span>
               <span className="font-black text-lg text-primary">₪{total.toFixed(2)}</span>
             </div>
+            <p className="text-xs text-muted-foreground text-center mt-1">{t("شامل ض.ق.م", "כולל מע״מ")}</p>
           </div>
           <Button asChild size="lg" className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold">
             <Link to="/checkout">{t("إتمام الطلب", "לסיום הזמנה")}</Link>

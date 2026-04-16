@@ -751,6 +751,7 @@ export default function WebCheckoutPage() {
                         <span>{t("المجموع", "סה״כ")}</span>
                         <span className="text-primary">₪{finalTotal.toFixed(2)}</span>
                       </div>
+                      <p className="text-xs text-muted-foreground text-center">{t("شامل ض.ق.م", "כולל מע״מ")}</p>
                     </div>
 
                     {/* Submit — desktop */}
