@@ -37,6 +37,73 @@ export default function WebCheckoutPage() {
   const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
   const submittedRef = useRef(false);
 
+  // OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpPhone, setOtpPhone] = useState("");
+  const [otpDialogOpen, setOtpDialogOpen] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+
+  const sendOtp = async (phone: string) => {
+    if (!phone || phone.replace(/[\s\-()]/g, "").length < 9) return;
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      const { data, error } = await supabase.functions.invoke("send-otp", {
+        body: { action: "send", phone },
+      });
+      if (error) throw error;
+      if (data?.error) { setOtpError(data.error); setOtpLoading(false); return; }
+      setOtpSent(true);
+      setOtpPhone(phone);
+      setOtpDialogOpen(true);
+    } catch (err) {
+      console.error("OTP send error:", err);
+      setOtpError(t("حدث خطأ في إرسال الرمز", "שגיאה בשליחת הקוד"));
+    }
+    setOtpLoading(false);
+  };
+
+  const verifyOtp = async () => {
+    if (!otpCode || otpCode.length < 4) return;
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      const { data, error } = await supabase.functions.invoke("send-otp", {
+        body: { action: "verify", phone: otpPhone, code: otpCode },
+      });
+      if (error) throw error;
+      if (data?.valid) {
+        setOtpVerified(true);
+        setOtpDialogOpen(false);
+        toast.success(t("تم التحقق بنجاح", "האימות הצליח"));
+      } else {
+        setOtpError(data?.error || t("رمز غير صحيح", "קוד שגוי"));
+      }
+    } catch (err) {
+      console.error("OTP verify error:", err);
+      setOtpError(t("حدث خطأ في التحقق", "שגיאה באימות"));
+    }
+    setOtpLoading(false);
+  };
+
+  const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const phone = e.target.value.trim();
+    if (phone && phone.replace(/[\s\-()]/g, "").length >= 9 && !otpVerified) {
+      // Reset if phone changed
+      if (phone !== otpPhone) {
+        setOtpVerified(false);
+        setOtpSent(false);
+        setOtpCode("");
+      }
+      if (!otpSent || phone !== otpPhone) {
+        sendOtp(phone);
+      }
+    }
+  };
+
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
   const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
   const { t } = useLanguage();
