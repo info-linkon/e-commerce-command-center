@@ -112,6 +112,7 @@ const WooSyncBadge = ({ syncStatus, syncError, orderId }: { syncStatus: string |
 const OrderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { data: order, isLoading } = useOrder(id);
   const { data: warehouses } = useWarehouses();
   const { data: delivery } = useOrderDelivery(id);
@@ -120,6 +121,50 @@ const OrderDetail = () => {
   const assignWarehouse = useAssignWarehouse();
   const cancelOrder = useCancelOrder();
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>("");
+  const [editingItems, setEditingItems] = useState(false);
+
+  if (isLoading) return <div className="py-12 text-center text-muted-foreground">טוען...</div>;
+  if (!order) return <div className="py-12 text-center text-muted-foreground">הזמנה לא נמצאה</div>;
+
+  const status = order.status as OrderStatus;
+  const items = (order.order_items as any[]) || [];
+  const isAssigned = !!order.assigned_warehouse_id;
+  const isCancelled = status === "cancelled";
+  const isCompleted = status === "completed";
+  const warehouseName = (order as any).warehouses?.name;
+
+  const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+  const isPaid = totalPaid >= order.total && totalPaid > 0;
+  const isPartiallyPaid = totalPaid > 0 && totalPaid < order.total;
+
+  const handleAssign = () => {
+    if (!selectedWarehouse) return;
+    assignWarehouse.mutate({ orderId: order.id, warehouseId: selectedWarehouse });
+  };
+
+  const handleCancel = () => {
+    cancelOrder.mutate(order.id);
+  };
+
+  const handleUpdateItemQty = async (itemId: string, newQty: number, unitPrice: number) => {
+    if (newQty < 1) return;
+    const newTotal = unitPrice * newQty;
+    await supabase.from("order_items").update({ quantity: newQty, total_price: newTotal }).eq("id", itemId);
+    const { data: allItems } = await supabase.from("order_items").select("total_price").eq("order_id", order.id);
+    const orderTotal = (allItems || []).reduce((sum: number, i: any) => sum + Number(i.total_price), 0);
+    await supabase.from("orders").update({ total: orderTotal }).eq("id", order.id);
+    qc.invalidateQueries({ queryKey: ["orders", id] });
+    toast.success("הכמות עודכנה");
+  };
+
+  const handleDeleteItem = async (itemId: string, itemTotal: number) => {
+    if (items.length <= 1) { toast.error("לא ניתן למחוק את הפריט האחרון"); return; }
+    await supabase.from("order_items").delete().eq("id", itemId);
+    const newOrderTotal = Number(order.total) - itemTotal;
+    await supabase.from("orders").update({ total: Math.max(0, newOrderTotal) }).eq("id", order.id);
+    qc.invalidateQueries({ queryKey: ["orders", id] });
+    toast.success("הפריט הוסר");
+  };
 
   if (isLoading) return <div className="py-12 text-center text-muted-foreground">טוען...</div>;
   if (!order) return <div className="py-12 text-center text-muted-foreground">הזמנה לא נמצאה</div>;
