@@ -819,7 +819,7 @@ export default function WebCheckoutPage() {
         </Button>
         <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mt-2">
           <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-          {t("تشلום مאובטח", "תשלום מאובטח")}
+          {t("الدفع آمن", "תשלום מאובטח")}
         </div>
       </div>
 
