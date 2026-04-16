@@ -187,6 +187,10 @@ export default function WebCheckoutPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (items.length === 0) { toast.error("السلة فارغة"); return; }
+    if (!otpVerified) {
+      toast.error(t("يرجى التحقق من رقم الهاتف أولاً", "יש לאמת את מספר הטלפון קודם"));
+      return;
+    }
 
     // Geo-blocking validation
     if (shippingMethod === "delivery") {
