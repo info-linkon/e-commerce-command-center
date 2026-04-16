@@ -1,4 +1,5 @@
 import { useCartStore } from "@/lib/web-cart-store";
+import { Minus as MinusIcon, Plus as PlusIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -29,7 +30,8 @@ const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
 };
 
 export default function WebCheckoutPage() {
-  const { items, totalPrice, clearCart, shippingCost } = useCartStore();
+  const { items, totalPrice, clearCart, shippingCost, updateQuantity } = useCartStore();
+  const [geoError, setGeoError] = useState("");
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
@@ -118,6 +120,28 @@ export default function WebCheckoutPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (items.length === 0) { toast.error("السلة فارغة"); return; }
+
+    // Geo-blocking validation
+    if (shippingMethod === "delivery") {
+      const formData = new FormData(e.currentTarget);
+      const city = (formData.get("city") as string || "").trim().toLowerCase();
+      const blockedKeywords = [
+        "jordan", "ירדן", "الأردن", "عمان", "oman", "עומאן",
+        "amman", "عمّان", "irbid", "اربد", "zarqa", "الزرقاء",
+        "europe", "אירופה", "أوروبا", "germany", "גרמניה", "ألمانيا",
+        "france", "צרפת", "فرنسا", "uk", "בריטניה", "بريطانيا",
+        "italy", "איטליה", "إيطاليا", "spain", "ספרד", "إسبانيا",
+        "netherlands", "הולנד", "هولندا", "belgium", "בלגיה", "بلجيكا",
+        "austria", "אוסטריה", "النمسا", "sweden", "שוודיה", "السويد",
+      ];
+      if (blockedKeywords.some((kw) => city.includes(kw))) {
+        setGeoError(t("عذراً، لا نوفر خدمة التوصيل لهذه المنطقة", "מצטערים, אין משלוח לאזור זה"));
+        setLoading(false);
+        return;
+      }
+      setGeoError("");
+    }
+
     setLoading(true);
     const form = new FormData(e.currentTarget);
     const customerName = form.get("name") as string;
@@ -455,8 +479,11 @@ export default function WebCheckoutPage() {
                         <Label htmlFor="city">{t("المدينة *", "עיר *")}</Label>
                         <div className="relative">
                           <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input id="city" name="city" required className="pr-10 rounded-xl" placeholder={t("المدينة", "עיר")} />
+                          <Input id="city" name="city" required className="pr-10 rounded-xl" placeholder={t("المدينة", "עיר")} onChange={() => geoError && setGeoError("")} />
                         </div>
+                        {geoError && (
+                          <p className="text-destructive text-xs mt-1">{geoError}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="address">{t("العنوان التفصيلي *", "כתובת מפורטת *")}</Label>
@@ -536,7 +563,7 @@ export default function WebCheckoutPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Items */}
-                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                    <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-thin">
                       {items.map((item) => (
                         <div key={item.variationId} className="flex items-center gap-3">
                           {item.imageUrl && (
@@ -551,7 +578,23 @@ export default function WebCheckoutPage() {
                             {item.variationName && (
                               <p className="text-xs text-muted-foreground">{item.variationName}</p>
                             )}
-                            <p className="text-xs text-muted-foreground">× {item.quantity}</p>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(item.variationId, item.quantity - 1)}
+                                className="p-0.5 rounded hover:bg-muted transition-colors"
+                              >
+                                <MinusIcon className="w-3 h-3" />
+                              </button>
+                              <span className="text-xs font-medium w-5 text-center">{item.quantity}</span>
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(item.variationId, item.quantity + 1)}
+                                className="p-0.5 rounded hover:bg-muted transition-colors"
+                              >
+                                <PlusIcon className="w-3 h-3" />
+                              </button>
+                            </div>
                           </div>
                           <span className="font-semibold text-sm shrink-0">₪{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
