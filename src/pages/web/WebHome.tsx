@@ -61,7 +61,7 @@ export default function WebHome() {
   // Use featured products if available, otherwise fall back to latest 8
   const featured = (featuredProducts && featuredProducts.length > 0) ? featuredProducts : (products?.slice(0, 8) || []);
 
-  // Build slides from banners, fallback to hero CMS data
+  // Build slides from banners only (no fallback hero during loading)
   const slides = banners && banners.length > 0
     ? banners.map((b: any) => ({
         image: b.image_url || heroBg,
@@ -71,14 +71,7 @@ export default function WebHome() {
         description: lang === "he" ? (b.description_he || b.description || "") : (b.description || ""),
         link: b.link || "",
       }))
-    : [{
-        image: hero.backgroundImage || heroBg,
-        title: hero.title || "وجهتك الأولى",
-        subtitle: hero.subtitle || "لعالم الطبيعة والمغامرات",
-        badge: t("أهلاً بك في الوجهة", "ברוכים הבאים ליעד"),
-        description: t("مستلزمات تخييم ورحلات بأسلوب شرقي أصيل — توصيل لجميع المناطق", "ציוד קמפינג וטיולים בסגנון מזרחי מקורי — משלוחים לכל האזורים"),
-        link: "",
-      }];
+    : [];
 
   return (
     <div>
