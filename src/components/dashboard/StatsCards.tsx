@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, ShoppingCart, Package, TrendingUp, Wallet, CreditCard } from "lucide-react";
+import { DollarSign, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,22 +12,13 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
   const { data } = useQuery({
     queryKey: ["dashboard-stats", startDate, endDate],
     queryFn: async () => {
-      const [salesOrders, pendingOrders, lowStock, payments] = await Promise.all([
+      const [salesOrders, payments] = await Promise.all([
         supabase
           .from("orders")
           .select("total")
           .gte("created_at", startDate)
           .lte("created_at", endDate)
-          .eq("status", "completed"),
-        supabase
-          .from("orders")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "pending"),
-        supabase
-          .from("inventory")
-          .select("id", { count: "exact", head: true })
-          .lte("quantity", 5)
-          .gt("quantity", -1),
+          .neq("status", "cancelled"),
         supabase
           .from("payments")
           .select("amount, payment_method")
@@ -53,8 +44,6 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
       return {
         salesTotal,
         ordersCount,
-        pendingCount: pendingOrders.count || 0,
-        lowStockCount: lowStock.count || 0,
         cashTotal,
         creditTotal,
         bitTotal,
@@ -69,7 +58,7 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
       title: "מכירות",
       value: `₪${(data?.salesTotal || 0).toFixed(0)}`,
       icon: DollarSign,
-      description: `${data?.ordersCount || 0} הזמנות שהושלמו`,
+      description: `${data?.ordersCount || 0} הזמנות`,
     },
     {
       title: "כסף נכנס",
@@ -77,22 +66,10 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
       icon: TrendingUp,
       description: `מזומן ₪${(data?.cashTotal || 0).toFixed(0)} | אשראי ₪${(data?.creditTotal || 0).toFixed(0)} | ביט ₪${(data?.bitTotal || 0).toFixed(0)}`,
     },
-    {
-      title: "הזמנות ממתינות",
-      value: String(data?.pendingCount || 0),
-      icon: ShoppingCart,
-      description: "הזמנות בהמתנה",
-    },
-    {
-      title: "מלאי נמוך",
-      value: String(data?.lowStockCount || 0),
-      icon: Package,
-      description: "פריטים מתחת לסף",
-    },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2">
       {stats.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
