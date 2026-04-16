@@ -21,6 +21,10 @@ export default function WebCartPage() {
     );
   }
 
+  const shipping = shippingCost();
+  const subtotal = totalPrice();
+  const total = subtotal + shipping;
+
   return (
     <div className="container py-8 md:py-12">
       <h1 className="text-2xl md:text-3xl font-bold mb-8">{t("سلة التسوق", "סל קניות")}</h1>
@@ -67,17 +71,17 @@ export default function WebCartPage() {
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("المجموع الفرعي", "סכום ביניים")}</span>
-              <span className="font-medium">₪{totalPrice().toFixed(2)}</span>
+              <span className="font-medium">₪{subtotal.toFixed(2)}</span>
             </div>
-            {shippingCost() > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("تكلفة التوصيل", "עלות משלוח")}</span>
-                <span className="font-medium">₪{shippingCost().toFixed(2)}</span>
-              </div>
-            )}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t("تكلفة التوصيل", "עלות משלוח")}</span>
+              <span className={`font-medium ${shipping === 0 ? "text-primary" : ""}`}>
+                {shipping === 0 ? t("مجاناً", "חינם") : `₪${shipping.toFixed(2)}`}
+              </span>
+            </div>
             <div className="border-t border-border pt-3 flex justify-between">
               <span className="font-bold">{t("المجموع", "סה״כ")}</span>
-              <span className="font-black text-lg text-primary">₪{(totalPrice() + shippingCost()).toFixed(2)}</span>
+              <span className="font-black text-lg text-primary">₪{total.toFixed(2)}</span>
             </div>
           </div>
           <Button asChild size="lg" className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold">
