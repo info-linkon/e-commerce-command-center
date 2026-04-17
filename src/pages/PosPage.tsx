@@ -562,6 +562,14 @@ const PosPage = () => {
               <Label>טלפון *</Label>
               <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} type="tel" dir="ltr" className="text-left" />
             </div>
+            <div>
+              <Label>עיר</Label>
+              <Input value={shippingCity} onChange={(e) => setShippingCity(e.target.value)} className="text-right" dir="rtl" placeholder="לדוגמה: אום אל-פחם" />
+            </div>
+            <div>
+              <Label>כתובת</Label>
+              <Input value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} className="text-right" dir="rtl" placeholder="רחוב, מספר בית" />
+            </div>
             <Separator />
             <div>
               <Label>שיטת משלוח *</Label>
