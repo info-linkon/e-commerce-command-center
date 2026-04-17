@@ -276,6 +276,7 @@ const PosPage = () => {
         discount_type: discountType !== "none" ? discountType : undefined,
         discount_value: discountType !== "none" ? discountValue : undefined,
         discount_amount: discountType !== "none" ? discountAmount : undefined,
+        created_at: orderDate.toISOString(),
         items: cart.map((c) => ({
           variation_id: c.variation_id,
           quantity: c.quantity,
@@ -302,6 +303,7 @@ const PosPage = () => {
       setDiscountType("none");
       setDiscountValue(0);
       setShippingPrice(0);
+      setOrderDate(new Date());
       toast.success("ההזמנה נוצרה ונשלחה לתהליך ההזמנות");
       navigate("/crm/orders");
     } catch {
