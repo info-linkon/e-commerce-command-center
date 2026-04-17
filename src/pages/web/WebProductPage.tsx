@@ -166,7 +166,7 @@ export default function WebProductPage() {
     const variationId = activeVariation?.id || variations?.[0]?.id || product.id;
     const variationName = activeBundleVariation?.name || activeVariation?.name_ar || activeVariation?.name || "";
 
-    const catalogId = product.sku || String((product as any).product_number || product.id);
+    const productSku = product.sku || null;
 
     for (let i = 0; i < quantity; i++) {
       addItem({
@@ -179,17 +179,19 @@ export default function WebProductPage() {
         shippingPrice: Number((product as any).shipping_price || 0),
         bundleVariationId: activeBundleVariation?.id || undefined,
         sku: activeVariation?.sku || product.sku || null,
-        catalogId,
+        catalogId: productSku,
       }, 1);
     }
-    // Meta Pixel: AddToCart — use catalog ID (matches Catalog feed)
-    fbq("AddToCart", {
-      content_ids: [catalogId],
-      content_name: displayName,
-      content_type: "product",
-      value: price * quantity,
-      currency: "ILS",
-    });
+    // Meta Pixel: AddToCart - always send product SKU only
+    if (productSku) {
+      fbq("AddToCart", {
+        content_ids: [productSku],
+        content_name: displayName,
+        content_type: "product",
+        value: price * quantity,
+        currency: "ILS",
+      });
+    }
     toast.success(t("تمت الإضافة إلى السلة", "נוסף לסל"));
   };
 
