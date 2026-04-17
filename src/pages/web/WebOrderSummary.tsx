@@ -146,19 +146,34 @@ export default function WebOrderSummary() {
 
       {/* Totals */}
       <div className="bg-card border border-border rounded-xl p-5">
-        {order.discount_amount > 0 && (
-          <>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-muted-foreground">{t("خصم", "הנחה")}</span>
-              <span className="text-green-600">-₪{Number(order.discount_amount).toFixed(2)}</span>
-            </div>
-            <Separator className="my-2" />
-          </>
-        )}
-        <div className="flex justify-between items-center">
-          <span className="font-bold text-lg">{t("المجموع", "סה״כ")}</span>
-          <span className="font-bold text-xl text-primary">₪{Number(order.total).toFixed(2)}</span>
-        </div>
+        {(() => {
+          const subtotal = (items || []).reduce((sum: number, it: any) => sum + Number(it.totalPrice || 0), 0);
+          const shipping = Number(order.shipping_cost || 0);
+          const discount = Number(order.discount_amount || 0);
+          return (
+            <>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-muted-foreground">{t("المجموع الفرعي", "סכום ביניים")}</span>
+                <span>₪{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-muted-foreground">{t("الشحن", "משלוח")}</span>
+                <span>{shipping > 0 ? `₪${shipping.toFixed(2)}` : t("مجاني", "חינם")}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">{t("خصم", "הנחה")}</span>
+                  <span className="text-green-600">-₪{discount.toFixed(2)}</span>
+                </div>
+              )}
+              <Separator className="my-2" />
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-lg">{t("المجموع", "סה״כ")}</span>
+                <span className="font-bold text-xl text-primary">₪{Number(order.total).toFixed(2)}</span>
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       {/* Notes */}
