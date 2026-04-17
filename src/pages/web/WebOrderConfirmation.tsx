@@ -9,6 +9,11 @@ import { incrementCouponUsage } from "@/hooks/useCoupons";
 
 type UiState = "loading" | "success" | "error" | "pending";
 
+// Statuses that mean the order is already paid/processed. Used by the error
+// safety-net poll: if HYP's notify URL arrives AFTER the browser redirect
+// marks the payment as failed, we still want the customer to see success.
+const PAID_STATUSES = new Set(["processing", "picking", "shipping", "completed"]);
+
 /**
  * Confirmation page after payment / cash order.
  *
@@ -16,6 +21,11 @@ type UiState = "loading" | "success" | "error" | "pending";
  * `hyp-callback` edge function, which has ALREADY verified the payment
  * server-side and 302'd here with `?status=ok|already|failed|amount_mismatch|error`.
  * This page just reads the status and renders the right UI.
+ *
+ * Error safety-net: when status=failed/error/amount_mismatch we still poll
+ * the order row for a few seconds because HYP's server-to-server notify can
+ * arrive after the browser redirect. If the notify eventually marks the order
+ * as paid, we upgrade the UI to success.
  *
  * Fallback: if the HYP portal is still configured to redirect directly here
  * (old setup, with raw `CCode`/`Id`/... in the URL), we fall back to calling
@@ -80,15 +90,16 @@ export default function WebOrderConfirmation() {
         sessionStorage.removeItem("hyp_coupon_id");
         return;
       }
-      // failed / amount_mismatch / error — all surface as error to the customer
-      setStatus("error");
+      // failed / amount_mismatch / error — before giving up, check if notify
+      // already (or will shortly) mark the order as paid.
+      pollOrderAfterFailure(orderNumber, setStatus, clearCart);
       return;
     }
 
     // ── Fallback: raw CCode from HYP (old portal config, no hyp-callback yet).
     if (ccode !== null) {
       if (ccode !== "0") {
-        setStatus("error");
+        pollOrderAfterFailure(orderNumber, setStatus, clearCart);
         return;
       }
       runFallbackVerify(searchParams, orderNumber, setStatus, clearCart);
@@ -112,12 +123,32 @@ export default function WebOrderConfirmation() {
   }
 
   if (status === "error") {
+    const reason = searchParams.get("reason");
+    const statusParam = searchParams.get("status");
+    const errorBody = (() => {
+      if (statusParam === "amount_mismatch") {
+        return t(
+          "حدث خطأ في مطابقة مبلغ الدفع. لا تُعِد الدفع — سيتواصل معك ممثلنا.",
+          "אי-התאמה בסכום התשלום. אל תשלם שוב — נציג יצור איתך קשר.",
+        );
+      }
+      if (reason === "order_not_found") {
+        return t(
+          "لم نتمكن من العثور على الطلب. يرجى التواصل مع الدعم مع الاحتفاظ برقم العملية.",
+          "לא הצלחנו למצוא את ההזמנה. צור קשר עם התמיכה ושמור את מספר העסקה.",
+        );
+      }
+      return t(
+        "فشل الدفع. إذا تم الخصم، سيتواصل معك ممثلنا.",
+        "התשלום לא הצליח. אם חויבת, נציג יצור איתך קשר.",
+      );
+    })();
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center animate-fade-in">
         <AlertCircle className="h-20 w-20 text-destructive mx-auto mb-6" />
         <h1 className="text-3xl font-bold text-foreground mb-3">{t("خطأ في الدفع", "שגיאה בתשלום")}</h1>
         <p className="text-muted-foreground mb-2">{t("رقم الطلب:", "מספר הזמנה:")} <span className="font-bold text-primary">#{orderNumber}</span></p>
-        <p className="text-muted-foreground mb-8">{t("فشل الدفع. إذا تم الخصم، سيتواصل معك ممثلنا.", "התשלום לא הצליח. אם חויבת, נציג יצור איתך קשר.")}</p>
+        <p className="text-muted-foreground mb-8">{errorBody}</p>
         <Link
           to="/"
           className="px-6 py-3 web-gold-gradient text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-md"
@@ -228,7 +259,7 @@ function runFallbackVerify(
 
     if (!orderId) {
       console.error("Could not resolve orderId for HYP verify fallback");
-      setStatus("error");
+      pollOrderAfterFailure(orderNumber, setStatus, clearCart);
       return;
     }
 
@@ -246,7 +277,7 @@ function runFallbackVerify(
 
       if (verifyError || verifyData?.amount_mismatch || !verifyData?.verified) {
         console.error("Fallback verify failed:", verifyError, verifyData);
-        setStatus("error");
+        pollOrderAfterFailure(orderNumber, setStatus, clearCart);
         return;
       }
 
@@ -260,7 +291,7 @@ function runFallbackVerify(
       await firePurchasePixel(orderNumber, searchParams.get("Amount"));
     } catch (err) {
       console.error("Fallback verify exception:", err);
-      setStatus("error");
+      pollOrderAfterFailure(orderNumber, setStatus, clearCart);
     }
   })();
 }
@@ -270,4 +301,44 @@ function bumpCouponFromSession(): void {
   if (!couponId) return;
   // Fire-and-forget: coupon bookkeeping shouldn't block the success UI
   incrementCouponUsage(couponId).catch((err) => console.error("coupon increment failed:", err));
+}
+
+// Safety net for when the browser-redirect verify failed but HYP's
+// server-to-server notify is still in flight. Poll the order row for up to
+// ~15s — if the notify lands during that window the customer sees "success"
+// instead of a false "failed". Keeps the cart cleared either way.
+async function pollOrderAfterFailure(
+  orderNumber: string | null,
+  setStatus: (s: UiState) => void,
+  clearCart: () => void,
+): Promise<void> {
+  clearCart();
+  if (!orderNumber) {
+    setStatus("error");
+    return;
+  }
+
+  const deadline = Date.now() + 15000;
+  while (Date.now() < deadline) {
+    try {
+      const { data } = await supabase
+        .from("orders")
+        .select("status, hyp_transaction_id")
+        .eq("order_number", Number(orderNumber))
+        .maybeSingle();
+      if (data && (data.hyp_transaction_id || PAID_STATUSES.has(String(data.status)))) {
+        setStatus("success");
+        bumpCouponFromSession();
+        sessionStorage.removeItem("hyp_order_id");
+        sessionStorage.removeItem("hyp_order_number");
+        sessionStorage.removeItem("hyp_coupon_id");
+        await firePurchasePixelForOrder(orderNumber);
+        return;
+      }
+    } catch (err) {
+      console.error("order status poll failed:", err);
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  setStatus("error");
 }

@@ -190,6 +190,9 @@ export default function WebCheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Guard against double-submit (button is also disabled={loading}, but Enter
+    // key presses and the mobile sticky button can still race the first click).
+    if (loading || submittedRef.current) return;
     if (items.length === 0) { toast.error("السلة فارغة"); return; }
     if (!otpVerified) {
       toast.error(t("يرجى التحقق من رقم الهاتف أولاً", "יש לאמת את מספר הטלפון קודם"));
@@ -352,8 +355,20 @@ export default function WebCheckoutPage() {
       });
 
       if (hypError || !hypData?.success) {
-        console.error("HYP payment error:", hypError || hypData?.error);
-        toast.error("שגיאה ביצירת דף תשלום — ההזמנה נשמרה ונציג יצור קשר");
+        const hypErrMsg = hypError?.message || hypData?.error || "unknown";
+        console.error("HYP payment error:", hypErrMsg);
+        // Tag the order so ops can see why it's stuck in pending_payment and
+        // regenerate a link from the CRM. Without this note the row looks
+        // identical to an abandoned checkout.
+        await supabase
+          .from("orders")
+          .update({
+            notes: [order.notes, `⚠️ יצירת לינק תשלום נכשלה: ${hypErrMsg}`]
+              .filter(Boolean)
+              .join(" | "),
+          })
+          .eq("id", order.id);
+        toast.error(t("حدث خطأ في إنشاء صفحة الدفع — سيتواصل معك ممثلنا", "שגיאה ביצירת דף תשלום — נציג יצור איתך קשר"));
         submittedRef.current = true;
         navigate(`/order-confirmation/${order.order_number}?payment=pending`);
         clearCart();
