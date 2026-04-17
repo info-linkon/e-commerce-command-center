@@ -567,11 +567,11 @@ const PosPage = () => {
 
       {/* Create Order Dialog */}
       <Dialog open={showCreateOrder} onOpenChange={setShowCreateOrder}>
-        <DialogContent className="max-w-md w-[95vw] sm:w-full" dir="rtl">
+        <DialogContent className="max-w-md w-[95vw] sm:w-full max-h-[90vh] flex flex-col" dir="rtl">
           <DialogHeader>
             <DialogTitle>יצירת הזמנה - ₪{total.toFixed(2)}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 text-right">
+          <div className="space-y-4 text-right overflow-y-auto flex-1 -mx-1 px-1">
             <div>
               <Label>שם לקוח *</Label>
               <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="text-right" dir="rtl" />
