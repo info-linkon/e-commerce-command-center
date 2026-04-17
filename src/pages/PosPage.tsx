@@ -1,5 +1,9 @@
 import { useState, useMemo } from "react";
-import { Search, ShoppingCart, Plus, Minus, Trash2, Package, Percent, BadgeDollarSign } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, Trash2, Package, Percent, BadgeDollarSign, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +62,7 @@ const PosPage = () => {
   const [discountType, setDiscountType] = useState<"none" | "percent" | "fixed">("none");
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [shippingPrice, setShippingPrice] = useState<number>(0);
+  const [orderDate, setOrderDate] = useState<Date>(new Date());
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
