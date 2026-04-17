@@ -139,12 +139,16 @@ export default function WebCheckoutPage() {
   const [couponError, setCouponError] = useState("");
 
   useEffect(() => {
-    fbq("InitiateCheckout", {
-      content_ids: items.map((i) => i.catalogId || i.sku || i.variationId),
-      num_items: items.length,
-      value: totalPrice(),
-      currency: "ILS",
-    });
+    // Meta Pixel: InitiateCheckout - send only product SKUs (catalog IDs)
+    const skuIds = items.map((i) => i.catalogId).filter(Boolean) as string[];
+    if (skuIds.length > 0) {
+      fbq("InitiateCheckout", {
+        content_ids: skuIds,
+        num_items: items.length,
+        value: totalPrice(),
+        currency: "ILS",
+      });
+    }
   }, []);
 
   // Listen for postMessage from HYP iframe (success/error redirect)
