@@ -60,6 +60,7 @@ import HypSettingsPage from "./pages/admin/HypSettingsPage";
 import PaymentMethodsSettingsPage from "./pages/admin/PaymentMethodsSettingsPage";
 import InforuSettingsPage from "./pages/admin/InforuSettingsPage";
 import EzcountSettingsPage from "./pages/admin/EzcountSettingsPage";
+import UsersPage from "./pages/admin/UsersPage";
 
 const queryClient = new QueryClient();
 
@@ -141,6 +142,7 @@ const App = () => (
             <Route path="/crm/admin/payment-methods" element={<Protected><PaymentMethodsSettingsPage /></Protected>} />
             <Route path="/crm/admin/inforu-settings" element={<Protected><InforuSettingsPage /></Protected>} />
             <Route path="/crm/admin/ezcount-settings" element={<Protected><EzcountSettingsPage /></Protected>} />
+            <Route path="/crm/admin/users" element={<Protected><UsersPage /></Protected>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
