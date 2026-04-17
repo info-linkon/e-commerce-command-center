@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, Plus, Trash2, CheckCircle2, Banknote, Smartphone, FileText, ExternalLink, Send, Loader2 } from "lucide-react";
+import { CreditCard, Plus, Trash2, CheckCircle2, Banknote, Smartphone, FileText, ExternalLink, Send, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,6 +68,10 @@ const PaymentSection = ({
   const [issueInvoice, setIssueInvoice] = useState(false);
   const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
   const [issuingInvoiceStandalone, setIssuingInvoiceStandalone] = useState(false);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
+  const [reconcileHypId, setReconcileHypId] = useState("");
+  const [reconcileAmount, setReconcileAmount] = useState(String(orderTotal));
+  const [reconciling, setReconciling] = useState(false);
   const [lines, setLines] = useState<PaymentLine[]>([
     { amount: String(orderTotal), method: "cash", cash_register_id: "", reference: "" },
   ]);
@@ -119,6 +123,41 @@ const PaymentSection = ({
   };
 
   const linesTotal = lines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+
+  const handleReconcileHyp = async () => {
+    const hypId = reconcileHypId.trim();
+    if (!hypId) {
+      toast.error("נדרש מזהה עסקה מ-HYP");
+      return;
+    }
+    const amt = parseFloat(reconcileAmount);
+    if (!isFinite(amt) || amt <= 0) {
+      toast.error("סכום לא תקין");
+      return;
+    }
+    setReconciling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("hyp-reconcile", {
+        body: { order_id: orderId, hyp_transaction_id: hypId, amount: amt },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.already_processed) {
+        toast.info("ההזמנה כבר סונכרנה");
+      } else {
+        toast.success("התשלום סונכרן מול HYP");
+      }
+      setReconcileOpen(false);
+      setReconcileHypId("");
+      qc.invalidateQueries({ queryKey: ["orders", orderId] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["payments", orderId] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "שגיאה בסנכרון תשלום");
+    } finally {
+      setReconciling(false);
+    }
+  };
 
   const handleSendPaymentLink = async () => {
     setSendingPaymentLink(true);
@@ -290,6 +329,58 @@ const PaymentSection = ({
             <Send className="h-3 w-3" />
             לינק תשלום נשלח — ממתין לתשלום
           </Badge>
+        )}
+
+        {/* Manual HYP reconcile — when the customer paid in HYP but our DB
+            stayed in pending (callback/notify never landed). Admin verifies
+            in the HYP portal, pastes the transaction Id, and we apply the
+            same side-effects as a successful verify. */}
+        {!isCancelled && !isCompleted && !isPaidByCredit && isPaymentLinkSent && (
+          <Dialog open={reconcileOpen} onOpenChange={setReconcileOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full gap-2">
+                <RefreshCw className="h-4 w-4" />
+                סנכרן תשלום מ-HYP
+              </Button>
+            </DialogTrigger>
+            <DialogContent dir="rtl" className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>סנכרון תשלום מ-HYP</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 pt-2">
+                <p className="text-xs text-muted-foreground">
+                  אם התשלום בוצע בהצלחה ב-HYP אך ההזמנה נשארה ב״ממתין לתשלום״, הזן את מזהה העסקה מפורטל HYP כדי לסמן אותה כשולמה, להנפיק חשבונית ולעדכן את WooCommerce.
+                </p>
+                <div>
+                  <Label className="text-xs">מזהה עסקה מ-HYP (Id)</Label>
+                  <Input
+                    value={reconcileHypId}
+                    onChange={(e) => setReconcileHypId(e.target.value)}
+                    placeholder="למשל 12788352"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">סכום שחויב (₪)</Label>
+                  <Input
+                    type="number"
+                    value={reconcileAmount}
+                    onChange={(e) => setReconcileAmount(e.target.value)}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <Button
+                  onClick={handleReconcileHyp}
+                  disabled={reconciling || !reconcileHypId.trim()}
+                  className="w-full gap-2"
+                >
+                  {reconciling ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                  {reconciling ? "מסנכרן..." : "אשר וסנכרן"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
 
 

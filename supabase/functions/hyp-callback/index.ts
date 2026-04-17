@@ -85,9 +85,34 @@ Deno.serve(async (req) => {
 
   try {
     // CCode !== "0" means payment failed / postponed / cancelled.
-    // No need to call HYP VERIFY — just inform the customer.
+    // No need to call HYP VERIFY — just inform the customer, but log the
+    // raw callback params to payment_events so ops can diagnose a stuck
+    // order later (e.g. HYP portal shows success but our DB stayed pending).
     if (input.CCode !== "0") {
       console.log("hyp-callback non-success CCode:", input.CCode);
+      try {
+        const { supabase } = buildSupabase();
+        let orderId: string | null = null;
+        if (input.Order) {
+          const { data: row } = await supabase
+            .from("orders")
+            .select("id")
+            .eq("order_number", Number(input.Order))
+            .maybeSingle();
+          orderId = row?.id || null;
+        }
+        if (orderId) {
+          await supabase.from("payment_events").insert({
+            order_id: orderId,
+            event_type: "hyp_callback_non_success",
+            success: false,
+            message: `CCode=${input.CCode || "missing"}`,
+            metadata: input as Record<string, unknown>,
+          });
+        }
+      } catch (logErr) {
+        console.error("hyp-callback audit log failed (non-blocking):", logErr);
+      }
       return redirectTo(`${confirmBase}?status=failed&CCode=${input.CCode || "unknown"}`);
     }
 

@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.hyp-callback]
 verify_jwt = false
+
+[functions.hyp-reconcile]
+verify_jwt = true

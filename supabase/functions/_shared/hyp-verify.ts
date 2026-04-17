@@ -205,47 +205,77 @@ export async function runHypVerify(
     return { verified: false, CCode: "0", amount_mismatch: true, reason: "amount_mismatch" };
   }
 
-  // ── Update order → processing, store transaction id, clear payment_link_url ──
+  return applyHypSuccess(supabase, supabaseUrl, supabaseKey, {
+    orderId: resolvedOrderId,
+    hypId: Id || null,
+    amount: chargedAmount,
+    orderSource: orderData.source,
+    customerName: orderData.customer_name,
+    customerEmail: orderData.customer_email,
+    customerPhone: orderData.customer_phone,
+    source,
+  });
+}
+
+export interface ApplyHypSuccessInput {
+  orderId: string;
+  hypId: string | null;
+  amount: number;
+  orderSource?: string | null;
+  customerName?: string | null;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
+  // Origin of the success signal, used only for event_type naming in payment_events.
+  source: "redirect" | "notify" | "manual_reconcile";
+}
+
+/**
+ * Apply all side-effects of a confirmed HYP payment: mark the order processing,
+ * insert the payment row (idempotent via unique index), issue invoice, send SMS/email,
+ * and sync to WooCommerce. Shared between the automated verify path and the
+ * admin-initiated `hyp-reconcile` path, so both produce identical state.
+ */
+export async function applyHypSuccess(
+  supabase: SupabaseClient,
+  supabaseUrl: string,
+  supabaseKey: string,
+  input: ApplyHypSuccessInput,
+): Promise<HypVerifyResult> {
+  const { orderId, hypId, amount, orderSource, customerName, customerEmail, customerPhone, source } = input;
+
   await supabase
     .from("orders")
     .update({
       status: "processing",
-      hyp_transaction_id: Id || null,
+      hyp_transaction_id: hypId,
       payment_link_url: null,
     })
-    .eq("id", resolvedOrderId);
+    .eq("id", orderId);
 
-  // ── Insert payment row (unique index on (order_id, reference) enforces idempotency) ──
   const paymentInsert = await supabase.from("payments").insert({
-    order_id: resolvedOrderId,
-    amount: chargedAmount,
+    order_id: orderId,
+    amount,
     payment_method: "credit",
-    reference: `HYP-${Id || ""}`,
+    reference: `HYP-${hypId || ""}`,
   });
 
   if (paymentInsert.error) {
     const code = (paymentInsert.error as { code?: string }).code;
     if (code === "23505") {
-      // Concurrent insert won; treat as already processed.
-      await logEvent(supabase, resolvedOrderId, `hyp_verify_${source}`, true, "duplicate_ignored", { Id });
+      await logEvent(supabase, orderId, `hyp_verify_${source}`, true, "duplicate_ignored", { Id: hypId });
       return { verified: true, CCode: "0", already_processed: true };
     }
-    await logEvent(supabase, resolvedOrderId, "hyp_payment_insert_failed", false, paymentInsert.error.message, { Id });
+    await logEvent(supabase, orderId, "hyp_payment_insert_failed", false, paymentInsert.error.message, { Id: hypId });
     return { verified: false, CCode: "0", reason: "payment_insert_failed" };
   }
 
-  await logEvent(supabase, resolvedOrderId, `hyp_verify_${source}`, true, "payment_recorded", { Id, amount: chargedAmount });
+  await logEvent(supabase, orderId, `hyp_verify_${source}`, true, "payment_recorded", { Id: hypId, amount });
 
-  // Coupon `used_count` is bumped client-side from the confirmation page
-  // (reads `hyp_coupon_id` from sessionStorage after a fresh verify) to avoid
-  // requiring a new `orders.applied_coupon_id` column.
-
-  // ── Auto-issue invoice receipt (Ezcount type 320) ──
   try {
     const { data: orderItems } = await supabase
       .from("order_items")
       .select("quantity, unit_price, variation_id, product_variations(name, sku, products(name))")
-      .eq("order_id", resolvedOrderId);
+      .eq("order_id", orderId);
 
     type OrderItemRow = {
       quantity: number;
@@ -267,12 +297,12 @@ export async function runHypVerify(
       },
       body: JSON.stringify({
         doc_type: "invoice_receipt",
-        order_id: resolvedOrderId,
-        customer_name: orderData.customer_name || "לקוח אתר",
-        customer_email: orderData.customer_email || undefined,
-        customer_phone: orderData.customer_phone || undefined,
+        order_id: orderId,
+        customer_name: customerName || "לקוח אתר",
+        customer_email: customerEmail || undefined,
+        customer_phone: customerPhone || undefined,
         items,
-        payments: [{ type: "credit", amount: chargedAmount }],
+        payments: [{ type: "credit", amount }],
       }),
     });
 
@@ -280,17 +310,16 @@ export async function runHypVerify(
     if (ezData.success) {
       const invoiceLink = ezData.short_code ? `/inv/${ezData.short_code}` : ezData.doc_url;
       if (invoiceLink) {
-        await supabase.from("orders").update({ invoice_url: invoiceLink }).eq("id", resolvedOrderId);
+        await supabase.from("orders").update({ invoice_url: invoiceLink }).eq("id", orderId);
       }
-      await logEvent(supabase, resolvedOrderId, "ezcount_invoice", true, ezData.short_code || ezData.doc_url);
+      await logEvent(supabase, orderId, "ezcount_invoice", true, ezData.short_code || ezData.doc_url);
     } else {
-      await logEvent(supabase, resolvedOrderId, "ezcount_invoice", false, JSON.stringify(ezData));
+      await logEvent(supabase, orderId, "ezcount_invoice", false, JSON.stringify(ezData));
     }
   } catch (ezErr) {
-    await logEvent(supabase, resolvedOrderId, "ezcount_invoice", false, String(ezErr));
+    await logEvent(supabase, orderId, "ezcount_invoice", false, String(ezErr));
   }
 
-  // ── SMS ──
   try {
     const smsRes = await fetch(`${supabaseUrl}/functions/v1/order-sms-trigger`, {
       method: "POST",
@@ -298,14 +327,13 @@ export async function runHypVerify(
         "Content-Type": "application/json",
         Authorization: `Bearer ${supabaseKey}`,
       },
-      body: JSON.stringify({ order_id: resolvedOrderId, trigger_type: "order_completed" }),
+      body: JSON.stringify({ order_id: orderId, trigger_type: "order_completed" }),
     });
-    await logEvent(supabase, resolvedOrderId, "order_sms", smsRes.ok, smsRes.ok ? "sent" : `status=${smsRes.status}`);
+    await logEvent(supabase, orderId, "order_sms", smsRes.ok, smsRes.ok ? "sent" : `status=${smsRes.status}`);
   } catch (smsErr) {
-    await logEvent(supabase, resolvedOrderId, "order_sms", false, String(smsErr));
+    await logEvent(supabase, orderId, "order_sms", false, String(smsErr));
   }
 
-  // ── Email ──
   try {
     const emailRes = await fetch(`${supabaseUrl}/functions/v1/order-email-notify`, {
       method: "POST",
@@ -313,29 +341,28 @@ export async function runHypVerify(
         "Content-Type": "application/json",
         Authorization: `Bearer ${supabaseKey}`,
       },
-      body: JSON.stringify({ order_id: resolvedOrderId }),
+      body: JSON.stringify({ order_id: orderId }),
     });
-    await logEvent(supabase, resolvedOrderId, "order_email", emailRes.ok, emailRes.ok ? "sent" : `status=${emailRes.status}`);
+    await logEvent(supabase, orderId, "order_email", emailRes.ok, emailRes.ok ? "sent" : `status=${emailRes.status}`);
   } catch (emailErr) {
-    await logEvent(supabase, resolvedOrderId, "order_email", false, String(emailErr));
+    await logEvent(supabase, orderId, "order_email", false, String(emailErr));
   }
 
-  // ── WooCommerce sync (website orders only) ──
-  if (orderData.source === "website") {
+  if (orderSource === "website") {
     try {
-      await supabase.from("orders").update({ woo_sync_status: "syncing", woo_sync_error: null }).eq("id", resolvedOrderId);
+      await supabase.from("orders").update({ woo_sync_status: "syncing", woo_sync_error: null }).eq("id", orderId);
       const { data: wooData, error: wooErr } = await supabase.functions.invoke("woo-sync", {
-        body: { action: "update_order_status", order_id: resolvedOrderId },
+        body: { action: "update_order_status", order_id: orderId },
       });
       if (wooErr || wooData?.error) {
         throw new Error(wooErr?.message || wooData?.error);
       }
-      await supabase.from("orders").update({ woo_sync_status: "synced", woo_sync_error: null }).eq("id", resolvedOrderId);
-      await logEvent(supabase, resolvedOrderId, "woo_sync", true, "synced");
+      await supabase.from("orders").update({ woo_sync_status: "synced", woo_sync_error: null }).eq("id", orderId);
+      await logEvent(supabase, orderId, "woo_sync", true, "synced");
     } catch (wooErr) {
       const msg = wooErr instanceof Error ? wooErr.message : String(wooErr);
-      await supabase.from("orders").update({ woo_sync_status: "failed", woo_sync_error: msg }).eq("id", resolvedOrderId);
-      await logEvent(supabase, resolvedOrderId, "woo_sync", false, msg);
+      await supabase.from("orders").update({ woo_sync_status: "failed", woo_sync_error: msg }).eq("id", orderId);
+      await logEvent(supabase, orderId, "woo_sync", false, msg);
     }
   }
 
