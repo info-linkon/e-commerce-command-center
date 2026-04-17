@@ -280,6 +280,10 @@ export default function WebCheckoutPage() {
           customer_email: customerEmail || null,
           shipping_city: shippingMethod === "delivery" ? (form.get("city") as string) : "איסוף עצמי",
           shipping_address: shippingMethod === "delivery" ? (form.get("address") as string) : "",
+          shipping_cost: shipping,
+          discount_amount: discount,
+          discount_type: appliedCoupon ? appliedCoupon.type : null,
+          discount_value: appliedCoupon ? Number(appliedCoupon.value) : 0,
           notes: [
             shippingMethod === "pickup" ? "🏪 איסוף עצמי" : "",
             (form.get("notes") as string) || "",
