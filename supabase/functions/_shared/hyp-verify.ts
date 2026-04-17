@@ -185,7 +185,7 @@ export async function runHypVerify(
   // Fetch order for amount check + side-effects
   const { data: orderData } = await supabase
     .from("orders")
-    .select("total, customer_name, customer_email, customer_phone, source, applied_coupon_id")
+    .select("total, customer_name, customer_email, customer_phone, source")
     .eq("id", resolvedOrderId)
     .single();
 
@@ -236,24 +236,9 @@ export async function runHypVerify(
 
   await logEvent(supabase, resolvedOrderId, `hyp_verify_${source}`, true, "payment_recorded", { Id, amount: chargedAmount });
 
-  // ── Increment coupon usage if one was applied (moved out of client so both cash+credit are consistent) ──
-  if (orderData.applied_coupon_id) {
-    try {
-      const { data: coupon } = await supabase
-        .from("coupons")
-        .select("used_count")
-        .eq("id", orderData.applied_coupon_id)
-        .maybeSingle();
-      if (coupon) {
-        await supabase
-          .from("coupons")
-          .update({ used_count: (coupon.used_count || 0) + 1 })
-          .eq("id", orderData.applied_coupon_id);
-      }
-    } catch (err) {
-      await logEvent(supabase, resolvedOrderId, "coupon_increment_failed", false, String(err));
-    }
-  }
+  // Coupon `used_count` is bumped client-side from the confirmation page
+  // (reads `hyp_coupon_id` from sessionStorage after a fresh verify) to avoid
+  // requiring a new `orders.applied_coupon_id` column.
 
   // ── Auto-issue invoice receipt (Ezcount type 320) ──
   try {

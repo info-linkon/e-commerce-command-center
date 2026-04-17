@@ -284,14 +284,13 @@ export default function WebCheckoutPage() {
           discount_amount: discount,
           discount_type: appliedCoupon ? appliedCoupon.type : null,
           discount_value: appliedCoupon ? Number(appliedCoupon.value) : 0,
-          applied_coupon_id: appliedCoupon ? appliedCoupon.id : null,
           notes: [
             shippingMethod === "pickup" ? "🏪 איסוף עצמי" : "",
             (form.get("notes") as string) || "",
             appliedCoupon ? `קופון: ${appliedCoupon.code} (הנחה: ₪${discount.toFixed(2)})` : "",
           ].filter(Boolean).join(" | ") || null,
           total: finalTotal,
-        } as any)
+        })
         .select()
         .single();
 
@@ -363,6 +362,14 @@ export default function WebCheckoutPage() {
 
       sessionStorage.setItem("hyp_order_id", order.id);
       sessionStorage.setItem("hyp_order_number", String(order.order_number));
+      // Stash the coupon id so the confirmation page can increment `used_count`
+      // only after HYP verifies — we can't rely on a DB column for it because
+      // the orders migration may not have run yet.
+      if (appliedCoupon) {
+        sessionStorage.setItem("hyp_coupon_id", appliedCoupon.id);
+      } else {
+        sessionStorage.removeItem("hyp_coupon_id");
+      }
       setHypPaymentUrl(hypData.payment_url);
     } catch (err) {
       console.error(err);

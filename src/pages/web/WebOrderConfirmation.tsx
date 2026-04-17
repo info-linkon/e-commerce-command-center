@@ -5,6 +5,7 @@ import { fbq } from "@/lib/meta-pixel";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/web-cart-store";
 import { useLanguage } from "@/hooks/useLanguage";
+import { incrementCouponUsage } from "@/hooks/useCoupons";
 
 type UiState = "loading" | "success" | "error" | "pending";
 
@@ -68,9 +69,15 @@ export default function WebOrderConfirmation() {
       if (statusParam === "ok" || statusParam === "already") {
         setStatus("success");
         clearCart();
+        // Fresh payment (not a re-processed duplicate) → increment coupon
+        // usage and fire Meta Pixel. `already` = idempotent replay, skip both.
+        if (statusParam === "ok") {
+          bumpCouponFromSession();
+          firePurchasePixel(orderNumber, searchParams.get("Amount"));
+        }
         sessionStorage.removeItem("hyp_order_id");
         sessionStorage.removeItem("hyp_order_number");
-        if (statusParam === "ok") firePurchasePixel(orderNumber, searchParams.get("Amount"));
+        sessionStorage.removeItem("hyp_coupon_id");
         return;
       }
       // failed / amount_mismatch / error — all surface as error to the customer
@@ -244,12 +251,23 @@ function runFallbackVerify(
       }
 
       setStatus("success");
+      if (!verifyData.already_processed) {
+        bumpCouponFromSession();
+      }
       sessionStorage.removeItem("hyp_order_id");
       sessionStorage.removeItem("hyp_order_number");
+      sessionStorage.removeItem("hyp_coupon_id");
       await firePurchasePixel(orderNumber, searchParams.get("Amount"));
     } catch (err) {
       console.error("Fallback verify exception:", err);
       setStatus("error");
     }
   })();
+}
+
+function bumpCouponFromSession(): void {
+  const couponId = sessionStorage.getItem("hyp_coupon_id");
+  if (!couponId) return;
+  // Fire-and-forget: coupon bookkeeping shouldn't block the success UI
+  incrementCouponUsage(couponId).catch((err) => console.error("coupon increment failed:", err));
 }
