@@ -86,14 +86,16 @@ export function useCreateOrder() {
       discount_type?: string;
       discount_value?: number;
       discount_amount?: number;
+      created_at?: string;
       items: OrderItem[];
     }) => {
-      const { items, source, cash_register_id, payment_method, delivery_method, created_by, discount_type, discount_value, discount_amount, ...rest } = input;
+      const { items, source, cash_register_id, payment_method, delivery_method, created_by, discount_type, discount_value, discount_amount, created_at, ...rest } = input;
       const orderPayload: any = { ...rest };
       if (source) orderPayload.source = source;
       if (cash_register_id) orderPayload.cash_register_id = cash_register_id;
       if (payment_method) orderPayload.payment_method = payment_method;
       if (created_by) orderPayload.created_by = created_by;
+      if (created_at) orderPayload.created_at = created_at;
       if (discount_type && discount_type !== "none") {
         orderPayload.discount_type = discount_type;
         orderPayload.discount_value = discount_value || 0;
