@@ -157,18 +157,19 @@ export default function WebOrderConfirmation() {
         if (orderRow) {
           const { data: items } = await supabase
             .from("order_items")
-            .select("variation_id, bundle_variation_id, product_variations(products(sku, product_number)), bundle_variations(bundles(products(sku, product_number)))")
+            .select("product_variations(products(sku)), bundle_variations(bundles(products(sku)))")
             .eq("order_id", orderRow.id);
-          const ids = (items || []).map((i: any) => {
-            const p = i.bundle_variations?.bundles?.products || i.product_variations?.products;
-            return p?.sku || (p?.product_number ? String(p.product_number) : (i.bundle_variation_id || i.variation_id));
-          });
-          fbq("Purchase", {
-            content_ids: ids,
-            value: orderRow.total,
-            currency: "ILS",
-            content_type: "product",
-          });
+          const skus = (items || [])
+            .map((i: any) => i.bundle_variations?.bundles?.products?.sku || i.product_variations?.products?.sku)
+            .filter(Boolean);
+          if (skus.length > 0) {
+            fbq("Purchase", {
+              content_ids: skus,
+              value: orderRow.total,
+              currency: "ILS",
+              content_type: "product",
+            });
+          }
         }
       })().catch(console.error);
     }
