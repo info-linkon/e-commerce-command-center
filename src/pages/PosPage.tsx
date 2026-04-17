@@ -580,6 +580,30 @@ const PosPage = () => {
           </DialogHeader>
           <div className="space-y-4 text-right overflow-y-auto flex-1 -mx-1 px-1">
             <div>
+              <Label>תאריך ההזמנה *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn("w-full justify-start text-right font-normal", !orderDate && "text-muted-foreground")}
+                  >
+                    <CalendarIcon className="ml-2 h-4 w-4" />
+                    {orderDate ? format(orderDate, "dd/MM/yyyy") : "בחר תאריך"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={orderDate}
+                    onSelect={(d) => d && setOrderDate(d)}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
               <Label>שם לקוח *</Label>
               <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="text-right" dir="rtl" />
             </div>
