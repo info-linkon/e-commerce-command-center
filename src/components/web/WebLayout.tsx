@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { fbqPageView } from "@/lib/meta-pixel";
 import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
+import { useVersionCheck } from "@/hooks/useVersionCheck";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -20,6 +21,7 @@ function WebLayoutInner() {
   const { lang } = useLanguage();
   const { pathname } = useLocation();
   const pixelInitialized = useRef(false);
+  useVersionCheck();
 
   const settings = (settingsData?.content || {}) as any;
   const whatsapp = settings.whatsapp || "972526573185";

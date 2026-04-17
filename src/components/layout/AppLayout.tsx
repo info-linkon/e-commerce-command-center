@@ -1,7 +1,9 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
+import { useVersionCheck } from "@/hooks/useVersionCheck";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
+  useVersionCheck();
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full" dir="rtl">
