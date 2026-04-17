@@ -49,6 +49,8 @@ const PosPage = () => {
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [shippingCity, setShippingCity] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [cashRegisterId, setCashRegisterId] = useState<string>("");
@@ -249,6 +251,8 @@ const PosPage = () => {
       const newOrder = await createOrder.mutateAsync({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
+        shipping_city: shippingCity.trim() || undefined,
+        shipping_address: shippingAddress.trim() || undefined,
         total,
         status: "pending",
         source: "pos" as any,
@@ -277,6 +281,8 @@ const PosPage = () => {
       setShowCreateOrder(false);
       setCustomerName("");
       setCustomerPhone("");
+      setShippingCity("");
+      setShippingAddress("");
       setDeliveryMethod("pickup");
       setPaymentMethod("cash");
       setCashRegisterId("");
@@ -555,6 +561,14 @@ const PosPage = () => {
             <div>
               <Label>טלפון *</Label>
               <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} type="tel" dir="ltr" className="text-left" />
+            </div>
+            <div>
+              <Label>עיר</Label>
+              <Input value={shippingCity} onChange={(e) => setShippingCity(e.target.value)} className="text-right" dir="rtl" placeholder="לדוגמה: אום אל-פחם" />
+            </div>
+            <div>
+              <Label>כתובת</Label>
+              <Input value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} className="text-right" dir="rtl" placeholder="רחוב, מספר בית" />
             </div>
             <Separator />
             <div>
