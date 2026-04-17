@@ -12,6 +12,8 @@ export interface CartItem {
   shippingPrice?: number;
   bundleVariationId?: string;
   sku?: string | null;
+  // Catalog ID for Meta Pixel matching (mirrors meta-product-feed: product.sku || product_number)
+  catalogId?: string | null;
 }
 
 interface CartStore {

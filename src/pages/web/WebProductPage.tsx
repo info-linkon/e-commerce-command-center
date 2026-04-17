@@ -68,11 +68,12 @@ export default function WebProductPage() {
     },
   });
 
-  // Meta Pixel: ViewContent (must be before early returns)
+  // Meta Pixel: ViewContent — use catalog ID (sku || product_number) to match Catalog feed
   useEffect(() => {
     if (product) {
+      const catalogId = product.sku || String((product as any).product_number || product.id);
       fbq("ViewContent", {
-        content_ids: [product.sku || product.id],
+        content_ids: [catalogId],
         content_name: product.name_ar || product.name,
         content_type: "product",
         value: product.sale_price,
@@ -166,6 +167,8 @@ export default function WebProductPage() {
     const variationId = activeVariation?.id || variations?.[0]?.id || product.id;
     const variationName = activeBundleVariation?.name || activeVariation?.name_ar || activeVariation?.name || "";
 
+    const catalogId = product.sku || String((product as any).product_number || product.id);
+
     for (let i = 0; i < quantity; i++) {
       addItem({
         variationId,
@@ -177,12 +180,12 @@ export default function WebProductPage() {
         shippingPrice: Number((product as any).shipping_price || 0),
         bundleVariationId: activeBundleVariation?.id || undefined,
         sku: activeVariation?.sku || product.sku || null,
+        catalogId,
       }, 1);
     }
-    // Meta Pixel: AddToCart — use SKU
-    const pixelId = activeVariation?.sku || product.sku || variationId;
+    // Meta Pixel: AddToCart — use catalog ID (matches Catalog feed)
     fbq("AddToCart", {
-      content_ids: [pixelId],
+      content_ids: [catalogId],
       content_name: displayName,
       content_type: "product",
       value: price * quantity,
