@@ -281,6 +281,8 @@ const PosPage = () => {
       setShowCreateOrder(false);
       setCustomerName("");
       setCustomerPhone("");
+      setShippingCity("");
+      setShippingAddress("");
       setDeliveryMethod("pickup");
       setPaymentMethod("cash");
       setCashRegisterId("");
