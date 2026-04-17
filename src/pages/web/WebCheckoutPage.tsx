@@ -16,6 +16,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLanguage } from "@/hooks/useLanguage";
 import logo from "@/assets/logo.webp";
 
+const HYP_ORDER_KEY = "hyp_pending_order";
+interface HypPendingOrder {
+  order_id: string;
+  order_number: number;
+  total: number;
+  started_at: number;
+}
+
 type ShippingMethod = "delivery" | "pickup";
 type PaymentMethodType = "cash" | "credit";
 
@@ -34,7 +42,7 @@ export default function WebCheckoutPage() {
   const [geoError, setGeoError] = useState("");
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
   const submittedRef = useRef(false);
 
   // OTP state
@@ -149,18 +157,6 @@ export default function WebCheckoutPage() {
         currency: "ILS",
       });
     }
-  }, []);
-
-  // Listen for postMessage from HYP iframe (success/error redirect)
-  useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type === "hyp-payment-done" && e.data?.url) {
-        clearCart();
-        window.location.href = e.data.url;
-      }
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
   }, []);
 
   const subtotal = totalPrice();
@@ -325,9 +321,6 @@ export default function WebCheckoutPage() {
         return;
       }
 
-      const successUrl = `${window.location.origin}/order-confirmation/${order.order_number}`;
-      const errorUrl = `${window.location.origin}/checkout?payment_error=true`;
-
       const { data: hypData, error: hypError } = await supabase.functions.invoke("hyp-create-payment", {
         body: {
           order_id: order.id,
@@ -336,106 +329,68 @@ export default function WebCheckoutPage() {
           customer_name: customerName,
           customer_phone: customerPhone,
           customer_email: customerEmail,
-          success_url: successUrl,
-          error_url: errorUrl,
           info: `הזמנה #${order.order_number}`,
         },
       });
 
-      if (hypError || !hypData?.success) {
+      if (hypError || !hypData?.success || !hypData?.payment_url) {
         console.error("HYP payment error:", hypError || hypData?.error);
-        toast.error("שגיאה ביצירת דף תשלום — ההזמנה נשמרה ונציג יצור קשר");
+        toast.error(t("تعذّر فتح صفحة الدفع — تم حفظ الطلب وسيتواصل معك فريقنا", "תקלה בפתיחת דף תשלום — ההזמנה נשמרה, נציג יצור קשר"));
         submittedRef.current = true;
         navigate(`/order-confirmation/${order.order_number}?payment=pending`);
         clearCart();
         return;
       }
 
-      sessionStorage.setItem("hyp_order_id", order.id);
-      sessionStorage.setItem("hyp_order_number", String(order.order_number));
-      setHypPaymentUrl(hypData.payment_url);
+      // Persist a pending-order snapshot so the confirmation page can resolve it
+      // even if the user opens the return URL in a different tab.
+      const snapshot: HypPendingOrder = {
+        order_id: order.id,
+        order_number: Number(order.order_number),
+        total: finalTotal,
+        started_at: Date.now(),
+      };
+      try {
+        sessionStorage.setItem(HYP_ORDER_KEY, JSON.stringify(snapshot));
+        localStorage.setItem(HYP_ORDER_KEY, JSON.stringify(snapshot));
+      } catch {
+        // storage may be unavailable (private mode etc.) — confirmation page has a DB fallback
+      }
+
+      submittedRef.current = true;
+      setRedirecting(true);
+      // Direct top-level redirect to HYP (no iframe: avoids X-Frame-Options,
+      // 3DS popups being blocked, and lost postMessage edge cases).
+      window.location.href = hypData.payment_url;
     } catch (err) {
       console.error(err);
-      toast.error("حدث خطأ أثناء إرسال الطلب");
-    } finally {
+      toast.error(t("حدث خطأ أثناء إرسال الطلب", "שגיאה בשליחת ההזמנה"));
       setLoading(false);
     }
   };
 
-  if (items.length === 0 && !hypPaymentUrl && !submittedRef.current) {
+  if (items.length === 0 && !redirecting && !submittedRef.current) {
     navigate("/cart");
     return null;
   }
 
-  // Show HYP payment iframe overlay
-  if (hypPaymentUrl) {
-    const orderTotal = finalTotal;
+  if (redirecting) {
     return (
-      <div className="fixed inset-0 z-[100] bg-muted/50 flex flex-col">
-        {/* Header with logo + secure badge */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shadow-sm">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="الوجهة" className="w-10 h-10 rounded-full ring-1 ring-border object-cover flex-shrink-0" />
-            <div>
-              <span className="font-bold text-sm text-foreground">الوجهة</span>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Lock className="w-3 h-3 text-primary" />
-                دفع آمن
-              </span>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setHypPaymentUrl(null);
-              navigate("/cart");
-            }}
-          >
-            <X className="w-4 h-4 ml-1" />
-            إلغاء
-          </Button>
-        </div>
-
-        {/* Order summary strip */}
-        <div className="bg-card border-b border-border px-4 py-3">
-          <div className="flex items-center justify-between max-w-lg mx-auto">
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-2 rtl:space-x-reverse">
-                {items.slice(0, 3).map((item, i) => (
-                  <div key={i} className="w-10 h-10 rounded-lg border-2 border-background bg-muted overflow-hidden shadow-sm">
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                        <ShoppingBag className="w-4 h-4" />
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {items.length > 3 && (
-                  <div className="w-10 h-10 rounded-lg border-2 border-background bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground shadow-sm">
-                    +{items.length - 3}
-                  </div>
-                )}
-              </div>
-              <div className="text-sm">
-                <span className="text-muted-foreground">{items.reduce((s, i) => s + i.quantity, 0)} منتجات</span>
-              </div>
-            </div>
-            <div className="text-left">
-              <div className="text-lg font-bold text-foreground">₪{orderTotal.toFixed(2)}</div>
-              <div className="text-xs text-muted-foreground">المجموع الكلي</div>
-            </div>
+      <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+        <div className="max-w-sm w-full bg-card rounded-2xl shadow-lg border border-border p-8 text-center space-y-4">
+          <img src={logo} alt="الوجهة" className="w-16 h-16 rounded-full mx-auto ring-2 ring-primary/20" />
+          <Loader2 className="w-8 h-8 text-primary mx-auto animate-spin" />
+          <h2 className="text-lg font-bold text-foreground">
+            {t("جاري التحويل إلى صفحة الدفع", "מעביר לדף התשלום המאובטח")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("يرجى عدم إغلاق الصفحة", "אנא אל תסגור את הדף")}
+          </p>
+          <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <Lock className="w-3.5 h-3.5 text-primary" />
+            {t("دفع آمن عبر Hypay", "תשלום מאובטח באמצעות Hypay")}
           </div>
         </div>
-
-        {/* Iframe */}
-        <iframe
-          src={hypPaymentUrl}
-          className="flex-1 w-full border-none bg-background"
-          allow="payment"
-        />
       </div>
     );
   }

@@ -5,6 +5,51 @@ const corsHeaders = {
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const HYP_ENDPOINT = "https://pay.hyp.co.il/p/";
+
+function splitName(fullName: string): { first: string; last: string } {
+  const clean = (fullName || "").trim().replace(/\s+/g, " ");
+  if (!clean) return { first: "", last: "" };
+  const parts = clean.split(" ");
+  if (parts.length === 1) return { first: parts[0], last: "" };
+  return { first: parts[0], last: parts.slice(1).join(" ") };
+}
+
+function cleanPhone(raw?: string): string {
+  return (raw || "").replace(/[^\d]/g, "").slice(0, 15);
+}
+
+async function fetchWithTimeout(url: string, ms: number): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function signWithRetry(url: string): Promise<{ ok: boolean; body: string; status: number }> {
+  const delays = [0, 800, 2000];
+  let lastStatus = 0;
+  let lastBody = "";
+  for (let i = 0; i < delays.length; i++) {
+    if (delays[i] > 0) await new Promise((r) => setTimeout(r, delays[i]));
+    try {
+      const res = await fetchWithTimeout(url, 15000);
+      const body = await res.text();
+      lastStatus = res.status;
+      lastBody = body;
+      if (res.ok && body.includes("signature=")) {
+        return { ok: true, body, status: res.status };
+      }
+    } catch (err) {
+      lastBody = err instanceof Error ? err.message : String(err);
+    }
+  }
+  return { ok: false, body: lastBody, status: lastStatus };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -15,7 +60,6 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Read HYP config
     const { data: configRow, error: configError } = await supabase
       .from("site_content")
       .select("content")
@@ -40,28 +84,44 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { order_id, order_number, total, customer_name, customer_phone, customer_email, success_url, error_url, info } = await req.json();
+    const body = await req.json();
+    const { order_id, order_number, total, customer_name, customer_phone, customer_email, info } = body;
 
-    if (!order_id || !total || !success_url || !error_url) {
-      return new Response(JSON.stringify({ error: "Missing required fields: order_id, total, success_url, error_url" }), {
+    if (!order_id || total === undefined || total === null) {
+      return new Response(JSON.stringify({ error: "Missing required fields: order_id, total" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Step 1: APISign — get signature
+    const numericAmount = Number(total);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      return new Response(JSON.stringify({ error: "Invalid amount" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const amountStr = numericAmount.toFixed(2);
+    const { first, last } = splitName(customer_name || "");
+    const phone = cleanPhone(customer_phone);
+
+    // HYP requires non-empty ClientName; fall back to a placeholder to avoid CCode=401
+    const clientName = first || "לקוח";
+    // UserId is required; 000000000 is Hypay's accepted "no-ID" fallback
+    const userId = "000000000";
+
     const signParams = new URLSearchParams({
       action: "APISign",
       What: "SIGN",
       Masof: masof,
       KEY: api_key,
       PassP: passp,
-      Amount: String(total),
+      Amount: amountStr,
       Order: String(order_number || order_id),
-      Info: info || `Order ${order_number || order_id}`,
-      ClientName: customer_name || "",
-      phone: customer_phone || "",
-      email: customer_email || "",
+      Info: (info || `Order ${order_number || order_id}`).slice(0, 100),
+      ClientName: clientName,
+      UserId: userId,
       UTF8: "True",
       UTF8out: "True",
       Sign: "True",
@@ -69,41 +129,53 @@ Deno.serve(async (req) => {
       Coin: "1",
       PageLang: "HEB",
       tmp: "7",
+      pageTimeOut: "True",
       sendemail: customer_email ? "True" : "False",
       FixTash: "False",
       J5: "False",
       Postpone: "False",
     });
 
-    const signUrl = `https://pay.hyp.co.il/p/?${signParams.toString()}`;
-    console.log("HYP APISign request URL:", signUrl);
+    if (last) signParams.set("ClientLName", last);
+    if (phone) {
+      signParams.set("phone", phone);
+      signParams.set("cell", phone);
+    }
+    if (customer_email) signParams.set("email", customer_email);
 
-    const signResponse = await fetch(signUrl);
-    const signResult = await signResponse.text();
-    console.log("HYP APISign response:", signResult);
+    const signUrl = `${HYP_ENDPOINT}?${signParams.toString()}`;
+    console.log("HYP APISign request (order", order_id, "amount", amountStr, ")");
 
-    // The response is URL-encoded params including signature
-    // Build payment URL from the response
-    if (signResult.includes("signature=")) {
-      // The response IS the query string for the payment page
-      const paymentUrl = `https://pay.hyp.co.il/p/?${signResult}`;
+    const signed = await signWithRetry(signUrl);
 
-      // Update success/error URLs — HYP redirects to the URLs configured in the portal,
-      // but we pass Order param so we can identify the order on return
+    if (!signed.ok) {
+      console.error("HYP APISign failed after retries:", signed.status, signed.body);
       return new Response(JSON.stringify({
-        success: true,
-        payment_url: paymentUrl,
+        error: "Failed to get payment signature from HYP",
+        raw: signed.body?.slice(0, 500),
       }), {
+        status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Error — no signature returned
+    // Response body IS the query string for the payment page (includes signature)
+    const paymentUrl = `${HYP_ENDPOINT}?${signed.body}`;
+
+    // Persist the payment URL so the order can be re-paid via a link if needed
+    try {
+      await supabase
+        .from("orders")
+        .update({ payment_link_url: paymentUrl } as any)
+        .eq("id", order_id);
+    } catch (persistErr) {
+      console.warn("Could not persist payment_link_url (non-blocking):", persistErr);
+    }
+
     return new Response(JSON.stringify({
-      error: "Failed to get payment signature from HYP",
-      raw: signResult,
+      success: true,
+      payment_url: paymentUrl,
     }), {
-      status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
