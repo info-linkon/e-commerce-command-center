@@ -1,0 +1,62 @@
+# Apply Supabase migrations on push to main.
+#
+# Scope: project-scoped by design — uses the pooler DB connection string stored
+# in SUPABASE_DB_URL. The URL embeds the project ref, so commands run here CANNOT
+# reach any other project in the account. The workflow intentionally does NOT
+# use SUPABASE_ACCESS_TOKEN to keep blast radius minimal.
+#
+# Edge functions deployment is handled by the Supabase ↔ GitHub integration
+# (configured in the Supabase dashboard), not by this workflow.
+
+name: Apply Supabase migrations
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/migrations/**"
+  workflow_dispatch: {}
+
+# Avoid two runs racing on the same DB
+concurrency:
+  group: supabase-migrations
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Guard — require DB URL secret
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL secret is missing."
+            exit 1
+          fi
+
+      - name: List pending migrations
+        run: |
+          echo "Migrations in repo:"
+          ls -1 supabase/migrations/ | tail -10
+
+      - name: Apply migrations (db push)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          supabase db push --db-url "$SUPABASE_DB_URL" --yes
+
+      - name: Summary
+        if: success()
+        run: echo "✅ Migrations applied successfully."
