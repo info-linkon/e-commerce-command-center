@@ -214,9 +214,6 @@ const UsersPage = () => {
                 autoComplete="off"
                 required
               />
-              <p className="text-xs text-muted-foreground">
-                יחובר אוטומטית ל-@elwejha.app
-              </p>
             </div>
 
             <div className="space-y-2">
