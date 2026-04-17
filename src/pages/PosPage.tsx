@@ -230,6 +230,14 @@ const PosPage = () => {
     }));
   };
 
+  const setQuantity = (variationId: string, qty: number) => {
+    if (qty <= 0) {
+      setCart(cart.filter((c) => c.variation_id !== variationId));
+      return;
+    }
+    setCart(cart.map((c) => (c.variation_id === variationId ? { ...c, quantity: qty } : c)));
+  };
+
   const removeFromCart = (variationId: string) => {
     setCart(cart.filter((c) => c.variation_id !== variationId));
   };
@@ -329,7 +337,17 @@ const PosPage = () => {
                     <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.variation_id, -1)}>
                       <Minus className="h-3 w-3" />
                     </Button>
-                    <span className="w-8 text-center text-sm">{item.quantity}</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={item.quantity}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10);
+                        if (!isNaN(v)) setQuantity(item.variation_id, v);
+                      }}
+                      className="h-6 w-12 text-center text-sm px-1"
+                      dir="ltr"
+                    />
                     <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.variation_id, 1)}>
                       <Plus className="h-3 w-3" />
                     </Button>

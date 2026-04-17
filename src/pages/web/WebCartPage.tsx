@@ -50,7 +50,17 @@ export default function WebCartPage() {
                   <button onClick={() => updateQuantity(item.variationId, item.quantity - 1)} className="p-1 hover:bg-muted rounded">
                     <Minus className="w-3 h-3" />
                   </button>
-                  <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={item.quantity}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!isNaN(v) && v > 0) updateQuantity(item.variationId, v);
+                    }}
+                    className="w-12 h-7 text-sm font-medium text-center bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                    dir="ltr"
+                  />
                   <button onClick={() => updateQuantity(item.variationId, item.quantity + 1)} className="p-1 hover:bg-muted rounded">
                     <Plus className="w-3 h-3" />
                   </button>
