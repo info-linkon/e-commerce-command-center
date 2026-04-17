@@ -230,6 +230,14 @@ const PosPage = () => {
     }));
   };
 
+  const setQuantity = (variationId: string, qty: number) => {
+    if (qty <= 0) {
+      setCart(cart.filter((c) => c.variation_id !== variationId));
+      return;
+    }
+    setCart(cart.map((c) => (c.variation_id === variationId ? { ...c, quantity: qty } : c)));
+  };
+
   const removeFromCart = (variationId: string) => {
     setCart(cart.filter((c) => c.variation_id !== variationId));
   };
