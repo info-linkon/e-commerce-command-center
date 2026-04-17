@@ -315,7 +315,7 @@ const PosPage = () => {
   // Cart content (shared between desktop panel and mobile drawer)
   const cartContent = (
     <>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0 pl-2">
         {cart.length === 0 ? (
           <div className="text-center text-muted-foreground py-12 text-sm">העגלה ריקה</div>
         ) : (
