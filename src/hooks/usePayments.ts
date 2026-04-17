@@ -48,20 +48,14 @@ export function useRecordPayment() {
       const { error: payErr } = await supabase.from("payments").insert(paymentRows);
       if (payErr) throw payErr;
 
-      // 2. Update cash register balances for cash payments
+      // 2. Atomic cash register balance update via RPC (avoids lost updates
+      //    when two terminals record a cash payment concurrently).
       for (const p of input.payments) {
         if (p.payment_method === "cash" && p.cash_register_id) {
-          const { data: reg } = await supabase
-            .from("cash_registers")
-            .select("current_balance")
-            .eq("id", p.cash_register_id)
-            .single();
-          if (reg) {
-            await supabase
-              .from("cash_registers")
-              .update({ current_balance: Number(reg.current_balance) + p.amount })
-              .eq("id", p.cash_register_id);
-          }
+          await supabase.rpc("increment_cash_register" as any, {
+            reg_id: p.cash_register_id,
+            delta: p.amount,
+          });
         }
       }
 

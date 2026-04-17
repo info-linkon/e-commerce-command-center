@@ -1,3 +1,13 @@
+// Generate a HYP payment page URL for an existing order, save a short
+// /pay/:orderNumber link on the order, and SMS it to the customer.
+//
+// Guards:
+//   - Refuses to generate a link for orders that are already paid or completed.
+//   - `NotifyUrl` is passed so HYP can server-to-server notify us even if the
+//     customer closes the browser mid-payment (see hyp-notify function).
+//
+// Blueprint refs: docs/hypay.apib §"Step 1 - APISign"
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -40,6 +50,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Read site URL from general settings (fallback to env, then hardcoded)
+    const { data: generalRow } = await supabase
+      .from("site_content")
+      .select("content")
+      .eq("page", "settings")
+      .eq("section", "general")
+      .maybeSingle();
+    const generalConfig = (generalRow?.content as Record<string, string> | null) || {};
+    const siteUrl =
+      generalConfig.site_url ||
+      Deno.env.get("SITE_URL") ||
+      "https://elwejha.co.il";
+
     const { order_id } = await req.json();
 
     if (!order_id) {
@@ -49,10 +72,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch order details
+    // Fetch order details + paid-status guard
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("id, order_number, total, customer_name, customer_phone, customer_email")
+      .select("id, order_number, total, customer_name, customer_phone, customer_email, status, hyp_transaction_id")
       .eq("id", order_id)
       .single();
 
@@ -63,6 +86,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Guard: refuse to generate a link for already-paid / completed / cancelled orders
+    const blockedStatuses = new Set(["processing", "picking", "shipping", "completed", "cancelled"]);
+    if (order.hyp_transaction_id || blockedStatuses.has(order.status || "")) {
+      return new Response(
+        JSON.stringify({
+          error: "לא ניתן ליצור לינק תשלום — ההזמנה כבר שולמה או סגורה",
+          already_paid: !!order.hyp_transaction_id,
+          status: order.status,
+        }),
+        {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
     if (!order.customer_phone) {
       return new Response(JSON.stringify({ error: "ללקוח אין מספר טלפון" }), {
         status: 400,
@@ -70,13 +109,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use custom domain
-    const siteUrl = "https://elwejha.co.il";
+    // Step 1: Generate HYP payment URL via APISign.
+    // NOTE (blueprint §"Set Up Success and Failure Pages"): SuccessRedirectUrl /
+    // ErrorRedirectUrl are NOT documented params — response pages are configured
+    // in the HYP merchant portal. Passing them here is a no-op, so we omit them.
+    const notifyUrl = `${supabaseUrl}/functions/v1/hyp-notify`;
 
-    const successUrl = `${siteUrl}/order-confirmation`;
-    const errorUrl = `${siteUrl}/order-confirmation`;
-
-    // Step 1: Generate HYP payment URL via APISign
     const signParams = new URLSearchParams({
       action: "APISign",
       What: "SIGN",
@@ -100,8 +138,9 @@ Deno.serve(async (req) => {
       FixTash: "False",
       J5: "False",
       Postpone: "False",
-      SuccessRedirectUrl: successUrl,
-      ErrorRedirectUrl: errorUrl,
+      pageTimeOut: "True",
+      // NotifyUrl — per-account HYP feature; safe to send even if terminal ignores it.
+      NotifyUrl: notifyUrl,
     });
 
     const signUrl = `https://pay.hyp.co.il/p/?${signParams.toString()}`;
@@ -123,14 +162,14 @@ Deno.serve(async (req) => {
 
     const fullPaymentUrl = `https://pay.hyp.co.il/p/?${signResult}`;
 
-    // Save payment link on order and create a short redirect URL
+    // Save payment link on order and build a short redirect URL
     await supabase
       .from("orders")
       .update({ payment_link_url: fullPaymentUrl } as any)
       .eq("id", order_id);
 
     // Short URL via edge function (works regardless of custom domain SPA config)
-    const shortPaymentUrl = `https://elwejha.co.il/pay/${order.order_number}`;
+    const shortPaymentUrl = `${siteUrl.replace(/\/$/, "")}/pay/${order.order_number}`;
 
     // Step 2: Send SMS with SHORT payment link
     const { data: smsConfig } = await supabase
@@ -192,6 +231,15 @@ Deno.serve(async (req) => {
     try { smsResult = JSON.parse(smsResultText); } catch { smsResult = { raw: smsResultText }; }
 
     const smsSent = smsResponse.ok && smsResult?.StatusDescription !== "Error";
+
+    // Log the event so ops can see failures without digging through function logs
+    await supabase.from("payment_events").insert({
+      order_id,
+      event_type: "hyp_payment_link_sms",
+      success: smsSent,
+      message: smsSent ? "sent" : (smsResult?.StatusDescription || smsResult?.Message || "error"),
+      metadata: { phone: formattedPhone, short_url: shortPaymentUrl },
+    }).then(() => {}, () => {});
 
     return new Response(JSON.stringify({
       success: true,

@@ -259,6 +259,7 @@ const PosPage = () => {
     if (paymentMethod === "cash" && !cashRegisterId) { toast.error("בחר קופה לתשלום במזומן"); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
+    const isHypLink = paymentMethod === "credit_link";
 
     try {
       const newOrder = await createOrder.mutateAsync({
@@ -267,16 +268,19 @@ const PosPage = () => {
         shipping_city: shippingCity.trim() || undefined,
         shipping_address: shippingAddress.trim() || undefined,
         total,
-        status: "pending",
+        // For HYP-link flow the order starts as pending_payment and the payment
+        // row is created only after the customer actually pays (via hyp-verify).
+        status: isHypLink ? "pending_payment" : "pending",
         source: "pos" as any,
         created_by: user?.id || undefined,
-        payment_method: paymentMethod,
+        payment_method: isHypLink ? "credit" : paymentMethod,
         cash_register_id: paymentMethod === "cash" ? cashRegisterId : undefined,
         delivery_method: deliveryMethod,
         discount_type: discountType !== "none" ? discountType : undefined,
         discount_value: discountType !== "none" ? discountValue : undefined,
         discount_amount: discountType !== "none" ? discountAmount : undefined,
         created_at: orderDate.toISOString(),
+        skip_auto_payment: isHypLink,
         items: cart.map((c) => ({
           variation_id: c.variation_id,
           quantity: c.quantity,
@@ -286,10 +290,25 @@ const PosPage = () => {
         })),
       } as any);
 
-      // Trigger SMS for new POS order
-      supabase.functions.invoke("order-sms-trigger", {
-        body: { order_id: newOrder.id, trigger_type: "order_created" },
-      }).catch(console.error);
+      if (isHypLink) {
+        // Send HYP payment link via SMS to the customer.
+        const { data: linkData, error: linkErr } = await supabase.functions.invoke("hyp-payment-link", {
+          body: { order_id: newOrder.id },
+        });
+        if (linkErr || linkData?.error) {
+          toast.error(`הזמנה נוצרה אך לינק HYP לא נשלח: ${linkErr?.message || linkData?.error}`);
+        } else if (linkData?.sms_sent) {
+          toast.success("ההזמנה נוצרה ולינק תשלום נשלח ללקוח ב-SMS");
+        } else {
+          toast.warning(`הזמנה נוצרה. לינק נוצר אך SMS לא נשלח: ${linkData?.sms_error || "שגיאה"}`);
+        }
+      } else {
+        // Trigger SMS for new POS order (non-HYP path)
+        supabase.functions.invoke("order-sms-trigger", {
+          body: { order_id: newOrder.id, trigger_type: "order_created" },
+        }).catch(console.error);
+        toast.success("ההזמנה נוצרה ונשלחה לתהליך ההזמנות");
+      }
 
       setCart([]);
       setShowCreateOrder(false);
@@ -304,7 +323,6 @@ const PosPage = () => {
       setDiscountValue(0);
       setShippingPrice(0);
       setOrderDate(new Date());
-      toast.success("ההזמנה נוצרה ונשלחה לתהליך ההזמנות");
       navigate("/crm/orders");
     } catch {
       toast.error("שגיאה ביצירת הזמנה");
@@ -638,9 +656,15 @@ const PosPage = () => {
                 <SelectTrigger dir="rtl" className="text-right"><SelectValue /></SelectTrigger>
                 <SelectContent dir="rtl">
                   <SelectItem value="cash">מזומן</SelectItem>
-                  <SelectItem value="credit">תשלום דיגיטלי</SelectItem>
+                  <SelectItem value="credit">אשראי (רישום ידני)</SelectItem>
+                  <SelectItem value="credit_link">אשראי - שלח לינק HYP ב-SMS</SelectItem>
                 </SelectContent>
               </Select>
+              {paymentMethod === "credit_link" && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  הלקוח יקבל SMS עם לינק תשלום. ההזמנה תסומן כ"ממתינה לתשלום" עד שהוא ישלם.
+                </p>
+              )}
             </div>
             {paymentMethod === "cash" && (
               <div>

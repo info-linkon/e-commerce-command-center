@@ -87,9 +87,10 @@ export function useCreateOrder() {
       discount_value?: number;
       discount_amount?: number;
       created_at?: string;
+      skip_auto_payment?: boolean;
       items: OrderItem[];
     }) => {
-      const { items, source, cash_register_id, payment_method, delivery_method, created_by, discount_type, discount_value, discount_amount, created_at, ...rest } = input;
+      const { items, source, cash_register_id, payment_method, delivery_method, created_by, discount_type, discount_value, discount_amount, created_at, skip_auto_payment, ...rest } = input;
       const orderPayload: any = { ...rest };
       if (source) orderPayload.source = source;
       if (cash_register_id) orderPayload.cash_register_id = cash_register_id;
@@ -119,8 +120,10 @@ export function useCreateOrder() {
         if (itemsError) throw itemsError;
       }
 
-      // Auto-create payment record for POS orders
-      if (source === "pos" && payment_method) {
+      // Auto-create payment record for POS orders (unless caller opts out, e.g.
+      // HYP-link flow where the payment is recorded by hyp-verify after the
+      // customer actually pays).
+      if (source === "pos" && payment_method && !skip_auto_payment) {
         const paymentRecord: any = {
           order_id: order.id,
           amount: input.total,
@@ -131,19 +134,13 @@ export function useCreateOrder() {
         }
         await supabase.from("payments").insert(paymentRecord);
 
-        // Update cash register balance for cash payments
+        // Atomic cash register balance update (server-side RPC avoids the
+        // read-modify-write race when two terminals charge at the same time).
         if (payment_method === "cash" && cash_register_id) {
-          const { data: reg } = await supabase
-            .from("cash_registers")
-            .select("current_balance")
-            .eq("id", cash_register_id)
-            .single();
-          if (reg) {
-            await supabase
-              .from("cash_registers")
-              .update({ current_balance: Number(reg.current_balance) + input.total })
-              .eq("id", cash_register_id);
-          }
+          await supabase.rpc("increment_cash_register" as any, {
+            reg_id: cash_register_id,
+            delta: input.total,
+          });
         }
       }
 
