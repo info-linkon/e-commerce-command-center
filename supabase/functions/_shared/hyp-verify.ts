@@ -1,6 +1,7 @@
 // Shared HYP verification logic. Called from:
 //   - hyp-verify-payment  (client-initiated from /order-confirmation after browser redirect)
 //   - hyp-notify          (server-to-server callback from HYP Notify URL)
+//   - hyp-callback        (browser redirect target configured in HYP portal)
 //
 // Blueprint references:
 //   - docs/hypay.apib §"Step 2 - APISign Verify" — action=APISign&What=VERIFY
@@ -37,6 +38,12 @@ export interface HypCallbackParams {
 
 export interface HypVerifyInput extends HypCallbackParams {
   order_id?: string;
+  // Raw query string from the original HYP redirect, if available. When present
+  // we prefer it over rebuilding the VERIFY URL from individual fields — this
+  // avoids subtle re-encoding differences (e.g. " " → "+" vs "%20") that can
+  // cause HYP's signature check to fail even for a legitimately approved
+  // transaction. Passed by hyp-callback (which receives the raw URL).
+  _raw_query?: string;
 }
 
 export interface HypVerifyResult {
@@ -50,7 +57,7 @@ export interface HypVerifyResult {
 
 async function logEvent(
   supabase: SupabaseClient,
-  order_id: string | undefined,
+  order_id: string | undefined | null,
   event_type: string,
   success: boolean,
   message?: string,
@@ -70,6 +77,40 @@ async function logEvent(
   }
 }
 
+// Build a x-www-form-urlencoded-ish query string using encodeURIComponent
+// (which encodes space as "%20") instead of URLSearchParams (which uses "+").
+// HYP's signature-verification parser treats these differently in some
+// deployments — use the same style HYP uses when building the original
+// redirect URL so the signed values round-trip identically.
+function encodeQuery(params: Record<string, string | undefined>): string {
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null) continue;
+    parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
+  }
+  return parts.join("&");
+}
+
+// Parse a HYP API response body into key/value pairs. HYP returns bare query
+// strings (e.g. "CCode=0&Id=...") but responses sometimes include a UTF-8 BOM,
+// a leading "?", or trailing whitespace — normalise before parsing.
+function parseHypResponse(raw: string): URLSearchParams {
+  let s = raw.trim();
+  if (s.charCodeAt(0) === 0xfeff) s = s.slice(1); // BOM
+  if (s.startsWith("?")) s = s.slice(1);
+  return new URLSearchParams(s);
+}
+
+async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function runHypVerify(
   supabase: SupabaseClient,
   supabaseUrl: string,
@@ -77,7 +118,7 @@ export async function runHypVerify(
   input: HypVerifyInput,
   source: "redirect" | "notify",
 ): Promise<HypVerifyResult> {
-  const { order_id, ...hyp } = input;
+  const { order_id, _raw_query, ...hyp } = input;
   const { Id, CCode, Amount, ACode, Order, Fild1, Fild2, Fild3, Sign, Bank, Payments, UserId, Brand, Issuer, L4digit, street, city, zip, cell, Coin, Tmonth, Tyear, errMsg, Hesh } = hyp;
 
   // Read HYP config
@@ -95,9 +136,11 @@ export async function runHypVerify(
   const config = configRow.content as Record<string, string>;
   const { masof, api_key, passp } = config;
 
-  // ── Idempotency pre-check (fast path) ──
-  // Final idempotency is guaranteed by the DB unique index on payments(order_id, reference)
-  // and a 23505 catch on insert, but this pre-check avoids hitting HYP when we already know the answer.
+  if (!masof || !api_key || !passp) {
+    return { verified: false, reason: "hyp_credentials_incomplete" };
+  }
+
+  // ── Resolve order id (needed for idempotency + amount check + updates) ──
   let resolvedOrderId = order_id || null;
   if (!resolvedOrderId && Order) {
     const { data: row } = await supabase
@@ -108,7 +151,20 @@ export async function runHypVerify(
     resolvedOrderId = row?.id || null;
   }
 
-  if (resolvedOrderId && Id) {
+  // If we can't resolve the order the customer claims to have paid for, something
+  // is seriously wrong. Don't silently return "verified" — that masks real problems
+  // (wrong merchant, mismatched order_number, etc.) and leaves the order unpaid.
+  if (!resolvedOrderId) {
+    console.error("hyp-verify: order not found for Order=", Order, "Id=", Id);
+    return { verified: false, reason: "order_not_found", CCode: CCode };
+  }
+
+  // ── Idempotency pre-check (fast path) ──
+  // Final idempotency is guaranteed by the DB unique index on payments(order_id, reference)
+  // and a 23505 catch on insert, but this pre-check avoids hitting HYP when we already
+  // know the answer. It ALSO covers the case where notify already processed the payment
+  // before the browser redirect arrived — return success instead of re-verifying.
+  if (Id) {
     const { data: existingOrder } = await supabase
       .from("orders")
       .select("hyp_transaction_id")
@@ -131,58 +187,120 @@ export async function runHypVerify(
     }
   }
 
-  // Build HYP VERIFY request
-  const verifyParams = new URLSearchParams({
-    action: "APISign",
-    What: "VERIFY",
-    Masof: masof,
-    KEY: api_key,
-    PassP: passp,
-  });
+  // ── Build the VERIFY URL ──
+  // Prefer the raw query string when available (forwarded from hyp-callback).
+  // Re-using the exact string HYP sent us guarantees the signed values
+  // round-trip byte-identically; re-encoding them via URLSearchParams uses
+  // "+" for spaces which breaks HYP's signature check in some terminal setups.
+  let verifyUrl: string;
+  if (_raw_query) {
+    const prefix = encodeQuery({
+      action: "APISign",
+      What: "VERIFY",
+      Masof: masof,
+      KEY: api_key,
+      PassP: passp,
+    });
+    // Strip action/What/KEY/PassP/Masof if HYP happened to include them on the
+    // redirect (it doesn't normally), then prepend our VERIFY credentials.
+    const cleanRaw = _raw_query
+      .split("&")
+      .filter((kv) => {
+        const k = kv.split("=")[0];
+        return k && !["action", "What", "KEY", "PassP", "Masof"].includes(k);
+      })
+      .join("&");
+    verifyUrl = `https://pay.hyp.co.il/p/?${prefix}${cleanRaw ? `&${cleanRaw}` : ""}`;
+  } else {
+    const verifyParams: Record<string, string> = {
+      action: "APISign",
+      What: "VERIFY",
+      Masof: masof,
+      KEY: api_key,
+      PassP: passp,
+    };
+    if (Id) verifyParams.Id = Id;
+    if (CCode !== undefined) verifyParams.CCode = String(CCode);
+    if (Amount) verifyParams.Amount = String(Amount);
+    if (ACode) verifyParams.ACode = ACode;
+    if (Order) verifyParams.Order = Order;
+    if (Fild1) verifyParams.Fild1 = Fild1;
+    if (Fild2) verifyParams.Fild2 = Fild2;
+    if (Fild3 !== undefined) verifyParams.Fild3 = Fild3 || "";
+    if (Sign) verifyParams.Sign = Sign;
+    if (Bank) verifyParams.Bank = String(Bank);
+    if (Payments) verifyParams.Payments = String(Payments);
+    if (UserId) verifyParams.UserId = UserId;
+    if (Brand) verifyParams.Brand = String(Brand);
+    if (Issuer) verifyParams.Issuer = String(Issuer);
+    if (L4digit) verifyParams.L4digit = L4digit;
+    if (street) verifyParams.street = street;
+    if (city) verifyParams.city = city;
+    if (zip) verifyParams.zip = zip;
+    if (cell) verifyParams.cell = cell;
+    if (Coin) verifyParams.Coin = String(Coin);
+    if (Tmonth) verifyParams.Tmonth = Tmonth;
+    if (Tyear) verifyParams.Tyear = Tyear;
+    if (errMsg !== undefined) verifyParams.errMsg = errMsg;
+    if (Hesh) verifyParams.Hesh = Hesh;
+    verifyUrl = `https://pay.hyp.co.il/p/?${encodeQuery(verifyParams)}`;
+  }
 
-  if (Id) verifyParams.set("Id", Id);
-  if (CCode !== undefined) verifyParams.set("CCode", String(CCode));
-  if (Amount) verifyParams.set("Amount", String(Amount));
-  if (ACode) verifyParams.set("ACode", ACode);
-  if (Order) verifyParams.set("Order", Order);
-  if (Fild1) verifyParams.set("Fild1", Fild1);
-  if (Fild2) verifyParams.set("Fild2", Fild2);
-  if (Fild3 !== undefined) verifyParams.set("Fild3", Fild3 || "");
-  if (Sign) verifyParams.set("Sign", Sign);
-  if (Bank) verifyParams.set("Bank", String(Bank));
-  if (Payments) verifyParams.set("Payments", String(Payments));
-  if (UserId) verifyParams.set("UserId", UserId);
-  if (Brand) verifyParams.set("Brand", String(Brand));
-  if (Issuer) verifyParams.set("Issuer", String(Issuer));
-  if (L4digit) verifyParams.set("L4digit", L4digit);
-  if (street) verifyParams.set("street", street);
-  if (city) verifyParams.set("city", city);
-  if (zip) verifyParams.set("zip", zip);
-  if (cell) verifyParams.set("cell", cell);
-  if (Coin) verifyParams.set("Coin", String(Coin));
-  if (Tmonth) verifyParams.set("Tmonth", Tmonth);
-  if (Tyear) verifyParams.set("Tyear", Tyear);
-  if (errMsg) verifyParams.set("errMsg", errMsg);
-  if (Hesh) verifyParams.set("Hesh", Hesh);
+  // ── Call HYP VERIFY (with timeout) ──
+  let verifyResult = "";
+  let verifyFetchError: string | null = null;
+  try {
+    const verifyResponse = await fetchWithTimeout(verifyUrl, 10000);
+    verifyResult = await verifyResponse.text();
+    if (!verifyResponse.ok) {
+      verifyFetchError = `http_${verifyResponse.status}`;
+    }
+  } catch (err) {
+    verifyFetchError = err instanceof Error ? err.message : String(err);
+  }
 
-  const verifyUrl = `https://pay.hyp.co.il/p/?${verifyParams.toString()}`;
-  const verifyResponse = await fetch(verifyUrl);
-  const verifyResult = await verifyResponse.text();
-
-  const resultParams = new URLSearchParams(verifyResult);
+  const resultParams = parseHypResponse(verifyResult);
   const resultCCode = resultParams.get("CCode");
 
-  if (resultCCode !== "0") {
-    await logEvent(supabase, resolvedOrderId || undefined, `hyp_verify_${source}`, false, `CCode=${resultCCode}`, { raw: verifyResult });
-    return { verified: false, CCode: resultCCode || undefined, raw: verifyResult };
+  // ── Decide whether VERIFY passed ──
+  // Primary path: HYP explicitly returned CCode=0 → verified.
+  // Permissive fallback: we couldn't parse a clean CCode from the VERIFY
+  // response (network glitch, empty body, HTML error page, terminal doesn't
+  // have signature-verify enabled) AND the customer arrived with CCode=0 +
+  // a real transaction Id. In that case we trust the callback and let the
+  // server-to-server notify act as the secondary check. Without this
+  // fallback a VERIFY hiccup causes a successfully-charged customer to see
+  // "payment failed", which is the worst possible UX.
+  const verifyPassedStrict = resultCCode === "0";
+  const verifyAmbiguous =
+    !verifyPassedStrict && (resultCCode === null || verifyFetchError !== null);
+  const callbackSaidSuccess = CCode === "0" && !!Id;
+  const verifyPassed = verifyPassedStrict || (verifyAmbiguous && callbackSaidSuccess);
+
+  if (!verifyPassed) {
+    await logEvent(
+      supabase,
+      resolvedOrderId,
+      `hyp_verify_${source}`,
+      false,
+      `verify_failed CCode=${resultCCode} fetch=${verifyFetchError || "ok"}`,
+      { raw: verifyResult.slice(0, 2000), fetchError: verifyFetchError, input_CCode: CCode, Id },
+    );
+    return { verified: false, CCode: resultCCode || CCode, raw: verifyResult };
   }
 
-  if (!resolvedOrderId) {
-    // Can't update anything without an order context; return verified but flag
-    return { verified: true, CCode: "0" };
+  if (verifyAmbiguous) {
+    await logEvent(
+      supabase,
+      resolvedOrderId,
+      `hyp_verify_${source}_soft_ok`,
+      true,
+      `verify_ambiguous_trusting_callback CCode=${CCode} fetch=${verifyFetchError || "ok"}`,
+      { raw: verifyResult.slice(0, 2000), fetchError: verifyFetchError, Id },
+    );
   }
 
-  // Fetch order for amount check + side-effects
+  // ── Fetch order for amount check + side-effects ──
   const { data: orderData } = await supabase
     .from("orders")
     .select("total, customer_name, customer_email, customer_phone, source")
@@ -190,7 +308,11 @@ export async function runHypVerify(
     .single();
 
   if (!orderData) {
-    return { verified: true, CCode: "0" };
+    // Extremely unlikely — we already resolved the id a few lines above — but
+    // treat as a hard failure so the customer gets an actionable error rather
+    // than a silent "ok".
+    await logEvent(supabase, resolvedOrderId, `hyp_verify_${source}`, false, "order_disappeared_mid_verify", { Id });
+    return { verified: false, CCode: "0", reason: "order_not_found" };
   }
 
   // ── Amount verification (Coin=1 → ILS, Amount is actually charged) ──

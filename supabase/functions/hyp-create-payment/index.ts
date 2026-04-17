@@ -15,6 +15,28 @@ const corsHeaders = {
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Match HYP's own query-string encoding style ("%20" for spaces, not "+") —
+// URLSearchParams.toString() uses application/x-www-form-urlencoded which
+// breaks signature verification on some HYP terminals.
+function encodeQuery(params: Record<string, string>): string {
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null) continue;
+    parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
+  }
+  return parts.join("&");
+}
+
+async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -75,15 +97,26 @@ Deno.serve(async (req) => {
 
     const notifyUrl = `${supabaseUrl}/functions/v1/hyp-notify`;
 
+    // Amount must be a valid positive number — pass through with 2dp to match
+    // what HYP will echo back on the callback (avoids false amount-mismatches).
+    const numericTotal = Number(total);
+    if (!isFinite(numericTotal) || numericTotal <= 0) {
+      return new Response(JSON.stringify({ error: `Invalid total: ${total}` }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const amountStr = numericTotal.toFixed(2);
+
     // APISign — get signature. Response URLs are portal-configured (blueprint),
     // so we don't pass success/error redirect params here.
-    const signParams = new URLSearchParams({
+    const signParams: Record<string, string> = {
       action: "APISign",
       What: "SIGN",
       Masof: masof,
       KEY: api_key,
       PassP: passp,
-      Amount: String(total),
+      Amount: amountStr,
       Order: String(order_number || order_id),
       Info: info || `Order ${order_number || order_id}`,
       ClientName: customer_name || "",
@@ -102,14 +135,34 @@ Deno.serve(async (req) => {
       Postpone: "False",
       pageTimeOut: "True",
       NotifyUrl: notifyUrl,
-    });
+    };
 
-    const signUrl = `https://pay.hyp.co.il/p/?${signParams.toString()}`;
-    console.log("HYP APISign request URL:", signUrl);
+    const signUrl = `https://pay.hyp.co.il/p/?${encodeQuery(signParams)}`;
+    console.log("HYP APISign request (order_id=" + order_id + " order_number=" + order_number + ")");
 
-    const signResponse = await fetch(signUrl);
-    const signResult = await signResponse.text();
-    console.log("HYP APISign response:", signResult);
+    let signResult = "";
+    try {
+      const signResponse = await fetchWithTimeout(signUrl, 15000);
+      signResult = (await signResponse.text()).trim();
+      if (signResult.charCodeAt(0) === 0xfeff) signResult = signResult.slice(1); // strip BOM
+      if (signResult.startsWith("?")) signResult = signResult.slice(1);
+      if (!signResponse.ok) {
+        console.error("HYP APISign returned HTTP", signResponse.status, "body:", signResult.slice(0, 500));
+        return new Response(
+          JSON.stringify({ error: `HYP returned HTTP ${signResponse.status}`, raw: signResult.slice(0, 500) }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    } catch (fetchErr) {
+      const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+      console.error("HYP APISign fetch failed:", msg);
+      return new Response(
+        JSON.stringify({ error: `Failed to reach HYP: ${msg}` }),
+        { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    console.log("HYP APISign response:", signResult.slice(0, 500));
 
     if (signResult.includes("signature=")) {
       const paymentUrl = `https://pay.hyp.co.il/p/?${signResult}`;
@@ -129,9 +182,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    // HYP returned a body without `signature=` — usually means bad credentials
+    // or a malformed request. Surface the raw response so it's debuggable.
     return new Response(JSON.stringify({
       error: "Failed to get payment signature from HYP",
-      raw: signResult,
+      raw: signResult.slice(0, 500),
     }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

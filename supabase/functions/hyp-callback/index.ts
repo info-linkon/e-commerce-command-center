@@ -18,7 +18,7 @@
 
 import { buildSupabase, runHypVerify, HypVerifyInput } from "../_shared/hyp-verify.ts";
 
-function paramsToInput(sp: URLSearchParams): HypVerifyInput {
+function paramsToInput(sp: URLSearchParams, rawQuery: string): HypVerifyInput {
   const get = (k: string) => sp.get(k) ?? undefined;
   return {
     Id: get("Id"),
@@ -45,6 +45,7 @@ function paramsToInput(sp: URLSearchParams): HypVerifyInput {
     Tyear: get("Tyear"),
     errMsg: get("errMsg"),
     Hesh: get("Hesh"),
+    _raw_query: rawQuery || undefined,
   };
 }
 
@@ -74,7 +75,10 @@ function redirectTo(url: string): Response {
 
 Deno.serve(async (req) => {
   const url = new URL(req.url);
-  const input = paramsToInput(url.searchParams);
+  // URL.search keeps "?" prefix; strip it before forwarding so hyp-verify can
+  // treat it as a clean "a=1&b=2" string.
+  const rawQuery = url.search.startsWith("?") ? url.search.slice(1) : url.search;
+  const input = paramsToInput(url.searchParams, rawQuery);
   const siteUrl = (await resolveSiteUrl()).replace(/\/$/, "");
 
   // Build a friendly confirmation URL. Always include the HYP Order param
@@ -83,17 +87,54 @@ Deno.serve(async (req) => {
   const orderPart = input.Order ? `/${encodeURIComponent(input.Order)}` : "";
   const confirmBase = `${siteUrl}/order-confirmation${orderPart}`;
 
+  console.log("hyp-callback received:", JSON.stringify({
+    method: req.method,
+    CCode: input.CCode,
+    Id: input.Id,
+    Amount: input.Amount,
+    Order: input.Order,
+    errMsg: input.errMsg,
+  }));
+
   try {
     // CCode !== "0" means payment failed / postponed / cancelled.
     // No need to call HYP VERIFY — just inform the customer.
     if (input.CCode !== "0") {
       console.log("hyp-callback non-success CCode:", input.CCode);
+      // Best-effort log so we can debug declined payments from the CRM.
+      try {
+        const { supabase } = buildSupabase();
+        if (input.Order) {
+          const { data: row } = await supabase
+            .from("orders")
+            .select("id")
+            .eq("order_number", Number(input.Order))
+            .maybeSingle();
+          if (row?.id) {
+            await supabase.from("payment_events").insert({
+              order_id: row.id,
+              event_type: "hyp_callback_declined",
+              success: false,
+              message: `CCode=${input.CCode} errMsg=${input.errMsg || ""}`,
+              metadata: { Id: input.Id, Amount: input.Amount, CCode: input.CCode },
+            });
+          }
+        }
+      } catch (logErr) {
+        console.error("hyp-callback log failed (non-blocking):", logErr);
+      }
       return redirectTo(`${confirmBase}?status=failed&CCode=${input.CCode || "unknown"}`);
     }
 
     const { supabase, supabaseUrl, supabaseKey } = buildSupabase();
     const result = await runHypVerify(supabase, supabaseUrl, supabaseKey, input, "redirect");
-    console.log("hyp-callback verify result:", JSON.stringify(result));
+    console.log("hyp-callback verify result:", JSON.stringify({
+      verified: result.verified,
+      already_processed: result.already_processed,
+      amount_mismatch: result.amount_mismatch,
+      reason: result.reason,
+      CCode: result.CCode,
+    }));
 
     if (result.amount_mismatch) {
       return redirectTo(`${confirmBase}?status=amount_mismatch`);
@@ -101,10 +142,13 @@ Deno.serve(async (req) => {
 
     if (result.verified) {
       const flag = result.already_processed ? "already" : "ok";
-      return redirectTo(`${confirmBase}?status=${flag}`);
+      // Forward Amount so the confirmation page can fire the Meta Pixel Purchase
+      // event with the correct value.
+      const amountParam = input.Amount ? `&Amount=${encodeURIComponent(input.Amount)}` : "";
+      return redirectTo(`${confirmBase}?status=${flag}${amountParam}`);
     }
 
-    return redirectTo(`${confirmBase}?status=failed&CCode=${result.CCode || "0"}`);
+    return redirectTo(`${confirmBase}?status=failed&CCode=${result.CCode || "0"}&reason=${encodeURIComponent(result.reason || "verify_failed")}`);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("hyp-callback error:", msg);
