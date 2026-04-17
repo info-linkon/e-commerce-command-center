@@ -68,12 +68,11 @@ export default function WebProductPage() {
     },
   });
 
-  // Meta Pixel: ViewContent — use catalog ID (sku || product_number) to match Catalog feed
+  // Meta Pixel: ViewContent — always use product SKU to match Catalog feed
   useEffect(() => {
-    if (product) {
-      const catalogId = product.sku || String((product as any).product_number || product.id);
+    if (product && product.sku) {
       fbq("ViewContent", {
-        content_ids: [catalogId],
+        content_ids: [product.sku],
         content_name: product.name_ar || product.name,
         content_type: "product",
         value: product.sale_price,
