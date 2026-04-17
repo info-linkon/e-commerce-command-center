@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.hyp-notify]
 verify_jwt = false
+
+[functions.hyp-callback]
+verify_jwt = false
