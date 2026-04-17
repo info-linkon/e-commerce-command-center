@@ -304,12 +304,15 @@ const OrderDetail = () => {
               const itemsSubtotal = items.reduce((sum: number, i: any) => sum + Number(i.total_price), 0);
               const discountAmt = Number((order as any).discount_amount) || 0;
               const shippingCost = Number((order as any).shipping_cost) || 0;
-              const showBreakdown = discountAmt > 0 || shippingCost > 0;
-              return showBreakdown ? (
+              return (
                 <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">סה״כ פריטים</span>
                     <span>₪{itemsSubtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">משלוח</span>
+                    <span>{shippingCost > 0 ? `₪${shippingCost.toFixed(2)}` : "חינם"}</span>
                   </div>
                   {discountAmt > 0 && (
                     <div className="flex justify-between text-green-600">
@@ -317,19 +320,11 @@ const OrderDetail = () => {
                       <span>-₪{discountAmt.toFixed(2)}</span>
                     </div>
                   )}
-                  {shippingCost > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">משלוח</span>
-                      <span>₪{shippingCost.toFixed(2)}</span>
-                    </div>
-                  )}
                   <div className="flex justify-between border-t border-border pt-1.5 mt-1.5">
                     <span className="font-bold">סה״כ</span>
                     <span className="text-2xl font-bold">₪{Number(order.total).toFixed(2)}</span>
                   </div>
                 </div>
-              ) : (
-                <div className="text-3xl font-bold">₪{Number(order.total).toFixed(2)}</div>
               );
             })()}
             <div className="text-sm text-muted-foreground">{items.length} פריטים</div>
