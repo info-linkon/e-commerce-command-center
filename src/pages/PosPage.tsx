@@ -49,6 +49,8 @@ const PosPage = () => {
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [shippingCity, setShippingCity] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [cashRegisterId, setCashRegisterId] = useState<string>("");
