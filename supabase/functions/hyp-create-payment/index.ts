@@ -1,3 +1,13 @@
+// Create a HYP payment page URL for an order (used by the website iframe checkout).
+// Saves the generated URL on the order so it can be re-served to the customer
+// if the browser closes mid-payment, and configures NotifyUrl for
+// server-to-server reconciliation.
+//
+// Blueprint refs:
+//   - docs/hypay.apib §"Step 1 - APISign"
+//   - docs/hypay.apib §"Set Up Success and Failure Pages" — response URLs
+//     are configured in the HYP portal, not via request params.
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -40,16 +50,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { order_id, order_number, total, customer_name, customer_phone, customer_email, success_url, error_url, info } = await req.json();
+    const { order_id, order_number, total, customer_name, customer_phone, customer_email, info } = await req.json();
 
-    if (!order_id || !total || !success_url || !error_url) {
-      return new Response(JSON.stringify({ error: "Missing required fields: order_id, total, success_url, error_url" }), {
+    if (!order_id || !total) {
+      return new Response(JSON.stringify({ error: "Missing required fields: order_id, total" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Step 1: APISign — get signature
+    // Guard against re-issuing a link for an already-paid order
+    const { data: existing } = await supabase
+      .from("orders")
+      .select("hyp_transaction_id, status")
+      .eq("id", order_id)
+      .maybeSingle();
+    const blockedStatuses = new Set(["processing", "picking", "shipping", "completed", "cancelled"]);
+    if (existing?.hyp_transaction_id || blockedStatuses.has(existing?.status || "")) {
+      return new Response(
+        JSON.stringify({ error: "ההזמנה כבר שולמה או סגורה", already_paid: !!existing?.hyp_transaction_id }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const notifyUrl = `${supabaseUrl}/functions/v1/hyp-notify`;
+
+    // APISign — get signature. Response URLs are portal-configured (blueprint),
+    // so we don't pass success/error redirect params here.
     const signParams = new URLSearchParams({
       action: "APISign",
       What: "SIGN",
@@ -73,6 +100,8 @@ Deno.serve(async (req) => {
       FixTash: "False",
       J5: "False",
       Postpone: "False",
+      pageTimeOut: "True",
+      NotifyUrl: notifyUrl,
     });
 
     const signUrl = `https://pay.hyp.co.il/p/?${signParams.toString()}`;
@@ -82,14 +111,16 @@ Deno.serve(async (req) => {
     const signResult = await signResponse.text();
     console.log("HYP APISign response:", signResult);
 
-    // The response is URL-encoded params including signature
-    // Build payment URL from the response
     if (signResult.includes("signature=")) {
-      // The response IS the query string for the payment page
       const paymentUrl = `https://pay.hyp.co.il/p/?${signResult}`;
 
-      // Update success/error URLs — HYP redirects to the URLs configured in the portal,
-      // but we pass Order param so we can identify the order on return
+      // Persist the signed URL so it can be re-served via /pay/:orderNumber
+      // if the customer closes the iframe before completing the payment.
+      await supabase
+        .from("orders")
+        .update({ payment_link_url: paymentUrl } as any)
+        .eq("id", order_id);
+
       return new Response(JSON.stringify({
         success: true,
         payment_url: paymentUrl,
@@ -98,7 +129,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Error — no signature returned
     return new Response(JSON.stringify({
       error: "Failed to get payment signature from HYP",
       raw: signResult,

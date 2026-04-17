@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.hyp-verify-payment]
 verify_jwt = false
+
+[functions.hyp-notify]
+verify_jwt = false

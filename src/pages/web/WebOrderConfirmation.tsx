@@ -72,7 +72,11 @@ export default function WebOrderConfirmation() {
 
         resolveOrderId().then(async (orderId) => {
           if (!orderId) {
-            setStatus("success"); // fallback — can't verify without order
+            // Without an order context we can't call verify; don't lie to the
+            // customer that payment succeeded — surface an error so they
+            // contact support.
+            console.error("Could not resolve orderId for HYP verify");
+            setStatus("error");
             return;
           }
 
@@ -90,6 +94,14 @@ export default function WebOrderConfirmation() {
 
             if (verifyError) {
               console.error("Verify error:", verifyError);
+              setStatus("error");
+              return;
+            }
+
+            if (verifyData?.amount_mismatch) {
+              // Payment cleared at HYP but the amount didn't match the order total —
+              // surface an error and let ops reconcile manually via payment_events.
+              console.error("HYP amount mismatch for order", orderId);
               setStatus("error");
               return;
             }

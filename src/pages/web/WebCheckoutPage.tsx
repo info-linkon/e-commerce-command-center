@@ -284,13 +284,14 @@ export default function WebCheckoutPage() {
           discount_amount: discount,
           discount_type: appliedCoupon ? appliedCoupon.type : null,
           discount_value: appliedCoupon ? Number(appliedCoupon.value) : 0,
+          applied_coupon_id: appliedCoupon ? appliedCoupon.id : null,
           notes: [
             shippingMethod === "pickup" ? "🏪 איסוף עצמי" : "",
             (form.get("notes") as string) || "",
             appliedCoupon ? `קופון: ${appliedCoupon.code} (הנחה: ₪${discount.toFixed(2)})` : "",
           ].filter(Boolean).join(" | ") || null,
           total: finalTotal,
-        })
+        } as any)
         .select()
         .single();
 
@@ -308,9 +309,21 @@ export default function WebCheckoutPage() {
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
       if (itemsError) throw itemsError;
 
-      if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
-
       if (isCash) {
+        // Cash-on-delivery: increment coupon usage now (order is authoritative,
+        // no remote payment step). For credit, increment happens after HYP verify.
+        if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
+
+        // Auto-create a cash payments row so the CRM can mark the order complete
+        // once the parcel is delivered (matches POS behavior).
+        await supabase.from("payments").insert({
+          order_id: order.id,
+          amount: finalTotal,
+          payment_method: "cash",
+          reference: "COD",
+          cash_register_id: null,
+        });
+
         // Trigger SMS for new order
         supabase.functions.invoke("order-sms-trigger", {
           body: { order_id: order.id, trigger_type: "order_created" },
@@ -325,9 +338,8 @@ export default function WebCheckoutPage() {
         return;
       }
 
-      const successUrl = `${window.location.origin}/order-confirmation/${order.order_number}`;
-      const errorUrl = `${window.location.origin}/checkout?payment_error=true`;
-
+      // HYP success/failure URLs are configured in the HYP merchant portal
+      // (blueprint §"Set Up Success and Failure Pages"), not via request params.
       const { data: hypData, error: hypError } = await supabase.functions.invoke("hyp-create-payment", {
         body: {
           order_id: order.id,
@@ -336,8 +348,6 @@ export default function WebCheckoutPage() {
           customer_name: customerName,
           customer_phone: customerPhone,
           customer_email: customerEmail,
-          success_url: successUrl,
-          error_url: errorUrl,
           info: `הזמנה #${order.order_number}`,
         },
       });
