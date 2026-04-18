@@ -1,0 +1,1 @@
+DELETE FROM public.payments WHERE reference = 'COD' AND cash_register_id IS NULL AND id IN ('3b60d207-a501-4806-8e44-2eb433f3ab35','c069ca33-ec61-4f09-bd10-3326b7b856e6','97d832cd-82b9-4c0a-a718-f8cc2ce656a9');

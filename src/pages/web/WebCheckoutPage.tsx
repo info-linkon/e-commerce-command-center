@@ -316,15 +316,10 @@ export default function WebCheckoutPage() {
         // no remote payment step). For credit, increment happens after HYP verify.
         if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
 
-        // Auto-create a cash payments row so the CRM can mark the order complete
-        // once the parcel is delivered (matches POS behavior).
-        await supabase.from("payments").insert({
-          order_id: order.id,
-          amount: finalTotal,
-          payment_method: "cash",
-          reference: "COD",
-          cash_register_id: null,
-        });
+        // NOTE: Do NOT auto-create a payments row for COD. The cash hasn't been
+        // collected yet. A real payment row (with cash_register_id) will be
+        // created in the CRM only when the courier/staff actually collects the
+        // money at delivery time. Otherwise the order would falsely appear paid.
 
         // Trigger SMS for new order
         supabase.functions.invoke("order-sms-trigger", {
