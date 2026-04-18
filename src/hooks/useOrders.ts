@@ -59,7 +59,7 @@ export function useOrder(id?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, order_items(*, product_variations(*, products(name, name_ar)), bundle_variations(id, name, name_he, sku)), warehouses(name)")
+        .select("*, order_items(*, product_variations(*, products(name, name_ar, sku)), bundle_variations(id, name, name_he, sku)), warehouses(name)")
         .eq("id", id!)
         .single();
       if (error) throw error;
