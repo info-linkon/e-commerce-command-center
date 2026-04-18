@@ -172,8 +172,28 @@ export default function WebProductPage() {
       return;
     }
 
-    const variationId = activeVariation?.id || variations?.[0]?.id || product.id;
-    const variationName = activeBundleVariation?.name || activeVariation?.name_ar || activeVariation?.name || "";
+    // Determine cart line ID — must come from the right source per product type:
+    // - variable bundle → bundle_variation.id
+    // - simple bundle  → product.id (no product_variations involved)
+    // - variable product → selected product_variation.id
+    // - simple product → first product_variation.id (legacy)
+    let variationId: string;
+    let variationName = "";
+    if (isVariableBundle && activeBundleVariation) {
+      variationId = activeBundleVariation.id;
+      variationName = activeBundleVariation.name;
+    } else if (isBundle) {
+      // simple_bundle — use product.id, ignore product_variations entirely
+      variationId = product.id;
+    } else if (isVariable && activeVariation) {
+      variationId = activeVariation.id;
+      variationName = activeVariation.name_ar || activeVariation.name || "";
+    } else if (variations && variations.length > 0) {
+      variationId = variations[0].id;
+    } else {
+      toast.error(t("المنتج غير متوفر", "המוצר אינו זמין"));
+      return;
+    }
 
     const productSku = product.sku || null;
 
