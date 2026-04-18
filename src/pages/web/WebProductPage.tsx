@@ -139,9 +139,9 @@ export default function WebProductPage() {
     return false;
   })();
 
-  // Regular product stock check
+  // Regular product stock check (only for non-bundles)
   const isRegularOutOfStock = (() => {
-    if (bundleData) return false; // handled by isBundleOutOfStock
+    if (isBundle) return false; // bundles handled by isBundleOutOfStock
     if (!inventoryStock) return false;
     if (isVariable && activeVariation) {
       return (inventoryStock.get(activeVariation.id) || 0) <= 0;
@@ -154,7 +154,13 @@ export default function WebProductPage() {
     return false;
   })();
 
-  const isOutOfStock = isBundleOutOfStock || isRegularOutOfStock;
+  // Empty simple bundle (no bundle_items configured) → block ordering
+  const isEmptySimpleBundle =
+    bundleData?.bundle_type === "simple_bundle" &&
+    bundleStockResult?.simple &&
+    bundleStockResult.simple.maxQuantity === 0;
+
+  const isOutOfStock = isBundleOutOfStock || isRegularOutOfStock || !!isEmptySimpleBundle;
 
   const handleAddToCart = () => {
     if (isVariable && !activeVariation) {
