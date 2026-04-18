@@ -214,8 +214,28 @@ const PosPage = () => {
     if (existing) {
       setCart(cart.map((c) => (c.variation_id === variation.id && c.bundle_variation_id === variation.bundle_variation_id) ? { ...c, quantity: c.quantity + 1 } : c));
     } else {
-      setCart([...cart, { variation_id: variation.id, variation_name: variation.name, product_name: productName, quantity: 1, unit_price: variation.price, bundle_variation_id: variation.bundle_variation_id }]);
+      setCart([...cart, { cart_uid: variation.id + (variation.bundle_variation_id || ""), variation_id: variation.id, variation_name: variation.name, product_name: productName, quantity: 1, unit_price: variation.price, bundle_variation_id: variation.bundle_variation_id }]);
     }
+  };
+
+  const addCustomItem = () => {
+    const price = parseFloat(customItemPrice);
+    if (!price || price <= 0) {
+      toast.error("הכנס מחיר חוקי");
+      return;
+    }
+    const uid = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setCart([...cart, {
+      cart_uid: uid,
+      variation_id: undefined,
+      variation_name: "",
+      product_name: "פריט כללי",
+      quantity: 1,
+      unit_price: price,
+      is_custom: true,
+    }]);
+    setCustomItemPrice("");
+    setCustomItemOpen(false);
   };
 
   const handleProductClick = (product: GroupedProduct) => {
@@ -233,24 +253,24 @@ const PosPage = () => {
     }
   };
 
-  const updateQuantity = (variationId: string, delta: number) => {
+  const updateQuantity = (uid: string, delta: number) => {
     setCart(cart.map((c) => {
-      if (c.variation_id !== variationId) return c;
+      if (c.cart_uid !== uid) return c;
       const newQ = c.quantity + delta;
       return newQ <= 0 ? c : { ...c, quantity: newQ };
     }));
   };
 
-  const setQuantity = (variationId: string, qty: number) => {
+  const setQuantity = (uid: string, qty: number) => {
     if (qty <= 0) {
-      setCart(cart.filter((c) => c.variation_id !== variationId));
+      setCart(cart.filter((c) => c.cart_uid !== uid));
       return;
     }
-    setCart(cart.map((c) => (c.variation_id === variationId ? { ...c, quantity: qty } : c)));
+    setCart(cart.map((c) => (c.cart_uid === uid ? { ...c, quantity: qty } : c)));
   };
 
-  const removeFromCart = (variationId: string) => {
-    setCart(cart.filter((c) => c.variation_id !== variationId));
+  const removeFromCart = (uid: string) => {
+    setCart(cart.filter((c) => c.cart_uid !== uid));
   };
 
   const openCreateOrder = () => {
