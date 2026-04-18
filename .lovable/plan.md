@@ -2,56 +2,72 @@
 
 ## ההבנה
 
-המשתמש רוצה שדף המוצר באתר יציג **רק** את הווריאציות שמופיעות בדף ניהול המארזים (`bundle_variations` + `bundle_variation_items`), ולא יערבב נתונים מ-`product_variations` כשמדובר במארז.
+המשתמש רוצה כלל ברור וגלובלי:
+**האתר יציג רק נתונים מהמקום הנכון:**
+- מוצר רגיל (`product_type` ≠ `bundle`) → רק מ-`product_variations`.
+- מוצר שהוא מארז (יש לו רשומה ב-`bundles`) → רק מ-`bundle_items` / `bundle_variations` / `bundle_variation_items`.
 
-**המצב כיום במוצר #4:**
-- רשום ב-`bundles` כ-`simple_bundle` ריק (אין `bundle_items`, אין `bundle_variations`).
-- יש לו 5 רשומות "רפאים" ב-`product_variations` (מסונכרנות מ-WooCommerce).
-- האתר מציג ומאפשר הזמנה של ה-5 הרפאים — וזה בדיוק מה שהמשתמש רוצה למנוע.
-
-**הכלל החדש:** אם מוצר רשום בטבלת `bundles` — האתר יסתמך **בלעדית** על נתוני המארז.
+**כל נתון "רפאים" שנמצא במקום הלא נכון — יימחק מה-DB.**
+דוגמה: מוצר #4 הוא `simple_bundle` אבל יש לו 5 רשומות ב-`product_variations` שסונכרנו מ-WooCommerce. הרשומות האלה צריכות להימחק.
 
 ---
 
-## תוכנית
+## בדיקה ראשונית — מה יש כיום ב-DB
 
-### 1. `src/pages/web/WebProductPage.tsx` — תיקון מרכזי
-שינוי הלוגיקה כך שכשהמוצר הוא מארז (יש לו רשומה ב-`bundles`):
-- **`variable_bundle`** → להציג רק `bundle_variations`. להזמין עם `bundleVariationId`.
-- **`simple_bundle`** → להציג כמוצר פשוט בלי בורר. להזמין `product.id` בלבד, **בלי** להפיל לאחור ל-`product_variations[0]`.
-- **לא מארז** (התנהגות נוכחית) → להציג `product_variations` כרגיל.
-
-שינויים קונקרטיים:
-- שורה 107: `const isVariable = !bundleData && product.product_type === "variable" && variations.length > 0;` (להוסיף `!bundleData`).
-- שורה 165: להסיר את הפול-בק `variations?.[0]?.id`. אם זה מארז ללא ווריאציות זמינות — להזמין את `product.id` בלבד.
-- אם המוצר הוא `simple_bundle` ריק (אין `bundle_items`) — להציג "אזל מהמלאי" / לחסום הוספה לסל (הגנה נוספת).
-
-### 2. `src/hooks/useBundleStock.ts` — בדיקה מהירה
-לוודא שהחישוב כבר מתבסס רק על טבלאות המארז. אם כן — לא נוגעים.
-
-### 3. `src/pages/PosPage.tsx` — בדיקה מהירה
-לוודא שבחירת מארז בקופה מתבססת רק על `bundle_variations`. אם כן — לא נוגעים.
-
-### 4. מוצר #4 הספציפי
-לאחר התיקון, המוצר יוצג באתר כמארז ריק לא זמין להזמנה — בדיוק מה שמופיע בדף ניהול המארזים. תוכל להגדיר לו רכיבים/ווריאציות ידנית בהמשך, או להחליט למחוק את ה-bundle.
-
-### 5. סריקה גלובלית
-שאילתת ביקורת לזיהוי כל המוצרים שיש להם גם רשומה ב-`bundles` וגם ב-`product_variations` — כדי לראות אם יש עוד מקרים שצריך לתת עליהם את הדעת:
+לפני המחיקה, ארוץ סריקה כדי לזהות **את כל** ה"רפאים":
 ```sql
 SELECT p.product_number, p.name, b.bundle_type,
-       (SELECT COUNT(*) FROM bundle_items WHERE bundle_id = b.id) AS items,
-       (SELECT COUNT(*) FROM bundle_variations WHERE bundle_id = b.id) AS variations,
-       (SELECT COUNT(*) FROM product_variations WHERE product_id = p.id) AS ghost_variations
-FROM products p JOIN bundles b ON b.product_id = p.id
-WHERE p.is_published = true;
+       COUNT(pv.id) AS ghost_variations
+FROM products p
+JOIN bundles b ON b.product_id = p.id
+LEFT JOIN product_variations pv ON pv.product_id = p.id
+GROUP BY p.id, b.bundle_type
+HAVING COUNT(pv.id) > 0;
 ```
+זה יראה לכל מוצר-מארז כמה ווריאציות "רפאים" יש לו ב-`product_variations`.
 
 ---
 
-## תוצאה מצופה
+## תוכנית הביצוע
 
-- מוצר עם `variable_bundle` ו-3 ווריאציות מארז → באתר יוצגו אותן 3 ווריאציות בדיוק (אותם שמות, מחירים, מק"טים).
-- מוצר עם `simple_bundle` שמוגדר כראוי → יוצג כמוצר פשוט.
-- מוצר עם `simple_bundle` ריק (כמו #4 כיום) → לא ניתן להזמנה באתר.
-- אפס סיכוי שלקוח יזמין וריאציה שלא נראית בדף ניהול המארזים.
+### שלב 1 — הרצת סקירה (קריאה בלבד)
+ארוץ את השאילתה לעיל וגם בדיקה הפוכה (מוצרים שאינם מארזים אבל יש להם רשומות בטבלאות מארז — אם רלוונטי).
+
+### שלב 2 — בדיקת תלויות לפני מחיקה
+לוודא שה-`product_variations` ה"רפאים" לא משמשים ב:
+- `inventory` (יש להם מלאי?)
+- `order_items` (הופיעו בהזמנות קיימות?)
+- `bundle_items` / `bundle_variation_items` (משמשים כרכיב במארז אחר?)
+- `intake_session_items`, `inventory_log`, `inventory_transfer_items`
+
+**אם יש תלויות בהזמנות קיימות** — לא נמחק את הווריאציה (היסטוריית ההזמנה חייבת להישמר). במקום זאת, נסיר רק את ה-`inventory` שלהן (כדי שלא יוצגו כ"במלאי" באתר). הקוד באתר כבר מתעלם מהן (אחרי התיקון הקודם), אז זה מספיק.
+
+**אם אין תלויות** — נמחק את הווריאציה לחלוטין (כולל `inventory` שלה).
+
+### שלב 3 — Migration למחיקה
+לבנות migration שמבצע את הניקוי לפי הבדיקות:
+1. למחוק רשומות `inventory` עבור כל ווריאציה "רפאים".
+2. למחוק רשומות `product_variations` שאין להן תלות בהזמנות.
+3. עבור ווריאציות עם היסטוריית הזמנות — להשאיר את הרשומה אבל להסיר מ-`inventory`.
+
+### שלב 4 — הקשחת הסנכרון מ-WooCommerce
+הבעיה המקורית: `woo-sync` / `woo-product-sync` יוצר רשומות ב-`product_variations` גם למוצרים שמוגדרים אצלנו כמארזים. צריך לתקן כך שאם מוצר רשום ב-`bundles` — הסנכרון **לא** ייצור עבורו רשומות ב-`product_variations`.
+
+קבצים לעדכון:
+- `supabase/functions/woo-sync/index.ts`
+- `supabase/functions/woo-product-sync/index.ts`
+- `supabase/functions/woo-webhook/index.ts`
+
+לפני יצירת/עדכון `product_variations` — לבדוק האם ל-`product_id` יש רשומה ב-`bundles`. אם כן — לדלג.
+
+### שלב 5 — אימות אחרי המחיקה
+- לוודא שמוצר #4 באתר מוצג כ"מארז ריק לא זמין".
+- לוודא שמוצרים רגילים אחרים לא נפגעו.
+- לוודא שהזמנות קיימות (179, 203) עדיין מציגות תקין את הפריטים שהוזמנו.
+
+---
+
+## הערה חשובה
+
+המחיקה היא פעולה הרסנית. אם בשלב 1 אגלה שיש הרבה ווריאציות "רפאים" עם היסטוריית הזמנות — אעצור ואחזיר אליך לפני המחיקה כדי לאשר את ההיקף.
 
