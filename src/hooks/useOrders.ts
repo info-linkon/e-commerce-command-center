@@ -29,7 +29,7 @@ async function syncOrderStatusToWoo(orderId: string) {
 export type OrderStatus = "pending" | "processing" | "picking" | "shipping" | "completed" | "cancelled";
 
 export interface OrderItem {
-  variation_id: string;
+  variation_id?: string; // optional — POS supports custom (general) line items without a product
   quantity: number;
   unit_price: number;
   total_price: number;
