@@ -41,7 +41,20 @@ export default function WebOrderConfirmation() {
   const clearCart = useCartStore((s) => s.clearCart);
   const { t } = useLanguage();
   const orderNumber = routeOrderNumber || searchParams.get("Order");
-  const [status, setStatus] = useState<UiState>("loading");
+  const [status, setStatus] = useState<UiState>(() => {
+    if (typeof window === "undefined") return "loading";
+
+    const params = new URLSearchParams(window.location.search);
+    const statusParam = params.get("status");
+    const paymentParam = params.get("payment");
+    const ccode = params.get("CCode");
+
+    if (paymentParam === "pending") return "pending";
+    if (statusParam === "ok" || statusParam === "already") return "success";
+    if (statusParam || ccode !== null) return "loading";
+
+    return "success";
+  });
   const ranRef = useRef(false);
 
   const isIframe = typeof window !== "undefined" && window.self !== window.top;
