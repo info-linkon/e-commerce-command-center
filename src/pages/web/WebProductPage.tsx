@@ -174,22 +174,30 @@ export default function WebProductPage() {
 
     // Determine cart line ID — must come from the right source per product type:
     // - variable bundle → bundle_variation.id
-    // - simple bundle  → product.id (no product_variations involved)
+    // - simple bundle  → the product's "ברירת מחדל" variation (NEVER any other
+    //   product_variation, even if Woo imported some — those would create
+    //   ghost order lines for variations the customer never picked).
     // - variable product → selected product_variation.id
-    // - simple product → first product_variation.id (legacy)
+    // - simple product → prefer "ברירת מחדל", else first variation (legacy)
     let variationId: string;
     let variationName = "";
     if (isVariableBundle && activeBundleVariation) {
       variationId = activeBundleVariation.id;
       variationName = activeBundleVariation.name;
     } else if (isBundle) {
-      // simple_bundle — use product.id, ignore product_variations entirely
-      variationId = product.id;
+      // simple_bundle — use ONLY the canonical "ברירת מחדל" variation.
+      const defaultVar = variations?.find((v) => v.name === "ברירת מחדל");
+      if (!defaultVar) {
+        toast.error(t("المنتج غير متوفر", "המוצר אינו זמין"));
+        return;
+      }
+      variationId = defaultVar.id;
     } else if (isVariable && activeVariation) {
       variationId = activeVariation.id;
       variationName = activeVariation.name_ar || activeVariation.name || "";
     } else if (variations && variations.length > 0) {
-      variationId = variations[0].id;
+      const defaultVar = variations.find((v) => v.name === "ברירת מחדל");
+      variationId = (defaultVar || variations[0]).id;
     } else {
       toast.error(t("المنتج غير متوفر", "המוצר אינו זמין"));
       return;
