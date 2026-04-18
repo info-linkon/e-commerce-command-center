@@ -26,12 +26,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 interface CartItem {
-  variation_id: string;
+  // For regular products: variation_id is the product variation UUID. The cart key uses this id.
+  // For custom (general) items: variation_id is undefined and `cart_uid` is used as the React key + identifier.
+  variation_id?: string;
   variation_name: string;
   product_name: string;
   quantity: number;
   unit_price: number;
   bundle_variation_id?: string;
+  is_custom?: boolean;
+  cart_uid: string;
 }
 
 interface GroupedProduct {
