@@ -50,6 +50,15 @@ serve(async (req) => {
       });
     }
 
+    // Guard: if this product is managed as a bundle, do NOT sync product_variations to Woo.
+    // Bundles are represented in our DB via the `bundles` table — Woo product_variations would create "ghost" rows.
+    const { data: bundleRow } = await supabase
+      .from("bundles")
+      .select("id")
+      .eq("product_id", product_id)
+      .maybeSingle();
+    const isBundle = !!bundleRow;
+
     // 2. Build WooCommerce product data
     const category = product.categories as any;
     const wooData: any = {
