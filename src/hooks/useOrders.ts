@@ -232,6 +232,7 @@ export function useAssignWarehouse() {
       const pickingItems: Array<{ order_id: string; order_item_id: string; variation_id: string; quantity: number }> = [];
 
       for (const item of items) {
+        if (!item.variation_id) continue; // skip custom (general) line items — no picking needed
         const { data: bundle } = await supabase
           .from("bundles")
           .select("id, bundle_type")
