@@ -102,9 +102,12 @@ export default function WebProductPage() {
   ];
   const displayImage = mainImage || allImages[0] || null;
 
-  // Determine if this is a variable bundle or a regular variable product
+  // Determine product display type.
+  // Rule: if product is registered as a bundle, rely EXCLUSIVELY on bundle tables
+  // (bundle_variations / bundle_items). Never fall back to product_variations for bundles.
+  const isBundle = !!bundleData;
   const isVariableBundle = bundleData?.bundle_type === "variable_bundle" && bundleVariations && bundleVariations.length > 0;
-  const isVariable = !isVariableBundle && product.product_type === "variable" && variations && variations.length > 0;
+  const isVariable = !isBundle && product.product_type === "variable" && variations && variations.length > 0;
 
   // Active variation for regular variable products
   const activeVariation = isVariable
