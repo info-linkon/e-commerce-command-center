@@ -329,6 +329,8 @@ export function useCancelOrder() {
       // 2. If warehouse was assigned, restore inventory
       if (warehouseId) {
         for (const item of items) {
+          if (!item.variation_id) continue; // skip custom (general) line items
+
           const { data: inv } = await supabase
             .from("inventory")
             .select("*")
@@ -361,8 +363,8 @@ export function useCancelOrder() {
           });
         }
 
-        // Sync restored stock to WooCommerce
-        syncMultipleStockToWoo(items.map((item: any) => item.variation_id));
+        // Sync restored stock to WooCommerce. Skip custom items.
+        syncMultipleStockToWoo(items.filter((i: any) => i.variation_id).map((item: any) => item.variation_id));
       }
 
       // 3. Update order status
