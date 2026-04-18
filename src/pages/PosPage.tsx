@@ -733,6 +733,38 @@ const PosPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Custom Item Dialog */}
+      <Dialog open={customItemOpen} onOpenChange={setCustomItemOpen}>
+        <DialogContent className="max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>הוספת פריט כללי</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>מחיר (₪) *</Label>
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                value={customItemPrice}
+                onChange={(e) => setCustomItemPrice(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addCustomItem(); }}
+                placeholder="0.00"
+                dir="ltr"
+                className="text-left"
+                autoFocus
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              פריט כללי לא משתייך למוצר ולא משפיע על המלאי או על תהליך הליקוט.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={addCustomItem} className="w-full">הוסף לעגלה</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
