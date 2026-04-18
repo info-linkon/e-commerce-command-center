@@ -67,6 +67,8 @@ const PosPage = () => {
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [shippingPrice, setShippingPrice] = useState<number>(0);
   const [orderDate, setOrderDate] = useState<Date>(new Date());
+  const [customItemOpen, setCustomItemOpen] = useState(false);
+  const [customItemPrice, setCustomItemPrice] = useState<string>("");
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
