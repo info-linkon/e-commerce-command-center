@@ -492,7 +492,7 @@ const PosPage = () => {
             <Input placeholder="חיפוש מוצר..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-9" />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-28 sm:w-36"><SelectValue placeholder="קטגוריה" /></SelectTrigger>
+            <SelectTrigger className="w-24 sm:w-32"><SelectValue placeholder="קטגוריה" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">הכל</SelectItem>
               {categories?.map((c) => (
@@ -500,6 +500,9 @@ const PosPage = () => {
               ))}
             </SelectContent>
           </Select>
+          <Button variant="outline" size="icon" onClick={() => { setCustomItemPrice(""); setCustomItemOpen(true); }} title="הוסף פריט כללי">
+            <Tag className="h-4 w-4" />
+          </Button>
         </div>
 
         <ScrollArea className="flex-1">
