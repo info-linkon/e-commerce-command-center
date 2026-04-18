@@ -35,6 +35,12 @@ const sourceLabels: Record<string, string> = {
   website: "אתר",
 };
 
+const paymentLabels: Record<string, string> = {
+  cash: "מזומן",
+  credit: "אשראי",
+  bit: "Bit",
+};
+
 const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
   const [statusFilter, setStatusFilter] = useState<string>(defaultStatus || "all");
   const [search, setSearch] = useState("");
@@ -58,6 +64,7 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
     { label: "טלפון", render: (o) => <span dir="ltr" className="text-right">{o.customer_phone || "—"}</span>, hideOnMobile: true },
     { label: "סה״כ", render: (o) => `₪${Number(o.total).toFixed(2)}` },
     { label: "מקור", render: (o) => <Badge variant="outline" className="text-xs">{sourceLabels[o.source] || o.source}</Badge>, hideOnMobile: true },
+    { label: "אמצעי תשלום", render: (o) => o.payment_method ? <Badge variant="secondary" className="text-xs">{paymentLabels[o.payment_method] || o.payment_method}</Badge> : <span className="text-muted-foreground text-xs">—</span>, hideOnMobile: true },
     {
       label: "סטטוס",
       render: (o) => {
