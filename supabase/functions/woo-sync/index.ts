@@ -150,8 +150,18 @@ serve(async (req) => {
             .single();
           const productId = newProd!.id;
 
-          // Import variations for new product
-          if (p.type === "variable") {
+          // Guard: never create product_variations for products that are managed as bundles in our DB.
+          const { data: bundleRow } = await supabase
+            .from("bundles")
+            .select("id")
+            .eq("product_id", productId)
+            .maybeSingle();
+          const isBundle = !!bundleRow;
+
+          // Import variations for new product (skip for bundles)
+          if (isBundle) {
+            console.log(`Skipped variation import for bundle product ${productId}`);
+          } else if (p.type === "variable") {
             const wooVars = await wooGet(`/products/${p.id}/variations?per_page=100`);
             for (const v of wooVars) {
               const varName = v.attributes?.map((a: any) => a.option).join(" / ") || v.sku || "ברירת מחדל";
