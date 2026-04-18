@@ -107,8 +107,8 @@ serve(async (req) => {
       console.log(`Created WooCommerce product ${wooProductId}`);
     }
 
-    // 4. Sync variations if variable product
-    if (product.product_type === "variable") {
+    // 4. Sync variations if variable product — but skip entirely for bundles.
+    if (!isBundle && product.product_type === "variable") {
       const { data: variations } = await supabase
         .from("product_variations")
         .select("*")
@@ -170,6 +170,8 @@ serve(async (req) => {
           }
         }
       }
+    } else if (isBundle) {
+      console.log(`Skipped variation sync for bundle product ${product_id}`);
     }
 
     return new Response(JSON.stringify({ success: true, product_id, woo_id: wooProductId }), {
