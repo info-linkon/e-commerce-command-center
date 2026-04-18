@@ -102,9 +102,12 @@ export default function WebProductPage() {
   ];
   const displayImage = mainImage || allImages[0] || null;
 
-  // Determine if this is a variable bundle or a regular variable product
+  // Determine product display type.
+  // Rule: if product is registered as a bundle, rely EXCLUSIVELY on bundle tables
+  // (bundle_variations / bundle_items). Never fall back to product_variations for bundles.
+  const isBundle = !!bundleData;
   const isVariableBundle = bundleData?.bundle_type === "variable_bundle" && bundleVariations && bundleVariations.length > 0;
-  const isVariable = !isVariableBundle && product.product_type === "variable" && variations && variations.length > 0;
+  const isVariable = !isBundle && product.product_type === "variable" && variations && variations.length > 0;
 
   // Active variation for regular variable products
   const activeVariation = isVariable
@@ -136,9 +139,9 @@ export default function WebProductPage() {
     return false;
   })();
 
-  // Regular product stock check
+  // Regular product stock check (only for non-bundles)
   const isRegularOutOfStock = (() => {
-    if (bundleData) return false; // handled by isBundleOutOfStock
+    if (isBundle) return false; // bundles handled by isBundleOutOfStock
     if (!inventoryStock) return false;
     if (isVariable && activeVariation) {
       return (inventoryStock.get(activeVariation.id) || 0) <= 0;
@@ -151,7 +154,13 @@ export default function WebProductPage() {
     return false;
   })();
 
-  const isOutOfStock = isBundleOutOfStock || isRegularOutOfStock;
+  // Empty simple bundle (no bundle_items configured) → block ordering
+  const isEmptySimpleBundle =
+    bundleData?.bundle_type === "simple_bundle" &&
+    bundleStockResult?.simple &&
+    bundleStockResult.simple.maxQuantity === 0;
+
+  const isOutOfStock = isBundleOutOfStock || isRegularOutOfStock || !!isEmptySimpleBundle;
 
   const handleAddToCart = () => {
     if (isVariable && !activeVariation) {
@@ -163,8 +172,28 @@ export default function WebProductPage() {
       return;
     }
 
-    const variationId = activeVariation?.id || variations?.[0]?.id || product.id;
-    const variationName = activeBundleVariation?.name || activeVariation?.name_ar || activeVariation?.name || "";
+    // Determine cart line ID — must come from the right source per product type:
+    // - variable bundle → bundle_variation.id
+    // - simple bundle  → product.id (no product_variations involved)
+    // - variable product → selected product_variation.id
+    // - simple product → first product_variation.id (legacy)
+    let variationId: string;
+    let variationName = "";
+    if (isVariableBundle && activeBundleVariation) {
+      variationId = activeBundleVariation.id;
+      variationName = activeBundleVariation.name;
+    } else if (isBundle) {
+      // simple_bundle — use product.id, ignore product_variations entirely
+      variationId = product.id;
+    } else if (isVariable && activeVariation) {
+      variationId = activeVariation.id;
+      variationName = activeVariation.name_ar || activeVariation.name || "";
+    } else if (variations && variations.length > 0) {
+      variationId = variations[0].id;
+    } else {
+      toast.error(t("المنتج غير متوفر", "המוצר אינו זמין"));
+      return;
+    }
 
     const productSku = product.sku || null;
 
