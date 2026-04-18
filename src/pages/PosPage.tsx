@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, ShoppingCart, Plus, Minus, Trash2, Package, Percent, BadgeDollarSign, CalendarIcon } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, Trash2, Package, Percent, BadgeDollarSign, CalendarIcon, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
