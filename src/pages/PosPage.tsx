@@ -372,20 +372,23 @@ const PosPage = () => {
         ) : (
           <div className="space-y-2">
             {cart.map((item) => (
-              <div key={item.variation_id} className="rounded-md border p-2 text-sm">
+              <div key={item.cart_uid} className="rounded-md border p-2 text-sm">
                 <div className="flex justify-between items-start">
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFromCart(item.variation_id)}>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFromCart(item.cart_uid)}>
                     <Trash2 className="h-3 w-3 text-destructive" />
                   </Button>
                   <div className="text-right flex-1">
-                    <div className="font-medium">{item.product_name}</div>
-                    <div className="text-xs text-muted-foreground">{item.variation_name}</div>
+                    <div className="font-medium flex items-center justify-end gap-1">
+                      {item.product_name}
+                      {item.is_custom && <Badge variant="secondary" className="text-[9px] px-1 py-0">כללי</Badge>}
+                    </div>
+                    {item.variation_name && <div className="text-xs text-muted-foreground">{item.variation_name}</div>}
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <div className="font-bold">₪{(item.quantity * item.unit_price).toFixed(2)}</div>
                   <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.variation_id, -1)}>
+                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.cart_uid, -1)}>
                       <Minus className="h-3 w-3" />
                     </Button>
                     <Input
@@ -394,12 +397,12 @@ const PosPage = () => {
                       value={item.quantity}
                       onChange={(e) => {
                         const v = parseInt(e.target.value, 10);
-                        if (!isNaN(v)) setQuantity(item.variation_id, v);
+                        if (!isNaN(v)) setQuantity(item.cart_uid, v);
                       }}
                       className="h-6 w-12 text-center text-sm px-1"
                       dir="ltr"
                     />
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.variation_id, 1)}>
+                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.cart_uid, 1)}>
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
