@@ -241,19 +241,28 @@ export default function WebCheckoutPage() {
         new Set(items.filter((item) => !matchedVariationIds.has(item.variationId)).map((item) => item.productId))
       );
 
-      let fallbackVariations: { id: string; product_id: string }[] = [];
+      let fallbackVariations: { id: string; product_id: string; name: string }[] = [];
       if (fallbackProductIds.length > 0) {
         const { data: fallbackData, error: fallbackError } = await supabase
           .from("product_variations")
-          .select("id, product_id")
+          .select("id, product_id, name")
           .in("product_id", fallbackProductIds)
           .order("created_at", { ascending: true });
 
         if (fallbackError) throw fallbackError;
-        fallbackVariations = (fallbackData || []) as { id: string; product_id: string }[];
+        fallbackVariations = (fallbackData || []) as { id: string; product_id: string; name: string }[];
       }
 
+      // Prefer the canonical "ברירת מחדל" variation as the fallback. Only if
+      // none exists do we fall back to the oldest variation. This prevents
+      // ghost Woo-imported variations from being recorded as the customer's
+      // chosen variation on bundle / simple products.
       const fallbackByProductId = new Map<string, string>();
+      for (const variation of fallbackVariations) {
+        if (variation.name === "ברירת מחדל") {
+          fallbackByProductId.set(variation.product_id, variation.id);
+        }
+      }
       for (const variation of fallbackVariations) {
         if (!fallbackByProductId.has(variation.product_id)) {
           fallbackByProductId.set(variation.product_id, variation.id);
