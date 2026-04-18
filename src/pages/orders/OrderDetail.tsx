@@ -387,7 +387,14 @@ const OrderDetail = () => {
           hypTransactionId={(order as any).hyp_transaction_id || null}
           orderItems={items.map((item: any) => {
             const varName = item.bundle_variations?.name || item.product_variations?.name || "";
-            const varSku = item.bundle_variations?.sku || item.product_variations?.sku || undefined;
+            // Prefer the parent product SKU (e.g. bundle SKU like BKG-3CH) so picking
+            // and invoices reference the catalog item the customer actually bought,
+            // not the internal "ברירת מחדל" variation which has no SKU.
+            const varSku =
+              item.bundle_variations?.sku ||
+              item.product_variations?.products?.sku ||
+              item.product_variations?.sku ||
+              undefined;
             return {
               details: `${item.product_variations?.products?.name_ar || item.product_variations?.products?.name || ""}${varName && !["ברירת מחדל", "default"].includes(varName.toLowerCase()) ? ` - ${varName}` : ""}`.trim(),
               amount: item.quantity,
@@ -431,8 +438,8 @@ const OrderDetail = () => {
                       <div className="text-xs text-muted-foreground">{item.product_variations?.products?.name}</div>
                     )}
                   </TableCell>
-                  <TableCell>{item.bundle_variations?.name || item.product_variations?.name || "—"}</TableCell>
-                  <TableCell>{item.bundle_variations?.sku || item.product_variations?.sku || "—"}</TableCell>
+                  <TableCell>{item.bundle_variations?.name || (item.product_variations?.name && !["ברירת מחדל", "default"].includes(item.product_variations.name.toLowerCase()) ? item.product_variations.name : "—")}</TableCell>
+                  <TableCell>{item.bundle_variations?.sku || item.product_variations?.products?.sku || item.product_variations?.sku || "—"}</TableCell>
                   <TableCell>
                     {editingItems ? (
                       <div className="flex items-center gap-1">
