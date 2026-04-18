@@ -308,7 +308,7 @@ const PosPage = () => {
         created_at: orderDate.toISOString(),
         skip_auto_payment: isHypLink,
         items: cart.map((c) => ({
-          variation_id: c.variation_id,
+          variation_id: c.variation_id, // may be undefined for custom items — handled in useOrders
           quantity: c.quantity,
           unit_price: c.unit_price,
           total_price: c.quantity * c.unit_price,
