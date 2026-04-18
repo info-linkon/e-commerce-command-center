@@ -179,6 +179,8 @@ export function useAssignWarehouse() {
 
       // 2. Deduct inventory from the assigned warehouse + log
       for (const item of items) {
+        if (!item.variation_id) continue; // skip custom (general) line items — no inventory tracking
+
         const { data: inv } = await supabase
           .from("inventory")
           .select("*")
@@ -212,8 +214,8 @@ export function useAssignWarehouse() {
         });
       }
 
-      // Sync stock to WooCommerce (all sources — stock is global)
-      syncMultipleStockToWoo(items.map((item: any) => item.variation_id));
+      // Sync stock to WooCommerce (all sources — stock is global). Skip custom items.
+      syncMultipleStockToWoo(items.filter((i: any) => i.variation_id).map((item: any) => item.variation_id));
 
       // 3. Update order with warehouse assignment + status to processing
       const { error: updateErr } = await supabase
