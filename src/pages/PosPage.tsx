@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, ShoppingCart, Plus, Minus, Trash2, Package, Percent, BadgeDollarSign, CalendarIcon } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, Trash2, Package, Percent, BadgeDollarSign, CalendarIcon, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -26,12 +26,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 interface CartItem {
-  variation_id: string;
+  // For regular products: variation_id is the product variation UUID. The cart key uses this id.
+  // For custom (general) items: variation_id is undefined and `cart_uid` is used as the React key + identifier.
+  variation_id?: string;
   variation_name: string;
   product_name: string;
   quantity: number;
   unit_price: number;
   bundle_variation_id?: string;
+  is_custom?: boolean;
+  cart_uid: string;
 }
 
 interface GroupedProduct {
@@ -63,6 +67,8 @@ const PosPage = () => {
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [shippingPrice, setShippingPrice] = useState<number>(0);
   const [orderDate, setOrderDate] = useState<Date>(new Date());
+  const [customItemOpen, setCustomItemOpen] = useState(false);
+  const [customItemPrice, setCustomItemPrice] = useState<string>("");
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
@@ -208,8 +214,28 @@ const PosPage = () => {
     if (existing) {
       setCart(cart.map((c) => (c.variation_id === variation.id && c.bundle_variation_id === variation.bundle_variation_id) ? { ...c, quantity: c.quantity + 1 } : c));
     } else {
-      setCart([...cart, { variation_id: variation.id, variation_name: variation.name, product_name: productName, quantity: 1, unit_price: variation.price, bundle_variation_id: variation.bundle_variation_id }]);
+      setCart([...cart, { cart_uid: variation.id + (variation.bundle_variation_id || ""), variation_id: variation.id, variation_name: variation.name, product_name: productName, quantity: 1, unit_price: variation.price, bundle_variation_id: variation.bundle_variation_id }]);
     }
+  };
+
+  const addCustomItem = () => {
+    const price = parseFloat(customItemPrice);
+    if (!price || price <= 0) {
+      toast.error("הכנס מחיר חוקי");
+      return;
+    }
+    const uid = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setCart([...cart, {
+      cart_uid: uid,
+      variation_id: undefined,
+      variation_name: "",
+      product_name: "פריט כללי",
+      quantity: 1,
+      unit_price: price,
+      is_custom: true,
+    }]);
+    setCustomItemPrice("");
+    setCustomItemOpen(false);
   };
 
   const handleProductClick = (product: GroupedProduct) => {
@@ -227,24 +253,24 @@ const PosPage = () => {
     }
   };
 
-  const updateQuantity = (variationId: string, delta: number) => {
+  const updateQuantity = (uid: string, delta: number) => {
     setCart(cart.map((c) => {
-      if (c.variation_id !== variationId) return c;
+      if (c.cart_uid !== uid) return c;
       const newQ = c.quantity + delta;
       return newQ <= 0 ? c : { ...c, quantity: newQ };
     }));
   };
 
-  const setQuantity = (variationId: string, qty: number) => {
+  const setQuantity = (uid: string, qty: number) => {
     if (qty <= 0) {
-      setCart(cart.filter((c) => c.variation_id !== variationId));
+      setCart(cart.filter((c) => c.cart_uid !== uid));
       return;
     }
-    setCart(cart.map((c) => (c.variation_id === variationId ? { ...c, quantity: qty } : c)));
+    setCart(cart.map((c) => (c.cart_uid === uid ? { ...c, quantity: qty } : c)));
   };
 
-  const removeFromCart = (variationId: string) => {
-    setCart(cart.filter((c) => c.variation_id !== variationId));
+  const removeFromCart = (uid: string) => {
+    setCart(cart.filter((c) => c.cart_uid !== uid));
   };
 
   const openCreateOrder = () => {
@@ -282,7 +308,7 @@ const PosPage = () => {
         created_at: orderDate.toISOString(),
         skip_auto_payment: isHypLink,
         items: cart.map((c) => ({
-          variation_id: c.variation_id,
+          variation_id: c.variation_id, // may be undefined for custom items — handled in useOrders
           quantity: c.quantity,
           unit_price: c.unit_price,
           total_price: c.quantity * c.unit_price,
@@ -346,20 +372,23 @@ const PosPage = () => {
         ) : (
           <div className="space-y-2">
             {cart.map((item) => (
-              <div key={item.variation_id} className="rounded-md border p-2 text-sm">
+              <div key={item.cart_uid} className="rounded-md border p-2 text-sm">
                 <div className="flex justify-between items-start">
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFromCart(item.variation_id)}>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFromCart(item.cart_uid)}>
                     <Trash2 className="h-3 w-3 text-destructive" />
                   </Button>
                   <div className="text-right flex-1">
-                    <div className="font-medium">{item.product_name}</div>
-                    <div className="text-xs text-muted-foreground">{item.variation_name}</div>
+                    <div className="font-medium flex items-center justify-end gap-1">
+                      {item.product_name}
+                      {item.is_custom && <Badge variant="secondary" className="text-[9px] px-1 py-0">כללי</Badge>}
+                    </div>
+                    {item.variation_name && <div className="text-xs text-muted-foreground">{item.variation_name}</div>}
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <div className="font-bold">₪{(item.quantity * item.unit_price).toFixed(2)}</div>
                   <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.variation_id, -1)}>
+                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.cart_uid, -1)}>
                       <Minus className="h-3 w-3" />
                     </Button>
                     <Input
@@ -368,12 +397,12 @@ const PosPage = () => {
                       value={item.quantity}
                       onChange={(e) => {
                         const v = parseInt(e.target.value, 10);
-                        if (!isNaN(v)) setQuantity(item.variation_id, v);
+                        if (!isNaN(v)) setQuantity(item.cart_uid, v);
                       }}
                       className="h-6 w-12 text-center text-sm px-1"
                       dir="ltr"
                     />
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.variation_id, 1)}>
+                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.cart_uid, 1)}>
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
@@ -463,7 +492,7 @@ const PosPage = () => {
             <Input placeholder="חיפוש מוצר..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-9" />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-28 sm:w-36"><SelectValue placeholder="קטגוריה" /></SelectTrigger>
+            <SelectTrigger className="w-24 sm:w-32"><SelectValue placeholder="קטגוריה" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">הכל</SelectItem>
               {categories?.map((c) => (
@@ -471,6 +500,9 @@ const PosPage = () => {
               ))}
             </SelectContent>
           </Select>
+          <Button variant="outline" size="icon" onClick={() => { setCustomItemPrice(""); setCustomItemOpen(true); }} title="הוסף פריט כללי">
+            <Tag className="h-4 w-4" />
+          </Button>
         </div>
 
         <ScrollArea className="flex-1">
@@ -698,6 +730,38 @@ const PosPage = () => {
             <Button onClick={handleCreateOrder} disabled={createOrder.isPending} className="w-full">
               {createOrder.isPending ? "מעבד..." : "צור ושלח להזמנות"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Item Dialog */}
+      <Dialog open={customItemOpen} onOpenChange={setCustomItemOpen}>
+        <DialogContent className="max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>הוספת פריט כללי</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>מחיר (₪) *</Label>
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                value={customItemPrice}
+                onChange={(e) => setCustomItemPrice(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addCustomItem(); }}
+                placeholder="0.00"
+                dir="ltr"
+                className="text-left"
+                autoFocus
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              פריט כללי לא משתייך למוצר ולא משפיע על המלאי או על תהליך הליקוט.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={addCustomItem} className="w-full">הוסף לעגלה</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

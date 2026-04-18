@@ -29,7 +29,7 @@ async function syncOrderStatusToWoo(orderId: string) {
 export type OrderStatus = "pending" | "processing" | "picking" | "shipping" | "completed" | "cancelled";
 
 export interface OrderItem {
-  variation_id: string;
+  variation_id?: string; // optional — POS supports custom (general) line items without a product
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -179,6 +179,8 @@ export function useAssignWarehouse() {
 
       // 2. Deduct inventory from the assigned warehouse + log
       for (const item of items) {
+        if (!item.variation_id) continue; // skip custom (general) line items — no inventory tracking
+
         const { data: inv } = await supabase
           .from("inventory")
           .select("*")
@@ -212,8 +214,8 @@ export function useAssignWarehouse() {
         });
       }
 
-      // Sync stock to WooCommerce (all sources — stock is global)
-      syncMultipleStockToWoo(items.map((item: any) => item.variation_id));
+      // Sync stock to WooCommerce (all sources — stock is global). Skip custom items.
+      syncMultipleStockToWoo(items.filter((i: any) => i.variation_id).map((item: any) => item.variation_id));
 
       // 3. Update order with warehouse assignment + status to processing
       const { error: updateErr } = await supabase
@@ -230,6 +232,7 @@ export function useAssignWarehouse() {
       const pickingItems: Array<{ order_id: string; order_item_id: string; variation_id: string; quantity: number }> = [];
 
       for (const item of items) {
+        if (!item.variation_id) continue; // skip custom (general) line items — no picking needed
         const { data: bundle } = await supabase
           .from("bundles")
           .select("id, bundle_type")
@@ -326,6 +329,8 @@ export function useCancelOrder() {
       // 2. If warehouse was assigned, restore inventory
       if (warehouseId) {
         for (const item of items) {
+          if (!item.variation_id) continue; // skip custom (general) line items
+
           const { data: inv } = await supabase
             .from("inventory")
             .select("*")
@@ -358,8 +363,8 @@ export function useCancelOrder() {
           });
         }
 
-        // Sync restored stock to WooCommerce
-        syncMultipleStockToWoo(items.map((item: any) => item.variation_id));
+        // Sync restored stock to WooCommerce. Skip custom items.
+        syncMultipleStockToWoo(items.filter((i: any) => i.variation_id).map((item: any) => item.variation_id));
       }
 
       // 3. Update order status
