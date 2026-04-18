@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const pickingItemsSelect = "*, order_items(id, quantity, product_variations(id, name, name_ar, products(name, name_ar, image_url))), product_variations(id, name, name_ar, products(name, name_ar, image_url))";
+const pickingItemsSelect = "*, order_items(id, quantity, product_variations(id, name, name_ar, sku, products(name, name_ar, sku, image_url))), product_variations(id, name, name_ar, sku, products(name, name_ar, sku, image_url))";
 
 async function fetchPickingItems(orderId: string) {
   const { data, error } = await supabase

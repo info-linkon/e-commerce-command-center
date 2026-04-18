@@ -109,6 +109,9 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
             const parentProductName = isBundle
               ? (orderItemVar?.products?.name_ar || orderItemVar?.products?.name || "מארז")
               : (first?.product_variations?.products?.name_ar || first?.product_variations?.products?.name || "—");
+            const parentSku = isBundle
+              ? (orderItemVar?.products?.sku || orderItemVar?.sku || null)
+              : null;
 
             const allGroupPicked = group.every((item: any) => item.picked);
             const someGroupPicked = group.some((item: any) => item.picked);
@@ -131,6 +134,9 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
                         className={someGroupPicked && !allGroupPicked ? "opacity-60" : ""}
                       />
                       <span className="font-medium">מארז</span>
+                      {parentSku && (
+                        <span className="font-mono text-xs text-muted-foreground">{parentSku}</span>
+                      )}
                     </div>
                     <span className="text-muted-foreground">{parentProductName}</span>
                   </label>
@@ -141,6 +147,7 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
                     const variation = item.product_variations;
                     const productName = variation?.products?.name_ar || variation?.products?.name || "—";
                     const variationName = variation?.name_ar || variation?.name || "";
+                    const variationSku = variation?.sku || variation?.products?.sku || null;
                     const imageUrl = variation?.products?.image_url || null;
 
                     return (
@@ -174,9 +181,14 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
 
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm">{productName}</div>
-                          {variationName && (
-                            <div className="text-xs text-muted-foreground">{variationName}</div>
-                          )}
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {variationName && !["ברירת מחדל", "default"].includes(variationName.toLowerCase()) && (
+                              <span>{variationName}</span>
+                            )}
+                            {variationSku && (
+                              <span className="font-mono">{variationSku}</span>
+                            )}
+                          </div>
                         </div>
 
                         <div className="text-sm font-medium">×{item.quantity || 0}</div>
