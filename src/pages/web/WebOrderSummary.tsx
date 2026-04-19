@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Package, MapPin, Calendar, CreditCard, Loader2, AlertCircle, CheckCircle, Clock, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 const statusConfig: Record<string, { label: string; labelHe: string; icon: React.ElementType; color: string }> = {
@@ -175,6 +176,27 @@ export default function WebOrderSummary() {
           );
         })()}
       </div>
+
+      {/* Pay-now CTA — only when the order is not yet paid and still open */}
+      {(() => {
+        const isClosed = order.status === "completed" || order.status === "cancelled";
+        const isPaid = !!order.hyp_transaction_id;
+        if (isClosed || isPaid) return null;
+        return (
+          <div className="bg-card border border-primary/30 rounded-xl p-5 mt-4 text-center">
+            <p className="font-bold mb-1">{t("ادفع طلبك ببطاقة الائتمان", "תשלום ההזמנה בכרטיס אשראי")}</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              {t("ستتم إعادة توجيهك إلى صفحة دفع آمنة.", "תועבר/י לדף תשלום מאובטח.")}
+            </p>
+            <Button asChild size="lg" className="w-full sm:w-auto">
+              <a href={`/pay/${order.order_number}`}>
+                <CreditCard className="h-4 w-4 ms-2" />
+                {t(`ادفع ₪${Number(order.total).toFixed(2)}`, `שלם ₪${Number(order.total).toFixed(2)}`)}
+              </a>
+            </Button>
+          </div>
+        );
+      })()}
 
       {/* Notes */}
       {order.notes && (
