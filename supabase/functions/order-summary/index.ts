@@ -1,9 +1,27 @@
+// Public order summary endpoint.
+//
+// Access control:
+//   - Order numbers are sequential and easy to guess, so we never serve order
+//     details based on `order_number` alone.
+//   - The caller must provide either:
+//       a) the order's secret `access_token` (sent in our SMS link as ?t=…), or
+//       b) the last 4 digits of the customer's phone number (?phone_last4=…).
+//   - If neither is provided / matches, we return 401 with a `requires_phone`
+//     flag so the public page can render a "verify with phone last 4" form.
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -17,37 +35,56 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const orderNumber = url.searchParams.get("order_number");
+    const token = url.searchParams.get("token");
+    const phoneLast4 = url.searchParams.get("phone_last4");
 
     if (!orderNumber) {
-      return new Response(JSON.stringify({ error: "order_number required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "order_number required" }, 400);
     }
 
     const num = parseInt(orderNumber, 10);
     if (isNaN(num)) {
-      return new Response(JSON.stringify({ error: "Invalid order_number" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Invalid order_number" }, 400);
     }
 
     // Get order
     const { data: order, error: orderErr } = await supabase
       .from("orders")
-      .select("id, order_number, status, total, created_at, customer_name, shipping_address, shipping_city, payment_method, discount_amount, shipping_cost, notes, source, hyp_transaction_id, payment_link_url")
+      .select("id, order_number, status, total, created_at, customer_name, customer_phone, shipping_address, shipping_city, payment_method, discount_amount, shipping_cost, notes, source, hyp_transaction_id, payment_link_url, access_token")
       .eq("order_number", num)
       .single();
 
     if (orderErr || !order) {
-      return new Response(JSON.stringify({ error: "Order not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Order not found" }, 404);
     }
 
-    // Get order items with product/variation info (use already-fetched order.id)
+    // ---- Access check ---------------------------------------------------
+    const tokenOk = !!token && !!(order as any).access_token && token === (order as any).access_token;
+
+    let phoneOk = false;
+    if (!tokenOk && phoneLast4 && /^\d{4}$/.test(phoneLast4)) {
+      const digits = (order.customer_phone || "").replace(/\D/g, "");
+      phoneOk = digits.length >= 4 && digits.endsWith(phoneLast4);
+    }
+
+    if (!tokenOk && !phoneOk) {
+      return jsonResponse(
+        {
+          error: "Unauthorized",
+          requires_phone: true,
+          // Return only enough metadata to render the verification screen.
+          order_number: order.order_number,
+        },
+        401,
+      );
+    }
+
+    // Strip secret fields before returning
+    const safeOrder = { ...(order as any) };
+    delete safeOrder.access_token;
+    delete safeOrder.customer_phone; // never expose phone publicly
+
+    // Get order items with product/variation info
     const { data: rawItems } = await supabase
       .from("order_items")
       .select("quantity, unit_price, total_price, variation_id, bundle_variation_id, order_id")
@@ -102,15 +139,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ order, items }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ order: safeOrder, items });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Order summary error:", errorMessage);
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: errorMessage }, 500);
   }
 });
