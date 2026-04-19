@@ -508,13 +508,16 @@ const OrderDetail = () => {
 
       {/* Items Table */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle>פריטים</CardTitle>
           {!isCancelled && !isCompleted && (
-            <Button variant="outline" size="sm" className="gap-1" onClick={() => setEditingItems(!editingItems)}>
-              <Edit3 className="h-3.5 w-3.5" />
-              {editingItems ? "סיום עריכה" : "ערוך פריטים"}
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <AddOrderItemDialog orderId={order.id} assignedWarehouseId={order.assigned_warehouse_id} />
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => setEditingItems(!editingItems)}>
+                <Edit3 className="h-3.5 w-3.5" />
+                {editingItems ? "סיום עריכה" : "ערוך פריטים"}
+              </Button>
+            </div>
           )}
         </CardHeader>
         <CardContent>
