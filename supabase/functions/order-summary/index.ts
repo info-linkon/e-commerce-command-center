@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     // Get order
     const { data: order, error: orderErr } = await supabase
       .from("orders")
-      .select("order_number, status, total, created_at, customer_name, shipping_address, shipping_city, payment_method, discount_amount, shipping_cost, notes, source")
+      .select("id, order_number, status, total, created_at, customer_name, shipping_address, shipping_city, payment_method, discount_amount, shipping_cost, notes, source, hyp_transaction_id, payment_link_url")
       .eq("order_number", num)
       .single();
 
@@ -47,11 +47,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get order items with product/variation info
+    // Get order items with product/variation info (use already-fetched order.id)
     const { data: rawItems } = await supabase
       .from("order_items")
       .select("quantity, unit_price, total_price, variation_id, bundle_variation_id, order_id")
-      .eq("order_id", (await supabase.from("orders").select("id").eq("order_number", num).single()).data?.id);
+      .eq("order_id", (order as any).id);
 
     // Enrich items with names
     const items: any[] = [];
