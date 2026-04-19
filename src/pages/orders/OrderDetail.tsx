@@ -327,7 +327,11 @@ const OrderDetail = () => {
           variant="outline"
           size="sm"
           className="mr-auto"
-          onClick={() => window.open(`/order/${order.order_number}`, "_blank")}
+          onClick={() => {
+            const token = (order as any).access_token;
+            const tokenQs = token ? `?t=${token}` : "";
+            window.open(`/order/${order.order_number}${tokenQs}`, "_blank");
+          }}
         >
           <ExternalLink className="h-4 w-4 ml-1" />
           סיכום הזמנה
