@@ -1,73 +1,56 @@
 
 
-## ההבנה
+## תוכנית
 
-המשתמש רוצה כלל ברור וגלובלי:
-**האתר יציג רק נתונים מהמקום הנכון:**
-- מוצר רגיל (`product_type` ≠ `bundle`) → רק מ-`product_variations`.
-- מוצר שהוא מארז (יש לו רשומה ב-`bundles`) → רק מ-`bundle_items` / `bundle_variations` / `bundle_variation_items`.
+### 1. תיקון גלילה בסל בטלפון
+**הבעיה**: בדף `/cart` (mobile), הגלילה נתקעת — צריך "להחזיר אצבע" כי כנראה יש overflow/touch handler שמפריע. סיכוי גבוה שזה נובע מ:
+- ה-`<input type="number">` של הכמות תופס את ה-touch בתוך כרטיס הפריט
+- אין `touch-action` מוגדר באזורים הרלוונטיים
+- ב-`WebLayout` ייתכן וכפתור "checkout מורם" sticky חוסם את הגלילה במובייל
 
-**כל נתון "רפאים" שנמצא במקום הלא נכון — יימחק מה-DB.**
-דוגמה: מוצר #4 הוא `simple_bundle` אבל יש לו 5 רשומות ב-`product_variations` שסונכרנו מ-WooCommerce. הרשומות האלה צריכות להימחק.
+**תיקון מתוכנן ב-`src/pages/web/WebCartPage.tsx`**:
+- להוסיף `touch-action: pan-y` לקונטיינר הראשי ולכרטיסי הפריטים
+- להחליף את ה-`<input type="number">` בתצוגת מספר רגילה (span) עם כפתורי +/- בלבד (לפי דפוס שכבר משמש בדף checkout) — מונע לכידת מחוות גלילה ע״י ה-input
+- לוודא שאין `overflow: hidden` בלתי-נחוץ על ה-container במובייל
+- לבדוק ב-`WebLayout` / `WebBottomNav` אם יש שכבה sticky שתופסת אירועי touch (אם כן — להוסיף `pointer-events-none` לאזור הרקע שלה)
 
----
+### 2. עריכת תוכן הזמנה בממשק הניהול
+**מצב נוכחי**: `OrderDetail.tsx` מציג פריטים אך לא מאפשר עריכה אחרי יצירה.
 
-## בדיקה ראשונית — מה יש כיום ב-DB
+**תיקון מתוכנן**:
 
-לפני המחיקה, ארוץ סריקה כדי לזהות **את כל** ה"רפאים":
-```sql
-SELECT p.product_number, p.name, b.bundle_type,
-       COUNT(pv.id) AS ghost_variations
-FROM products p
-JOIN bundles b ON b.product_id = p.id
-LEFT JOIN product_variations pv ON pv.product_id = p.id
-GROUP BY p.id, b.bundle_type
-HAVING COUNT(pv.id) > 0;
-```
-זה יראה לכל מוצר-מארז כמה ווריאציות "רפאים" יש לו ב-`product_variations`.
+**א. רכיב חדש `src/components/orders/OrderItemsEditor.tsx`**:
+- כפתור "ערוך פריטים" בתוך כרטיס הפריטים ב-`OrderDetail`
+- במצב עריכה: לכל שורה — שדה כמות + כפתור הסרה
+- כפתור "הוסף פריט" → דיאלוג חיפוש מוצרים (משתמש ב-`useProducts` + `useBundles`) עם בחירת וריאציה (אם רלוונטי) וכמות
+- חישוב מחדש של `subtotal`/`total` כולל משלוח קיים והנחת קופון קיימת
+- כפתורי "שמור" / "ביטול" בתחתית
 
----
+**ב. הרחבת `src/hooks/useOrders.ts`**:
+- `useUpdateOrderItems(orderId)` mutation שמקבלת רשימת פריטים חדשה ומבצעת:
+  1. השוואה מול `order_items` קיימים (insert/update/delete)
+  2. עדכון מלאי בהתאם להפרשים (החזרת מלאי לפריטים שהוסרו/הוקטנו, ניכוי לפריטים שהוספו/גדלו) — רק אם ההזמנה כבר במצב שניכה מלאי (לפי הסטטוס)
+  3. עדכון `subtotal` / `total` בטבלת `orders`
+  4. רישום ב-`inventory_log` עם `created_by` ו-`reason: 'order_edit'`
+  5. סנכרון ל-Woo דרך `syncOrderStatusToWoo` הקיים
+- ולידציה: לא לאפשר עריכה אם ההזמנה במצב `completed` או `cancelled` (או — להציג אזהרה ולחייב אישור)
+- שמירה אוטומטית של וריאציית "ברירת מחדל" עבור מארזים (אותו מנגנון מהאתר)
 
-## תוכנית הביצוע
+**ג. הרשאות**:
+- בטבלת `orders` ו-`order_items` — לוודא ש-RLS מאפשר UPDATE/INSERT/DELETE למשתמשים מאומתים (CRM)
+- אם חסר — להוסיף migration
 
-### שלב 1 — הרצת סקירה (קריאה בלבד)
-ארוץ את השאילתה לעיל וגם בדיקה הפוכה (מוצרים שאינם מארזים אבל יש להם רשומות בטבלאות מארז — אם רלוונטי).
+### עקרונות
+- אין שינויי DB אלא אם בדיקת RLS תראה שחסרות הרשאות
+- כל פעולה תרשום `created_by` (audit trail — לפי memory)
+- עדכון מלאי מותנה במצב הזמנה (לא לכפול ניכוי אם מלאי עוד לא הופחת)
+- שמות מוצרים בערבית (`name_ar || name`) — לפי memory
 
-### שלב 2 — בדיקת תלויות לפני מחיקה
-לוודא שה-`product_variations` ה"רפאים" לא משמשים ב:
-- `inventory` (יש להם מלאי?)
-- `order_items` (הופיעו בהזמנות קיימות?)
-- `bundle_items` / `bundle_variation_items` (משמשים כרכיב במארז אחר?)
-- `intake_session_items`, `inventory_log`, `inventory_transfer_items`
-
-**אם יש תלויות בהזמנות קיימות** — לא נמחק את הווריאציה (היסטוריית ההזמנה חייבת להישמר). במקום זאת, נסיר רק את ה-`inventory` שלהן (כדי שלא יוצגו כ"במלאי" באתר). הקוד באתר כבר מתעלם מהן (אחרי התיקון הקודם), אז זה מספיק.
-
-**אם אין תלויות** — נמחק את הווריאציה לחלוטין (כולל `inventory` שלה).
-
-### שלב 3 — Migration למחיקה
-לבנות migration שמבצע את הניקוי לפי הבדיקות:
-1. למחוק רשומות `inventory` עבור כל ווריאציה "רפאים".
-2. למחוק רשומות `product_variations` שאין להן תלות בהזמנות.
-3. עבור ווריאציות עם היסטוריית הזמנות — להשאיר את הרשומה אבל להסיר מ-`inventory`.
-
-### שלב 4 — הקשחת הסנכרון מ-WooCommerce
-הבעיה המקורית: `woo-sync` / `woo-product-sync` יוצר רשומות ב-`product_variations` גם למוצרים שמוגדרים אצלנו כמארזים. צריך לתקן כך שאם מוצר רשום ב-`bundles` — הסנכרון **לא** ייצור עבורו רשומות ב-`product_variations`.
-
-קבצים לעדכון:
-- `supabase/functions/woo-sync/index.ts`
-- `supabase/functions/woo-product-sync/index.ts`
-- `supabase/functions/woo-webhook/index.ts`
-
-לפני יצירת/עדכון `product_variations` — לבדוק האם ל-`product_id` יש רשומה ב-`bundles`. אם כן — לדלג.
-
-### שלב 5 — אימות אחרי המחיקה
-- לוודא שמוצר #4 באתר מוצג כ"מארז ריק לא זמין".
-- לוודא שמוצרים רגילים אחרים לא נפגעו.
-- לוודא שהזמנות קיימות (179, 203) עדיין מציגות תקין את הפריטים שהוזמנו.
-
----
-
-## הערה חשובה
-
-המחיקה היא פעולה הרסנית. אם בשלב 1 אגלה שיש הרבה ווריאציות "רפאים" עם היסטוריית הזמנות — אעצור ואחזיר אליך לפני המחיקה כדי לאשר את ההיקף.
+### קבצים שיווצרו/ישונו
+- `src/pages/web/WebCartPage.tsx` (תיקון גלילה)
+- `src/components/orders/OrderItemsEditor.tsx` (חדש)
+- `src/components/orders/AddOrderItemDialog.tsx` (חדש — חיפוש והוספת פריט)
+- `src/pages/orders/OrderDetail.tsx` (שילוב ה-editor)
+- `src/hooks/useOrders.ts` (mutation חדשה)
+- migration לבדיקת RLS אם נדרש
 
