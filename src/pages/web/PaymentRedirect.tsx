@@ -30,8 +30,9 @@ const PaymentRedirect = () => {
         return;
       }
 
-      // Block forwarding to HYP if the order is already paid / closed.
-      const blocked = new Set(["processing", "picking", "shipping", "completed"]);
+      // Block forwarding to HYP only on actual payment proof or fully closed orders.
+      // Operational stages (picking/shipping/processing) do NOT mean the order was paid.
+      const blocked = new Set(["completed"]);
       if (order.hyp_transaction_id || blocked.has(order.status as string)) {
         setState({ kind: "already_paid", orderNumber });
         return;
