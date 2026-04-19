@@ -1,9 +1,10 @@
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Package, MapPin, Calendar, CreditCard, Loader2, AlertCircle, CheckCircle, Clock, Truck } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Package, MapPin, Calendar, CreditCard, Loader2, AlertCircle, CheckCircle, Clock, Truck, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
 const statusConfig: Record<string, { label: string; labelHe: string; icon: React.ElementType; color: string }> = {
@@ -16,32 +17,115 @@ const statusConfig: Record<string, { label: string; labelHe: string; icon: React
   cancelled: { label: "ملغي", labelHe: "בוטלה", icon: AlertCircle, color: "bg-red-100 text-red-800 border-red-200" },
 };
 
+// Public order summary page.
+//
+// Authentication for this page works in one of two ways:
+//   1. The URL contains ?t=<access_token> — the token from the SMS link
+//      proves the visitor came from a message we sent to the customer.
+//   2. The visitor enters the last 4 digits of the order's phone number
+//      (sessionStorage-cached for the same browser session).
+//
+// All access checks happen server-side in the `order-summary` edge function.
+// The page never touches the `orders` table directly, so order numbers can't
+// be enumerated.
+
 export default function WebOrderSummary() {
   const { orderNumber } = useParams();
+  const [searchParams] = useSearchParams();
   const { t, lang } = useLanguage();
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["order-summary", orderNumber],
+  const tokenFromUrl = searchParams.get("t") || "";
+  const sessionKey = `order_phone_${orderNumber}`;
+  const [phoneLast4, setPhoneLast4] = useState<string>(() =>
+    typeof window !== "undefined" ? sessionStorage.getItem(sessionKey) || "" : "",
+  );
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
+    queryKey: ["order-summary", orderNumber, tokenFromUrl, phoneLast4],
     enabled: !!orderNumber,
+    retry: false,
     queryFn: async () => {
+      const params = new URLSearchParams({ order_number: String(orderNumber) });
+      if (tokenFromUrl) params.set("token", tokenFromUrl);
+      if (phoneLast4) params.set("phone_last4", phoneLast4);
+
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/order-summary?order_number=${orderNumber}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/order-summary?${params.toString()}`,
         {
-          headers: {
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-        }
+          headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        },
       );
-      if (!res.ok) throw new Error("Order not found");
-      return res.json();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err: any = new Error(json?.error || "Failed");
+        err.status = res.status;
+        err.requiresPhone = !!json?.requires_phone;
+        throw err;
+      }
+      return json;
     },
   });
+
+  const handlePhoneSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPhoneError(null);
+    const cleaned = phoneInput.replace(/\D/g, "");
+    if (cleaned.length !== 4) {
+      setPhoneError(t("أدخل آخر 4 أرقام من رقم الهاتف", "הזן 4 ספרות אחרונות של הטלפון"));
+      return;
+    }
+    sessionStorage.setItem(sessionKey, cleaned);
+    setPhoneLast4(cleaned);
+    setTimeout(() => refetch(), 0);
+  };
 
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <Loader2 className="h-12 w-12 text-primary mx-auto mb-4 animate-spin" />
         <p className="text-muted-foreground">{t("جاري التحميل...", "טוען...")}</p>
+      </div>
+    );
+  }
+
+  // Auth required — show phone verification form
+  const needsPhone = error && ((error as any).status === 401 || (error as any).requiresPhone);
+  if (needsPhone) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 animate-fade-in" dir="rtl">
+        <div className="bg-card border border-border rounded-xl p-6 text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
+            <Lock className="h-7 w-7 text-primary" />
+          </div>
+          <h1 className="text-xl font-bold mb-2">
+            {t("التحقق من الطلب", "אימות הזמנה")} #{orderNumber}
+          </h1>
+          <p className="text-sm text-muted-foreground mb-5">
+            {t(
+              "للحفاظ على خصوصيتك، أدخل آخر 4 أرقام من رقم الهاتف المستخدم في الطلب.",
+              "לשמירה על פרטיות, הזן 4 ספרות אחרונות של מספר הטלפון בהזמנה.",
+            )}
+          </p>
+          <form onSubmit={handlePhoneSubmit} className="space-y-3">
+            <Input
+              type="tel"
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="••••"
+              value={phoneInput}
+              onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              className="text-center text-xl tracking-widest"
+              autoFocus
+            />
+            {phoneError && <p className="text-sm text-destructive">{phoneError}</p>}
+            <Button type="submit" className="w-full" disabled={isFetching}>
+              {isFetching && <Loader2 className="h-4 w-4 ms-2 animate-spin" />}
+              {t("تحقق", "אמת")}
+            </Button>
+          </form>
+        </div>
       </div>
     );
   }
