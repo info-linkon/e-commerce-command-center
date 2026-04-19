@@ -62,8 +62,11 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Replace placeholders
-      const orderLink = `https://elwejha.co.il/order/${order.order_number}`;
+      // Replace placeholders. Append access_token (?t=...) so the order summary
+      // page can be opened from the SMS link without an extra verification step,
+      // while still preventing strangers from enumerating order numbers.
+      const tokenParam = (order as any).access_token ? `?t=${(order as any).access_token}` : "";
+      const orderLink = `https://elwejha.co.il/order/${order.order_number}${tokenParam}`;
 
       let message = template.template_text
         .replace(/{customer_name}/g, order.customer_name || "")

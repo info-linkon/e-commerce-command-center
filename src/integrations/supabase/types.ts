@@ -945,6 +945,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          access_token: string
           assigned_user_id: string | null
           assigned_warehouse_id: string | null
           cash_register_id: string | null
@@ -979,6 +980,7 @@ export type Database = {
           woo_sync_status: string | null
         }
         Insert: {
+          access_token?: string
           assigned_user_id?: string | null
           assigned_warehouse_id?: string | null
           cash_register_id?: string | null
@@ -1013,6 +1015,7 @@ export type Database = {
           woo_sync_status?: string | null
         }
         Update: {
+          access_token?: string
           assigned_user_id?: string | null
           assigned_warehouse_id?: string | null
           cash_register_id?: string | null
