@@ -303,7 +303,7 @@ export async function runHypVerify(
   // ── Fetch order for amount check + side-effects ──
   const { data: orderData } = await supabase
     .from("orders")
-    .select("total, customer_name, customer_email, customer_phone, source")
+    .select("total, customer_name, customer_email, customer_phone, source, shipping_cost, discount_amount")
     .eq("id", resolvedOrderId)
     .single();
 
