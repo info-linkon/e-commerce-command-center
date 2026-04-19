@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useWarehouses } from "@/hooks/useWarehouses";
 import PickingChecklist from "@/components/orders/PickingChecklist";
+import AddOrderItemDialog from "@/components/orders/AddOrderItemDialog";
 
 const statusLabels: Record<string, string> = {
   pending: "ממתינה",
