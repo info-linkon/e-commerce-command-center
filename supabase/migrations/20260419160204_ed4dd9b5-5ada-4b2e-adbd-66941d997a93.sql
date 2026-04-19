@@ -1,0 +1,1 @@
+UPDATE public.orders SET invoice_url = '/inv/2ff62713' WHERE order_number = 209;

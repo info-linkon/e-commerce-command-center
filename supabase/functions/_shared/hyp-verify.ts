@@ -303,7 +303,7 @@ export async function runHypVerify(
   // ── Fetch order for amount check + side-effects ──
   const { data: orderData } = await supabase
     .from("orders")
-    .select("total, customer_name, customer_email, customer_phone, source")
+    .select("total, customer_name, customer_email, customer_phone, source, shipping_cost, discount_amount")
     .eq("id", resolvedOrderId)
     .single();
 
@@ -380,6 +380,28 @@ export async function runHypVerify(
       price: Number(oi.unit_price),
       catalog_number: oi.product_variations?.sku || undefined,
     }));
+
+    // Add discount as a negative line so price_total matches actual charged amount
+    const discountAmount = Number((orderData as any).discount_amount || 0);
+    if (discountAmount > 0) {
+      items.push({
+        details: "הנחה",
+        amount: 1,
+        price: -discountAmount,
+        catalog_number: undefined,
+      });
+    }
+
+    // Add shipping as a line so price_total matches actual charged amount
+    const shippingCost = Number((orderData as any).shipping_cost || 0);
+    if (shippingCost > 0) {
+      items.push({
+        details: "משלוח",
+        amount: 1,
+        price: shippingCost,
+        catalog_number: undefined,
+      });
+    }
 
     const ezRes = await fetch(`${supabaseUrl}/functions/v1/ezcount-doc`, {
       method: "POST",
