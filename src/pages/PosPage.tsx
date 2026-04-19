@@ -305,6 +305,7 @@ const PosPage = () => {
         discount_type: discountType !== "none" ? discountType : undefined,
         discount_value: discountType !== "none" ? discountValue : undefined,
         discount_amount: discountType !== "none" ? discountAmount : undefined,
+        shipping_cost: shippingPrice > 0 ? shippingPrice : undefined,
         created_at: orderDate.toISOString(),
         skip_auto_payment: isHypLink,
         items: cart.map((c) => ({
