@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useWarehouses } from "@/hooks/useWarehouses";
 import PickingChecklist from "@/components/orders/PickingChecklist";
+import AddOrderItemDialog from "@/components/orders/AddOrderItemDialog";
 
 const statusLabels: Record<string, string> = {
   pending: "ממתינה",
@@ -149,23 +150,124 @@ const OrderDetail = () => {
     cancelOrder.mutate(order.id);
   };
 
+  const recalcOrderTotal = async () => {
+    const { data: allItems } = await supabase.from("order_items").select("total_price").eq("order_id", order.id);
+    const itemsSum = (allItems || []).reduce((s: number, i: any) => s + Number(i.total_price), 0);
+    const shipping = Number((order as any).shipping_cost) || 0;
+    const discount = Number((order as any).discount_amount) || 0;
+    const newTotal = Math.max(0, itemsSum + shipping - discount);
+    await supabase.from("orders").update({ total: newTotal }).eq("id", order.id);
+  };
+
+  const adjustInventoryForItem = async (item: any, qtyDelta: number, reason: string) => {
+    if (!isAssigned || !order.assigned_warehouse_id || !item.variation_id) return;
+    const warehouseId = order.assigned_warehouse_id;
+
+    const { data: bundle } = await supabase
+      .from("bundles")
+      .select("id, bundle_type")
+      .eq("product_id", item.product_variations?.product_id)
+      .maybeSingle();
+
+    let components: Array<{ variation_id: string; quantity: number }> = [];
+    if (bundle?.id) {
+      if (bundle.bundle_type === "variable_bundle" && item.bundle_variation_id) {
+        const { data: bvItems } = await supabase
+          .from("bundle_variation_items")
+          .select("variation_id, quantity")
+          .eq("bundle_variation_id", item.bundle_variation_id);
+        components = (bvItems || []).map((b) => ({ variation_id: b.variation_id, quantity: b.quantity * Math.abs(qtyDelta) }));
+      } else {
+        const { data: biItems } = await supabase
+          .from("bundle_items")
+          .select("variation_id, quantity")
+          .eq("bundle_id", bundle.id);
+        components = (biItems || []).map((b) => ({ variation_id: b.variation_id, quantity: b.quantity * Math.abs(qtyDelta) }));
+      }
+    } else {
+      components = [{ variation_id: item.variation_id, quantity: Math.abs(qtyDelta) }];
+    }
+
+    const sign = qtyDelta > 0 ? -1 : 1;
+    const { logInventoryChange } = await import("@/hooks/useInventoryLog");
+    const { syncMultipleStockToWoo } = await import("@/lib/wooStockSync");
+    for (const c of components) {
+      const { data: inv } = await supabase
+        .from("inventory")
+        .select("*")
+        .eq("variation_id", c.variation_id)
+        .eq("warehouse_id", warehouseId)
+        .maybeSingle();
+      const currentQty = inv?.quantity || 0;
+      const newQty = currentQty + sign * c.quantity;
+      if (inv) {
+        await supabase.from("inventory").update({ quantity: newQty }).eq("id", inv.id);
+      } else {
+        await supabase.from("inventory").insert({
+          variation_id: c.variation_id,
+          warehouse_id: warehouseId,
+          quantity: newQty,
+        });
+      }
+      await logInventoryChange({
+        variation_id: c.variation_id,
+        warehouse_id: warehouseId,
+        quantity_change: sign * c.quantity,
+        quantity_after: newQty,
+        action_type: sign < 0 ? "sale" : "adjustment",
+        reference_id: order.id,
+        notes: reason,
+      });
+    }
+    syncMultipleStockToWoo(components.map((c) => c.variation_id));
+  };
+
   const handleUpdateItemQty = async (itemId: string, newQty: number, unitPrice: number) => {
     if (newQty < 1) return;
+    const item = items.find((i: any) => i.id === itemId);
+    if (!item) return;
+    const oldQty = item.quantity;
+    const delta = newQty - oldQty;
+    if (delta === 0) return;
+
     const newTotal = unitPrice * newQty;
     await supabase.from("order_items").update({ quantity: newQty, total_price: newTotal }).eq("id", itemId);
-    const { data: allItems } = await supabase.from("order_items").select("total_price").eq("order_id", order.id);
-    const orderTotal = (allItems || []).reduce((sum: number, i: any) => sum + Number(i.total_price), 0);
-    await supabase.from("orders").update({ total: orderTotal }).eq("id", order.id);
+
+    if (isAssigned && delta !== 0) {
+      await adjustInventoryForItem(item, delta, `עדכון כמות בהזמנה #${order.order_number}`);
+      const { data: pi } = await supabase
+        .from("order_picking_items")
+        .select("id, quantity")
+        .eq("order_item_id", itemId);
+      for (const p of pi || []) {
+        const perUnit = p.quantity / oldQty;
+        const newPickQty = Math.max(1, Math.round(perUnit * newQty));
+        await supabase.from("order_picking_items").update({ quantity: newPickQty }).eq("id", p.id);
+      }
+    }
+
+    await recalcOrderTotal();
     qc.invalidateQueries({ queryKey: ["orders", id] });
+    qc.invalidateQueries({ queryKey: ["picking_items", order.id] });
+    qc.invalidateQueries({ queryKey: ["inventory"] });
     toast.success("הכמות עודכנה");
   };
 
-  const handleDeleteItem = async (itemId: string, itemTotal: number) => {
+  const handleDeleteItem = async (itemId: string, _itemTotal: number) => {
     if (items.length <= 1) { toast.error("לא ניתן למחוק את הפריט האחרון"); return; }
+    const item = items.find((i: any) => i.id === itemId);
+    if (!item) return;
+
+    if (isAssigned) {
+      await adjustInventoryForItem(item, -item.quantity, `הסרת פריט מהזמנה #${order.order_number}`);
+      await supabase.from("order_picking_items").delete().eq("order_item_id", itemId);
+    }
+
     await supabase.from("order_items").delete().eq("id", itemId);
-    const newOrderTotal = Number(order.total) - itemTotal;
-    await supabase.from("orders").update({ total: Math.max(0, newOrderTotal) }).eq("id", order.id);
+    await recalcOrderTotal();
     qc.invalidateQueries({ queryKey: ["orders", id] });
+    qc.invalidateQueries({ queryKey: ["picking_items", order.id] });
+    qc.invalidateQueries({ queryKey: ["inventory"] });
     toast.success("הפריט הוסר");
   };
 
@@ -407,13 +509,16 @@ const OrderDetail = () => {
 
       {/* Items Table */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle>פריטים</CardTitle>
           {!isCancelled && !isCompleted && (
-            <Button variant="outline" size="sm" className="gap-1" onClick={() => setEditingItems(!editingItems)}>
-              <Edit3 className="h-3.5 w-3.5" />
-              {editingItems ? "סיום עריכה" : "ערוך פריטים"}
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <AddOrderItemDialog orderId={order.id} assignedWarehouseId={order.assigned_warehouse_id} />
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => setEditingItems(!editingItems)}>
+                <Edit3 className="h-3.5 w-3.5" />
+                {editingItems ? "סיום עריכה" : "ערוך פריטים"}
+              </Button>
+            </div>
           )}
         </CardHeader>
         <CardContent>

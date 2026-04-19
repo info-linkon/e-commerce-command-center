@@ -26,13 +26,17 @@ export default function WebCartPage() {
   const total = subtotal + shipping;
 
   return (
-    <div className="container py-8 md:py-12">
+    <div className="container py-8 md:py-12" style={{ touchAction: "pan-y" }}>
       <h1 className="text-2xl md:text-3xl font-bold mb-8">{t("سلة التسوق", "סל קניות")}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <div key={item.variationId} className="flex gap-4 bg-card p-4 rounded-xl border border-border">
+            <div
+              key={item.variationId}
+              className="flex gap-4 bg-card p-4 rounded-xl border border-border"
+              style={{ touchAction: "pan-y" }}
+            >
               <div className="w-16 h-16 md:w-20 md:h-20 bg-muted rounded-lg overflow-hidden shrink-0">
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
@@ -47,21 +51,26 @@ export default function WebCartPage() {
                 )}
                 <p className="text-primary font-bold mt-1">₪{item.price.toFixed(2)}</p>
                 <div className="flex items-center gap-2 mt-2">
-                  <button onClick={() => updateQuantity(item.variationId, item.quantity - 1)} className="p-1 hover:bg-muted rounded">
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.variationId, item.quantity - 1)}
+                    className="w-7 h-7 flex items-center justify-center hover:bg-muted rounded border border-border"
+                    aria-label="הפחת"
+                  >
                     <Minus className="w-3 h-3" />
                   </button>
-                  <input
-                    type="number"
-                    min={1}
-                    value={item.quantity}
-                    onChange={(e) => {
-                      const v = parseInt(e.target.value, 10);
-                      if (!isNaN(v) && v > 0) updateQuantity(item.variationId, v);
-                    }}
-                    className="w-12 h-7 text-sm font-medium text-center bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                  <span
+                    className="w-10 h-7 text-sm font-medium text-center bg-background border border-border rounded flex items-center justify-center select-none"
                     dir="ltr"
-                  />
-                  <button onClick={() => updateQuantity(item.variationId, item.quantity + 1)} className="p-1 hover:bg-muted rounded">
+                  >
+                    {item.quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.variationId, item.quantity + 1)}
+                    className="w-7 h-7 flex items-center justify-center hover:bg-muted rounded border border-border"
+                    aria-label="הוסף"
+                  >
                     <Plus className="w-3 h-3" />
                   </button>
                 </div>
