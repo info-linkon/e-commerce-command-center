@@ -52,8 +52,11 @@ Deno.serve(async (req) => {
       return page("הזמנה לא נמצאה", `<h1>הזמנה לא נמצאה</h1><p>בדוק את הקישור ונסה שוב, או פנה אלינו.</p>`, 404);
     }
 
-    // Already paid — show friendly page, never forward to HYP
-    const blockedStatuses = new Set(["processing", "picking", "shipping", "completed"]);
+    // Already paid — show friendly page, never forward to HYP.
+    // Picking / shipping / processing are operational stages and do NOT imply payment,
+    // so they must not block the payment link. Only block when we have proof of payment
+    // (hyp_transaction_id) or the order is fully closed (completed/cancelled handled below).
+    const blockedStatuses = new Set(["completed"]);
     if (order.hyp_transaction_id || blockedStatuses.has(order.status || "")) {
       return page(
         "ההזמנה כבר שולמה",

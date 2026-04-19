@@ -86,8 +86,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Guard: refuse to generate a link for already-paid / completed / cancelled orders
-    const blockedStatuses = new Set(["processing", "picking", "shipping", "completed", "cancelled"]);
+    // Guard: refuse to generate a link only when there's actual payment proof or the
+    // order is fully closed. Picking/shipping/processing are operational stages and do
+    // NOT indicate payment — orders in those stages may still need a payment link.
+    const blockedStatuses = new Set(["completed", "cancelled"]);
     if (order.hyp_transaction_id || blockedStatuses.has(order.status || "")) {
       return new Response(
         JSON.stringify({
