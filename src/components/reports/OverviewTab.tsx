@@ -22,7 +22,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
         .from("orders")
         .select("total, created_at")
         .gte("created_at", startDate)
-        .eq("status", "completed")
+        .neq("status", "cancelled")
         .order("created_at");
       if (endDate) q = q.lte("created_at", endDate);
       const { data, error } = await q;
@@ -57,7 +57,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
         .from("order_items")
         .select("quantity, total_price, product_variations(cost_price), orders!inner(status, created_at)")
         .gte("orders.created_at", startDate)
-        .eq("orders.status", "completed");
+        .neq("orders.status", "cancelled");
       if (endDate) q = q.lte("orders.created_at", endDate);
       const { data, error } = await q;
       if (error) throw error;
