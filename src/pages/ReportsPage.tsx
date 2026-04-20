@@ -15,7 +15,7 @@ import ExpensesTab from "@/components/reports/ExpensesTab";
 import ProfitabilityTab from "@/components/reports/ProfitabilityTab";
 
 const ReportsPage = () => {
-  const [period, setPeriod] = useState("30");
+  const [period, setPeriod] = useState("today");
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
 
@@ -25,6 +25,21 @@ const ReportsPage = () => {
       // Default to 30 days ago when custom dates not yet selected
       const d = new Date();
       d.setDate(d.getDate() - 30);
+      return d.toISOString();
+    }
+    const now = new Date();
+    if (period === "today") {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return d.toISOString();
+    }
+    if (period === "week") {
+      const d = new Date(now);
+      d.setDate(d.getDate() - d.getDay());
+      d.setHours(0, 0, 0, 0);
+      return d.toISOString();
+    }
+    if (period === "month") {
+      const d = new Date(now.getFullYear(), now.getMonth(), 1);
       return d.toISOString();
     }
     const d = new Date();
@@ -48,6 +63,9 @@ const ReportsPage = () => {
         <h1 className="text-2xl font-bold">דוחות</h1>
         <div className="flex items-center gap-2 flex-wrap">
           <ToggleGroup type="single" value={period} onValueChange={(v) => v && setPeriod(v)} variant="outline" className="gap-1" dir="rtl">
+            <ToggleGroupItem value="today" className="rounded-full px-3 h-8 text-xs">היום</ToggleGroupItem>
+            <ToggleGroupItem value="week" className="rounded-full px-3 h-8 text-xs">השבוע</ToggleGroupItem>
+            <ToggleGroupItem value="month" className="rounded-full px-3 h-8 text-xs">החודש</ToggleGroupItem>
             <ToggleGroupItem value="7" className="rounded-full px-3 h-8 text-xs">7 ימים</ToggleGroupItem>
             <ToggleGroupItem value="30" className="rounded-full px-3 h-8 text-xs">30 יום</ToggleGroupItem>
             <ToggleGroupItem value="90" className="rounded-full px-3 h-8 text-xs">90 יום</ToggleGroupItem>
