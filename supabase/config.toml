@@ -53,3 +53,9 @@ verify_jwt = false
 
 [functions.order-summary]
 verify_jwt = false
+
+[functions.web-validate-coupon]
+verify_jwt = false
+
+[functions.web-best-sellers]
+verify_jwt = false
