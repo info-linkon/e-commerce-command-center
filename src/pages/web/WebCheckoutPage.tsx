@@ -281,44 +281,50 @@ export default function WebCheckoutPage() {
         return;
       }
 
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          source: "website" as const,
-          status: isCash ? ("pending" as const) : ("pending_payment" as const),
-          payment_method: isCash ? "cash" : "credit",
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          customer_email: customerEmail || null,
-          shipping_city: shippingMethod === "delivery" ? (form.get("city") as string) : "איסוף עצמי",
-          shipping_address: shippingMethod === "delivery" ? (form.get("address") as string) : "",
-          shipping_cost: shipping,
-          discount_amount: discount,
-          discount_type: appliedCoupon ? appliedCoupon.type : null,
-          discount_value: appliedCoupon ? Number(appliedCoupon.value) : 0,
-          notes: [
-            shippingMethod === "pickup" ? "🏪 איסוף עצמי" : "",
-            (form.get("notes") as string) || "",
-            appliedCoupon ? `קופון: ${appliedCoupon.code} (הנחה: ₪${discount.toFixed(2)})` : "",
-          ].filter(Boolean).join(" | ") || null,
-          total: finalTotal,
-        })
-        .select()
-        .single();
+      // All checkout writes go through this edge function so the public
+      // anon key never needs INSERT/SELECT on orders/customers/payments
+      // (those tables contain PII and remain authenticated-only via RLS).
+      const { data: createData, error: createErr } = await supabase.functions.invoke(
+        "web-create-order",
+        {
+          body: {
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            customer_email: customerEmail || null,
+            shipping_method: shippingMethod,
+            shipping_city: shippingMethod === "delivery" ? (form.get("city") as string) : null,
+            shipping_address: shippingMethod === "delivery" ? (form.get("address") as string) : null,
+            shipping_cost: shipping,
+            payment_method: isCash ? "cash" : "credit",
+            coupon_code: appliedCoupon ? appliedCoupon.code : null,
+            notes: [
+              shippingMethod === "pickup" ? "🏪 איסוף עצמי" : "",
+              (form.get("notes") as string) || "",
+              appliedCoupon ? `קופון: ${appliedCoupon.code} (הנחה: ₪${discount.toFixed(2)})` : "",
+            ].filter(Boolean).join(" | ") || null,
+            items: normalizedItems.map((item) => ({
+              variation_id: item.orderVariationId!,
+              product_id: item.productId,
+              quantity: item.quantity,
+              bundle_variation_id: item.bundleVariationId || null,
+            })),
+          },
+        },
+      );
 
-      if (orderError) throw orderError;
+      if (createErr || !createData?.success) {
+        const msg = createData?.error || createErr?.message || "حدث خطأ أثناء إرسال الطلب";
+        console.error("web-create-order failed:", createErr, createData);
+        toast.error(msg);
+        return;
+      }
 
-      const orderItems = normalizedItems.map((item) => ({
-        order_id: order.id,
-        variation_id: item.orderVariationId!,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.price * item.quantity,
-        ...(item.bundleVariationId ? { bundle_variation_id: item.bundleVariationId } : {}),
-      }));
-
-      const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
-      if (itemsError) throw itemsError;
+      const order = {
+        id: createData.order_id as string,
+        order_number: createData.order_number as number,
+        access_token: createData.access_token as string,
+        notes: null as string | null,
+      };
 
       if (isCash) {
         // Cash-on-delivery: increment coupon usage now (order is authoritative,
@@ -381,6 +387,9 @@ export default function WebCheckoutPage() {
 
       sessionStorage.setItem("hyp_order_id", order.id);
       sessionStorage.setItem("hyp_order_number", String(order.order_number));
+      // Confirmation page polls /functions/order-summary with this token
+      // so it can read the order without needing direct table SELECT access.
+      sessionStorage.setItem("hyp_order_token", order.access_token);
       // Stash the coupon id so the confirmation page can increment `used_count`
       // only after HYP verifies — we can't rely on a DB column for it because
       // the orders migration may not have run yet.

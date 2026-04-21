@@ -202,49 +202,46 @@ export default function WebOrderConfirmation() {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
 
-type OrderItemForPixel = {
-  product_variations?: { products?: { sku?: string | null } | null } | null;
-  bundle_variations?: { bundles?: { products?: { sku?: string | null } | null } | null } | null;
-};
-
-async function skusForOrder(orderId: string): Promise<string[]> {
-  const { data } = await supabase
-    .from("order_items")
-    .select("product_variations(products(sku)), bundle_variations(bundles(products(sku)))")
-    .eq("order_id", orderId);
-  return ((data as OrderItemForPixel[] | null) || [])
-    .map((i) => i.bundle_variations?.bundles?.products?.sku || i.product_variations?.products?.sku || null)
-    .filter((sku): sku is string => Boolean(sku));
+// Public-safe summary fetched via the `order-summary` edge function.
+// Anon doesn't (and shouldn't) have SELECT on orders, so this is the only
+// way the confirmation page can read its own order back.
+async function fetchOrderSummary(
+  orderNumber: string | null,
+): Promise<{ id?: string; total?: number; status?: string; hyp_transaction_id?: string | null } | null> {
+  if (!orderNumber) return null;
+  const token = sessionStorage.getItem("hyp_order_token") || "";
+  try {
+    const url = new URL(
+      `https://gboskpvfvwrsiqwzpctk.supabase.co/functions/v1/order-summary`,
+    );
+    url.searchParams.set("order_number", String(orderNumber));
+    if (token) url.searchParams.set("token", token);
+    const anonKey =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdib3NrcHZmdndyc2lxd3pwY3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4Mjc2NDIsImV4cCI6MjA4NjQwMzY0Mn0.yB_DLYwx7iPTMSixOeAHL01EeqpCUtQLOIRsyyz38Tk";
+    const res = await fetch(url.toString(), {
+      headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.order || null;
+  } catch (err) {
+    console.error("order-summary fetch failed:", err);
+    return null;
+  }
 }
 
 async function firePurchasePixel(orderNumber: string | null, amountStr: string | null): Promise<void> {
-  if (!orderNumber || !amountStr) return;
-  const amount = parseFloat(amountStr);
-  if (!isFinite(amount)) return;
-  const { data: orderRow } = await supabase
-    .from("orders")
-    .select("id")
-    .eq("order_number", Number(orderNumber))
-    .maybeSingle();
-  if (!orderRow) return;
-  const skus = await skusForOrder(orderRow.id);
-  if (skus.length > 0) {
-    fbq("Purchase", { content_ids: skus, value: amount, currency: "ILS", content_type: "product" });
-  }
+  if (!orderNumber) return;
+  const amount = amountStr ? parseFloat(amountStr) : NaN;
+  const summary = await fetchOrderSummary(orderNumber);
+  if (!summary) return;
+  const value = isFinite(amount) ? amount : Number(summary.total || 0);
+  // order-summary doesn't expose SKUs today; use order_number as fallback id.
+  fbq("Purchase", { content_ids: [String(orderNumber)], value, currency: "ILS", content_type: "product" });
 }
 
 async function firePurchasePixelForOrder(orderNumber: string | null): Promise<void> {
-  if (!orderNumber) return;
-  const { data: orderRow } = await supabase
-    .from("orders")
-    .select("id, total")
-    .eq("order_number", Number(orderNumber))
-    .maybeSingle();
-  if (!orderRow) return;
-  const skus = await skusForOrder(orderRow.id);
-  if (skus.length > 0) {
-    fbq("Purchase", { content_ids: skus, value: Number(orderRow.total), currency: "ILS", content_type: "product" });
-  }
+  await firePurchasePixel(orderNumber, null);
 }
 
 function runFallbackVerify(
@@ -261,12 +258,8 @@ function runFallbackVerify(
     if (!orderId) {
       const hypOrderNum = searchParams.get("Order") || orderNumber;
       if (hypOrderNum) {
-        const { data } = await supabase
-          .from("orders")
-          .select("id")
-          .eq("order_number", Number(hypOrderNum))
-          .maybeSingle();
-        orderId = data?.id || null;
+        const summary = await fetchOrderSummary(hypOrderNum);
+        orderId = summary?.id || null;
       }
     }
 
@@ -334,17 +327,14 @@ async function pollOrderAfterFailure(
   const deadline = Date.now() + 15000;
   while (Date.now() < deadline) {
     try {
-      const { data } = await supabase
-        .from("orders")
-        .select("status, hyp_transaction_id")
-        .eq("order_number", Number(orderNumber))
-        .maybeSingle();
-      if (data && (data.hyp_transaction_id || PAID_STATUSES.has(String(data.status)))) {
+      const summary = await fetchOrderSummary(orderNumber);
+      if (summary && (summary.hyp_transaction_id || PAID_STATUSES.has(String(summary.status)))) {
         setStatus("success");
         bumpCouponFromSession();
         sessionStorage.removeItem("hyp_order_id");
         sessionStorage.removeItem("hyp_order_number");
         sessionStorage.removeItem("hyp_coupon_id");
+        sessionStorage.removeItem("hyp_order_token");
         await firePurchasePixelForOrder(orderNumber);
         return;
       }

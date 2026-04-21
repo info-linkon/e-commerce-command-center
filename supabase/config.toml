@@ -47,3 +47,9 @@ verify_jwt = false
 
 [functions.hyp-callback]
 verify_jwt = false
+
+[functions.web-create-order]
+verify_jwt = false
+
+[functions.order-summary]
+verify_jwt = false
