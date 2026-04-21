@@ -285,6 +285,7 @@ Deno.serve(async (req) => {
       total: finalTotal,
       coupon_id: couponRow?.id || null,
     });
+    // (unreachable — see note above; kept for type continuity)
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("web-create-order error:", msg);
