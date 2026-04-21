@@ -5,7 +5,6 @@ import { fbq } from "@/lib/meta-pixel";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/web-cart-store";
 import { useLanguage } from "@/hooks/useLanguage";
-import { incrementCouponUsage } from "@/hooks/useCoupons";
 
 type UiState = "loading" | "success" | "error" | "pending";
 
