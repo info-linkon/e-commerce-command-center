@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { validateCoupon, calcDiscount, incrementCouponUsage, Coupon } from "@/hooks/useCoupons";
+import { validateCoupon, calcDiscount, Coupon } from "@/hooks/useCoupons";
 import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home, MessageSquare, ShieldCheck, Lock, ChevronLeft, ShoppingBag, Package, Truck } from "lucide-react";
 import { fbq } from "@/lib/meta-pixel";
 import { useSiteSection } from "@/hooks/useSiteContent";
@@ -327,9 +327,8 @@ export default function WebCheckoutPage() {
       };
 
       if (isCash) {
-        // Cash-on-delivery: increment coupon usage now (order is authoritative,
-        // no remote payment step). For credit, increment happens after HYP verify.
-        if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
+        // web-create-order has already incremented coupon usage server-side
+        // (atomic, runs with service role). Nothing to do here.
 
         // NOTE: Do NOT auto-create a payments row for COD. The cash hasn't been
         // collected yet. A real payment row (with cash_register_id) will be
@@ -367,17 +366,8 @@ export default function WebCheckoutPage() {
       if (hypError || !hypData?.success) {
         const hypErrMsg = hypError?.message || hypData?.error || "unknown";
         console.error("HYP payment error:", hypErrMsg);
-        // Tag the order so ops can see why it's stuck in pending_payment and
-        // regenerate a link from the CRM. Without this note the row looks
-        // identical to an abandoned checkout.
-        await supabase
-          .from("orders")
-          .update({
-            notes: [order.notes, `⚠️ יצירת לינק תשלום נכשלה: ${hypErrMsg}`]
-              .filter(Boolean)
-              .join(" | "),
-          })
-          .eq("id", order.id);
+        // hyp-create-payment has already tagged the order's `notes` with the
+        // failure reason (it has the service role; anon can't UPDATE orders).
         toast.error(t("حدث خطأ في إنشاء صفحة الدفع — سيتواصل معك ممثلنا", "שגיאה ביצירת דף תשלום — נציג יצור איתך קשר"));
         submittedRef.current = true;
         navigate(`/order-confirmation/${order.order_number}?payment=pending`);
@@ -390,14 +380,8 @@ export default function WebCheckoutPage() {
       // Confirmation page polls /functions/order-summary with this token
       // so it can read the order without needing direct table SELECT access.
       sessionStorage.setItem("hyp_order_token", order.access_token);
-      // Stash the coupon id so the confirmation page can increment `used_count`
-      // only after HYP verifies — we can't rely on a DB column for it because
-      // the orders migration may not have run yet.
-      if (appliedCoupon) {
-        sessionStorage.setItem("hyp_coupon_id", appliedCoupon.id);
-      } else {
-        sessionStorage.removeItem("hyp_coupon_id");
-      }
+      // Coupon usage is incremented inside web-create-order (server-side),
+      // so the confirmation page no longer needs to track the coupon id.
       setHypPaymentUrl(hypData.payment_url);
     } catch (err) {
       console.error(err);

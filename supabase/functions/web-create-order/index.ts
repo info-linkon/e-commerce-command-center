@@ -277,6 +277,27 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "فشل حفظ منتجات الطلب", detail: itemsErr.message }, 500);
     }
 
+    // ── Atomically increment coupon usage ──────────────────────────────
+    // Done after the order + items are safely persisted. We can't rely on
+    // a SQL trigger (we'd race other paths that update the same row), and
+    // we can't trust the browser to call this back later — so do it here,
+    // server-side, right after the authoritative order row exists.
+    if (couponRow) {
+      try {
+        const { data: fresh } = await supabase
+          .from("coupons")
+          .select("used_count")
+          .eq("id", couponRow.id)
+          .single();
+        await supabase
+          .from("coupons")
+          .update({ used_count: ((fresh as any)?.used_count || 0) + 1 })
+          .eq("id", couponRow.id);
+      } catch (couponErr) {
+        console.warn("coupon usage increment failed (non-fatal):", couponErr);
+      }
+    }
+
     return jsonResponse({
       success: true,
       order_id: order.id,

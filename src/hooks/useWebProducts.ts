@@ -128,51 +128,11 @@ export function useWebBestSellers() {
   return useQuery({
     queryKey: ["web-best-sellers"],
     queryFn: async () => {
-      // Get order_items grouped by variation, then map to products
-      const { data: orderItems, error } = await supabase
-        .from("order_items")
-        .select("variation_id, quantity");
+      // order_items is locked down for anon (PII via the order join), so the
+      // aggregation runs server-side in `web-best-sellers` (service role).
+      const { data, error } = await supabase.functions.invoke("web-best-sellers", { body: {} });
       if (error) throw error;
-
-      // Sum quantities per variation_id
-      const variationTotals: Record<string, number> = {};
-      for (const item of orderItems || []) {
-        if (item.variation_id) {
-          variationTotals[item.variation_id] = (variationTotals[item.variation_id] || 0) + item.quantity;
-        }
-      }
-
-      // Get variation -> product mapping
-      const varIds = Object.keys(variationTotals);
-      if (varIds.length === 0) return [];
-
-      const { data: variations } = await supabase
-        .from("product_variations")
-        .select("id, product_id")
-        .in("id", varIds);
-
-      // Sum by product_id
-      const productTotals: Record<string, number> = {};
-      for (const v of variations || []) {
-        productTotals[v.product_id] = (productTotals[v.product_id] || 0) + (variationTotals[v.id] || 0);
-      }
-
-      // Get top 12 product IDs
-      const topProductIds = Object.entries(productTotals)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 12)
-        .map(([id]) => id);
-
-      if (topProductIds.length === 0) return [];
-
-      const { data: products } = await supabase
-        .from("products")
-        .select("*, categories!products_category_id_fkey(name, slug)")
-        .eq("is_published", true)
-        .in("id", topProductIds);
-
-      // Sort by sales
-      return (products || []).sort((a, b) => (productTotals[b.id] || 0) - (productTotals[a.id] || 0));
+      return (data?.products || []) as any[];
     },
   });
 }
