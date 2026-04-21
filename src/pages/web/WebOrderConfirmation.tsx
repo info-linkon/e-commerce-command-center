@@ -331,17 +331,14 @@ async function pollOrderAfterFailure(
   const deadline = Date.now() + 15000;
   while (Date.now() < deadline) {
     try {
-      const { data } = await supabase
-        .from("orders")
-        .select("status, hyp_transaction_id")
-        .eq("order_number", Number(orderNumber))
-        .maybeSingle();
-      if (data && (data.hyp_transaction_id || PAID_STATUSES.has(String(data.status)))) {
+      const summary = await fetchOrderSummary(orderNumber);
+      if (summary && (summary.hyp_transaction_id || PAID_STATUSES.has(String(summary.status)))) {
         setStatus("success");
         bumpCouponFromSession();
         sessionStorage.removeItem("hyp_order_id");
         sessionStorage.removeItem("hyp_order_number");
         sessionStorage.removeItem("hyp_coupon_id");
+        sessionStorage.removeItem("hyp_order_token");
         await firePurchasePixelForOrder(orderNumber);
         return;
       }
