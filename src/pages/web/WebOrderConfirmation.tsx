@@ -207,35 +207,23 @@ export default function WebOrderConfirmation() {
 // way the confirmation page can read its own order back.
 async function fetchOrderSummary(
   orderNumber: string | null,
-): Promise<{ id?: string; total?: number; status?: string; hyp_transaction_id?: string | null; items?: Array<{ sku?: string | null }> } | null> {
+): Promise<{ id?: string; total?: number; status?: string; hyp_transaction_id?: string | null } | null> {
   if (!orderNumber) return null;
   const token = sessionStorage.getItem("hyp_order_token") || "";
   try {
-    const { data, error } = await supabase.functions.invoke("order-summary", {
-      body: null,
-      method: "GET" as any,
-      headers: {} as any,
-    } as any);
-    // supabase.functions.invoke doesn't support GET query params well — use fetch.
-    if (error) console.warn("invoke fallback", error);
-    if (data) return (data as any).order || null;
-  } catch {
-    // fall through to direct fetch
-  }
-
-  try {
-    const url = new URL(`https://gboskpvfvwrsiqwzpctk.supabase.co/functions/v1/order-summary`);
+    const url = new URL(
+      `https://gboskpvfvwrsiqwzpctk.supabase.co/functions/v1/order-summary`,
+    );
     url.searchParams.set("order_number", String(orderNumber));
     if (token) url.searchParams.set("token", token);
+    const anonKey =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdib3NrcHZmdndyc2lxd3pwY3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4Mjc2NDIsImV4cCI6MjA4NjQwMzY0Mn0.yB_DLYwx7iPTMSixOeAHL01EeqpCUtQLOIRsyyz38Tk";
     const res = await fetch(url.toString(), {
-      headers: {
-        apikey: (supabase as any).supabaseKey || "",
-        Authorization: `Bearer ${(supabase as any).supabaseKey || ""}`,
-      },
+      headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
     });
     if (!res.ok) return null;
     const json = await res.json();
-    return { ...(json.order || {}), items: json.items || [] };
+    return json.order || null;
   } catch (err) {
     console.error("order-summary fetch failed:", err);
     return null;
