@@ -144,12 +144,14 @@ export default function WebProductPage() {
     if (isBundle) return false; // bundles handled by isBundleOutOfStock
     if (!inventoryStock) return false;
     if (isVariable && activeVariation) {
-      return (inventoryStock.get(activeVariation.id) || 0) <= 0;
+      // Variable product — out of stock only if ALL variations are <= 0
+      if (!variations || variations.length === 0) return true;
+      return variations.every((v) => (inventoryStock.get(v.id) || 0) <= 0);
     }
-    // Simple product — check first variation
+    // Simple product — prefer canonical "ברירת מחדל" variation (matches cart logic)
     if (variations && variations.length > 0) {
-      const firstVar = variations[0];
-      return (inventoryStock.get(firstVar.id) || 0) <= 0;
+      const target = variations.find((v) => v.name === "ברירת מחדל") || variations[0];
+      return (inventoryStock.get(target.id) || 0) <= 0;
     }
     return false;
   })();
