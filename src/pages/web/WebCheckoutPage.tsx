@@ -387,6 +387,9 @@ export default function WebCheckoutPage() {
 
       sessionStorage.setItem("hyp_order_id", order.id);
       sessionStorage.setItem("hyp_order_number", String(order.order_number));
+      // Confirmation page polls /functions/order-summary with this token
+      // so it can read the order without needing direct table SELECT access.
+      sessionStorage.setItem("hyp_order_token", order.access_token);
       // Stash the coupon id so the confirmation page can increment `used_count`
       // only after HYP verifies — we can't rely on a DB column for it because
       // the orders migration may not have run yet.
