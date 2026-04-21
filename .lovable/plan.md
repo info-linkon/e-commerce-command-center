@@ -1,50 +1,73 @@
 
 
-## תיקון תצוגת "غير متوفر" שגויה בדף המוצר
+# תיקון תהליך הצ'קאאוט הציבורי
 
-### הבעיה
-בדף מוצר ספציפי, כפתור "הוסף לסל" מציג "غير متوفر" גם כשיש מלאי. הסיבה: לוגיקת בדיקת המלאי ב-`WebProductPage.tsx` מסתכלת על **הווריאציה הראשונה לפי שם** (`variations[0]`) במקום על ווריאציית "ברירת מחדל" הקנונית.
+## הבעיה
 
-### ממצאי חקירה (מה-DB)
-- **למוצרים פשוטים**: הקוד בודק `variations[0]` (סדר אלפביתי לפי שם). בקיוסק/סל הקוד משתמש ב-`variations.find(v => v.name === "ברירת מחדל")`. **אי-עקביות** → בודק ווריאציה לא נכונה.
-- **למוצרים משתנים** (כמו "شنطة حافظة للكاسات - هارد كيس"): מתוך 3 ווריאציות, ל-2 אין רשומת `inventory` בכלל → `inventoryStock.get(id)` מחזיר `undefined` → `0` → "غير متوفر" שגוי.
-- **מלאי שלילי**: כמה ווריאציות צוברות סכום שלילי (`-1`, `-2`, `-10`). `<= 0` מתייחס לזה כ"אזל" אך זו אנומליית מכירות, לא חוסר אמיתי.
-- **מוצר ללא בחירה ראשונית**: כשפותחים מוצר משתנה, `activeVariation` הוא `variations[0]`. אם דווקא הוא אזל אבל אחרים זמינים — הכפתור נעול לפני שהמשתמש הספיק לבחור.
+הזמנות חדשות מהאתר נכשלות עם שגיאה 401 (`new row violates row-level security policy for table "orders"`), למרות שהוספנו policy של INSERT ל-anon. הסיבה: הקוד עושה `.insert(...).select().single()` — ה-`select()` דורש גם הרשאת **SELECT**, וזו לא הוענקה ל-anon (בכוונה — כדי לא לחשוף PII של הזמנות אחרות).
 
-### התיקון
+בנוסף, אחרי יצירת ההזמנה הקוד מנסה גם להכניס `order_items` ולקרוא ל-Edge Function `hyp-create-payment` שגם הוא צריך לקרוא/לכתוב לטבלת orders.
 
-**קובץ יחיד**: `src/pages/web/WebProductPage.tsx` (לוגיקת `isRegularOutOfStock`, lines 142-155).
+## הפתרון המומלץ — Edge Function ייעודי לצ'קאאוט
 
-**שינויים**:
+במקום לפתוח SELECT ציבורי על orders (חשיפת PII של כל הלקוחות = דליפת אבטחה חמורה), נעביר את כל יצירת ההזמנה ל-Edge Function אחד שרץ עם `service_role` ועוקף RLS באופן בקרי.
 
-1. **מוצר פשוט (`product_type='simple'`)**: לבדוק את ווריאציית `"ברירת מחדל"` (כמו שעושה הסל), ורק אם לא קיימת — ליפול ל-`variations[0]`.
+### שלבי הביצוע
 
-2. **מוצר משתנה**: להחשיב כ"אזל" רק כאשר **כל** הווריאציות עם stock `<= 0`. כל עוד יש לפחות וריאציה אחת זמינה — הכפתור פעיל (המשתמש יבחר אותה), והווריאציות שאזלו ימשיכו להיות מסומנות בנפרד ב-chip של בחירת הווריאציה (לוגיקה זו כבר קיימת ב-line 299).
+**1. יצירת Edge Function `web-create-order`**
+- מקבל מהדפדפן: פרטי לקוח, פריטי סל, משלוח, קופון, אופן תשלום
+- ולידציה בצד השרת:
+  - בדיקת מלאי בזמן אמת מול `inventory`
+  - אימות מחירי מוצרים מול ה-DB (לא לסמוך על המחיר שהדפדפן שלח)
+  - אימות הקופון (תוקף, max_uses, min_order)
+  - חישוב הסכום הסופי בשרת
+- יצירת רשומות `customers`, `orders`, `order_items` עם service role
+- מחזיר ללקוח רק: `order_id`, `order_number`, `access_token`
+- `verify_jwt = false` ב-`config.toml` (כמו שאר ה-Edge Functions הציבוריים)
 
-3. **בחירה אוטומטית של וריאציה זמינה**: ב-`useEffect`, כש-`inventoryStock` נטען, אם הווריאציה הנבחרת אזלה אבל יש אחרת זמינה — לבחור אותה אוטומטית. זה שיפור UX משלים שמונע מהכפתור להיות נעול בטעינה הראשונית
+**2. עדכון `WebCheckoutPage.tsx`**
+- במקום שלושה `.insert()` ישירים, קריאה אחת ל-`supabase.functions.invoke("web-create-order", {...})`
+- אחרי הצלחה — ניווט ל-`/order-confirmation/:orderNumber` (קיים)
+- במקרה של תשלום אשראי, קריאה ל-`hyp-create-payment` עם ה-`order_id` שהוחזר
 
-<lov-plan>
+**3. החזרת ה-RLS על orders/order_items/customers/payments למצב מאובטח**
+- הסרת ה-policies של `public_insert` שיצרנו במיגרציה הקודמת (כבר לא נחוצות — הכל עובר דרך Edge Function)
+- הטבלאות חוזרות להיות `authenticated only`
+- שום נתון רגיש לא יהיה חשוף ל-anon
 
-## תיקון תצוגת "غير متوفر" שגויה בדף המוצר
+**4. בדיקת תהליכים נוספים שעלולים להישבר**
+- `WebOrderSummary` / `/order/:orderNumber` — כבר עובר דרך Edge Function `order-summary` עם service role ↦ ✅ תקין
+- `hyp-callback` / `hyp-notify` / `pay-redirect` — Edge Functions עם service role ↦ ✅ תקין
+- `order-confirmation` poll על orders — נצטרך לבדוק אם הוא קורא בלי auth; אם כן, לעטוף גם אותו
 
-### הבעיה
-בדף מוצר ספציפי, כפתור "הוסף לסל" מציג "غير متوفر" גם כשיש מלאי. הסיבה: לוגיקת בדיקת המלאי ב-`WebProductPage.tsx` בודקת את הווריאציה הלא נכונה.
+## פרטים טכניים
 
-### ממצאי חקירה
-- **מוצרים פשוטים**: הקוד בודק `variations[0]` (סדר אלפביתי), אבל הסל משתמש ב-`variations.find(v => v.name === "ברירת מחדל")`. אי-עקביות שגורמת לבדוק ווריאציה שגויה.
-- **מוצרים משתנים**: כשפותחים את הדף, `activeVariation` מוגדר ל-`variations[0]`. אם דווקא הוא אזל אבל אחרים זמינים — הכפתור נעול לפני שהמשתמש הספיק לבחור.
-- **ווריאציות בלי inventory**: למוצרים מסוימים (כמו "شنطة حافظة للكاسات") יש ווריאציות ללא רשומת `inventory` בכלל → `inventoryStock.get(id)` מחזיר `undefined` → `0` → "غير متوفر" שגוי.
+```text
+Browser (anon)
+  │
+  ▼
+[Edge Function: web-create-order]   ← service_role, verify_jwt=false
+  │
+  ├─ validate stock, prices, coupon
+  ├─ INSERT customers, orders, order_items
+  └─ return { order_id, order_number, access_token }
+  │
+  ▼
+Browser → invoke("hyp-create-payment", { order_id })
+       → navigate("/order-confirmation/:orderNumber?t=access_token")
+```
 
-### התיקון
+יתרונות:
+- אין דליפת PII (anon לא רואה הזמנות, לא לקוחות, לא תשלומים)
+- אין מניפולציה של מחירים מהצד הציבורי (ולידציה בשרת)
+- אין מניפולציה של קופונים (max_uses/expires_at נאכף בשרת)
+- ולידציית מלאי אטומית בעת יצירת הזמנה
 
-**קובץ**: `src/pages/web/WebProductPage.tsx`
+## קבצים שיושפעו
 
-#### 1. תיקון `isRegularOutOfStock` למוצרים פשוטים (lines 142-155)
-שימוש בווריאציית `"ברירת מחדל"` לבדיקת מלאי (כמו שכבר עושה `handleAddToCart`), עם fallback ל-`variations[0]` רק אם אין default.
-
-#### 2. תיקון `isRegularOutOfStock` למוצרים משתנים
-החשבת המוצר כ"אזל" רק כשכל הווריאציות עם stock `<= 0`. כל עוד יש ווריאציה אחת זמינה — הכפתור פעיל. הווריאציות שאזלו כבר מסומנות בנפרד ב-UI (line 299).
-
-#### 3. בחירה אוטומטית של ווריאציה זמינה
-הוספת `useEffect` שכאשר `inventoryStock` נטען, אם הווריאציה הנוכחית אזלה אבל יש אחרת זמינה — בוחר אותה אוטומטית. מונע מהכפתור להיות נעול בטעינה הראשונית.
+- **חדש**: `supabase/functions/web-create-order/index.ts`
+- **חדש**: רישום ב-`supabase/config.toml` עם `verify_jwt = false`
+- **שינוי**: `src/pages/web/WebCheckoutPage.tsx` (החלפת בלוק יצירת הזמנה)
+- **שינוי**: `src/pages/web/WebOrderConfirmation.tsx` (רק אם נמצאות קריאות שדורשות auth)
+- **מיגרציה חדשה**: הסרת `public_insert` מ-`orders`, `order_items`, `customers`, `payments`
 
