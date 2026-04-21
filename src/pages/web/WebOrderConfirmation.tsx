@@ -202,49 +202,58 @@ export default function WebOrderConfirmation() {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
 
-type OrderItemForPixel = {
-  product_variations?: { products?: { sku?: string | null } | null } | null;
-  bundle_variations?: { bundles?: { products?: { sku?: string | null } | null } | null } | null;
-};
+// Public-safe summary fetched via the `order-summary` edge function.
+// Anon doesn't (and shouldn't) have SELECT on orders, so this is the only
+// way the confirmation page can read its own order back.
+async function fetchOrderSummary(
+  orderNumber: string | null,
+): Promise<{ id?: string; total?: number; status?: string; hyp_transaction_id?: string | null; items?: Array<{ sku?: string | null }> } | null> {
+  if (!orderNumber) return null;
+  const token = sessionStorage.getItem("hyp_order_token") || "";
+  try {
+    const { data, error } = await supabase.functions.invoke("order-summary", {
+      body: null,
+      method: "GET" as any,
+      headers: {} as any,
+    } as any);
+    // supabase.functions.invoke doesn't support GET query params well — use fetch.
+    if (error) console.warn("invoke fallback", error);
+    if (data) return (data as any).order || null;
+  } catch {
+    // fall through to direct fetch
+  }
 
-async function skusForOrder(orderId: string): Promise<string[]> {
-  const { data } = await supabase
-    .from("order_items")
-    .select("product_variations(products(sku)), bundle_variations(bundles(products(sku)))")
-    .eq("order_id", orderId);
-  return ((data as OrderItemForPixel[] | null) || [])
-    .map((i) => i.bundle_variations?.bundles?.products?.sku || i.product_variations?.products?.sku || null)
-    .filter((sku): sku is string => Boolean(sku));
+  try {
+    const url = new URL(`https://gboskpvfvwrsiqwzpctk.supabase.co/functions/v1/order-summary`);
+    url.searchParams.set("order_number", String(orderNumber));
+    if (token) url.searchParams.set("token", token);
+    const res = await fetch(url.toString(), {
+      headers: {
+        apikey: (supabase as any).supabaseKey || "",
+        Authorization: `Bearer ${(supabase as any).supabaseKey || ""}`,
+      },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return { ...(json.order || {}), items: json.items || [] };
+  } catch (err) {
+    console.error("order-summary fetch failed:", err);
+    return null;
+  }
 }
 
 async function firePurchasePixel(orderNumber: string | null, amountStr: string | null): Promise<void> {
-  if (!orderNumber || !amountStr) return;
-  const amount = parseFloat(amountStr);
-  if (!isFinite(amount)) return;
-  const { data: orderRow } = await supabase
-    .from("orders")
-    .select("id")
-    .eq("order_number", Number(orderNumber))
-    .maybeSingle();
-  if (!orderRow) return;
-  const skus = await skusForOrder(orderRow.id);
-  if (skus.length > 0) {
-    fbq("Purchase", { content_ids: skus, value: amount, currency: "ILS", content_type: "product" });
-  }
+  if (!orderNumber) return;
+  const amount = amountStr ? parseFloat(amountStr) : NaN;
+  const summary = await fetchOrderSummary(orderNumber);
+  if (!summary) return;
+  const value = isFinite(amount) ? amount : Number(summary.total || 0);
+  // order-summary doesn't expose SKUs today; use order_number as fallback id.
+  fbq("Purchase", { content_ids: [String(orderNumber)], value, currency: "ILS", content_type: "product" });
 }
 
 async function firePurchasePixelForOrder(orderNumber: string | null): Promise<void> {
-  if (!orderNumber) return;
-  const { data: orderRow } = await supabase
-    .from("orders")
-    .select("id, total")
-    .eq("order_number", Number(orderNumber))
-    .maybeSingle();
-  if (!orderRow) return;
-  const skus = await skusForOrder(orderRow.id);
-  if (skus.length > 0) {
-    fbq("Purchase", { content_ids: skus, value: Number(orderRow.total), currency: "ILS", content_type: "product" });
-  }
+  await firePurchasePixel(orderNumber, null);
 }
 
 function runFallbackVerify(
