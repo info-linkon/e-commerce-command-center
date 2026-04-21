@@ -81,6 +81,23 @@ export default function WebProductPage() {
     }
   }, [product?.id]);
 
+  // Auto-select an in-stock variation if the current selection is out of stock
+  useEffect(() => {
+    if (!inventoryStock) return;
+    if (!variations || variations.length === 0) return;
+    if (!product || product.product_type !== "variable") return;
+    const current = selectedVariation
+      ? variations.find((v) => v.id === selectedVariation)
+      : variations[0];
+    if (!current) return;
+    const currentStock = inventoryStock.get(current.id) || 0;
+    if (currentStock > 0) return;
+    const available = variations.find((v) => (inventoryStock.get(v.id) || 0) > 0);
+    if (available && available.id !== current.id) {
+      setSelectedVariation(available.id);
+    }
+  }, [inventoryStock, variations, product?.product_type]);
+
   if (isLoading) {
     return (
       <div className="container py-16 text-center text-muted-foreground">{t("جاري التحميل...", "טוען...")}</div>
