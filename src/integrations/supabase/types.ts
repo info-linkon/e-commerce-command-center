@@ -1104,6 +1104,112 @@ export type Database = {
           },
         ]
       }
+      notification_log: {
+        Row: {
+          body: string | null
+          channel: string
+          context: Json | null
+          created_at: string | null
+          error: string | null
+          event_key: string
+          id: string
+          locale: string | null
+          provider_message_id: string | null
+          recipient: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+          tenant_id: string
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          context?: Json | null
+          created_at?: string | null
+          error?: string | null
+          event_key: string
+          id?: string
+          locale?: string | null
+          provider_message_id?: string | null
+          recipient: string
+          sent_at?: string | null
+          status: string
+          subject?: string | null
+          tenant_id: string
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          context?: Json | null
+          created_at?: string | null
+          error?: string | null
+          event_key?: string
+          id?: string
+          locale?: string | null
+          provider_message_id?: string | null
+          recipient?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_templates: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string | null
+          enabled: boolean
+          event_key: string
+          id: string
+          locale: string
+          subject: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          body: string
+          channel: string
+          created_at?: string | null
+          enabled?: boolean
+          event_key: string
+          id?: string
+          locale?: string
+          subject?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string | null
+          enabled?: boolean
+          event_key?: string
+          id?: string
+          locale?: string
+          subject?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           bundle_variation_id: string | null
