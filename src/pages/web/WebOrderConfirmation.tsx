@@ -317,10 +317,8 @@ async function pollOrderAfterFailure(
       const summary = await fetchOrderSummary(orderNumber);
       if (summary && (summary.hyp_transaction_id || PAID_STATUSES.has(String(summary.status)))) {
         setStatus("success");
-        bumpCouponFromSession();
         sessionStorage.removeItem("hyp_order_id");
         sessionStorage.removeItem("hyp_order_number");
-        sessionStorage.removeItem("hyp_coupon_id");
         sessionStorage.removeItem("hyp_order_token");
         await firePurchasePixelForOrder(orderNumber);
         return;
