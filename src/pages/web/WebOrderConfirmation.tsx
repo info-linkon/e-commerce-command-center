@@ -258,12 +258,8 @@ function runFallbackVerify(
     if (!orderId) {
       const hypOrderNum = searchParams.get("Order") || orderNumber;
       if (hypOrderNum) {
-        const { data } = await supabase
-          .from("orders")
-          .select("id")
-          .eq("order_number", Number(hypOrderNum))
-          .maybeSingle();
-        orderId = data?.id || null;
+        const summary = await fetchOrderSummary(hypOrderNum);
+        orderId = summary?.id || null;
       }
     }
 
