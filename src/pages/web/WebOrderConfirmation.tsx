@@ -94,12 +94,11 @@ export default function WebOrderConfirmation() {
         // Fresh payment (not a re-processed duplicate) → increment coupon
         // usage and fire Meta Pixel. `already` = idempotent replay, skip both.
         if (statusParam === "ok") {
-          bumpCouponFromSession();
+          // Coupon usage is bumped inside web-create-order (server-side).
           firePurchasePixel(orderNumber, searchParams.get("Amount"));
         }
         sessionStorage.removeItem("hyp_order_id");
         sessionStorage.removeItem("hyp_order_number");
-        sessionStorage.removeItem("hyp_coupon_id");
         return;
       }
       // failed / amount_mismatch / error — before giving up, check if notify
@@ -287,25 +286,14 @@ function runFallbackVerify(
       }
 
       setStatus("success");
-      if (!verifyData.already_processed) {
-        bumpCouponFromSession();
-      }
       sessionStorage.removeItem("hyp_order_id");
       sessionStorage.removeItem("hyp_order_number");
-      sessionStorage.removeItem("hyp_coupon_id");
       await firePurchasePixel(orderNumber, searchParams.get("Amount"));
     } catch (err) {
       console.error("Fallback verify exception:", err);
       pollOrderAfterFailure(orderNumber, setStatus, clearCart);
     }
   })();
-}
-
-function bumpCouponFromSession(): void {
-  const couponId = sessionStorage.getItem("hyp_coupon_id");
-  if (!couponId) return;
-  // Fire-and-forget: coupon bookkeeping shouldn't block the success UI
-  incrementCouponUsage(couponId).catch((err) => console.error("coupon increment failed:", err));
 }
 
 // Safety net for when the browser-redirect verify failed but HYP's
