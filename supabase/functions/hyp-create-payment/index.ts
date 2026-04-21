@@ -140,6 +140,28 @@ Deno.serve(async (req) => {
     const signUrl = `https://pay.hyp.co.il/p/?${encodeQuery(signParams)}`;
     console.log("HYP APISign request (order_id=" + order_id + " order_number=" + order_number + ")");
 
+    // Helper: tag the order with a failure reason so ops can see why the
+    // checkout got stuck in pending_payment instead of just looking abandoned.
+    // We do this server-side because the storefront (anon) has no UPDATE on
+    // orders. Best-effort — never let the bookkeeping mask the real error.
+    async function tagOrderFailure(reason: string): Promise<void> {
+      try {
+        const { data: row } = await supabase
+          .from("orders")
+          .select("notes")
+          .eq("id", order_id)
+          .maybeSingle();
+        const prev = (row?.notes || "").trim();
+        const stamp = `⚠️ יצירת לינק תשלום נכשלה: ${reason}`;
+        await supabase
+          .from("orders")
+          .update({ notes: prev ? `${prev} | ${stamp}` : stamp })
+          .eq("id", order_id);
+      } catch (tagErr) {
+        console.warn("failed to tag order with payment failure reason:", tagErr);
+      }
+    }
+
     let signResult = "";
     try {
       const signResponse = await fetchWithTimeout(signUrl, 15000);
@@ -148,6 +170,7 @@ Deno.serve(async (req) => {
       if (signResult.startsWith("?")) signResult = signResult.slice(1);
       if (!signResponse.ok) {
         console.error("HYP APISign returned HTTP", signResponse.status, "body:", signResult.slice(0, 500));
+        await tagOrderFailure(`HYP HTTP ${signResponse.status}`);
         return new Response(
           JSON.stringify({ error: `HYP returned HTTP ${signResponse.status}`, raw: signResult.slice(0, 500) }),
           { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -156,6 +179,7 @@ Deno.serve(async (req) => {
     } catch (fetchErr) {
       const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
       console.error("HYP APISign fetch failed:", msg);
+      await tagOrderFailure(`fetch failed: ${msg}`);
       return new Response(
         JSON.stringify({ error: `Failed to reach HYP: ${msg}` }),
         { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -184,6 +208,7 @@ Deno.serve(async (req) => {
 
     // HYP returned a body without `signature=` — usually means bad credentials
     // or a malformed request. Surface the raw response so it's debuggable.
+    await tagOrderFailure(`bad sign response: ${signResult.slice(0, 200)}`);
     return new Response(JSON.stringify({
       error: "Failed to get payment signature from HYP",
       raw: signResult.slice(0, 500),
