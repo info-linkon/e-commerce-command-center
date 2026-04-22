@@ -29,6 +29,17 @@ const BundleForm = () => {
   const { data: bundle } = useBundle(id);
   const { data: products } = useProducts();
   const { data: categories } = useCategories();
+  const productIdForCategories = bundle?.product_id || fromProductId || undefined;
+  const { data: existingCategoryIds } = useProductCategories(productIdForCategories);
+  const setProductCategories = useSetProductCategories();
+  const [secondaryCategoryIds, setSecondaryCategoryIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (existingCategoryIds) {
+      // Exclude primary category from secondary list
+      setSecondaryCategoryIds(existingCategoryIds);
+    }
+  }, [existingCategoryIds]);
 
   // Load source product when converting from products list
   const { data: sourceProduct } = useQuery({
