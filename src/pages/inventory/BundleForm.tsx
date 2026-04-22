@@ -243,10 +243,10 @@ const BundleForm = () => {
 
     const bundleItems = items.map(({ variation_id, quantity }) => ({ variation_id, quantity }));
 
-    // Build full category list: primary + secondary (deduped)
-    const allCategoryIds = Array.from(
-      new Set([...(form.category_id ? [form.category_id] : []), ...secondaryCategoryIds])
-    );
+    // Use unified selection; first selected = primary
+    const allCategoryIds = Array.from(new Set(selectedCategoryIds));
+    const primaryCategoryId = allCategoryIds[0] || null;
+    productData.category_id = primaryCategoryId;
 
     if (isEditing && bundle) {
       updateBundle.mutate(
