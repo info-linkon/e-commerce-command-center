@@ -243,6 +243,11 @@ const BundleForm = () => {
 
     const bundleItems = items.map(({ variation_id, quantity }) => ({ variation_id, quantity }));
 
+    // Build full category list: primary + secondary (deduped)
+    const allCategoryIds = Array.from(
+      new Set([...(form.category_id ? [form.category_id] : []), ...secondaryCategoryIds])
+    );
+
     if (isEditing && bundle) {
       updateBundle.mutate(
         {
@@ -252,7 +257,15 @@ const BundleForm = () => {
           bundleType: form.bundle_type,
           items: bundleItems,
         },
-        { onSuccess: () => navigate("/crm/inventory/bundles") }
+        {
+          onSuccess: async () => {
+            await setProductCategories.mutateAsync({
+              productId: bundle.product_id,
+              categoryIds: allCategoryIds,
+            });
+            navigate("/crm/inventory/bundles");
+          },
+        }
       );
     } else if (fromProductId) {
       // Converting existing product to bundle — update the product, then create bundle record
@@ -281,6 +294,11 @@ const BundleForm = () => {
             if (iErr) throw iErr;
           }
 
+          await setProductCategories.mutateAsync({
+            productId: fromProductId,
+            categoryIds: allCategoryIds,
+          });
+
           toast.success("הפריט הועבר למארז בהצלחה");
           navigate("/crm/inventory/bundles");
         } catch (err: any) {
@@ -296,7 +314,17 @@ const BundleForm = () => {
           bundleType: form.bundle_type,
           items: bundleItems,
         },
-        { onSuccess: () => navigate("/crm/inventory/bundles") }
+        {
+          onSuccess: async (newBundle: any) => {
+            if (newBundle?.product_id && allCategoryIds.length > 0) {
+              await setProductCategories.mutateAsync({
+                productId: newBundle.product_id,
+                categoryIds: allCategoryIds,
+              });
+            }
+            navigate("/crm/inventory/bundles");
+          },
+        }
       );
     }
   };
