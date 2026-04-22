@@ -77,11 +77,30 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "طريقة دفع غير صالحة" }, 400);
     }
 
+    // ── Identify which products are bundles ────────────────────────────
+    // We need this for two reasons:
+    //   1. variable_bundle items send `bundle_variation_id` as their cart
+    //      variation_id — we must resolve that to the product's real
+    //      "ברירת מחדל" product_variation row before insert.
+    //   2. Stock for bundles is computed from their components, not from
+    //      the default variation row. We skip the inventory pre-check for
+    //      bundle items entirely (the frontend's useBundleStock already
+    //      enforces this, and the CRM picking flow re-validates).
+    const allProductIds = Array.from(new Set(payload.items.map((i) => i.product_id))).filter(Boolean);
+    const bundleProductIds = new Set<string>();
+    if (allProductIds.length > 0) {
+      const { data: bundleRows } = await supabase
+        .from("bundles")
+        .select("product_id")
+        .in("product_id", allProductIds);
+      for (const b of bundleRows || []) bundleProductIds.add(b.product_id);
+    }
+
     // ── Resolve bundle items to their real product_variation_id ────────
-    // For bundle items the client may send the bundle_variation_id (or even
-    // the bundle's product_id) as `variation_id` — neither lives in
-    // product_variations. We look up the product's "ברירת מחדל" variation
-    // and use that as the order_items.variation_id.
+    // variable_bundle items arrive with bundle_variation_id as variation_id.
+    // simple_bundle items already arrive with the product's default
+    // product_variation_id (handled in WebProductPage), but we re-resolve
+    // defensively so any cart shape works.
     const productIdsNeedingDefaultVariation = Array.from(
       new Set(
         payload.items
@@ -164,16 +183,12 @@ Deno.serve(async (req) => {
     }
 
     // ── Stock check (sum across warehouses) ────────────────────────────
-    // Bundles are skipped here: their stock is the min over their component
-    // variations (computed client-side via useBundleStock and re-checked by
-    // the CRM/picking flow). Re-implementing that recursion server-side
-    // would duplicate a lot of logic and is unnecessary for the storefront
-    // sanity check — non-bundle simple/variable products are still
-    // validated against authoritative inventory below.
+    // Bundles are skipped: their stock is the min over component variations
+    // (computed client-side via useBundleStock; CRM picking re-validates).
     const nonBundleVariationIds = Array.from(
       new Set(
         payload.items
-          .filter((i) => !i.bundle_variation_id)
+          .filter((i) => !bundleProductIds.has(i.product_id))
           .map((i) => i.variation_id),
       ),
     ).filter(Boolean);
@@ -195,7 +210,7 @@ Deno.serve(async (req) => {
 
       const requestedByVariation = new Map<string, number>();
       for (const item of payload.items) {
-        if (item.bundle_variation_id) continue;
+        if (bundleProductIds.has(item.product_id)) continue;
         requestedByVariation.set(
           item.variation_id,
           (requestedByVariation.get(item.variation_id) || 0) + item.quantity,
