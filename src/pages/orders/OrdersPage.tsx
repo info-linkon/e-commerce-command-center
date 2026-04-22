@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
 import { useOrders, useDeleteOrder, useUpdateOrderStatus, type OrderStatus } from "@/hooks/useOrders";
+import { useCashRegisters } from "@/hooks/useCashRegisters";
 
 const statusLabels: Record<string, string> = {
   pending: "ממתינה",
@@ -44,11 +45,14 @@ const paymentLabels: Record<string, string> = {
 const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
   const [statusFilter, setStatusFilter] = useState<string>(defaultStatus || "all");
   const [search, setSearch] = useState("");
+  const [registerFilter, setRegisterFilter] = useState<string>("all");
   const { data: orders, isLoading } = useOrders(statusFilter === "all" ? undefined : statusFilter as OrderStatus);
+  const { data: registers } = useCashRegisters();
   const deleteOrder = useDeleteOrder();
   const updateStatus = useUpdateOrderStatus();
 
   const filtered = orders?.filter((o) => {
+    if (registerFilter !== "all" && o.cash_register_id !== registerFilter) return false;
     if (!search) return true;
     const s = search.toLowerCase();
     return (
@@ -110,6 +114,15 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
             <SelectItem value="shipping">במשלוח</SelectItem>
             <SelectItem value="completed">הושלמה</SelectItem>
             <SelectItem value="cancelled">בוטלה</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={registerFilter} onValueChange={setRegisterFilter}>
+          <SelectTrigger className="w-32 sm:w-40"><SelectValue placeholder="כל הקופות" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">כל הקופות</SelectItem>
+            {registers?.map((r) => (
+              <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
