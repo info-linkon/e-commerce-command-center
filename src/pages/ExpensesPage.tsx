@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
-import { Receipt, Plus, Upload, FileText, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Receipt, Plus, Upload, FileText, X, Pencil, Trash2, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +10,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useExpenses, useCreateExpense } from "@/hooks/useExpenses";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@/hooks/useExpenses";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
 
 const sourceLabels: Record<string, string> = {
@@ -21,39 +35,81 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
   const { data: expenses, isLoading } = useExpenses();
   const { data: registers } = useCashRegisters();
   const createExpense = useCreateExpense();
+  const updateExpense = useUpdateExpense();
+  const deleteExpense = useDeleteExpense();
 
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [source, setSource] = useState<string>("credit_card");
   const [registerId, setRegisterId] = useState("");
   const [docFile, setDocFile] = useState<File | null>(null);
+  const [existingDocUrl, setExistingDocUrl] = useState<string | null>(null);
+  const [removeExistingDoc, setRemoveExistingDoc] = useState(false);
+  const [date, setDate] = useState<Date>(new Date());
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleCreate = () => {
+  const resetForm = () => {
+    setEditingId(null);
+    setDescription("");
+    setAmount("");
+    setSource("credit_card");
+    setRegisterId("");
+    setDocFile(null);
+    setExistingDocUrl(null);
+    setRemoveExistingDoc(false);
+    setDate(new Date());
+  };
+
+  useEffect(() => {
+    if (!open) resetForm();
+  }, [open]);
+
+  const startEdit = (e: any) => {
+    setEditingId(e.id);
+    setDescription(e.description);
+    setAmount(String(e.amount));
+    setSource(e.payment_source);
+    setRegisterId(e.cash_register_id || "");
+    setDocFile(null);
+    setExistingDocUrl(e.document_file || e.document_url || null);
+    setRemoveExistingDoc(false);
+    setDate(new Date(e.created_at));
+    setOpen(true);
+  };
+
+  const handleSubmit = () => {
     if (!description.trim() || !amount) return;
-    createExpense.mutate(
-      {
-        description: description.trim(),
-        amount: parseFloat(amount),
-        payment_source: source as any,
-        cash_register_id: source === "cash_register" ? registerId || null : null,
-        document_file: docFile || undefined,
-      },
-      {
-        onSuccess: () => {
-          setOpen(false);
-          setDescription("");
-          setAmount("");
-          setSource("credit_card");
-          setRegisterId("");
-          setDocFile(null);
+    const payload = {
+      description: description.trim(),
+      amount: parseFloat(amount),
+      payment_source: source as any,
+      cash_register_id: source === "cash_register" ? registerId || null : null,
+      created_at: date.toISOString(),
+    };
+
+    if (editingId) {
+      updateExpense.mutate(
+        {
+          id: editingId,
+          ...payload,
+          document_file: docFile,
+          remove_document: removeExistingDoc && !docFile,
         },
-      }
-    );
+        { onSuccess: () => setOpen(false) }
+      );
+    } else {
+      createExpense.mutate(
+        { ...payload, document_file: docFile || undefined },
+        { onSuccess: () => setOpen(false) }
+      );
+    }
   };
 
   const totalExpenses = expenses?.reduce((s, e) => s + Number(e.amount), 0) || 0;
+  const pending = createExpense.isPending || updateExpense.isPending;
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -74,7 +130,9 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
             <Button className="gap-2"><Plus className="h-4 w-4" />הוצאה חדשה</Button>
           </DialogTrigger>
           <DialogContent dir="rtl">
-            <DialogHeader><DialogTitle>רישום הוצאה</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{editingId ? "עריכת הוצאה" : "רישום הוצאה"}</DialogTitle>
+            </DialogHeader>
             <div className="space-y-4 pt-2">
               <div>
                 <Label>תיאור</Label>
@@ -83,6 +141,32 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
               <div>
                 <Label>סכום</Label>
                 <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} min="0" step="0.01" />
+              </div>
+              <div>
+                <Label>תאריך</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-right font-normal",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="ml-2 h-4 w-4" />
+                      {date ? format(date, "dd/MM/yyyy") : "בחר תאריך"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={(d) => d && setDate(d)}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label>מקור תשלום</Label>
@@ -116,13 +200,26 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
                   type="file"
                   accept="image/*,.pdf,.doc,.docx"
                   className="hidden"
-                  onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    setDocFile(e.target.files?.[0] || null);
+                    setRemoveExistingDoc(false);
+                  }}
                 />
                 {docFile ? (
                   <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm truncate flex-1">{docFile.name}</span>
                     <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDocFile(null)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : existingDocUrl && !removeExistingDoc ? (
+                  <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <a href={existingDocUrl} target="_blank" rel="noopener noreferrer" className="text-sm truncate flex-1 text-primary underline">
+                      מסמך קיים
+                    </a>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setRemoveExistingDoc(true)}>
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
@@ -134,11 +231,11 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
                 )}
               </div>
               <Button
-                onClick={handleCreate}
-                disabled={!description.trim() || !amount || createExpense.isPending || (source === "cash_register" && !registerId)}
+                onClick={handleSubmit}
+                disabled={!description.trim() || !amount || pending || (source === "cash_register" && !registerId)}
                 className="w-full"
               >
-                {createExpense.isPending ? "שומר..." : "רשום הוצאה"}
+                {pending ? "שומר..." : editingId ? "עדכן הוצאה" : "רשום הוצאה"}
               </Button>
             </div>
           </DialogContent>
@@ -154,15 +251,23 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
         ) : (
           expenses.map((e: any) => (
             <Card key={e.id} className="p-3">
-              <div className="flex justify-between items-start">
+              <div className="flex justify-between items-start gap-2">
                 <Badge variant="outline" className="text-xs">
                   {sourceLabels[e.payment_source] || e.payment_source}
                 </Badge>
-                <span className="font-medium">{e.description}</span>
+                <span className="font-medium flex-1 text-right">{e.description}</span>
               </div>
               <div className="flex justify-between items-center mt-2 text-sm">
                 <span className="text-muted-foreground text-xs">{new Date(e.created_at).toLocaleDateString("he-IL")}</span>
                 <span className="font-bold">₪{Number(e.amount).toFixed(2)}</span>
+              </div>
+              <div className="flex gap-1 mt-2 pt-2 border-t">
+                <Button size="sm" variant="ghost" className="flex-1 gap-1" onClick={() => startEdit(e)}>
+                  <Pencil className="h-3 w-3" /> עריכה
+                </Button>
+                <Button size="sm" variant="ghost" className="flex-1 gap-1 text-destructive" onClick={() => setDeleteId(e.id)}>
+                  <Trash2 className="h-3 w-3" /> מחיקה
+                </Button>
               </div>
             </Card>
           ))
@@ -185,6 +290,7 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
                   <TableHead>מקור</TableHead>
                   <TableHead>תאריך</TableHead>
                   <TableHead>מסמך</TableHead>
+                  <TableHead className="w-[120px]">פעולות</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -208,6 +314,16 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
                         </a>
                       ) : "—"}
                     </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(e)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(e.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -215,6 +331,29 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת הוצאה</AlertDialogTitle>
+            <AlertDialogDescription>
+              האם למחוק את ההוצאה? פעולה זו תחזיר את הסכום לקופה (אם שולם מקופה).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteId) {
+                  deleteExpense.mutate(deleteId, { onSuccess: () => setDeleteId(null) });
+                }
+              }}
+            >
+              מחק
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
