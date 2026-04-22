@@ -216,23 +216,45 @@ const ProductForm = () => {
                   <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>מק״ט</Label>
-                  <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} dir="ltr" placeholder="e.g. SKU-001" />
+              <div className="space-y-2">
+                <Label>מק״ט</Label>
+                <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} dir="ltr" placeholder="e.g. SKU-001" />
+              </div>
+              {/* Categories — multi-select chips. First selected = primary */}
+              <div className="space-y-1">
+                <Label>קטגוריות (ניתן לבחור כמה)</Label>
+                <div className="flex flex-wrap gap-1.5 p-2 border rounded-md min-h-[44px]">
+                  {(categories || []).map((c) => {
+                    const idx = selectedCategoryIds.indexOf(c.id);
+                    const selected = idx >= 0;
+                    const isPrimary = idx === 0;
+                    return (
+                      <button
+                        type="button"
+                        key={c.id}
+                        onClick={() =>
+                          setSelectedCategoryIds((prev) =>
+                            prev.includes(c.id) ? prev.filter((id) => id !== c.id) : [...prev, c.id]
+                          )
+                        }
+                        className={`px-2.5 py-1 text-xs rounded-md border transition-colors ${
+                          isPrimary
+                            ? "bg-primary text-primary-foreground border-primary font-semibold"
+                            : selected
+                              ? "bg-accent text-accent-foreground border-accent"
+                              : "bg-background hover:bg-accent"
+                        }`}
+                        title={isPrimary ? "קטגוריה ראשית" : selected ? "מסומן" : "לא מסומן"}
+                      >
+                        {isPrimary && "★ "}{c.name}
+                      </button>
+                    );
+                  })}
+                  {(categories?.length || 0) === 0 && (
+                    <span className="text-xs text-muted-foreground">אין קטגוריות זמינות</span>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label>קטגוריה</Label>
-                  <Select value={form.category_id || "none"} onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? null : v })}>
-                    <SelectTrigger><SelectValue placeholder="בחר קטגוריה" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">ללא קטגוריה</SelectItem>
-                      {categories?.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <p className="text-xs text-muted-foreground">הקטגוריה הראשונה שתבחר היא הקטגוריה הראשית (★).</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
