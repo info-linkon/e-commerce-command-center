@@ -131,6 +131,9 @@ Deno.serve(async (req) => {
       tmp: "7",
       sendemail: customer_email ? "True" : "False",
       FixTash: "False",
+      // Allow customer to split into up to 3 payments (1/2/3). FixTash=False
+      // keeps it customer-selectable up to this maximum.
+      Tash: "3",
       J5: "False",
       Postpone: "False",
       pageTimeOut: "True",

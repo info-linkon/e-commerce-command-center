@@ -138,6 +138,8 @@ Deno.serve(async (req) => {
       tmp: "1",
       sendemail: order.customer_email ? "True" : "False",
       FixTash: "False",
+      // Allow up to 3 payments (customer chooses 1..3 on HYP page)
+      Tash: "3",
       J5: "False",
       Postpone: "False",
       pageTimeOut: "True",
