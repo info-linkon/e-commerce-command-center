@@ -32,12 +32,12 @@ const BundleForm = () => {
   const productIdForCategories = bundle?.product_id || fromProductId || undefined;
   const { data: existingCategoryIds } = useProductCategories(productIdForCategories);
   const setProductCategories = useSetProductCategories();
-  const [secondaryCategoryIds, setSecondaryCategoryIds] = useState<string[]>([]);
+  // Unified multi-select: holds ALL category IDs (primary = first one)
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (existingCategoryIds) {
-      // Exclude primary category from secondary list
-      setSecondaryCategoryIds(existingCategoryIds);
+    if (existingCategoryIds && existingCategoryIds.length > 0) {
+      setSelectedCategoryIds(existingCategoryIds);
     }
   }, [existingCategoryIds]);
 
