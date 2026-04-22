@@ -88,12 +88,28 @@ Deno.serve(async (req) => {
     //      enforces this, and the CRM picking flow re-validates).
     const allProductIds = Array.from(new Set(payload.items.map((i) => i.product_id))).filter(Boolean);
     const bundleProductIds = new Set<string>();
+    const simpleBundlePriceByProduct = new Map<string, number>();
     if (allProductIds.length > 0) {
       const { data: bundleRows } = await supabase
         .from("bundles")
-        .select("product_id")
+        .select("product_id, bundle_type")
         .in("product_id", allProductIds);
       for (const b of bundleRows || []) bundleProductIds.add(b.product_id);
+
+      // simple_bundle items use the parent product's sale_price (their
+      // default product_variation often has price=0).
+      const simpleBundleProductIds = (bundleRows || [])
+        .filter((b: any) => b.bundle_type === "simple_bundle")
+        .map((b: any) => b.product_id);
+      if (simpleBundleProductIds.length > 0) {
+        const { data: prodRows } = await supabase
+          .from("products")
+          .select("id, sale_price")
+          .in("id", simpleBundleProductIds);
+        for (const p of prodRows || []) {
+          simpleBundlePriceByProduct.set(p.id, Number((p as any).sale_price) || 0);
+        }
+      }
     }
 
     // ── Resolve bundle items to their real product_variation_id ────────
@@ -239,9 +255,16 @@ Deno.serve(async (req) => {
     }> = [];
 
     for (const item of payload.items) {
-      const unitPrice = item.bundle_variation_id
-        ? bundleVariationMap.get(item.bundle_variation_id)?.price
-        : variationMap.get(item.variation_id)?.price;
+      let unitPrice: number | undefined;
+      if (item.bundle_variation_id) {
+        unitPrice = bundleVariationMap.get(item.bundle_variation_id)?.price;
+      } else if (bundleProductIds.has(item.product_id)) {
+        // simple_bundle — price comes from products.sale_price, not the
+        // (often 0) default variation row.
+        unitPrice = simpleBundlePriceByProduct.get(item.product_id);
+      } else {
+        unitPrice = variationMap.get(item.variation_id)?.price;
+      }
 
       if (unitPrice === undefined || unitPrice === null) {
         return jsonResponse({ error: "سعر منتج غير صالح" }, 400);
