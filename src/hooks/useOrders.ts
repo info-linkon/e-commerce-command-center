@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
 import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
+import { expandToInventoryRows } from "@/lib/order-inventory";
 
 async function syncOrderStatusToWoo(orderId: string) {
   try {
@@ -177,36 +178,32 @@ export function useAssignWarehouse() {
 
       const items = (order.order_items as any[]) || [];
 
-      // 2. Deduct inventory from the assigned warehouse + log
-      for (const item of items) {
-        if (!item.variation_id) continue; // skip custom (general) line items — no inventory tracking
+      // 2. Deduct inventory — expand bundles to their actual component variations
+      const inventoryRows = await expandToInventoryRows(items as any);
 
+      for (const row of inventoryRows) {
         const { data: inv } = await supabase
           .from("inventory")
           .select("*")
-          .eq("variation_id", item.variation_id)
+          .eq("variation_id", row.variation_id)
           .eq("warehouse_id", warehouseId)
           .maybeSingle();
 
         const currentQty = inv?.quantity || 0;
-        const newQty = currentQty - item.quantity;
+        const newQty = currentQty - row.quantity;
 
         if (inv) {
-          await supabase
-            .from("inventory")
-            .update({ quantity: newQty })
-            .eq("id", inv.id);
+          await supabase.from("inventory").update({ quantity: newQty }).eq("id", inv.id);
         } else {
-          // Create negative inventory record if none exists
           await supabase
             .from("inventory")
-            .insert({ variation_id: item.variation_id, warehouse_id: warehouseId, quantity: newQty });
+            .insert({ variation_id: row.variation_id, warehouse_id: warehouseId, quantity: newQty });
         }
 
         await logInventoryChange({
-          variation_id: item.variation_id,
+          variation_id: row.variation_id,
           warehouse_id: warehouseId,
-          quantity_change: -item.quantity,
+          quantity_change: -row.quantity,
           quantity_after: newQty,
           action_type: "sale",
           reference_id: orderId,
@@ -214,8 +211,8 @@ export function useAssignWarehouse() {
         });
       }
 
-      // Sync stock to WooCommerce (all sources — stock is global). Skip custom items.
-      syncMultipleStockToWoo(items.filter((i: any) => i.variation_id).map((item: any) => item.variation_id));
+      // Sync stock to WooCommerce (all sources — stock is global).
+      syncMultipleStockToWoo(inventoryRows.map((r) => r.variation_id));
 
       // 3. Update order with warehouse assignment + status to processing
       const { error: updateErr } = await supabase
@@ -314,7 +311,7 @@ export function useCancelOrder() {
       // 1. Get order with items
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .select("*, order_items(*)")
+        .select("*, order_items(*, product_variations(product_id))")
         .eq("id", orderId)
         .single();
       if (orderErr) throw orderErr;
@@ -328,34 +325,31 @@ export function useCancelOrder() {
 
       // 2. If warehouse was assigned, restore inventory
       if (warehouseId) {
-        for (const item of items) {
-          if (!item.variation_id) continue; // skip custom (general) line items
+        const inventoryRows = await expandToInventoryRows(items as any);
 
+        for (const row of inventoryRows) {
           const { data: inv } = await supabase
             .from("inventory")
             .select("*")
-            .eq("variation_id", item.variation_id)
+            .eq("variation_id", row.variation_id)
             .eq("warehouse_id", warehouseId)
             .maybeSingle();
 
           const currentQty = inv?.quantity || 0;
-          const newQty = currentQty + item.quantity;
+          const newQty = currentQty + row.quantity;
 
           if (inv) {
-            await supabase
-              .from("inventory")
-              .update({ quantity: newQty })
-              .eq("id", inv.id);
+            await supabase.from("inventory").update({ quantity: newQty }).eq("id", inv.id);
           } else {
             await supabase
               .from("inventory")
-              .insert({ variation_id: item.variation_id, warehouse_id: warehouseId, quantity: newQty });
+              .insert({ variation_id: row.variation_id, warehouse_id: warehouseId, quantity: newQty });
           }
 
           await logInventoryChange({
-            variation_id: item.variation_id,
+            variation_id: row.variation_id,
             warehouse_id: warehouseId,
-            quantity_change: item.quantity,
+            quantity_change: row.quantity,
             quantity_after: newQty,
             action_type: "adjustment",
             reference_id: orderId,
@@ -363,11 +357,36 @@ export function useCancelOrder() {
           });
         }
 
-        // Sync restored stock to WooCommerce. Skip custom items.
-        syncMultipleStockToWoo(items.filter((i: any) => i.variation_id).map((item: any) => item.variation_id));
+        // Sync restored stock to WooCommerce.
+        syncMultipleStockToWoo(inventoryRows.map((r) => r.variation_id));
       }
 
-      // 3. Update order status
+      // 3. Reverse payments — refund cash to register, then delete payment records
+      const { data: payments } = await supabase
+        .from("payments")
+        .select("id, amount, payment_method, cash_register_id")
+        .eq("order_id", orderId);
+
+      for (const p of payments || []) {
+        if (p.payment_method === "cash" && p.cash_register_id) {
+          await supabase.rpc("increment_cash_register" as any, {
+            reg_id: p.cash_register_id,
+            delta: -Number(p.amount),
+          });
+        }
+      }
+
+      if (payments && payments.length > 0) {
+        await supabase.from("payments").delete().eq("order_id", orderId);
+        await supabase.from("payment_events").insert({
+          order_id: orderId,
+          event_type: "order_cancelled_refund",
+          success: true,
+          message: `בוטלו ${payments.length} תשלומים — החזרת ₪${payments.reduce((s, p) => s + Number(p.amount), 0).toFixed(2)} לקופה`,
+        });
+      }
+
+      // 4. Update order status
       const { error: updateErr } = await supabase
         .from("orders")
         .update({ status: "cancelled" as OrderStatus })
@@ -383,6 +402,8 @@ export function useCancelOrder() {
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
       qc.invalidateQueries({ queryKey: ["inventory_log"] });
+      qc.invalidateQueries({ queryKey: ["payments"] });
+      qc.invalidateQueries({ queryKey: ["cash_registers"] });
       toast.success("ההזמנה בוטלה והמלאי הוחזר");
     },
     onError: (err: any) => toast.error(err?.message || "שגיאה בביטול הזמנה"),
