@@ -31,7 +31,10 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 interface IncomingItem {
-  variation_id: string; // resolved (default-variation) id used for inventory & order_items
+  variation_id: string; // For non-bundles: product_variation id. For bundles
+                        // (bundle_variation_id present): may be the
+                        // bundle_variation id — server resolves the real
+                        // product_variation to use on order_items.
   product_id: string;
   quantity: number;
   bundle_variation_id?: string | null;
@@ -72,6 +75,54 @@ Deno.serve(async (req) => {
     }
     if (payload.payment_method !== "cash" && payload.payment_method !== "credit") {
       return jsonResponse({ error: "طريقة دفع غير صالحة" }, 400);
+    }
+
+    // ── Resolve bundle items to their real product_variation_id ────────
+    // For bundle items the client may send the bundle_variation_id (or even
+    // the bundle's product_id) as `variation_id` — neither lives in
+    // product_variations. We look up the product's "ברירת מחדל" variation
+    // and use that as the order_items.variation_id.
+    const productIdsNeedingDefaultVariation = Array.from(
+      new Set(
+        payload.items
+          .filter((i) => !!i.bundle_variation_id)
+          .map((i) => i.product_id),
+      ),
+    );
+    const defaultVariationByProduct = new Map<string, string>();
+    if (productIdsNeedingDefaultVariation.length > 0) {
+      const { data: pvs, error: pvsErr } = await supabase
+        .from("product_variations")
+        .select("id, product_id, name, created_at")
+        .in("product_id", productIdsNeedingDefaultVariation)
+        .order("created_at", { ascending: true });
+      if (pvsErr) throw pvsErr;
+      // Prefer the canonical "ברירת מחדל" variation; fall back to oldest
+      for (const pv of pvs || []) {
+        if ((pv as any).name === "ברירת מחדל") {
+          defaultVariationByProduct.set(pv.product_id, pv.id);
+        }
+      }
+      for (const pv of pvs || []) {
+        if (!defaultVariationByProduct.has(pv.product_id)) {
+          defaultVariationByProduct.set(pv.product_id, pv.id);
+        }
+      }
+    }
+
+    // Rewrite payload.items so `variation_id` is always a real
+    // product_variations.id from here on.
+    for (const item of payload.items) {
+      if (item.bundle_variation_id) {
+        const resolved = defaultVariationByProduct.get(item.product_id);
+        if (!resolved) {
+          return jsonResponse(
+            { error: `الطقم غير متوفر (${item.product_id})` },
+            400,
+          );
+        }
+        item.variation_id = resolved;
+      }
     }
 
     const variationIds = Array.from(new Set(payload.items.map((i) => i.variation_id))).filter(Boolean);
