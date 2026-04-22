@@ -290,6 +290,17 @@ export default function WebProductPage() {
             <h1 className="text-2xl md:text-3xl font-bold">{displayName}</h1>
             <ShareProductButton productNumber={product.product_number} productName={displayName} />
           </div>
+          {(() => {
+            const shortDesc = lang === "he"
+              ? (product.short_description || product.short_description_ar)
+              : (product.short_description_ar || product.short_description);
+            return shortDesc ? (
+              <div
+                className="text-foreground font-medium leading-relaxed mb-3 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: shortDesc }}
+              />
+            ) : null;
+          })()}
           {lang === "he" ? (
             (product.description || product.description_ar) && (
               <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
