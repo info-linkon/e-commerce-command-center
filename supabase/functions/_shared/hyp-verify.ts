@@ -362,77 +362,11 @@ export async function runHypVerify(
   // (reads `hyp_coupon_id` from sessionStorage after a fresh verify) to avoid
   // requiring a new `orders.applied_coupon_id` column.
 
-  // ── Auto-issue invoice receipt (Ezcount type 320) ──
-  try {
-    const { data: orderItems } = await supabase
-      .from("order_items")
-      .select("quantity, unit_price, variation_id, product_variations(name, sku, products(name))")
-      .eq("order_id", resolvedOrderId);
-
-    type OrderItemRow = {
-      quantity: number;
-      unit_price: number;
-      product_variations?: { name?: string | null; sku?: string | null; products?: { name?: string | null } | null } | null;
-    };
-    const items = ((orderItems as OrderItemRow[] | null) || []).map((oi) => ({
-      details: `${oi.product_variations?.products?.name || ""} - ${oi.product_variations?.name || ""}`.trim().replace(/^- /, ""),
-      amount: oi.quantity,
-      price: Number(oi.unit_price),
-      catalog_number: oi.product_variations?.sku || undefined,
-    }));
-
-    // Add discount as a negative line so price_total matches actual charged amount
-    const discountAmount = Number((orderData as any).discount_amount || 0);
-    if (discountAmount > 0) {
-      items.push({
-        details: "הנחה",
-        amount: 1,
-        price: -discountAmount,
-        catalog_number: undefined,
-      });
-    }
-
-    // Add shipping as a line so price_total matches actual charged amount
-    const shippingCost = Number((orderData as any).shipping_cost || 0);
-    if (shippingCost > 0) {
-      items.push({
-        details: "משלוח",
-        amount: 1,
-        price: shippingCost,
-        catalog_number: undefined,
-      });
-    }
-
-    const ezRes = await fetch(`${supabaseUrl}/functions/v1/ezcount-doc`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({
-        doc_type: "invoice_receipt",
-        order_id: resolvedOrderId,
-        customer_name: orderData.customer_name || "לקוח אתר",
-        customer_email: orderData.customer_email || undefined,
-        customer_phone: orderData.customer_phone || undefined,
-        items,
-        payments: [{ type: "credit", amount: chargedAmount }],
-      }),
-    });
-
-    const ezData = await ezRes.json();
-    if (ezData.success) {
-      const invoiceLink = ezData.short_code ? `/inv/${ezData.short_code}` : ezData.doc_url;
-      if (invoiceLink) {
-        await supabase.from("orders").update({ invoice_url: invoiceLink }).eq("id", resolvedOrderId);
-      }
-      await logEvent(supabase, resolvedOrderId, "ezcount_invoice", true, ezData.short_code || ezData.doc_url);
-    } else {
-      await logEvent(supabase, resolvedOrderId, "ezcount_invoice", false, JSON.stringify(ezData));
-    }
-  } catch (ezErr) {
-    await logEvent(supabase, resolvedOrderId, "ezcount_invoice", false, String(ezErr));
-  }
+  // ── Invoice receipt ──
+  // HYP itself is configured in EZCount to auto-issue the invoice-receipt
+  // (Type 320) for credit transactions. We intentionally DO NOT issue one
+  // here to avoid creating a duplicate document. For cash/bit payments the
+  // operator issues it manually from PaymentSection in the CRM.
 
   // ── SMS ──
   try {
