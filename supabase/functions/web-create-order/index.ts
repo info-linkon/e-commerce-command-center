@@ -31,7 +31,10 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 interface IncomingItem {
-  variation_id: string; // resolved (default-variation) id used for inventory & order_items
+  variation_id: string; // For non-bundles: product_variation id. For bundles
+                        // (bundle_variation_id present): may be the
+                        // bundle_variation id — server resolves the real
+                        // product_variation to use on order_items.
   product_id: string;
   quantity: number;
   bundle_variation_id?: string | null;
@@ -74,6 +77,89 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "طريقة دفع غير صالحة" }, 400);
     }
 
+    // ── Identify which products are bundles ────────────────────────────
+    // We need this for two reasons:
+    //   1. variable_bundle items send `bundle_variation_id` as their cart
+    //      variation_id — we must resolve that to the product's real
+    //      "ברירת מחדל" product_variation row before insert.
+    //   2. Stock for bundles is computed from their components, not from
+    //      the default variation row. We skip the inventory pre-check for
+    //      bundle items entirely (the frontend's useBundleStock already
+    //      enforces this, and the CRM picking flow re-validates).
+    const allProductIds = Array.from(new Set(payload.items.map((i) => i.product_id))).filter(Boolean);
+    const bundleProductIds = new Set<string>();
+    const simpleBundlePriceByProduct = new Map<string, number>();
+    if (allProductIds.length > 0) {
+      const { data: bundleRows } = await supabase
+        .from("bundles")
+        .select("product_id, bundle_type")
+        .in("product_id", allProductIds);
+      for (const b of bundleRows || []) bundleProductIds.add(b.product_id);
+
+      // simple_bundle items use the parent product's sale_price (their
+      // default product_variation often has price=0).
+      const simpleBundleProductIds = (bundleRows || [])
+        .filter((b: any) => b.bundle_type === "simple_bundle")
+        .map((b: any) => b.product_id);
+      if (simpleBundleProductIds.length > 0) {
+        const { data: prodRows } = await supabase
+          .from("products")
+          .select("id, sale_price")
+          .in("id", simpleBundleProductIds);
+        for (const p of prodRows || []) {
+          simpleBundlePriceByProduct.set(p.id, Number((p as any).sale_price) || 0);
+        }
+      }
+    }
+
+    // ── Resolve bundle items to their real product_variation_id ────────
+    // variable_bundle items arrive with bundle_variation_id as variation_id.
+    // simple_bundle items already arrive with the product's default
+    // product_variation_id (handled in WebProductPage), but we re-resolve
+    // defensively so any cart shape works.
+    const productIdsNeedingDefaultVariation = Array.from(
+      new Set(
+        payload.items
+          .filter((i) => !!i.bundle_variation_id)
+          .map((i) => i.product_id),
+      ),
+    );
+    const defaultVariationByProduct = new Map<string, string>();
+    if (productIdsNeedingDefaultVariation.length > 0) {
+      const { data: pvs, error: pvsErr } = await supabase
+        .from("product_variations")
+        .select("id, product_id, name, created_at")
+        .in("product_id", productIdsNeedingDefaultVariation)
+        .order("created_at", { ascending: true });
+      if (pvsErr) throw pvsErr;
+      // Prefer the canonical "ברירת מחדל" variation; fall back to oldest
+      for (const pv of pvs || []) {
+        if ((pv as any).name === "ברירת מחדל") {
+          defaultVariationByProduct.set(pv.product_id, pv.id);
+        }
+      }
+      for (const pv of pvs || []) {
+        if (!defaultVariationByProduct.has(pv.product_id)) {
+          defaultVariationByProduct.set(pv.product_id, pv.id);
+        }
+      }
+    }
+
+    // Rewrite payload.items so `variation_id` is always a real
+    // product_variations.id from here on.
+    for (const item of payload.items) {
+      if (item.bundle_variation_id) {
+        const resolved = defaultVariationByProduct.get(item.product_id);
+        if (!resolved) {
+          return jsonResponse(
+            { error: `الطقم غير متوفر (${item.product_id})` },
+            400,
+          );
+        }
+        item.variation_id = resolved;
+      }
+    }
+
     const variationIds = Array.from(new Set(payload.items.map((i) => i.variation_id))).filter(Boolean);
     if (variationIds.length === 0) {
       return jsonResponse({ error: "منتجات غير صالحة في السلة" }, 400);
@@ -113,36 +199,48 @@ Deno.serve(async (req) => {
     }
 
     // ── Stock check (sum across warehouses) ────────────────────────────
-    const { data: inventoryRows, error: invErr } = await supabase
-      .from("inventory")
-      .select("variation_id, quantity")
-      .in("variation_id", variationIds);
-    if (invErr) throw invErr;
+    // Bundles are skipped: their stock is the min over component variations
+    // (computed client-side via useBundleStock; CRM picking re-validates).
+    const nonBundleVariationIds = Array.from(
+      new Set(
+        payload.items
+          .filter((i) => !bundleProductIds.has(i.product_id))
+          .map((i) => i.variation_id),
+      ),
+    ).filter(Boolean);
 
-    const stockByVariation = new Map<string, number>();
-    for (const row of inventoryRows || []) {
-      stockByVariation.set(
-        row.variation_id,
-        (stockByVariation.get(row.variation_id) || 0) + (row.quantity || 0),
-      );
-    }
+    if (nonBundleVariationIds.length > 0) {
+      const { data: inventoryRows, error: invErr } = await supabase
+        .from("inventory")
+        .select("variation_id, quantity")
+        .in("variation_id", nonBundleVariationIds);
+      if (invErr) throw invErr;
 
-    // Aggregate requested qty per variation (a bundle may share underlying variation)
-    const requestedByVariation = new Map<string, number>();
-    for (const item of payload.items) {
-      requestedByVariation.set(
-        item.variation_id,
-        (requestedByVariation.get(item.variation_id) || 0) + item.quantity,
-      );
-    }
-
-    for (const [vid, requested] of requestedByVariation) {
-      const available = stockByVariation.get(vid) ?? 0;
-      if (available < requested) {
-        return jsonResponse(
-          { error: "أحد المنتجات في السلة لم يعد متوفراً بالكمية المطلوبة", out_of_stock_variation_id: vid },
-          409,
+      const stockByVariation = new Map<string, number>();
+      for (const row of inventoryRows || []) {
+        stockByVariation.set(
+          row.variation_id,
+          (stockByVariation.get(row.variation_id) || 0) + (row.quantity || 0),
         );
+      }
+
+      const requestedByVariation = new Map<string, number>();
+      for (const item of payload.items) {
+        if (bundleProductIds.has(item.product_id)) continue;
+        requestedByVariation.set(
+          item.variation_id,
+          (requestedByVariation.get(item.variation_id) || 0) + item.quantity,
+        );
+      }
+
+      for (const [vid, requested] of requestedByVariation) {
+        const available = stockByVariation.get(vid) ?? 0;
+        if (available < requested) {
+          return jsonResponse(
+            { error: "أحد المنتجات في السلة لم يعد متوفراً بالكمية المطلوبة", out_of_stock_variation_id: vid },
+            409,
+          );
+        }
       }
     }
 
@@ -157,9 +255,16 @@ Deno.serve(async (req) => {
     }> = [];
 
     for (const item of payload.items) {
-      const unitPrice = item.bundle_variation_id
-        ? bundleVariationMap.get(item.bundle_variation_id)?.price
-        : variationMap.get(item.variation_id)?.price;
+      let unitPrice: number | undefined;
+      if (item.bundle_variation_id) {
+        unitPrice = bundleVariationMap.get(item.bundle_variation_id)?.price;
+      } else if (bundleProductIds.has(item.product_id)) {
+        // simple_bundle — price comes from products.sale_price, not the
+        // (often 0) default variation row.
+        unitPrice = simpleBundlePriceByProduct.get(item.product_id);
+      } else {
+        unitPrice = variationMap.get(item.variation_id)?.price;
+      }
 
       if (unitPrice === undefined || unitPrice === null) {
         return jsonResponse({ error: "سعر منتج غير صالح" }, 400);
