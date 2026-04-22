@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wallet, ArrowLeftRight, Plus } from "lucide-react";
+import { Wallet, ArrowLeftRight, Plus, History, ArrowDownLeft, ArrowUpRight, Receipt, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useCashRegisters, useCreateCashRegister } from "@/hooks/useCashRegisters";
+import { useCashRegisters, useCreateCashRegister, useCashRegisterTransactions } from "@/hooks/useCashRegisters";
 import { useCashTransfers, useCreateCashTransfer } from "@/hooks/useCashTransfers";
 
 const CashRegistersPage = () => {
@@ -27,6 +27,10 @@ const CashRegistersPage = () => {
   const [toId, setToId] = useState("");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
+
+  const [txRegisterId, setTxRegisterId] = useState<string | null>(null);
+  const txRegister = registers?.find((r) => r.id === txRegisterId);
+  const { data: transactions, isLoading: txLoading } = useCashRegisterTransactions(txRegisterId);
 
   const handleCreateRegister = () => {
     if (!regName.trim()) return;
@@ -149,11 +153,90 @@ const CashRegistersPage = () => {
                 <div className="text-xs text-muted-foreground mt-1">
                   יתרת פתיחה: ₪{Number(r.opening_balance).toFixed(2)}
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-3 gap-2"
+                  onClick={() => setTxRegisterId(r.id)}
+                >
+                  <History className="h-4 w-4" />
+                  צפייה בתנועות
+                </Button>
               </CardContent>
             </Card>
           ))
         )}
       </div>
+
+      {/* Transactions Dialog */}
+      <Dialog open={!!txRegisterId} onOpenChange={(o) => !o && setTxRegisterId(null)}>
+        <DialogContent dir="rtl" className="max-w-3xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              תנועות קופה{txRegister ? ` — ${txRegister.name}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          {txRegister && (
+            <div className="flex items-center gap-4 px-1 pb-2 border-b text-sm">
+              <span className="text-muted-foreground">יתרה נוכחית:</span>
+              <span className="font-bold text-lg">₪{Number(txRegister.current_balance).toFixed(2)}</span>
+              <span className="text-muted-foreground mr-auto">
+                {transactions?.length || 0} תנועות
+              </span>
+            </div>
+          )}
+          <div className="flex-1 overflow-y-auto -mx-6 px-6">
+            {txLoading ? (
+              <div className="py-12 text-center text-muted-foreground">טוען...</div>
+            ) : !transactions?.length ? (
+              <div className="py-12 text-center text-muted-foreground">אין תנועות בקופה זו</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-right">סוג</TableHead>
+                    <TableHead className="text-right">תיאור</TableHead>
+                    <TableHead className="text-right">סכום</TableHead>
+                    <TableHead className="text-right">תאריך</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {transactions.map((t) => {
+                    const typeMeta = {
+                      payment: { label: "תשלום", icon: CreditCard, cls: "text-green-700 bg-green-50 border-green-200" },
+                      expense: { label: "הוצאה", icon: Receipt, cls: "text-red-700 bg-red-50 border-red-200" },
+                      transfer_in: { label: "העברה נכנסת", icon: ArrowDownLeft, cls: "text-blue-700 bg-blue-50 border-blue-200" },
+                      transfer_out: { label: "העברה יוצאת", icon: ArrowUpRight, cls: "text-orange-700 bg-orange-50 border-orange-200" },
+                    }[t.type];
+                    const Icon = typeMeta.icon;
+                    return (
+                      <TableRow key={t.id}>
+                        <TableCell>
+                          <Badge variant="outline" className={`gap-1 ${typeMeta.cls}`}>
+                            <Icon className="h-3 w-3" />
+                            {typeMeta.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {t.description}
+                          {t.reference && <div className="text-xs text-muted-foreground">{t.reference}</div>}
+                        </TableCell>
+                        <TableCell className={`font-bold ${t.amount >= 0 ? "text-green-700" : "text-red-700"}`}>
+                          {t.amount >= 0 ? "+" : "−"}₪{Math.abs(t.amount).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                          {new Date(t.created_at).toLocaleString("he-IL")}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Recent Transfers */}
       {transfers && transfers.length > 0 && (
