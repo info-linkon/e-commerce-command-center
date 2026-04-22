@@ -143,16 +143,58 @@ const TransfersPage = () => {
               </div>
 
               <div className="flex gap-2">
-                <Select value={selectedVariation} onValueChange={setSelectedVariation}>
-                  <SelectTrigger className="flex-1"><SelectValue placeholder="בחר פריט..." /></SelectTrigger>
-                  <SelectContent>
-                    {variations?.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {(v.products as any)?.name} — {v.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={pickerOpen}
+                      className="flex-1 justify-between font-normal"
+                    >
+                      <span className="truncate">
+                        {selectedVariationObj ? getDisplayLabel(selectedVariationObj) : "בחר פריט..."}
+                      </span>
+                      <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                    <Command
+                      filter={(value, search) => {
+                        if (!search) return 1;
+                        return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                      }}
+                    >
+                      <CommandInput placeholder="חיפוש מוצר, וריאציה או מק״ט..." />
+                      <CommandList>
+                        <CommandEmpty>לא נמצאו פריטים</CommandEmpty>
+                        <CommandGroup>
+                          {variations?.map((v) => {
+                            const label = getDisplayLabel(v);
+                            const searchValue = `${getProductLabel(v)} ${v.name || ""} ${v.sku || ""} ${(v.products as any)?.name || ""}`;
+                            return (
+                              <CommandItem
+                                key={v.id}
+                                value={searchValue}
+                                onSelect={() => {
+                                  setSelectedVariation(v.id);
+                                  setPickerOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "ml-2 h-4 w-4",
+                                    selectedVariation === v.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <span className="truncate">{label}</span>
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <Button onClick={addItem} disabled={!selectedVariation}>
                   <Plus className="h-4 w-4 ml-1" />הוסף
                 </Button>
