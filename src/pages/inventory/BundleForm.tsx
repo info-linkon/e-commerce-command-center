@@ -332,7 +332,7 @@ const BundleForm = () => {
   const isPending = createBundle.isPending || updateBundle.isPending;
 
   return (
-    <div className="space-y-4 pb-20" dir="rtl">
+   <div className="space-y-4 pb-24" dir="rtl">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/crm/inventory/bundles")}>

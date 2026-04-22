@@ -211,7 +211,7 @@ export default function AddOrderItemDialog({ orderId, assignedWarehouseId, onAdd
           הוסף פריט
         </Button>
       </DialogTrigger>
-      <DialogContent dir="rtl" className="max-w-lg">
+      <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>הוסף פריט להזמנה</DialogTitle>
         </DialogHeader>
