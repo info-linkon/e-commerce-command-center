@@ -178,36 +178,32 @@ export function useAssignWarehouse() {
 
       const items = (order.order_items as any[]) || [];
 
-      // 2. Deduct inventory from the assigned warehouse + log
-      for (const item of items) {
-        if (!item.variation_id) continue; // skip custom (general) line items — no inventory tracking
+      // 2. Deduct inventory — expand bundles to their actual component variations
+      const inventoryRows = await expandToInventoryRows(items as any);
 
+      for (const row of inventoryRows) {
         const { data: inv } = await supabase
           .from("inventory")
           .select("*")
-          .eq("variation_id", item.variation_id)
+          .eq("variation_id", row.variation_id)
           .eq("warehouse_id", warehouseId)
           .maybeSingle();
 
         const currentQty = inv?.quantity || 0;
-        const newQty = currentQty - item.quantity;
+        const newQty = currentQty - row.quantity;
 
         if (inv) {
-          await supabase
-            .from("inventory")
-            .update({ quantity: newQty })
-            .eq("id", inv.id);
+          await supabase.from("inventory").update({ quantity: newQty }).eq("id", inv.id);
         } else {
-          // Create negative inventory record if none exists
           await supabase
             .from("inventory")
-            .insert({ variation_id: item.variation_id, warehouse_id: warehouseId, quantity: newQty });
+            .insert({ variation_id: row.variation_id, warehouse_id: warehouseId, quantity: newQty });
         }
 
         await logInventoryChange({
-          variation_id: item.variation_id,
+          variation_id: row.variation_id,
           warehouse_id: warehouseId,
-          quantity_change: -item.quantity,
+          quantity_change: -row.quantity,
           quantity_after: newQty,
           action_type: "sale",
           reference_id: orderId,
@@ -215,8 +211,8 @@ export function useAssignWarehouse() {
         });
       }
 
-      // Sync stock to WooCommerce (all sources — stock is global). Skip custom items.
-      syncMultipleStockToWoo(items.filter((i: any) => i.variation_id).map((item: any) => item.variation_id));
+      // Sync stock to WooCommerce (all sources — stock is global).
+      syncMultipleStockToWoo(inventoryRows.map((r) => r.variation_id));
 
       // 3. Update order with warehouse assignment + status to processing
       const { error: updateErr } = await supabase
