@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeftRight, Plus, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { useWarehouses } from "@/hooks/useWarehouses";
 import { useInventoryTransfers, useCreateTransfer } from "@/hooks/useInventoryTransfers";
 import { useQuery } from "@tanstack/react-query";
@@ -28,22 +31,41 @@ const TransfersPage = () => {
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<TransferItem[]>([]);
   const [selectedVariation, setSelectedVariation] = useState("");
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const { data: warehouses } = useWarehouses();
   const { data: transfers, isLoading } = useInventoryTransfers();
   const createTransfer = useCreateTransfer();
 
   const { data: variations } = useQuery({
-    queryKey: ["all-variations"],
+    queryKey: ["all-variations-non-bundle"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_variations")
-        .select("*, products(name)")
+        .select("*, products(name, name_ar, product_type)")
         .order("name");
       if (error) throw error;
-      return data;
+      // Filter out bundle shells — bundles don't hold real inventory
+      return (data || []).filter(
+        (v: any) =>
+          v.products?.product_type !== "simple_bundle" &&
+          v.products?.product_type !== "variable_bundle"
+      );
     },
   });
+
+  const getProductLabel = (v: any) =>
+    (v.products as any)?.name_ar || (v.products as any)?.name || "";
+
+  const getDisplayLabel = (v: any) => {
+    const product = getProductLabel(v);
+    const isDefault = !v.name || v.name.toLowerCase() === "default";
+    const variation = isDefault ? "" : ` — ${v.name}`;
+    const sku = v.sku ? ` (${v.sku})` : "";
+    return `${product}${variation}${sku}`;
+  };
+
+  const selectedVariationObj = variations?.find((v) => v.id === selectedVariation);
 
   const addItem = () => {
     if (!selectedVariation) return;
@@ -51,12 +73,12 @@ const TransfersPage = () => {
       toast.error("הפריט כבר ברשימה");
       return;
     }
-    const v = variations?.find((v) => v.id === selectedVariation);
+    const v = selectedVariationObj;
     if (!v) return;
     setItems([...items, {
       variation_id: v.id,
       variation_name: v.name,
-      product_name: (v.products as any)?.name || "",
+      product_name: getProductLabel(v),
       quantity: 1,
     }]);
     setSelectedVariation("");
