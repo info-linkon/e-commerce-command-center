@@ -78,7 +78,17 @@ Deno.serve(async (req) => {
 
       // Call send-sms function
       const { error: smsErr } = await supabase.functions.invoke("send-sms", {
-        body: { phone, message },
+        body: {
+          phone,
+          message,
+          event_key: trigger_type,
+          context: {
+            order_id: order.id,
+            order_number: order.order_number,
+            template_id: template.id,
+            recipient_type: recipientType,
+          },
+        },
       });
 
       if (smsErr) {

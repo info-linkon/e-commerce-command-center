@@ -105,6 +105,28 @@ Deno.serve(async (req) => {
       const smsResult = await smsResponse.json();
       console.log("SMS send result:", JSON.stringify(smsResult));
 
+      // Log to notification_log (best-effort, code masked for security)
+      try {
+        const isOk = smsResponse.ok && smsResult?.StatusDescription !== "Error";
+        const errorMsg = isOk ? null : (smsResult?.StatusDescription || smsResult?.Message || null);
+        const providerMessageId = smsResult?.Data?.[0]?.MessageId
+          ? String(smsResult.Data[0].MessageId)
+          : (smsResult?.MessageId ? String(smsResult.MessageId) : null);
+        await supabase.from("notification_log").insert({
+          channel: "sms",
+          event_key: "otp_code",
+          recipient: normalizedPhone,
+          body: "קוד אימות: ****",
+          status: isOk ? "sent" : "failed",
+          error: errorMsg,
+          provider_message_id: providerMessageId,
+          sent_at: isOk ? new Date().toISOString() : null,
+          context: { sender: sender || "Elwejha" },
+        });
+      } catch (logErr) {
+        console.error("Failed to log OTP SMS:", logErr);
+      }
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

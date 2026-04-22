@@ -1,4 +1,4 @@
-import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText } from "lucide-react";
+import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText, History } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +34,12 @@ const settingsSections = [
     description: "ניהול הודעות SMS אוטומטיות ללקוחות",
     icon: MessageSquare,
     url: "/crm/admin/sms-templates",
+  },
+  {
+    title: "יומן הודעות SMS",
+    description: "צפייה בכל ההודעות שנשלחו (כולל שגיאות ו-OTP)",
+    icon: History,
+    url: "/crm/admin/sms-log",
   },
   {
     title: "הגדרות LINKON SMS",

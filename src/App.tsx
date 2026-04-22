@@ -61,6 +61,7 @@ import PaymentMethodsSettingsPage from "./pages/admin/PaymentMethodsSettingsPage
 import InforuSettingsPage from "./pages/admin/InforuSettingsPage";
 import EzcountSettingsPage from "./pages/admin/EzcountSettingsPage";
 import UsersPage from "./pages/admin/UsersPage";
+import SmsLogPage from "./pages/admin/SmsLogPage";
 
 const queryClient = new QueryClient();
 
@@ -137,6 +138,7 @@ const App = () => (
             <Route path="/crm/admin/web-banners" element={<Protected><WebBannersPage /></Protected>} />
             <Route path="/crm/admin/coupons" element={<Protected><AdminCouponsPage /></Protected>} />
             <Route path="/crm/admin/sms-templates" element={<Protected><SmsTemplatesPage /></Protected>} />
+            <Route path="/crm/admin/sms-log" element={<Protected><SmsLogPage /></Protected>} />
             <Route path="/crm/admin/meta-pixel" element={<Protected><MetaPixelSettingsPage /></Protected>} />
             <Route path="/crm/admin/hyp-settings" element={<Protected><HypSettingsPage /></Protected>} />
             <Route path="/crm/admin/payment-methods" element={<Protected><PaymentMethodsSettingsPage /></Protected>} />

@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { phone, message } = await req.json();
+    const { phone, message, event_key, context } = await req.json();
     if (!phone || !message) {
       return new Response(JSON.stringify({ error: "phone and message are required" }), {
         status: 400,
@@ -88,15 +88,35 @@ Deno.serve(async (req) => {
       resultData = { raw: resultText };
     }
 
-    if (response.ok && resultData?.StatusDescription !== "Error") {
+    const isOk = response.ok && resultData?.StatusDescription !== "Error";
+    const errorMsg = isOk ? null : (resultData?.StatusDescription || resultData?.Message || resultText);
+    const providerMessageId = resultData?.Data?.[0]?.MessageId
+      ? String(resultData.Data[0].MessageId)
+      : (resultData?.MessageId ? String(resultData.MessageId) : null);
+
+    // Log to notification_log (best-effort, never fails the response)
+    try {
+      await supabase.from("notification_log").insert({
+        channel: "sms",
+        event_key: event_key || "manual_sms",
+        recipient: formattedPhone,
+        body: message,
+        status: isOk ? "sent" : "failed",
+        error: errorMsg,
+        provider_message_id: providerMessageId,
+        sent_at: isOk ? new Date().toISOString() : null,
+        context: { ...(context || {}), sender },
+      });
+    } catch (logErr) {
+      console.error("Failed to log SMS:", logErr);
+    }
+
+    if (isOk) {
       return new Response(JSON.stringify({ success: true, result: resultData }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } else {
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: resultData?.StatusDescription || resultData?.Message || resultText 
-      }), {
+      return new Response(JSON.stringify({ success: false, error: errorMsg }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
