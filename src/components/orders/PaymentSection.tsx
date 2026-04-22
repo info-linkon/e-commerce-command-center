@@ -175,6 +175,7 @@ const PaymentSection = ({
                 customer_phone: customerPhone,
                 items: orderItems,
                 payments: docPayments,
+                shipping_cost: shippingCost,
               });
 
               // Save short invoice URL to order
@@ -442,6 +443,7 @@ const PaymentSection = ({
                   customer_phone: customerPhone,
                   items: orderItems,
                   payments: docPayments,
+                  shipping_cost: shippingCost,
                 });
                 const shortCode = result?.short_code;
                 const invoiceLink = shortCode ? `/inv/${shortCode}` : result?.doc_url;
