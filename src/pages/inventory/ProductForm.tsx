@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useProduct, useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
+import { useProductCategories, useSetProductCategories } from "@/hooks/useProductCategories";
 import { VariationsManager } from "@/components/inventory/VariationsManager";
 import { syncProductToWoo } from "@/lib/wooProductSync";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +26,10 @@ const ProductForm = () => {
   const { data: categories } = useCategories();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
+  const { data: existingCategoryIds } = useProductCategories(id);
+  const setProductCategories = useSetProductCategories();
+  // Unified multi-select; first selected = primary
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -71,6 +76,15 @@ const ProductForm = () => {
     }
   }, [product]);
 
+  // Initialise multi-select from join table; fall back to single category_id for legacy data
+  useEffect(() => {
+    if (existingCategoryIds && existingCategoryIds.length > 0) {
+      setSelectedCategoryIds(existingCategoryIds);
+    } else if (product?.category_id) {
+      setSelectedCategoryIds([product.category_id]);
+    }
+  }, [existingCategoryIds, product?.category_id]);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -115,15 +129,38 @@ const ProductForm = () => {
   };
 
   const handleSave = () => {
+    // Unified selection; first selected = primary category
+    const allCategoryIds = Array.from(new Set(selectedCategoryIds));
+    const primaryCategoryId = allCategoryIds[0] || null;
+
     const data = {
       ...form,
-      category_id: form.category_id || null,
+      category_id: primaryCategoryId,
       gallery_images: galleryImages,
     };
+
+    const persistCategories = async (productId: string) => {
+      try {
+        await setProductCategories.mutateAsync({ productId, categoryIds: allCategoryIds });
+      } catch (err) {
+        console.error("Failed to save categories", err);
+      }
+    };
+
     if (isEditing) {
-      updateProduct.mutate({ id, ...data } as any, { onSuccess: () => navigate("/crm/inventory/products") });
+      updateProduct.mutate({ id, ...data } as any, {
+        onSuccess: async () => {
+          await persistCategories(id!);
+          navigate("/crm/inventory/products");
+        },
+      });
     } else {
-      createProduct.mutate(data as any, { onSuccess: () => navigate("/crm/inventory/products") });
+      createProduct.mutate(data as any, {
+        onSuccess: async (created: any) => {
+          if (created?.id) await persistCategories(created.id);
+          navigate("/crm/inventory/products");
+        },
+      });
     }
   };
 
