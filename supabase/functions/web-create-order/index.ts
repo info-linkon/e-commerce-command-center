@@ -164,36 +164,52 @@ Deno.serve(async (req) => {
     }
 
     // ── Stock check (sum across warehouses) ────────────────────────────
-    const { data: inventoryRows, error: invErr } = await supabase
-      .from("inventory")
-      .select("variation_id, quantity")
-      .in("variation_id", variationIds);
-    if (invErr) throw invErr;
+    // Bundles are skipped here: their stock is the min over their component
+    // variations (computed client-side via useBundleStock and re-checked by
+    // the CRM/picking flow). Re-implementing that recursion server-side
+    // would duplicate a lot of logic and is unnecessary for the storefront
+    // sanity check — non-bundle simple/variable products are still
+    // validated against authoritative inventory below.
+    const nonBundleVariationIds = Array.from(
+      new Set(
+        payload.items
+          .filter((i) => !i.bundle_variation_id)
+          .map((i) => i.variation_id),
+      ),
+    ).filter(Boolean);
 
-    const stockByVariation = new Map<string, number>();
-    for (const row of inventoryRows || []) {
-      stockByVariation.set(
-        row.variation_id,
-        (stockByVariation.get(row.variation_id) || 0) + (row.quantity || 0),
-      );
-    }
+    if (nonBundleVariationIds.length > 0) {
+      const { data: inventoryRows, error: invErr } = await supabase
+        .from("inventory")
+        .select("variation_id, quantity")
+        .in("variation_id", nonBundleVariationIds);
+      if (invErr) throw invErr;
 
-    // Aggregate requested qty per variation (a bundle may share underlying variation)
-    const requestedByVariation = new Map<string, number>();
-    for (const item of payload.items) {
-      requestedByVariation.set(
-        item.variation_id,
-        (requestedByVariation.get(item.variation_id) || 0) + item.quantity,
-      );
-    }
-
-    for (const [vid, requested] of requestedByVariation) {
-      const available = stockByVariation.get(vid) ?? 0;
-      if (available < requested) {
-        return jsonResponse(
-          { error: "أحد المنتجات في السلة لم يعد متوفراً بالكمية المطلوبة", out_of_stock_variation_id: vid },
-          409,
+      const stockByVariation = new Map<string, number>();
+      for (const row of inventoryRows || []) {
+        stockByVariation.set(
+          row.variation_id,
+          (stockByVariation.get(row.variation_id) || 0) + (row.quantity || 0),
         );
+      }
+
+      const requestedByVariation = new Map<string, number>();
+      for (const item of payload.items) {
+        if (item.bundle_variation_id) continue;
+        requestedByVariation.set(
+          item.variation_id,
+          (requestedByVariation.get(item.variation_id) || 0) + item.quantity,
+        );
+      }
+
+      for (const [vid, requested] of requestedByVariation) {
+        const available = stockByVariation.get(vid) ?? 0;
+        if (available < requested) {
+          return jsonResponse(
+            { error: "أحد المنتجات في السلة لم يعد متوفراً بالكمية المطلوبة", out_of_stock_variation_id: vid },
+            409,
+          );
+        }
       }
     }
 
