@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateBundle, useUpdateBundle, useBundle } from "@/hooks/useBundles";
 import { useProducts, useProductVariations } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
+import { useProductCategories, useSetProductCategories } from "@/hooks/useProductCategories";
 import { BundleVariationsManager } from "@/components/inventory/BundleVariationsManager";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,17 @@ const BundleForm = () => {
   const { data: bundle } = useBundle(id);
   const { data: products } = useProducts();
   const { data: categories } = useCategories();
+  const productIdForCategories = bundle?.product_id || fromProductId || undefined;
+  const { data: existingCategoryIds } = useProductCategories(productIdForCategories);
+  const setProductCategories = useSetProductCategories();
+  const [secondaryCategoryIds, setSecondaryCategoryIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (existingCategoryIds) {
+      // Exclude primary category from secondary list
+      setSecondaryCategoryIds(existingCategoryIds);
+    }
+  }, [existingCategoryIds]);
 
   // Load source product when converting from products list
   const { data: sourceProduct } = useQuery({
@@ -231,6 +243,11 @@ const BundleForm = () => {
 
     const bundleItems = items.map(({ variation_id, quantity }) => ({ variation_id, quantity }));
 
+    // Build full category list: primary + secondary (deduped)
+    const allCategoryIds = Array.from(
+      new Set([...(form.category_id ? [form.category_id] : []), ...secondaryCategoryIds])
+    );
+
     if (isEditing && bundle) {
       updateBundle.mutate(
         {
@@ -240,7 +257,15 @@ const BundleForm = () => {
           bundleType: form.bundle_type,
           items: bundleItems,
         },
-        { onSuccess: () => navigate("/crm/inventory/bundles") }
+        {
+          onSuccess: async () => {
+            await setProductCategories.mutateAsync({
+              productId: bundle.product_id,
+              categoryIds: allCategoryIds,
+            });
+            navigate("/crm/inventory/bundles");
+          },
+        }
       );
     } else if (fromProductId) {
       // Converting existing product to bundle — update the product, then create bundle record
@@ -269,6 +294,11 @@ const BundleForm = () => {
             if (iErr) throw iErr;
           }
 
+          await setProductCategories.mutateAsync({
+            productId: fromProductId,
+            categoryIds: allCategoryIds,
+          });
+
           toast.success("הפריט הועבר למארז בהצלחה");
           navigate("/crm/inventory/bundles");
         } catch (err: any) {
@@ -284,7 +314,17 @@ const BundleForm = () => {
           bundleType: form.bundle_type,
           items: bundleItems,
         },
-        { onSuccess: () => navigate("/crm/inventory/bundles") }
+        {
+          onSuccess: async (newBundle: any) => {
+            if (newBundle?.product_id && allCategoryIds.length > 0) {
+              await setProductCategories.mutateAsync({
+                productId: newBundle.product_id,
+                categoryIds: allCategoryIds,
+              });
+            }
+            navigate("/crm/inventory/bundles");
+          },
+        }
       );
     }
   };
@@ -337,6 +377,37 @@ const BundleForm = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              {/* Secondary categories — multi-select chips */}
+              <div className="space-y-1">
+                <Label className="text-xs">קטגוריות נוספות</Label>
+                <div className="flex flex-wrap gap-1.5 p-2 border rounded-md min-h-[40px]">
+                  {(categories || []).filter((c) => c.id !== form.category_id).map((c) => {
+                    const selected = secondaryCategoryIds.includes(c.id);
+                    return (
+                      <button
+                        type="button"
+                        key={c.id}
+                        onClick={() =>
+                          setSecondaryCategoryIds((prev) =>
+                            selected ? prev.filter((id) => id !== c.id) : [...prev, c.id]
+                          )
+                        }
+                        className={`px-2 py-1 text-xs rounded-md border transition-colors ${
+                          selected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background hover:bg-accent"
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                    );
+                  })}
+                  {(categories?.length || 0) === 0 && (
+                    <span className="text-xs text-muted-foreground">אין קטגוריות זמינות</span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">לחץ על קטגוריה כדי לשייך/לבטל. ניתן לבחור כמה.</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
