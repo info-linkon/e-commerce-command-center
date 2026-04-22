@@ -67,6 +67,7 @@ serve(async (req) => {
       description,
       comment,
       dont_send_email,
+      shipping_cost,
     } = body;
 
     const typeNum = DOC_TYPE_MAP[doc_type];
@@ -88,12 +89,25 @@ serve(async (req) => {
 
     // Items
     if (items && items.length > 0) {
-      ezBody.item = items.map((i: { details: string; amount: number; price: number; catalog_number?: string }) => ({
+      const itemsList = items.map((i: { details: string; amount: number; price: number; catalog_number?: string }) => ({
         details: i.details,
         amount: i.amount,
         price: i.price,
         ...(i.catalog_number ? { catalog_number: i.catalog_number } : {}),
       }));
+
+      // Add shipping as a line item if present (so price_total matches payments)
+      const shipping = Number(shipping_cost) || 0;
+      if (shipping > 0) {
+        itemsList.push({
+          details: "דמי משלוח",
+          amount: 1,
+          price: shipping,
+          catalog_number: "SHIPPING",
+        });
+      }
+
+      ezBody.item = itemsList;
     }
 
     // Payments (required for receipt and invoice_receipt)
@@ -107,8 +121,9 @@ serve(async (req) => {
 
     // For invoice_receipt, price_total and tax_included are mandatory
     if (typeNum === 320 && items && items.length > 0) {
-      const total = items.reduce((sum: number, i: { amount: number; price: number }) => sum + i.amount * i.price, 0);
-      ezBody.price_total = total;
+      const itemsTotal = items.reduce((sum: number, i: { amount: number; price: number }) => sum + i.amount * i.price, 0);
+      const shipping = Number(shipping_cost) || 0;
+      ezBody.price_total = itemsTotal + shipping;
       ezBody.tax_included = 1;
     }
 
@@ -124,9 +139,10 @@ serve(async (req) => {
     console.log("EZCount response:", JSON.stringify(ezData));
 
     // Calculate total
-    const total = items
+    const itemsTotalCalc = items
       ? items.reduce((sum: number, i: { amount: number; price: number }) => sum + i.amount * i.price, 0)
       : 0;
+    const total = itemsTotalCalc + (Number(shipping_cost) || 0);
 
     if (ezResponse.ok && !ezData.errMsg) {
       // Generate short code for the document
