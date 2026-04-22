@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
 import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
+import { expandToInventoryRows } from "@/lib/order-inventory";
 
 async function syncOrderStatusToWoo(orderId: string) {
   try {
