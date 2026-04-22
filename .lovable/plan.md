@@ -1,67 +1,66 @@
 
 
-# בדיקה: עוד מקומות שיש לתקן בצד הציבורי
-
-הצ'קאאוט עובד 🎉, אבל אחרי ההסרה של `public_insert` מ-RLS, יש עוד 3 מקומות בקוד הציבורי שעדיין ניגשים ישירות לטבלאות חסומות (`orders`, `order_items`, `coupons`) וייכשלו בשקט או יציגו שגיאות למשתמש.
+# תיקון: ביטול הזמנה + העברות מלאי
 
 ## הבעיות שאותרו
 
-### 1. `useWebBestSellers` (דף הבית) — חסום עכשיו
-`useWebProducts.ts` קורא ישירות `supabase.from("order_items").select(...)` כדי לחשב את המוצרים הנמכרים ביותר. ל-anon אין SELECT על `order_items` ⇒ הקרוסלה "הנמכרים ביותר" בדף הבית תהיה ריקה.
+### 1. ביטול הזמנה לא מחזיר כסף לקופה
+ב-`useCancelOrder` (`src/hooks/useOrders.ts`) הקוד רק מחזיר מלאי ומשנה סטטוס — לא נוגע ב-`payments` ולא בקופה. תוצאה: הזמנה במזומן שבוטלה — הכסף נשאר ביתרת הקופה לנצח.
 
-### 2. `PaymentRedirect` — `/pay/:orderNumber` שבור
-לינק התשלום מה-SMS (`/pay/229`) קורא ישירות `supabase.from("orders").select("payment_link_url, status, ...")`. ל-anon אין SELECT על `orders` ⇒ כל לקוח שלוחץ על לינק תשלום מ-SMS יקבל "הזמנה לא נמצאה".
+### 2. ביטול ושיוך מלאי של מארזים — מנכים מהמקום הלא נכון
+גם `useAssignWarehouse` וגם `useCancelOrder` מבצעים ניכוי/החזרה לפי `order_item.variation_id`. במארזים, ה-variation הזה הוא ה-"shell" (פגז המוצר) — לא מוחזק לו מלאי. הרכיבים האמיתיים נמצאים ב-`bundle_items` או ב-`bundle_variation_items`. תוצאה:
+- בשיוך — המלאי של הרכיבים האמיתיים לא יורד (יוצר פגז מלאי שלילי על ה-shell, והרכיבים נשארים מלאים).
+- בביטול — אותו הדבר במהופך.
 
-### 3. `incrementCouponUsage` ו-`validateCoupon` — קופונים שבורים
-- `validateCoupon` קורא `coupons` מהדפדפן בזמן שלקוח מקליד קוד קופון בצ'קאאוט.
-- `incrementCouponUsage` מעדכנת `used_count` אחרי תשלום מוצלח.
-- ל-anon אין גישה ל-`coupons` ⇒ כל קופון שמשתמש מנסה להזין יחזיר "קוד לא תקין", ו-`max_uses` לא ייאכף.
+הפיקינג עצמו (`order_picking_items`) **כן** מתפרק נכון לרכיבים, אבל פעולת ה-DB על `inventory` לא.
 
-### 4. `WebCheckoutPage` — עדכון notes על כשל
-שורה 373: אם `hyp-create-payment` נכשל, הקוד מנסה `supabase.from("orders").update({ notes: ... })` כדי לתייג את ההזמנה. ל-anon אין UPDATE על `orders` ⇒ העדכון יישתק (לא קריטי, אבל מחבל ב-debug של ops).
+### 3. בהעברות מלאי לא מופיעות וריאציות של מארזים
+זה למעשה **התנהגות נכונה** — מארזים לא אמורים להיות במלאי הפיזי, רק רכיביהם. אבל המשתמש מצפה לראות את הרכיבים (למשל "צבע אדום", "צבע ירוק") כדי להעביר אותם בנפרד. הסלקט מציג כל `product_variations` — כולל ה-shell של המארזים שמטעים. צריך **לסנן החוצה** מארזים מהסלקט.
+
+### 4. אין חיפוש בסלקט של העברות מלאי
+רשימה ארוכה של עשרות וריאציות ב-Select רגיל — קשה למצוא פריט. צריך Combobox עם חיפוש חופשי לפי שם מוצר/וריאציה/SKU.
 
 ## הפתרון
 
-### תיקון 1+3+4 — הרחבת `web-create-order` + Edge Function חדש לוולידציית קופון
+### תיקון 1+2: שכתוב `useCancelOrder` ו-`useAssignWarehouse`
 
-**א. תיקון 4 (notes על כשל יצירת לינק)**: להעביר את עדכון ה-`notes` ל-`hyp-create-payment` עצמו (שכבר רץ עם service role) — אם יצירת הלינק נכשלת בתוך הפונקציה, היא תרשום את הסיבה בעמודת `notes`.
+**עזר משותף**: פונקציה פנימית `expandToInventoryRows(items)` שמקבלת order_items ומחזירה רשימת `{ variation_id, quantity }` של הרכיבים האמיתיים שצריך לנכות/להחזיר במלאי — תוך פירוק מארפים לפי `bundle_type` (אותה לוגיקה שכבר קיימת בבניית `pickingItems`).
 
-**ב. תיקון 3 (קופונים)**:
-- **וולידציה בלייב** (כשהמשתמש מקליד קוד בצ'קאאוט): Edge Function חדש `web-validate-coupon` עם service role + `verify_jwt = false`. מקבל `code` ו-`subtotal`, מחזיר `{ valid, discount, code, type, value, min_order, error? }` בלבד — בלי `id`, `used_count` או שדות פנימיים.
-- **בלי `incrementCouponUsage` בצד הלקוח**: ה-Edge Function `web-create-order` כבר מאתר את הקופון ומחשב הנחה. נוסיף לו: אחרי הצלחה, להגדיל `used_count` (אטומי ב-SQL: `UPDATE coupons SET used_count = used_count+1 WHERE id = ?`). למחוק את הלוגיקה של `hyp_coupon_id` ב-sessionStorage ואת `bumpCouponFromSession` ב-`WebOrderConfirmation` ו-ב-`WebCheckoutPage`.
-- ב-`useCoupons.ts` — `validateCoupon` ו-`incrementCouponUsage` עוברים לקרוא ל-Edge Function (במקום `supabase.from('coupons')` ישיר).
+**`useAssignWarehouse`**: להחליף את הלולאה של ניכוי המלאי כך שתפעל על תוצאת `expandToInventoryRows(items)` במקום ישירות על `order_items`. כך גם המלאי יורד נכון, גם הלוג נכון, וגם הסנכרון ל-Woo (שכבר רק על variation_ids אמיתיים) ייעשה לרכיבים האמיתיים.
 
-### תיקון 2 — `PaymentRedirect` משתמש ב-`pay-redirect` הקיים
+**`useCancelOrder`**:
+1. החזרת מלאי לפי `expandToInventoryRows(items)` (במקום ישירות על order_items).
+2. **חדש** — החזרת תשלומים:
+   - שליפת כל ה-`payments` של ההזמנה.
+   - לכל תשלום מזומן עם `cash_register_id` — קריאה ל-`increment_cash_register(reg_id, -amount)` (RPC קיים, מקבל ערך שלילי).
+   - מחיקת רשומות ה-`payments` (או סימונן כ-void — אבל מחיקה פשוטה יותר ועקבית עם לוגיקת היפוך מלאי).
+   - רישום `payment_events` לתיעוד הביטול.
 
-הפונקציה `pay-redirect` כבר קיימת (רשומה ב-`config.toml` עם `verify_jwt = false`) ועושה בדיוק מה שצריך — מחזירה 302 ל-`payment_link_url` או דף שגיאה. נשנה את `PaymentRedirect.tsx` שיעשה `window.location.href = "/functions/v1/pay-redirect?order=" + orderNumber` במקום לקרוא לטבלה ישירות. (אם `pay-redirect` לא תומך בכל מקרי הקצה — נרחיב אותו במקום לקרוא ל-DB מהדפדפן.)
+### תיקון 3+4: שיפור דיאלוג העברת מלאי
 
-### תיקון 1 — `web-best-sellers` Edge Function חדש
+**ב-`src/pages/inventory/TransfersPage.tsx`**:
+- שינוי ה-query `all-variations` כך שיסנן מוצרים שהם מארזים: אחרי השליפה של `product_variations` עם `products(name, name_ar, product_type)`, לסנן `product_type !== 'simple_bundle' && product_type !== 'variable_bundle'`. זה מסיר את ה-shell של המארפים מהרשימה.
+- החלפת ה-`Select` של בחירת פריט ב-`Command` + `Popover` (Combobox עם חיפוש). שדה החיפוש יחפש לפי שם המוצר (he+ar), שם הוריאציה ו-SKU.
+- תצוגה: "שם מוצר — שם וריאציה (SKU)". למוצרים `simple` עם variation בשם "Default" — להציג רק את שם המוצר כדי לא להטעות.
 
-Edge Function זעיר `web-best-sellers` עם service role + `verify_jwt = false`:
-- אוסף `order_items` (variation_id, quantity)
-- מצרף ל-`product_variations` ואז ל-`products`
-- מחזיר רשימת 12 מוצרים מובילים (אותו פורמט שהפרונט ציפה)
-- `useWebBestSellers` יקרא ל-Edge Function במקום לטבלה ישירה.
+### בונוס איכות: עיגון לוגיקה
 
-## קבצים שיושפעו
+ליצור קובץ עזר חדש `src/lib/order-inventory.ts` עם הפונקציה `expandToInventoryRows(items)` כדי שגם השיוך וגם הביטול ישתמשו באותה לוגיקה (אחרת היא תיכפל ותיווצר שונות בעתיד).
 
-**חדשים**
-- `supabase/functions/web-validate-coupon/index.ts`
-- `supabase/functions/web-best-sellers/index.ts`
-- רישום ב-`supabase/config.toml` עם `verify_jwt = false` לשתיהן
+## טכני: קבצים שיושפעו
 
-**עדכון Edge Functions קיימים**
-- `supabase/functions/web-create-order/index.ts` — להוסיף `UPDATE coupons SET used_count = used_count+1` אחרי הצלחה
-- `supabase/functions/hyp-create-payment/index.ts` — בכישלון, לכתוב את הסיבה ל-`orders.notes`
+- **חדש**: `src/lib/order-inventory.ts` — `expandToInventoryRows()` שמפרק מארזים לרכיבים.
+- **שינוי**: `src/hooks/useOrders.ts`:
+  - `useAssignWarehouse` — שימוש ב-`expandToInventoryRows` לניכוי מלאי.
+  - `useCancelOrder` — שימוש ב-`expandToInventoryRows` להחזרת מלאי + לוגיקת החזרת תשלומים מזומן לקופה ומחיקת רשומות `payments`.
+- **שינוי**: `src/pages/inventory/TransfersPage.tsx`:
+  - סינון מארזים מה-query.
+  - החלפת ה-`Select` ב-Combobox (Command + Popover) עם חיפוש.
 
-**עדכון פרונט**
-- `src/hooks/useWebProducts.ts` — `useWebBestSellers` ⇒ `functions.invoke("web-best-sellers")`
-- `src/hooks/useCoupons.ts` — `validateCoupon` ⇒ `functions.invoke("web-validate-coupon")`; הסרת `incrementCouponUsage` הציבורית
-- `src/pages/web/WebCheckoutPage.tsx` — הסרת `incrementCouponUsage`, `hyp_coupon_id` ב-sessionStorage, ועדכון `notes` הישיר
-- `src/pages/web/WebOrderConfirmation.tsx` — הסרת `bumpCouponFromSession` והקריאות ל-`incrementCouponUsage`
-- `src/pages/web/PaymentRedirect.tsx` — מעבר לשימוש ב-`pay-redirect` Edge Function (או רכיב פשוט שמפנה אליו)
+## בדיקת קצה
 
-## בונוס: בדיקת אבטחה
-
-נריץ את `security--run_security_scan` של Lovable אחרי הסיום כדי לוודא שלא נשארו טבלאות עם חורים.
+לאחר הביצוע נריץ `tsc --noEmit` כדי לוודא שאין שבירה. נמליץ למשתמש לבדוק:
+1. ביטול הזמנת POS שכללה תשלום במזומן ⇒ יתרת הקופה יורדת.
+2. ביטול הזמנה שכללה מארז ⇒ המלאי של הרכיבים (ולא של ה-shell) חוזר.
+3. דיאלוג העברת מלאי ⇒ חיפוש עובד, מארזים לא מופיעים, ורק רכיבים אמיתיים זמינים.
 
