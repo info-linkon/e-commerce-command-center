@@ -91,7 +91,7 @@ const SmsLogPage = () => {
       label: "סטטוס",
       render: (r) =>
         r.status === "sent" ? (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100 gap-1">
+          <Badge className="gap-1 bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400 border-transparent">
             <CheckCircle2 className="h-3 w-3" />
             נשלח
           </Badge>
@@ -139,7 +139,7 @@ const SmsLogPage = () => {
             <CardTitle className="text-sm font-medium text-muted-foreground">סך הכל נשלחו</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">{stats?.sent ?? "—"}</div>
+            <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{stats?.sent ?? "—"}</div>
           </CardContent>
         </Card>
         <Card>
