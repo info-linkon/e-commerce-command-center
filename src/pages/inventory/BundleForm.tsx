@@ -350,6 +350,37 @@ const BundleForm = () => {
                   </Select>
                 </div>
               </div>
+              {/* Secondary categories — multi-select chips */}
+              <div className="space-y-1">
+                <Label className="text-xs">קטגוריות נוספות</Label>
+                <div className="flex flex-wrap gap-1.5 p-2 border rounded-md min-h-[40px]">
+                  {(categories || []).filter((c) => c.id !== form.category_id).map((c) => {
+                    const selected = secondaryCategoryIds.includes(c.id);
+                    return (
+                      <button
+                        type="button"
+                        key={c.id}
+                        onClick={() =>
+                          setSecondaryCategoryIds((prev) =>
+                            selected ? prev.filter((id) => id !== c.id) : [...prev, c.id]
+                          )
+                        }
+                        className={`px-2 py-1 text-xs rounded-md border transition-colors ${
+                          selected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background hover:bg-accent"
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                    );
+                  })}
+                  {(categories?.length || 0) === 0 && (
+                    <span className="text-xs text-muted-foreground">אין קטגוריות זמינות</span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">לחץ על קטגוריה כדי לשייך/לבטל. ניתן לבחור כמה.</p>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">תיאור קצר (עברית)</Label>
