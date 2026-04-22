@@ -32,12 +32,12 @@ const BundleForm = () => {
   const productIdForCategories = bundle?.product_id || fromProductId || undefined;
   const { data: existingCategoryIds } = useProductCategories(productIdForCategories);
   const setProductCategories = useSetProductCategories();
-  const [secondaryCategoryIds, setSecondaryCategoryIds] = useState<string[]>([]);
+  // Unified multi-select: holds ALL category IDs (primary = first one)
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (existingCategoryIds) {
-      // Exclude primary category from secondary list
-      setSecondaryCategoryIds(existingCategoryIds);
+    if (existingCategoryIds && existingCategoryIds.length > 0) {
+      setSelectedCategoryIds(existingCategoryIds);
     }
   }, [existingCategoryIds]);
 
@@ -243,10 +243,10 @@ const BundleForm = () => {
 
     const bundleItems = items.map(({ variation_id, quantity }) => ({ variation_id, quantity }));
 
-    // Build full category list: primary + secondary (deduped)
-    const allCategoryIds = Array.from(
-      new Set([...(form.category_id ? [form.category_id] : []), ...secondaryCategoryIds])
-    );
+    // Use unified selection; first selected = primary
+    const allCategoryIds = Array.from(new Set(selectedCategoryIds));
+    const primaryCategoryId = allCategoryIds[0] || null;
+    productData.category_id = primaryCategoryId;
 
     if (isEditing && bundle) {
       updateBundle.mutate(
@@ -360,46 +360,37 @@ const BundleForm = () => {
                   <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" className="h-9" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">מק״ט</Label>
-                  <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} dir="ltr" placeholder="e.g. BND-001" className="h-9" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">קטגוריה</Label>
-                  <Select value={form.category_id || "none"} onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? null : v })}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder="בחר" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">ללא</SelectItem>
-                      {categories?.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              {/* Secondary categories — multi-select chips */}
               <div className="space-y-1">
-                <Label className="text-xs">קטגוריות נוספות</Label>
-                <div className="flex flex-wrap gap-1.5 p-2 border rounded-md min-h-[40px]">
-                  {(categories || []).filter((c) => c.id !== form.category_id).map((c) => {
-                    const selected = secondaryCategoryIds.includes(c.id);
+                <Label className="text-xs">מק״ט</Label>
+                <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} dir="ltr" placeholder="e.g. BND-001" className="h-9" />
+              </div>
+              {/* Categories — multi-select chips. First selected = primary */}
+              <div className="space-y-1">
+                <Label className="text-xs">קטגוריות (ניתן לבחור כמה)</Label>
+                <div className="flex flex-wrap gap-1.5 p-2 border rounded-md min-h-[44px]">
+                  {(categories || []).map((c) => {
+                    const idx = selectedCategoryIds.indexOf(c.id);
+                    const selected = idx >= 0;
+                    const isPrimary = idx === 0;
                     return (
                       <button
                         type="button"
                         key={c.id}
                         onClick={() =>
-                          setSecondaryCategoryIds((prev) =>
-                            selected ? prev.filter((id) => id !== c.id) : [...prev, c.id]
+                          setSelectedCategoryIds((prev) =>
+                            prev.includes(c.id) ? prev.filter((id) => id !== c.id) : [...prev, c.id]
                           )
                         }
-                        className={`px-2 py-1 text-xs rounded-md border transition-colors ${
-                          selected
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background hover:bg-accent"
+                        className={`px-2.5 py-1 text-xs rounded-md border transition-colors ${
+                          isPrimary
+                            ? "bg-primary text-primary-foreground border-primary font-semibold"
+                            : selected
+                              ? "bg-accent text-accent-foreground border-accent"
+                              : "bg-background hover:bg-accent"
                         }`}
+                        title={isPrimary ? "קטגוריה ראשית" : selected ? "מסומן" : "לא מסומן"}
                       >
-                        {c.name}
+                        {isPrimary && "★ "}{c.name}
                       </button>
                     );
                   })}
@@ -407,7 +398,7 @@ const BundleForm = () => {
                     <span className="text-xs text-muted-foreground">אין קטגוריות זמינות</span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">לחץ על קטגוריה כדי לשייך/לבטל. ניתן לבחור כמה.</p>
+                <p className="text-xs text-muted-foreground">הקטגוריה הראשונה שתבחר היא הקטגוריה הראשית (★).</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
