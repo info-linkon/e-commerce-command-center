@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateBundle, useUpdateBundle, useBundle } from "@/hooks/useBundles";
 import { useProducts, useProductVariations } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
+import { useProductCategories, useSetProductCategories } from "@/hooks/useProductCategories";
 import { BundleVariationsManager } from "@/components/inventory/BundleVariationsManager";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
