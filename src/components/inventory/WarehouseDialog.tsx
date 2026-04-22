@@ -32,7 +32,7 @@ export function WarehouseDialog({ open, onOpenChange, warehouse, onSave, loading
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="sm:max-w-md" dir="rtl">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle>{warehouse ? "עריכת מחסן" : "הוספת מחסן"}</DialogTitle>
         </DialogHeader>

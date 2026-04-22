@@ -55,7 +55,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="sm:max-w-md" dir="rtl">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle>{category ? "עריכת קטגוריה" : "הוספת קטגוריה"}</DialogTitle>
         </DialogHeader>

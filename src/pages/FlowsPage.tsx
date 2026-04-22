@@ -294,7 +294,7 @@ function MermaidDiagram({ diagram, id }: { diagram: string; id: string }) {
 
 const FlowsPage = () => {
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
+    <div className="bg-background" dir="rtl">
       {/* Header */}
       <header className="border-b bg-card shadow-sm">
         <div className="container mx-auto flex items-center gap-4 py-6 px-4">
