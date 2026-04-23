@@ -52,7 +52,12 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
   const updateStatus = useUpdateOrderStatus();
 
   const filtered = orders?.filter((o) => {
-    if (registerFilter !== "all" && o.cash_register_id !== registerFilter) return false;
+    if (registerFilter !== "all") {
+      const orderRegister = o.cash_register_id;
+      const paymentRegisters = (o.payments || []).map((p: any) => p.cash_register_id).filter(Boolean);
+      const matches = orderRegister === registerFilter || paymentRegisters.includes(registerFilter);
+      if (!matches) return false;
+    }
     if (!search) return true;
     const s = search.toLowerCase();
     return (
