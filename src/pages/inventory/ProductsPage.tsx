@@ -22,7 +22,9 @@ const ProductsPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const { data: products, isLoading } = useProducts(categoryFilter === "all" ? undefined : categoryFilter);
+  // Fetch all products and filter client-side so the category filter also matches
+  // products linked via the product_categories mapping table.
+  const { data: products, isLoading } = useProducts();
   const { data: categories } = useCategories();
   const deleteProduct = useDeleteProduct();
   const updateProduct = useUpdateProduct();
@@ -57,16 +59,34 @@ const ProductsPage = () => {
     return (products || []).filter((p) => {
       // Hide products that are already bundles
       if (bundleProductIds?.has(p.id)) return false;
+      // Category filter: check primary category_id and product_categories mapping
+      if (categoryFilter !== "all") {
+        const catIds = new Set<string>();
+        if (p.category_id) catIds.add(p.category_id);
+        ((p as any).product_categories || []).forEach((pc: any) => {
+          if (pc?.category?.id) catIds.add(pc.category.id);
+        });
+        if (!catIds.has(categoryFilter)) return false;
+      }
       const s = search.toLowerCase();
       return p.name.toLowerCase().includes(s) ||
         p.name_ar?.toLowerCase().includes(s) ||
         p.sku?.toLowerCase().includes(s);
     });
-  }, [products, bundleProductIds, search]);
+  }, [products, bundleProductIds, search, categoryFilter]);
 
   const handleToggleFeatured = (p: any, e: React.MouseEvent) => {
     e.stopPropagation();
     updateProduct.mutate({ id: p.id, is_featured: !p.is_featured });
+  };
+
+  const getCategoryNames = (p: any): string => {
+    const names = new Set<string>();
+    if (p.categories?.name) names.add(p.categories.name);
+    (p.product_categories || []).forEach((pc: any) => {
+      if (pc?.category?.name) names.add(pc.category.name);
+    });
+    return names.size ? Array.from(names).join(", ") : "—";
   };
 
   const columns: ColumnDef<any>[] = [
@@ -77,7 +97,7 @@ const ProductsPage = () => {
     )},
     { label: "שם", render: (p) => <span className="font-medium">{p.name_ar || p.name}</span> },
     { label: "מק״ט", render: (p) => p.sku || "—", hideOnMobile: true },
-    { label: "קטגוריה", render: (p) => (p as any).categories?.name || "—", hideOnMobile: true },
+    { label: "קטגוריה", render: (p) => getCategoryNames(p), hideOnMobile: true },
     { label: "סוג", render: (p) => <Badge variant="secondary">{p.product_type === "simple" ? "פשוט" : "עם וריאציות"}</Badge> },
     { label: "מחיר", render: (p) => `₪${Number(p.sale_price).toFixed(2)}` },
     { label: "עלות", render: (p) => `₪${Number(p.cost_price).toFixed(2)}`, hideOnMobile: true },
@@ -132,7 +152,7 @@ const ProductsPage = () => {
             </div>
             <div className="flex justify-between items-center mt-2 text-sm">
               <span className="font-bold">₪{Number(p.sale_price).toFixed(2)}</span>
-              <span className="text-muted-foreground">{(p as any).categories?.name || "ללא קטגוריה"}</span>
+              <span className="text-muted-foreground">{getCategoryNames(p)}</span>
             </div>
           </div>
         )}
