@@ -22,7 +22,9 @@ const ProductsPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const { data: products, isLoading } = useProducts(categoryFilter === "all" ? undefined : categoryFilter);
+  // Fetch all products and filter client-side so the category filter also matches
+  // products linked via the product_categories mapping table.
+  const { data: products, isLoading } = useProducts();
   const { data: categories } = useCategories();
   const deleteProduct = useDeleteProduct();
   const updateProduct = useUpdateProduct();
@@ -57,12 +59,21 @@ const ProductsPage = () => {
     return (products || []).filter((p) => {
       // Hide products that are already bundles
       if (bundleProductIds?.has(p.id)) return false;
+      // Category filter: check primary category_id and product_categories mapping
+      if (categoryFilter !== "all") {
+        const catIds = new Set<string>();
+        if (p.category_id) catIds.add(p.category_id);
+        ((p as any).product_categories || []).forEach((pc: any) => {
+          if (pc?.category?.id) catIds.add(pc.category.id);
+        });
+        if (!catIds.has(categoryFilter)) return false;
+      }
       const s = search.toLowerCase();
       return p.name.toLowerCase().includes(s) ||
         p.name_ar?.toLowerCase().includes(s) ||
         p.sku?.toLowerCase().includes(s);
     });
-  }, [products, bundleProductIds, search]);
+  }, [products, bundleProductIds, search, categoryFilter]);
 
   const handleToggleFeatured = (p: any, e: React.MouseEvent) => {
     e.stopPropagation();
