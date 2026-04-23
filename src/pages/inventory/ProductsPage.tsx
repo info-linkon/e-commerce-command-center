@@ -69,6 +69,15 @@ const ProductsPage = () => {
     updateProduct.mutate({ id: p.id, is_featured: !p.is_featured });
   };
 
+  const getCategoryNames = (p: any): string => {
+    const names = new Set<string>();
+    if (p.categories?.name) names.add(p.categories.name);
+    (p.product_categories || []).forEach((pc: any) => {
+      if (pc?.category?.name) names.add(pc.category.name);
+    });
+    return names.size ? Array.from(names).join(", ") : "—";
+  };
+
   const columns: ColumnDef<any>[] = [
     { label: "⭐", render: (p) => (
       <button onClick={(e) => handleToggleFeatured(p, e)} className="p-1">
@@ -77,7 +86,7 @@ const ProductsPage = () => {
     )},
     { label: "שם", render: (p) => <span className="font-medium">{p.name_ar || p.name}</span> },
     { label: "מק״ט", render: (p) => p.sku || "—", hideOnMobile: true },
-    { label: "קטגוריה", render: (p) => (p as any).categories?.name || "—", hideOnMobile: true },
+    { label: "קטגוריה", render: (p) => getCategoryNames(p), hideOnMobile: true },
     { label: "סוג", render: (p) => <Badge variant="secondary">{p.product_type === "simple" ? "פשוט" : "עם וריאציות"}</Badge> },
     { label: "מחיר", render: (p) => `₪${Number(p.sale_price).toFixed(2)}` },
     { label: "עלות", render: (p) => `₪${Number(p.cost_price).toFixed(2)}`, hideOnMobile: true },
@@ -132,7 +141,7 @@ const ProductsPage = () => {
             </div>
             <div className="flex justify-between items-center mt-2 text-sm">
               <span className="font-bold">₪{Number(p.sale_price).toFixed(2)}</span>
-              <span className="text-muted-foreground">{(p as any).categories?.name || "ללא קטגוריה"}</span>
+              <span className="text-muted-foreground">{getCategoryNames(p)}</span>
             </div>
           </div>
         )}
