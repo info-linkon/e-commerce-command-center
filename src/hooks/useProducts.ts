@@ -13,7 +13,7 @@ export function useProducts(categoryId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("products")
-        .select("*, categories!products_category_id_fkey(name)")
+        .select("*, categories!products_category_id_fkey(name), product_categories(category:categories(id, name))")
         .order("name");
       if (categoryId) query = query.eq("category_id", categoryId);
       const { data, error } = await query;
