@@ -43,7 +43,7 @@ export function useOrders(status?: OrderStatus) {
     queryFn: async () => {
       let query = supabase
         .from("orders")
-        .select("*, warehouses(name)")
+        .select("*, warehouses(name), payments(cash_register_id)")
         .order("created_at", { ascending: false });
       if (status) query = query.eq("status", status);
       const { data, error } = await query;
