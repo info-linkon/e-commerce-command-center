@@ -30,11 +30,29 @@ export function useWebProductsByCategoryNumber(categoryNumber: number | undefine
         .eq("category_number", categoryNumber!)
         .single();
       if (!cat) return { products: [], category: null };
+
+      // Collect product ids from both the primary category_id link
+      // and the many-to-many product_categories table.
+      const [primaryRes, mappedRes] = await Promise.all([
+        supabase.from("products").select("id").eq("category_id", cat.id),
+        supabase.from("product_categories").select("product_id").eq("category_id", cat.id),
+      ]);
+      if (primaryRes.error) throw primaryRes.error;
+      if (mappedRes.error) throw mappedRes.error;
+
+      const ids = Array.from(
+        new Set([
+          ...(primaryRes.data || []).map((r: any) => r.id),
+          ...(mappedRes.data || []).map((r: any) => r.product_id),
+        ]),
+      );
+      if (ids.length === 0) return { products: [], category: cat };
+
       const { data, error } = await supabase
         .from("products")
         .select("*, categories!products_category_id_fkey(name, slug)")
         .eq("is_published", true)
-        .eq("category_id", cat.id)
+        .in("id", ids)
         .order("name");
       if (error) throw error;
       return { products: data || [], category: cat };
