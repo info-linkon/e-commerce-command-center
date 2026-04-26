@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
-import { useOrders, useDeleteOrder, useUpdateOrderStatus, type OrderStatus } from "@/hooks/useOrders";
+import { useOrders, useDeleteOrder, useUpdateOrderStatus, orderInvoiceKind, type OrderStatus } from "@/hooks/useOrders";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
 
 const statusLabels: Record<string, string> = {
@@ -46,6 +46,7 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
   const [statusFilter, setStatusFilter] = useState<string>(defaultStatus || "all");
   const [search, setSearch] = useState("");
   const [registerFilter, setRegisterFilter] = useState<string>("all");
+  const [invoiceFilter, setInvoiceFilter] = useState<string>("all");
   const { data: orders, isLoading } = useOrders(statusFilter === "all" ? undefined : statusFilter as OrderStatus);
   const { data: registers } = useCashRegisters();
   const deleteOrder = useDeleteOrder();
@@ -57,6 +58,11 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
       const paymentRegisters = (o.payments || []).map((p: any) => p.cash_register_id).filter(Boolean);
       const matches = orderRegister === registerFilter || paymentRegisters.includes(registerFilter);
       if (!matches) return false;
+    }
+    if (invoiceFilter !== "all") {
+      const kind = orderInvoiceKind(o);
+      if (invoiceFilter === "with" && kind === "none") return false;
+      if (invoiceFilter === "without" && kind !== "none") return false;
     }
     if (!search) return true;
     const s = search.toLowerCase();
@@ -74,6 +80,16 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
     { label: "סה״כ", render: (o) => `₪${Number(o.total).toFixed(2)}` },
     { label: "מקור", render: (o) => <Badge variant="outline" className="text-xs">{sourceLabels[o.source] || o.source}</Badge>, hideOnMobile: true },
     { label: "אמצעי תשלום", render: (o) => o.payment_method ? <Badge variant="secondary" className="text-xs">{paymentLabels[o.payment_method] || o.payment_method}</Badge> : <span className="text-muted-foreground text-xs">—</span>, hideOnMobile: true },
+    {
+      label: "חשבונית",
+      render: (o) => {
+        const kind = orderInvoiceKind(o);
+        if (kind === "auto") return <Badge className="bg-green-100 text-green-800 border-0 text-xs">אוטומטית</Badge>;
+        if (kind === "manual") return <Badge className="bg-blue-100 text-blue-800 border-0 text-xs">ידנית</Badge>;
+        return <span className="text-muted-foreground text-xs">—</span>;
+      },
+      hideOnMobile: true,
+    },
     {
       label: "סטטוס",
       render: (o) => {
@@ -128,6 +144,14 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
             {registers?.map((r) => (
               <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={invoiceFilter} onValueChange={setInvoiceFilter}>
+          <SelectTrigger className="w-32 sm:w-40"><SelectValue placeholder="חשבונית" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">כל ההזמנות</SelectItem>
+            <SelectItem value="with">עם חשבונית</SelectItem>
+            <SelectItem value="without">בלי חשבונית</SelectItem>
           </SelectContent>
         </Select>
       </div>
