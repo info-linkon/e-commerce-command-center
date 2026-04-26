@@ -266,9 +266,6 @@ const CashRegistersPage = () => {
                   <RotateCcw className="h-4 w-4" />
                   אפס יתרה לאפס
                 </Button>
-                <p className="text-xs text-muted-foreground">
-                  עדכון ידני של היתרה הנוכחית. השתמש לתיקון או איפוס יזום בלבד — התנועות שתועדו (תשלומים, הוצאות, העברות) אינן נמחקות.
-                </p>
               </div>
             </div>
           </DialogContent>
