@@ -391,6 +391,12 @@ const CashRegistersPage = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Cash total (excluding bank account & HYP) */}
+      <div className="pt-2 pb-4 text-center text-xs text-muted-foreground">
+        סך הכל בקופות ({cashTotalCount}) — ללא חשבון בנק ו-HYP:{" "}
+        <span className="font-semibold text-foreground">₪{cashTotal.toFixed(2)}</span>
+      </div>
     </div>
   );
 };
