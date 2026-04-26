@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wallet, ArrowLeftRight, Plus, History, ArrowDownLeft, ArrowUpRight, Receipt, CreditCard } from "lucide-react";
+import { Wallet, ArrowLeftRight, Plus, History, ArrowDownLeft, ArrowUpRight, Receipt, CreditCard, Settings, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useCashRegisters, useCreateCashRegister, useCashRegisterTransactions } from "@/hooks/useCashRegisters";
+import { useCashRegisters, useCreateCashRegister, useCashRegisterTransactions, useSetCashRegisterBalance, useSetCashRegisterOpeningBalance } from "@/hooks/useCashRegisters";
 import { useCashTransfers, useCreateCashTransfer } from "@/hooks/useCashTransfers";
 import { useIsOwner } from "@/hooks/useIsAdmin";
 
@@ -18,6 +18,8 @@ const CashRegistersPage = () => {
   const { data: transfers } = useCashTransfers();
   const createRegister = useCreateCashRegister();
   const createTransfer = useCreateCashTransfer();
+  const setBalance = useSetCashRegisterBalance();
+  const setOpeningBalance = useSetCashRegisterOpeningBalance();
   const { isOwner } = useIsOwner();
 
   const [newOpen, setNewOpen] = useState(false);
@@ -33,6 +35,41 @@ const CashRegistersPage = () => {
   const [txRegisterId, setTxRegisterId] = useState<string | null>(null);
   const txRegister = registers?.find((r) => r.id === txRegisterId);
   const { data: transactions, isLoading: txLoading } = useCashRegisterTransactions(txRegisterId);
+
+  // Settings dialog (owner only)
+  const [settingsRegisterId, setSettingsRegisterId] = useState<string | null>(null);
+  const settingsRegister = registers?.find((r) => r.id === settingsRegisterId);
+  const [openingInput, setOpeningInput] = useState("");
+  const [balanceInput, setBalanceInput] = useState("");
+
+  const openSettings = (r: { id: string; opening_balance: number; current_balance: number }) => {
+    setSettingsRegisterId(r.id);
+    setOpeningInput(String(Number(r.opening_balance)));
+    setBalanceInput(String(Number(r.current_balance)));
+  };
+
+  const handleSaveOpening = () => {
+    if (!settingsRegisterId) return;
+    const v = parseFloat(openingInput);
+    if (!isFinite(v)) return;
+    setOpeningBalance.mutate({ id: settingsRegisterId, opening_balance: v });
+  };
+
+  const handleSaveBalance = () => {
+    if (!settingsRegisterId) return;
+    const v = parseFloat(balanceInput);
+    if (!isFinite(v)) return;
+    setBalance.mutate({ id: settingsRegisterId, current_balance: v });
+  };
+
+  const handleResetBalance = () => {
+    if (!settingsRegisterId || !settingsRegister) return;
+    if (!confirm(`לאפס את היתרה הנוכחית של "${settingsRegister.name}" לאפס? פעולה זו אינה משפיעה על היסטוריית התנועות.`)) return;
+    setBalance.mutate(
+      { id: settingsRegisterId, current_balance: 0 },
+      { onSuccess: () => setBalanceInput("0") },
+    );
+  };
 
   const handleCreateRegister = () => {
     if (!regName.trim()) return;
@@ -164,11 +201,82 @@ const CashRegistersPage = () => {
                   <History className="h-4 w-4" />
                   צפייה בתנועות
                 </Button>
+                {isOwner && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2 gap-2"
+                    onClick={() => openSettings(r)}
+                  >
+                    <Settings className="h-4 w-4" />
+                    הגדרות קופה
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ))
         )}
       </div>
+
+      {/* Settings Dialog (owner only) */}
+      {isOwner && (
+        <Dialog open={!!settingsRegisterId} onOpenChange={(o) => !o && setSettingsRegisterId(null)}>
+          <DialogContent dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                הגדרות קופה{settingsRegister ? ` — ${settingsRegister.name}` : ""}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-5 pt-2">
+              <div className="space-y-2">
+                <Label>יתרת פתיחה (סכום התחלתי)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    value={openingInput}
+                    onChange={(e) => setOpeningInput(e.target.value)}
+                    step="0.01"
+                  />
+                  <Button onClick={handleSaveOpening} disabled={setOpeningBalance.isPending}>
+                    שמור
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  הסכום ההתחלתי של הקופה (קו בסיס בלבד — אינו משנה את היתרה הנוכחית).
+                </p>
+              </div>
+
+              <div className="space-y-2 border-t pt-4">
+                <Label>יתרה נוכחית</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    value={balanceInput}
+                    onChange={(e) => setBalanceInput(e.target.value)}
+                    step="0.01"
+                  />
+                  <Button onClick={handleSaveBalance} disabled={setBalance.isPending}>
+                    שמור
+                  </Button>
+                </div>
+                <Button
+                  variant="destructive"
+                  className="w-full gap-2 mt-2"
+                  onClick={handleResetBalance}
+                  disabled={setBalance.isPending}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  אפס יתרה לאפס
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  עדכון ידני של היתרה הנוכחית. השתמש לתיקון או איפוס יזום בלבד — התנועות שתועדו (תשלומים, הוצאות, העברות) אינן נמחקות.
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Transactions Dialog */}
       <Dialog open={!!txRegisterId} onOpenChange={(o) => !o && setTxRegisterId(null)}>

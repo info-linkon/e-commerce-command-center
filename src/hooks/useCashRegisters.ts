@@ -49,6 +49,44 @@ export function useUpdateCashRegisterBalance() {
   });
 }
 
+// Owner-only: set absolute current balance (used for "reset" / manual correction).
+export function useSetCashRegisterBalance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, current_balance }: { id: string; current_balance: number }) => {
+      const { error } = await supabase
+        .from("cash_registers")
+        .update({ current_balance })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["cash_registers"] });
+      toast.success("היתרה עודכנה");
+    },
+    onError: (err: any) => toast.error(err?.message || "שגיאה בעדכון היתרה"),
+  });
+}
+
+// Owner-only: set opening balance (the "starting amount" baseline of the register).
+export function useSetCashRegisterOpeningBalance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, opening_balance }: { id: string; opening_balance: number }) => {
+      const { error } = await supabase
+        .from("cash_registers")
+        .update({ opening_balance })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["cash_registers"] });
+      toast.success("יתרת הפתיחה עודכנה");
+    },
+    onError: (err: any) => toast.error(err?.message || "שגיאה בעדכון יתרת הפתיחה"),
+  });
+}
+
 export type CashRegisterTransaction = {
   id: string;
   type: "payment" | "expense" | "transfer_in" | "transfer_out";
