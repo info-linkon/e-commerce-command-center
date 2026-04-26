@@ -116,7 +116,7 @@ export default function OrderTypeTab({ startDate, endDate }: Props) {
         </Card>
       </div>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "with" | "without")}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "with" | "without")} dir="rtl">
         <TabsList dir="rtl">
           <TabsTrigger value="with">עם חשבונית ({withInvoice.length})</TabsTrigger>
           <TabsTrigger value="without">בלי חשבונית ({withoutInvoice.length})</TabsTrigger>
