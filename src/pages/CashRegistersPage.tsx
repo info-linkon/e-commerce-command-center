@@ -242,9 +242,6 @@ const CashRegistersPage = () => {
                     שמור
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  הסכום ההתחלתי של הקופה (קו בסיס בלבד — אינו משנה את היתרה הנוכחית).
-                </p>
               </div>
 
               <div className="space-y-2 border-t pt-4">
