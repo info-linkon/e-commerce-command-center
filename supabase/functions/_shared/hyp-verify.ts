@@ -337,12 +337,28 @@ export async function runHypVerify(
     })
     .eq("id", resolvedOrderId);
 
+  // ── Resolve HYP cash register (so credit transactions accumulate in a dedicated register) ──
+  let hypRegisterId: string | null = null;
+  try {
+    const { data: hypReg } = await supabase
+      .from("cash_registers")
+      .select("id")
+      .ilike("name", "%HYP%")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    hypRegisterId = hypReg?.id || null;
+  } catch (regErr) {
+    console.error("hyp-verify: failed to resolve HYP register (non-blocking):", regErr);
+  }
+
   // ── Insert payment row (unique index on (order_id, reference) enforces idempotency) ──
   const paymentInsert = await supabase.from("payments").insert({
     order_id: resolvedOrderId,
     amount: chargedAmount,
     payment_method: "credit",
     reference: `HYP-${Id || ""}`,
+    cash_register_id: hypRegisterId,
   });
 
   if (paymentInsert.error) {
@@ -354,6 +370,19 @@ export async function runHypVerify(
     }
     await logEvent(supabase, resolvedOrderId, "hyp_payment_insert_failed", false, paymentInsert.error.message, { Id });
     return { verified: false, CCode: "0", reason: "payment_insert_failed" };
+  }
+
+  // ── Bump HYP register balance ──
+  if (hypRegisterId) {
+    try {
+      await supabase.rpc("increment_cash_register", {
+        reg_id: hypRegisterId,
+        delta: chargedAmount,
+      });
+    } catch (balErr) {
+      console.error("hyp-verify: failed to increment HYP register balance (non-blocking):", balErr);
+      await logEvent(supabase, resolvedOrderId, "hyp_register_balance_failed", false, String(balErr), { Id, hypRegisterId });
+    }
   }
 
   await logEvent(supabase, resolvedOrderId, `hyp_verify_${source}`, true, "payment_recorded", { Id, amount: chargedAmount });
