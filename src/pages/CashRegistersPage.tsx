@@ -11,12 +11,14 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useCashRegisters, useCreateCashRegister, useCashRegisterTransactions } from "@/hooks/useCashRegisters";
 import { useCashTransfers, useCreateCashTransfer } from "@/hooks/useCashTransfers";
+import { useIsOwner } from "@/hooks/useIsAdmin";
 
 const CashRegistersPage = () => {
   const { data: registers, isLoading } = useCashRegisters();
   const { data: transfers } = useCashTransfers();
   const createRegister = useCreateCashRegister();
   const createTransfer = useCreateCashTransfer();
+  const { isOwner } = useIsOwner();
 
   const [newOpen, setNewOpen] = useState(false);
   const [regName, setRegName] = useState("");
@@ -109,7 +111,7 @@ const CashRegistersPage = () => {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={newOpen} onOpenChange={setNewOpen}>
+          {isOwner && <Dialog open={newOpen} onOpenChange={setNewOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2"><Plus className="h-4 w-4" />קופה חדשה</Button>
             </DialogTrigger>
@@ -129,7 +131,7 @@ const CashRegistersPage = () => {
                 </Button>
               </div>
             </DialogContent>
-          </Dialog>
+          </Dialog>}
         </div>
       </div>
 
