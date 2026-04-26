@@ -461,6 +461,57 @@ const OrderDetail = () => {
                 </Badge>
               </a>
             )}
+            {/* סימון ידני של חשבונית — מוצג רק כשאין חשבונית אוטומטית */}
+            {!(order as any).invoice_url && (
+              <div className="flex items-center gap-2 mt-1 pt-2 border-t">
+                {(order as any).invoice_issued_manually ? (
+                  <>
+                    <Badge className="bg-blue-100 text-blue-800 border-0 gap-1">
+                      <FileText className="h-3 w-3" />
+                      חשבונית הופקה ידנית
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs"
+                      onClick={async () => {
+                        const { error } = await supabase
+                          .from("orders")
+                          .update({ invoice_issued_manually: false } as any)
+                          .eq("id", order.id);
+                        if (error) toast.error("שגיאה בעדכון");
+                        else {
+                          toast.success("הסימון בוטל");
+                          qc.invalidateQueries({ queryKey: ["orders"] });
+                        }
+                      }}
+                    >
+                      בטל סימון
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={async () => {
+                      const { error } = await supabase
+                        .from("orders")
+                        .update({ invoice_issued_manually: true } as any)
+                        .eq("id", order.id);
+                      if (error) toast.error("שגיאה בעדכון");
+                      else {
+                        toast.success("ההזמנה סומנה כהונפקה לה חשבונית");
+                        qc.invalidateQueries({ queryKey: ["orders"] });
+                      }
+                    }}
+                  >
+                    <FileText className="h-3 w-3 ml-1" />
+                    סמן כחשבונית הופקה ידנית
+                  </Button>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
