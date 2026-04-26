@@ -1,73 +1,73 @@
-# חסימת פעולות ניהול קופה ל-karam + הוספת קופות HYP ובנק
+# סימון חשבונית להזמנות + טאב "סוג הזמנה" בדוחות
+
+## מטרה
+1. כל הזמנה שהונפק עליה חשבונית (אוטומטית או ידנית) — תסומן בבירור.
+2. אפשרות לסמן **ידנית** הזמנה כ"הופקה חשבונית" (למקרה של חשבונית שהוצאה מחוץ למערכת).
+3. טאב חדש בדוחות → **"סוג הזמנה"** עם שני תתי-טאבים: **עם חשבונית** / **בלי חשבונית**.
 
 ## ניתוח המצב הקיים
+- חשבוניות אשראי דרך HYP מופקות אוטומטית ב-EZCount, נשמרות בטבלת `documents` עם `order_id`, ו-`orders.invoice_url` מתעדכן.
+- אין כיום אינדיקטור ויזואלי ברשימת ההזמנות שמראה אם יש חשבונית.
+- אין דרך לסמן ידנית הזמנה (מזומן/Bit) כ"חשבונית הופקה ידנית".
 
-### מצב משתמשים
-- כיום ה-enum `app_role` כולל רק `'admin' | 'user'`.
-- **karam הוא היחיד עם תפקיד `admin`** (משמש להצגת ניהול משתמשים בסיידבר).
-- שאר המשתמשים (Tareq, Mohammed) הם `user` בלבד.
+## שינויים נדרשים
 
-### מצב קופות
-- קיימות 5 קופות פעילות: ראשית, טארק, כרם, מחמד, עובד.
-- חסרות: **HYP** (סליקת אשראי) ו**חשבון בנק**.
+### 1. בסיס נתונים (Migration)
+הוספת עמודה ל-`orders`:
+```sql
+ALTER TABLE public.orders 
+  ADD COLUMN IF NOT EXISTS invoice_issued_manually boolean NOT NULL DEFAULT false;
+```
+- העמודה מתעדת סימון ידני בלבד.
+- הזמנה תיחשב "עם חשבונית" אם: `invoice_url IS NOT NULL` **או** קיים `documents.status='issued'` עבורה **או** `invoice_issued_manually = true`.
 
-### בעיה לוגית
-המשתמש מבקש לחסום את karam מהפעולות, אבל היום davka הוא הוא ה-admin. המשמעות: ההיגיון של "admin = מורשה הכל" צריך להתהפך — בעלי העסק (Tareq, Mohammed) הם ה-owners, וכרם הוא user רגיל.
+### 2. עדכון `useOrders` hook
+שינוי השאילתה לכלול ספירת מסמכים שהונפקו:
+```ts
+.select("*, warehouses(name), payments(cash_register_id), documents:documents!documents_order_id_fkey(id, status)")
+```
+(אם אין FK מוגדר — נשתמש ב-`documents(id, status)` ונסנן ב-client).
 
-## הפתרון המוצע
+הוספת helper: `hasInvoice(order)` שמחזיר `true` אם:
+- `order.invoice_issued_manually === true` או
+- `order.invoice_url` קיים או
+- יש מסמך אחד לפחות עם `status='issued'`.
 
-### 1. עדכון תפקידי משתמשים
-- הוספת ערך `'owner'` ל-enum `app_role`.
-- הקצאת תפקיד `owner` ל-Tareq ול-Mohammed.
-- **הסרת תפקיד `admin` מ-karam** (יישאר רק עם תפקיד `user`).
-- ה-hook הקיים `useIsAdmin` יוחלף/יורחב ב-`useIsOwner` שיבדוק תפקיד `owner`.
-- הסיידבר יציג "ניהול משתמשים" רק ל-owners (במקום admins).
+### 3. תצוגה ב-`OrdersPage.tsx`
+- **עמודה חדשה** "חשבונית" עם Badge:
+  - 🟢 "אוטומטית" (יש document/invoice_url)
+  - 🔵 "ידנית" (`invoice_issued_manually=true` ואין document)
+  - ⚪ "—" (אין חשבונית)
+- **פילטר חדש** ב-Select: "עם חשבונית" / "בלי חשבונית" / "הכל".
 
-### 2. הסתרה/חסימת פעולות ב-`CashRegistersPage`
-ל-non-owners (כרם וכל user רגיל אחר):
-- **כפתור "קופה חדשה"** — מוסתר.
-- **שדה "יתרת פתיחה"** בעת יצירת קופה חדשה — לא רלוונטי אם הכפתור מוסתר. מוסר.
-- **כפתור "אפס יתרה"** (אם נוסיף בעתיד) — מוסתר.
+### 4. תצוגה ב-`OrderDetail.tsx`
+- אם אין חשבונית אוטומטית — להוסיף **כפתור/Switch** "סמן כחשבונית הופקה ידנית" (Toggle של `invoice_issued_manually`).
+- אם יש חשבונית אוטומטית — Badge "חשבונית הופקה" + לינק להורדה (`invoice_url`).
+- אם הוסר הסימון הידני — Toggle off חוזר.
 
-> הערה: כיום אין בקוד פונקציית "איפוס יתרת קופה" מפורשת. בכל זאת, נחסום גם הזנת `opening_balance` בשרת ע"י ולידציה ב-mutation: רק owner יכול ליצור קופה.
+### 5. דוחות — טאב חדש "סוג הזמנה"
+ב-`src/pages/ReportsPage.tsx`:
+- הוספת `<TabsTrigger value="order-type">סוג הזמנה</TabsTrigger>`
+- יצירת רכיב חדש `src/components/reports/OrderTypeTab.tsx` עם:
+  - **תת-Tabs פנימי**: `with-invoice` / `without-invoice`.
+  - שאילתה ל-`orders` בטווח התאריכים (`startDate`/`endDate`).
+  - קביעת סטטוס חשבונית לכל הזמנה (לפי הלוגיקה מסעיף 2).
+  - תצוגה: טבלה עם מס׳ הזמנה, לקוח, סכום, אמצעי תשלום, סטטוס, סוג חשבונית (אוטומטית/ידנית בטאב "עם").
+  - סיכומי ראש: כמות הזמנות + סך כספי בכל קבוצה.
+  - שימוש ב-`MobileCardList` לתצוגה רספונסיבית.
 
-### 3. אכיפה ברמת ה-DB (RLS)
-כיום ה-policy על `cash_registers` הוא `auth_all` (כל מאומת = הכל). נוסיף policies ספציפיים:
-- **SELECT**: כל מאומת (כמו היום).
-- **INSERT / UPDATE / DELETE**: רק `has_role(auth.uid(), 'owner')`.
-- העברות (`cash_transfers`) — נשארות פתוחות לכל המאומתים (כי zה תזרים עבודה רגיל), אבל נחסום העברה **מתוך** קופה שלא שייכת למשתמש בעתיד אם יבקש (לא בסקופ הנוכחי).
-
-### 4. הוספת קופות HYP וחשבון בנק
-הוספה של שתי שורות בטבלת `cash_registers`:
-- `שם: HYP (סליקת אשראי)`, `opening_balance: 0`, `is_active: true`
-- `שם: חשבון בנק`, `opening_balance: 0`, `is_active: true`
-
-לאחר יצירתן ניתן יהיה לשייך אליהן תשלומים בעת קבלת הזמנה (HYP אוטומטי, או העברה ידנית לבנק).
-
-#### חיווט אוטומטי של HYP
-בקוד תשלומי האשראי (`hyp-callback`, `hyp-verify-payment`) — נבדוק אם תשלום שמתקבל עם `payment_method = 'credit'` או דומה כבר משייך `cash_register_id`. אם לא — נשייך אוטומטית ל-cash register בשם "HYP".
-
-> יש לאמת שהקבצים בפועל כותבים ל-`payments` עם `cash_register_id`, ולעדכן בהתאם.
-
-## קבצים שיתעדכנו
+## קבצים שיושפעו
 
 | קובץ | שינוי |
-|---|---|
-| Migration חדש | הוספת `'owner'` ל-enum `app_role` |
-| Insert חדש | הקצאת `owner` ל-Tareq/Mohammed; הסרת `admin` מ-karam; הוספת קופות HYP + בנק |
-| Migration חדש | RLS policies חדשים על `cash_registers` (write רק ל-owner) |
-| `src/hooks/useIsAdmin.ts` | הוספת `useIsOwner` (או החלפה ל-role-based generic) |
-| `src/pages/CashRegistersPage.tsx` | הסתרת כפתור "קופה חדשה" + העברת כספים ל-non-owners (אופציונלי — לאשר עם המשתמש) |
-| `src/components/layout/AppSidebar.tsx` | החלפת `isAdmin` ל-`isOwner` עבור פריט "משתמשים" |
-| `supabase/functions/hyp-callback/index.ts` (וכו') | הצמדה אוטומטית של תשלומי HYP לקופת "HYP" |
-
-## שאלות לאישור
-
-1. **העברות כספים בין קופות** — האם גם להעברות אסור ל-karam, או רק יצירת קופה חדשה / יתרת פתיחה?
-2. **שיוך אוטומטי HYP→קופת HYP** — מאשרים שזה הזמן לעשות זאת, או שכרגע רק ליצור את הקופה ולחווט בעתיד?
-3. **קופת בנק** — האם זו רק "מאגר ערך" (כמו קופה רגילה לצורכי דיווח), או שתשלומי "העברה בנקאית" צריכים להישלח אליה אוטומטית?
+|------|--------|
+| migration חדש | הוספת `invoice_issued_manually` |
+| `src/hooks/useOrders.ts` | הרחבת select + helper `hasInvoice` |
+| `src/pages/orders/OrdersPage.tsx` | עמודה + פילטר |
+| `src/pages/orders/OrderDetail.tsx` | Toggle + תצוגת סטטוס חשבונית |
+| `src/components/reports/OrderTypeTab.tsx` | חדש |
+| `src/pages/ReportsPage.tsx` | רישום הטאב |
 
 ## תוצאה צפויה
-- karam רואה את הקופות ויתרותיהן, יכול לבצע תשלומים ולקבל הזמנות, אבל **לא יכול ליצור קופה חדשה / לאפס יתרת פתיחה**.
-- Tareq ו-Mohammed הם owners — שולטים בקופות מלא, יוצרים, מנהלים, מעבירים.
-- שתי קופות חדשות מופיעות ברשימה: HYP וחשבון בנק.
+- בכל מקום במערכת רואים מיידית אם להזמנה יש חשבונית.
+- ניתן לסמן ידנית הזמנות שהוצאה להן חשבונית מחוץ למערכת.
+- בדוחות אפשר לחתוך את הנתונים לפי "עם" / "בלי" חשבונית בטווח תאריכים.

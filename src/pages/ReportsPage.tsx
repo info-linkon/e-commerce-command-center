@@ -13,6 +13,7 @@ import InventoryLogTab from "@/components/reports/InventoryLogTab";
 import CashflowTab from "@/components/reports/CashflowTab";
 import ExpensesTab from "@/components/reports/ExpensesTab";
 import ProfitabilityTab from "@/components/reports/ProfitabilityTab";
+import OrderTypeTab from "@/components/reports/OrderTypeTab";
 
 const ReportsPage = () => {
   const [period, setPeriod] = useState("today");
@@ -110,6 +111,7 @@ const ReportsPage = () => {
           <TabsTrigger value="cashflow">קופות ותשלומים</TabsTrigger>
           <TabsTrigger value="expenses">הוצאות</TabsTrigger>
           <TabsTrigger value="profitability">רווחיות</TabsTrigger>
+          <TabsTrigger value="order-type">סוג הזמנה</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -129,6 +131,9 @@ const ReportsPage = () => {
         </TabsContent>
         <TabsContent value="profitability">
           <ProfitabilityTab startDate={startDate} endDate={endDate} />
+        </TabsContent>
+        <TabsContent value="order-type">
+          <OrderTypeTab startDate={startDate} endDate={endDate} />
         </TabsContent>
       </Tabs>
     </div>

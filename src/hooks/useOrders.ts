@@ -43,7 +43,7 @@ export function useOrders(status?: OrderStatus) {
     queryFn: async () => {
       let query = supabase
         .from("orders")
-        .select("*, warehouses(name), payments(cash_register_id)")
+        .select("*, warehouses(name), payments(cash_register_id), documents(id, status)")
         .order("created_at", { ascending: false });
       if (status) query = query.eq("status", status);
       const { data, error } = await query;
@@ -51,6 +51,29 @@ export function useOrders(status?: OrderStatus) {
       return data;
     },
   });
+}
+
+/**
+ * הזמנה נחשבת "עם חשבונית" אם:
+ *  - סומנה ידנית (invoice_issued_manually)
+ *  - יש URL לחשבונית (invoice_url) שנשמר ע"י ezcount-doc
+ *  - יש מסמך מקושר בסטטוס issued
+ */
+export function orderHasInvoice(order: any): boolean {
+  if (!order) return false;
+  if (order.invoice_issued_manually === true) return true;
+  if (order.invoice_url) return true;
+  const docs = (order.documents || []) as Array<{ status: string }>;
+  return docs.some((d) => d.status === "issued");
+}
+
+export function orderInvoiceKind(order: any): "auto" | "manual" | "none" {
+  if (!order) return "none";
+  const docs = (order.documents || []) as Array<{ status: string }>;
+  const hasAuto = !!order.invoice_url || docs.some((d) => d.status === "issued");
+  if (hasAuto) return "auto";
+  if (order.invoice_issued_manually === true) return "manual";
+  return "none";
 }
 
 export function useOrder(id?: string) {
