@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, Trash2, Eye } from "lucide-react";
+import { Plus, Search, Trash2, Eye, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
 import { useOrders, useDeleteOrder, useUpdateOrderStatus, orderInvoiceKind, type OrderStatus } from "@/hooks/useOrders";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const statusLabels: Record<string, string> = {
   pending: "ממתינה",
@@ -51,6 +55,26 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
   const { data: registers } = useCashRegisters();
   const deleteOrder = useDeleteOrder();
   const updateStatus = useUpdateOrderStatus();
+  const qc = useQueryClient();
+
+  const toggleManualInvoice = async (order: any) => {
+    const kind = orderInvoiceKind(order);
+    if (kind === "auto") {
+      toast.info("חשבונית הופקה אוטומטית — לא ניתן לשנות");
+      return;
+    }
+    const next = !order.invoice_issued_manually;
+    const { error } = await supabase
+      .from("orders")
+      .update({ invoice_issued_manually: next } as any)
+      .eq("id", order.id);
+    if (error) {
+      toast.error("שגיאה בעדכון סימון החשבונית");
+      return;
+    }
+    toast.success(next ? "סומן כחשבונית הופקה" : "הסימון בוטל");
+    qc.invalidateQueries({ queryKey: ["orders"] });
+  };
 
   const filtered = orders?.filter((o) => {
     if (registerFilter !== "all") {
@@ -84,11 +108,37 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
       label: "חשבונית",
       render: (o) => {
         const kind = orderInvoiceKind(o);
-        if (kind === "auto") return <Badge className="bg-green-100 text-green-800 border-0 text-xs">אוטומטית</Badge>;
-        if (kind === "manual") return <Badge className="bg-blue-100 text-blue-800 border-0 text-xs">ידנית</Badge>;
-        return <span className="text-muted-foreground text-xs">—</span>;
+        const hasInvoice = kind !== "none";
+        const tip =
+          kind === "auto"
+            ? "חשבונית הופקה אוטומטית"
+            : kind === "manual"
+              ? "סומן ידנית — לחץ לביטול"
+              : "אין חשבונית — לחץ לסימון ידני";
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    toggleManualInvoice(o);
+                  }}
+                  className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors"
+                  aria-label={tip}
+                >
+                  <Receipt
+                    className={`h-4 w-4 ${hasInvoice ? "text-green-600" : "text-muted-foreground"}`}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{tip}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
       },
-      hideOnMobile: true,
     },
     {
       label: "סטטוס",
