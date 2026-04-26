@@ -61,6 +61,8 @@ export function useOrders(status?: OrderStatus) {
  */
 export function orderHasInvoice(order: any): boolean {
   if (!order) return false;
+  // הזמנות אשראי תמיד מונפקת להן חשבונית אוטומטית דרך HYP/EZCount
+  if (order.payment_method === "credit") return true;
   if (order.invoice_issued_manually === true) return true;
   if (order.invoice_url) return true;
   const docs = (order.documents || []) as Array<{ status: string }>;
@@ -69,6 +71,8 @@ export function orderHasInvoice(order: any): boolean {
 
 export function orderInvoiceKind(order: any): "auto" | "manual" | "none" {
   if (!order) return "none";
+  // אשראי = תמיד אוטומטית
+  if (order.payment_method === "credit") return "auto";
   const docs = (order.documents || []) as Array<{ status: string }>;
   const hasAuto = !!order.invoice_url || docs.some((d) => d.status === "issued");
   if (hasAuto) return "auto";
