@@ -116,14 +116,14 @@ export default function OrderTypeTab({ startDate, endDate }: Props) {
         </Card>
       </div>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "with" | "without")}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "with" | "without")} dir="rtl">
         <TabsList dir="rtl">
           <TabsTrigger value="with">עם חשבונית ({withInvoice.length})</TabsTrigger>
           <TabsTrigger value="without">בלי חשבונית ({withoutInvoice.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="with">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6" dir="rtl">
               <MobileCardList
                 data={withInvoice}
                 columns={columnsWith}
@@ -151,7 +151,7 @@ export default function OrderTypeTab({ startDate, endDate }: Props) {
         </TabsContent>
         <TabsContent value="without">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6" dir="rtl">
               <MobileCardList
                 data={withoutInvoice}
                 columns={columnsWithout}
