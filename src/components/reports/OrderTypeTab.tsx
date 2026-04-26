@@ -123,7 +123,7 @@ export default function OrderTypeTab({ startDate, endDate }: Props) {
         </TabsList>
         <TabsContent value="with">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6" dir="rtl">
               <MobileCardList
                 data={withInvoice}
                 columns={columnsWith}
@@ -151,7 +151,7 @@ export default function OrderTypeTab({ startDate, endDate }: Props) {
         </TabsContent>
         <TabsContent value="without">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6" dir="rtl">
               <MobileCardList
                 data={withoutInvoice}
                 columns={columnsWithout}
