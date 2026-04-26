@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useIsAdmin, useIsOwner } from "@/hooks/useIsAdmin";
 import { useOrderCounts } from "@/hooks/useOrderCounts";
 import {
   Sidebar,
@@ -71,6 +71,7 @@ const menuItems = [
 export function AppSidebar() {
   const { signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { isOwner } = useIsOwner();
   const { data: orderCounts } = useOrderCounts();
   const { isMobile, setOpenMobile } = useSidebar();
 
@@ -259,7 +260,7 @@ export function AppSidebar() {
               ))}
 
               {/* Admin-only: Users management */}
-              {isAdmin && (
+              {(isAdmin || isOwner) && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
