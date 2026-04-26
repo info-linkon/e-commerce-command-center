@@ -89,6 +89,18 @@ const CashRegistersPage = () => {
 
   const activeRegisters = registers?.filter((r) => r.is_active) || [];
 
+  // Total of all registers excluding bank account and HYP (credit gateway)
+  const isExcludedFromTotal = (name: string) => {
+    const n = name.toLowerCase();
+    return n.includes("hyp") || n.includes("חשבון בנק") || n.includes("בנק");
+  };
+  const cashTotal = (registers || [])
+    .filter((r) => r.is_active && !isExcludedFromTotal(r.name))
+    .reduce((sum, r) => sum + Number(r.current_balance || 0), 0);
+  const cashTotalCount = (registers || []).filter(
+    (r) => r.is_active && !isExcludedFromTotal(r.name),
+  ).length;
+
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -379,6 +391,12 @@ const CashRegistersPage = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Cash total (excluding bank account & HYP) */}
+      <div className="pt-2 pb-4 text-center text-xs text-muted-foreground">
+        סך הכל בקופות ({cashTotalCount}) — ללא חשבון בנק ו-HYP:{" "}
+        <span className="font-semibold text-foreground">₪{cashTotal.toFixed(2)}</span>
+      </div>
     </div>
   );
 };
