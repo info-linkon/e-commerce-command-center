@@ -1,73 +1,68 @@
-# סימון חשבונית להזמנות + טאב "סוג הזמנה" בדוחות
+## טאב לוג פעילות משתמשים בדוחות
 
-## מטרה
-1. כל הזמנה שהונפק עליה חשבונית (אוטומטית או ידנית) — תסומן בבירור.
-2. אפשרות לסמן **ידנית** הזמנה כ"הופקה חשבונית" (למקרה של חשבונית שהוצאה מחוץ למערכת).
-3. טאב חדש בדוחות → **"סוג הזמנה"** עם שני תתי-טאבים: **עם חשבונית** / **בלי חשבונית**.
+### גישה כללית
+במקום להוסיף טבלה חדשה ולכתוב triggers על כל הטבלאות (פתרון יקר ושביר), ננצל את העובדה שהמערכת כבר מתעדת `created_by` + `created_at` בכל הפעולות המשמעותיות. נבנה **feed מאוחד בצד הלקוח** ששואב מכל המקורות הרלוונטיים, ממזג, ממיין לפי תאריך, ומציג בטבלה אחת עם פילטרים.
 
-## ניתוח המצב הקיים
-- חשבוניות אשראי דרך HYP מופקות אוטומטית ב-EZCount, נשמרות בטבלת `documents` עם `order_id`, ו-`orders.invoice_url` מתעדכן.
-- אין כיום אינדיקטור ויזואלי ברשימת ההזמנות שמראה אם יש חשבונית.
-- אין דרך לסמן ידנית הזמנה (מזומן/Bit) כ"חשבונית הופקה ידנית".
+יתרונות:
+- **אפס שינויים בסכמה** — שום מיגרציה, שום סיכון לנתונים קיימים
+- **רטרואקטיבי** — כל ההיסטוריה הקיימת מופיעה מיידית
+- **אין כפילות** — כל פעולה כבר נשמרת פעם אחת בטבלת המקור שלה
 
-## שינויים נדרשים
+### מקורות שיאוחדו ל-feed
+| מקור | סוג פעולה בלוג | פרטים מוצגים |
+|---|---|---|
+| `orders` (created_at) | יצירת הזמנה | מס׳ הזמנה, לקוח, סכום |
+| `orders` (updated_at ≠ created_at) | עדכון הזמנה | מס׳ הזמנה, סטטוס נוכחי |
+| `payments` | קבלת תשלום | מס׳ הזמנה, אמצעי, סכום |
+| `intake_sessions` | קליטת מלאי | מחסן, ספק, סה״כ פריטים |
+| `inventory_transfers` | העברת מלאי | מ-מחסן → ל-מחסן |
+| `inventory_log` (action_type=adjustment) | התאמת מלאי ידנית | מוצר, שינוי |
+| `expenses` | רישום הוצאה | תיאור, סכום |
+| `cash_transfers` | העברה בין קופות | מ-קופה → ל-קופה, סכום |
+| `documents` | הנפקת חשבונית | מס׳ חשבונית, סכום |
 
-### 1. בסיס נתונים (Migration)
-הוספת עמודה ל-`orders`:
-```sql
-ALTER TABLE public.orders 
-  ADD COLUMN IF NOT EXISTS invoice_issued_manually boolean NOT NULL DEFAULT false;
-```
-- העמודה מתעדת סימון ידני בלבד.
-- הזמנה תיחשב "עם חשבונית" אם: `invoice_url IS NOT NULL` **או** קיים `documents.status='issued'` עבורה **או** `invoice_issued_manually = true`.
+הערה: `payments`, `documents`, ו-`inventory_log` חסרים `created_by` ישיר — נציג אותם כפעולת מערכת (או נמשוך את ה-`created_by` של ההזמנה הקשורה כשרלוונטי, למשל `payments → orders.created_by`).
 
-### 2. עדכון `useOrders` hook
-שינוי השאילתה לכלול ספירת מסמכים שהונפקו:
-```ts
-.select("*, warehouses(name), payments(cash_register_id), documents:documents!documents_order_id_fkey(id, status)")
-```
-(אם אין FK מוגדר — נשתמש ב-`documents(id, status)` ונסנן ב-client).
+### קבצים חדשים
+**`src/hooks/useActivityLog.ts`** — hook חדש:
+- מקבל פילטרים: `dateFrom`, `dateTo`, `userId?`, `actionType?`
+- מבצע ~9 שאילתות במקביל (`Promise.all`) למקורות לעיל, מסונן לפי טווח תאריכים
+- ממפה כל שורה למבנה אחיד:
+  ```ts
+  type ActivityEntry = {
+    id: string;
+    timestamp: string;
+    user_id: string | null;
+    user_name: string | null; // מצורף מ-profiles
+    action_type: 'order_create' | 'order_update' | 'payment' | 'intake' | 'transfer' | 'adjustment' | 'expense' | 'cash_transfer' | 'document';
+    description: string;       // טקסט קריא בעברית
+    reference_id?: string;     // לקישור (למשל id של הזמנה)
+    reference_label?: string;  // למשל "הזמנה #1234"
+    amount?: number;
+  }
+  ```
+- מאחד הכל לרשימה אחת, ממיין לפי `timestamp DESC`, חותך ל-500 הראשונים
+- שאילתה נפרדת ל-`profiles` (user_id, display_name) לרזולוציית שמות משתמשים
 
-הוספת helper: `hasInvoice(order)` שמחזיר `true` אם:
-- `order.invoice_issued_manually === true` או
-- `order.invoice_url` קיים או
-- יש מסמך אחד לפחות עם `status='issued'`.
+**`src/components/reports/ActivityLogTab.tsx`** — רכיב חדש:
+- מקבל `startDate, endDate` (כמו שאר הטאבים)
+- פילטרים פנימיים: בחירת משתמש (Select מ-profiles), בחירת סוג פעולה
+- טבלה RTL עם עמודות: תאריך/שעה | משתמש | סוג פעולה | תיאור | הפניה (Link כשרלוונטי) | סכום
+- Badges צבעוניים לפי סוג פעולה (כמו ב-`InventoryLogTab`)
+- קישורים: הזמנה → `/crm/orders/:id`, קליטה → `/crm/inventory/intake-history`, וכד׳
+- תצוגת mobile דרך `MobileCardList` (תואם לתבנית הקיימת)
 
-### 3. תצוגה ב-`OrdersPage.tsx`
-- **עמודה חדשה** "חשבונית" עם Badge:
-  - 🟢 "אוטומטית" (יש document/invoice_url)
-  - 🔵 "ידנית" (`invoice_issued_manually=true` ואין document)
-  - ⚪ "—" (אין חשבונית)
-- **פילטר חדש** ב-Select: "עם חשבונית" / "בלי חשבונית" / "הכל".
+### קובץ קיים שיתעדכן
+**`src/pages/ReportsPage.tsx`** — הוספת `<TabsTrigger value="activity-log">לוג פעילות</TabsTrigger>` ו-`<TabsContent>` מתאים. הטאב יהיה אחרון.
 
-### 4. תצוגה ב-`OrderDetail.tsx`
-- אם אין חשבונית אוטומטית — להוסיף **כפתור/Switch** "סמן כחשבונית הופקה ידנית" (Toggle של `invoice_issued_manually`).
-- אם יש חשבונית אוטומטית — Badge "חשבונית הופקה" + לינק להורדה (`invoice_url`).
-- אם הוסר הסימון הידני — Toggle off חוזר.
+### בלי שינויים בבק-אנד
+- אין מיגרציה
+- אין edge function
+- אין שינוי ב-RLS (כל הטבלאות הקיימות כבר נגישות ל-authenticated)
 
-### 5. דוחות — טאב חדש "סוג הזמנה"
-ב-`src/pages/ReportsPage.tsx`:
-- הוספת `<TabsTrigger value="order-type">סוג הזמנה</TabsTrigger>`
-- יצירת רכיב חדש `src/components/reports/OrderTypeTab.tsx` עם:
-  - **תת-Tabs פנימי**: `with-invoice` / `without-invoice`.
-  - שאילתה ל-`orders` בטווח התאריכים (`startDate`/`endDate`).
-  - קביעת סטטוס חשבונית לכל הזמנה (לפי הלוגיקה מסעיף 2).
-  - תצוגה: טבלה עם מס׳ הזמנה, לקוח, סכום, אמצעי תשלום, סטטוס, סוג חשבונית (אוטומטית/ידנית בטאב "עם").
-  - סיכומי ראש: כמות הזמנות + סך כספי בכל קבוצה.
-  - שימוש ב-`MobileCardList` לתצוגה רספונסיבית.
+### מה לא נכלל (במכוון)
+- **מחיקות** — Postgres לא שומר היסטוריית מחיקות בלי triggers. אם זה קריטי בעתיד נוכל להוסיף טבלת `audit_log` ו-triggers, אבל זו עבודה נפרדת ומשמעותית.
+- **שינויים על שדות לא-מרכזיים** (למשל עדכון תיאור מוצר) — `products.updated_at` לא יודע מי עדכן. אם תרצי כיסוי מלא של עריכות, נצטרך להוסיף `updated_by` לעמודות האלה ולבצע trigger — שוב, מהלך נפרד.
 
-## קבצים שיושפעו
-
-| קובץ | שינוי |
-|------|--------|
-| migration חדש | הוספת `invoice_issued_manually` |
-| `src/hooks/useOrders.ts` | הרחבת select + helper `hasInvoice` |
-| `src/pages/orders/OrdersPage.tsx` | עמודה + פילטר |
-| `src/pages/orders/OrderDetail.tsx` | Toggle + תצוגת סטטוס חשבונית |
-| `src/components/reports/OrderTypeTab.tsx` | חדש |
-| `src/pages/ReportsPage.tsx` | רישום הטאב |
-
-## תוצאה צפויה
-- בכל מקום במערכת רואים מיידית אם להזמנה יש חשבונית.
-- ניתן לסמן ידנית הזמנות שהוצאה להן חשבונית מחוץ למערכת.
-- בדוחות אפשר לחתוך את הנתונים לפי "עם" / "בלי" חשבונית בטווח תאריכים.
+### שאלה לפני המעבר ליישום
+האם הסקופ הנוכחי (פעולות עם `created_by` קיים = הזמנות, קליטות, העברות, הוצאות, העברות קופה, התאמות מלאי, תשלומים, חשבוניות) מספיק? או שחשוב לך שכבר עכשיו נכלול גם **מחיקות ועריכות של מוצרים/לקוחות/קטגוריות** (מה שידרוש מיגרציה + triggers)?
