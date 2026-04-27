@@ -164,11 +164,20 @@ export function useCreateOrder() {
 
         // Atomic cash register balance update (server-side RPC avoids the
         // read-modify-write race when two terminals charge at the same time).
+        // Skip "deferred" registers — their balance is updated by a DB trigger
+        // only when the order reaches `completed` status.
         if (payment_method === "cash" && cash_register_id) {
-          await supabase.rpc("increment_cash_register" as any, {
-            reg_id: cash_register_id,
-            delta: input.total,
-          });
+          const { data: reg } = await supabase
+            .from("cash_registers")
+            .select("requires_completed_order")
+            .eq("id", cash_register_id)
+            .maybeSingle();
+          if (!reg?.requires_completed_order) {
+            await supabase.rpc("increment_cash_register" as any, {
+              reg_id: cash_register_id,
+              delta: input.total,
+            });
+          }
         }
       }
 
@@ -394,8 +403,32 @@ export function useCancelOrder() {
         .select("id, amount, payment_method, cash_register_id")
         .eq("order_id", orderId);
 
+      // Look up which registers are "deferred" — for those, the balance is
+      // managed by a DB trigger tied to order status, so skip manual refund here.
+      const cashRegIds = Array.from(
+        new Set(
+          (payments || [])
+            .filter((p) => p.payment_method === "cash" && p.cash_register_id)
+            .map((p) => p.cash_register_id as string),
+        ),
+      );
+      const deferredRegIds = new Set<string>();
+      if (cashRegIds.length > 0) {
+        const { data: regs } = await supabase
+          .from("cash_registers")
+          .select("id, requires_completed_order")
+          .in("id", cashRegIds);
+        for (const r of (regs as any[]) || []) {
+          if (r.requires_completed_order) deferredRegIds.add(r.id);
+        }
+      }
+
       for (const p of payments || []) {
-        if (p.payment_method === "cash" && p.cash_register_id) {
+        if (
+          p.payment_method === "cash" &&
+          p.cash_register_id &&
+          !deferredRegIds.has(p.cash_register_id)
+        ) {
           await supabase.rpc("increment_cash_register" as any, {
             reg_id: p.cash_register_id,
             delta: -Number(p.amount),

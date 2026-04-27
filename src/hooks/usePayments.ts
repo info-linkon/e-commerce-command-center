@@ -50,8 +50,32 @@ export function useRecordPayment() {
 
       // 2. Atomic cash register balance update via RPC (avoids lost updates
       //    when two terminals record a cash payment concurrently).
+      //    Skip registers flagged `requires_completed_order` — for them, the
+      //    balance is updated by a DB trigger only when the order reaches
+      //    `completed` status.
+      const cashRegisterIds = Array.from(
+        new Set(
+          input.payments
+            .filter((p) => p.payment_method === "cash" && p.cash_register_id)
+            .map((p) => p.cash_register_id as string),
+        ),
+      );
+      const deferredRegisterIds = new Set<string>();
+      if (cashRegisterIds.length > 0) {
+        const { data: regs } = await supabase
+          .from("cash_registers")
+          .select("id, requires_completed_order")
+          .in("id", cashRegisterIds);
+        for (const r of (regs as any[]) || []) {
+          if (r.requires_completed_order) deferredRegisterIds.add(r.id);
+        }
+      }
       for (const p of input.payments) {
-        if (p.payment_method === "cash" && p.cash_register_id) {
+        if (
+          p.payment_method === "cash" &&
+          p.cash_register_id &&
+          !deferredRegisterIds.has(p.cash_register_id)
+        ) {
           await supabase.rpc("increment_cash_register" as any, {
             reg_id: p.cash_register_id,
             delta: p.amount,
