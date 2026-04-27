@@ -94,6 +94,7 @@ export type CashRegisterTransaction = {
   description: string;
   reference: string | null;
   created_at: string;
+  order_status?: string | null;
 };
 
 export function useCashRegisterTransactions(registerId: string | null) {
@@ -106,7 +107,7 @@ export function useCashRegisterTransactions(registerId: string | null) {
       const [payments, expenses, transfers] = await Promise.all([
         supabase
           .from("payments")
-          .select("id, amount, payment_method, reference, created_at, order_id, orders(order_number, customer_name)")
+          .select("id, amount, payment_method, reference, created_at, order_id, orders(order_number, customer_name, status)")
           .eq("cash_register_id", registerId)
           .order("created_at", { ascending: false }),
         supabase
@@ -138,6 +139,7 @@ export function useCashRegisterTransactions(registerId: string | null) {
           description: orderLabel,
           reference: p.reference,
           created_at: p.created_at,
+          order_status: order?.status ?? null,
         });
       }
 
