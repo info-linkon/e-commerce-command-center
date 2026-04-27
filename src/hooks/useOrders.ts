@@ -514,13 +514,68 @@ export function useDeleteOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // 1. Reverse cash register balances for any cash payments on
+      //    non-deferred registers (deferred registers are managed by trigger
+      //    and only reflect completed orders — nothing to reverse).
+      const { data: payments } = await supabase
+        .from("payments")
+        .select("amount, payment_method, cash_register_id")
+        .eq("order_id", id);
+
+      const cashRegIds = Array.from(
+        new Set(
+          (payments || [])
+            .filter((p) => p.payment_method === "cash" && p.cash_register_id)
+            .map((p) => p.cash_register_id as string),
+        ),
+      );
+      const deferredRegIds = new Set<string>();
+      if (cashRegIds.length > 0) {
+        const { data: regs } = await supabase
+          .from("cash_registers")
+          .select("id, requires_completed_order")
+          .in("id", cashRegIds);
+        for (const r of (regs as any[]) || []) {
+          if (r.requires_completed_order) deferredRegIds.add(r.id);
+        }
+      }
+      // Only reverse balance if order is currently completed (otherwise
+      // balance was never added). For deferred registers — never reverse.
+      const { data: ord } = await supabase.from("orders").select("status").eq("id", id).single();
+      if (ord?.status === "completed") {
+        for (const p of payments || []) {
+          if (
+            p.payment_method === "cash" &&
+            p.cash_register_id &&
+            !deferredRegIds.has(p.cash_register_id)
+          ) {
+            await supabase.rpc("increment_cash_register" as any, {
+              reg_id: p.cash_register_id,
+              delta: -Number(p.amount),
+            });
+          }
+        }
+      }
+
+      // 2. Delete dependent rows (no FK CASCADE on most tables)
+      await supabase.from("deliveries").delete().eq("order_id", id);
+      await supabase.from("order_picking_items").delete().eq("order_id", id);
+      await supabase.from("payments").delete().eq("order_id", id);
+      await supabase.from("payment_events").delete().eq("order_id", id);
+      await supabase.from("documents").delete().eq("order_id", id);
+      await supabase.from("order_items").delete().eq("order_id", id);
+
+      // 3. Finally delete the order
       const { error } = await supabase.from("orders").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["payments"] });
+      qc.invalidateQueries({ queryKey: ["cash_registers"] });
+      qc.invalidateQueries({ queryKey: ["deliveries"] });
       toast.success("ההזמנה נמחקה");
     },
-    onError: () => toast.error("שגיאה במחיקת הזמנה"),
+    onError: (err: any) => toast.error(err?.message || "שגיאה במחיקת הזמנה"),
   });
 }
