@@ -164,11 +164,20 @@ export function useCreateOrder() {
 
         // Atomic cash register balance update (server-side RPC avoids the
         // read-modify-write race when two terminals charge at the same time).
+        // Skip "deferred" registers — their balance is updated by a DB trigger
+        // only when the order reaches `completed` status.
         if (payment_method === "cash" && cash_register_id) {
-          await supabase.rpc("increment_cash_register" as any, {
-            reg_id: cash_register_id,
-            delta: input.total,
-          });
+          const { data: reg } = await supabase
+            .from("cash_registers")
+            .select("requires_completed_order")
+            .eq("id", cash_register_id)
+            .maybeSingle();
+          if (!reg?.requires_completed_order) {
+            await supabase.rpc("increment_cash_register" as any, {
+              reg_id: cash_register_id,
+              delta: input.total,
+            });
+          }
         }
       }
 
