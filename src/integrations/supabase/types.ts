@@ -215,6 +215,7 @@ export type Database = {
           is_active: boolean
           name: string
           opening_balance: number
+          requires_completed_order: boolean
           updated_at: string
         }
         Insert: {
@@ -224,6 +225,7 @@ export type Database = {
           is_active?: boolean
           name: string
           opening_balance?: number
+          requires_completed_order?: boolean
           updated_at?: string
         }
         Update: {
@@ -233,6 +235,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           opening_balance?: number
+          requires_completed_order?: boolean
           updated_at?: string
         }
         Relationships: []
