@@ -104,7 +104,12 @@ export function useCashRegisterTransactions(registerId: string | null) {
     queryFn: async () => {
       if (!registerId) return [] as CashRegisterTransaction[];
 
-      const [payments, expenses, transfers] = await Promise.all([
+      const [registerRow, payments, expenses, transfers] = await Promise.all([
+        supabase
+          .from("cash_registers")
+          .select("requires_completed_order")
+          .eq("id", registerId)
+          .maybeSingle(),
         supabase
           .from("payments")
           .select("id, amount, payment_method, reference, created_at, order_id, orders(order_number, customer_name, status)")
@@ -127,10 +132,15 @@ export function useCashRegisterTransactions(registerId: string | null) {
       if (expenses.error) throw expenses.error;
       if (transfers.error) throw transfers.error;
 
+      const requiresCompleted = !!(registerRow.data as any)?.requires_completed_order;
+
       const items: CashRegisterTransaction[] = [];
 
       for (const p of payments.data || []) {
         const order = (p as any).orders;
+        // For "deferred" registers, only count payments from completed orders —
+        // matches the balance calculation enforced by the DB trigger.
+        if (requiresCompleted && order?.status !== "completed") continue;
         const orderLabel = order ? `הזמנה #${order.order_number}${order.customer_name ? ` — ${order.customer_name}` : ""}` : "תשלום";
         items.push({
           id: `payment-${p.id}`,
