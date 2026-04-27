@@ -1,7 +1,9 @@
-import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText, History } from "lucide-react";
+import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText, History, Trash2, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import ImageWebpConverter from "@/components/admin/ImageWebpConverter";
 import WpImageMigrator from "@/components/admin/WpImageMigrator";
 const settingsSections = [
@@ -69,6 +71,40 @@ const settingsSections = [
 
 const SettingsPage = () => {
   const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  const handleClearCache = async () => {
+    if (!confirm("לנקות את כל ה-cache של הדפדפן (localStorage, sessionStorage, cache, query cache) ולרענן את הדף?")) return;
+    try {
+      // 1. React Query cache
+      qc.clear();
+      // 2. localStorage + sessionStorage (keep auth session if present)
+      const authKeys: Record<string, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.includes("supabase.auth") || k.startsWith("sb-"))) {
+          authKeys[k] = localStorage.getItem(k) || "";
+        }
+      }
+      localStorage.clear();
+      sessionStorage.clear();
+      // restore auth so user stays logged in
+      Object.entries(authKeys).forEach(([k, v]) => localStorage.setItem(k, v));
+      // 3. Service worker / browser cache
+      if ("caches" in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map((n) => caches.delete(n)));
+      }
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+      toast.success("ה-cache נוקה — מרענן את הדף...");
+      setTimeout(() => window.location.reload(), 800);
+    } catch (err: any) {
+      toast.error(err?.message || "שגיאה בניקוי cache");
+    }
+  };
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -97,6 +133,26 @@ const SettingsPage = () => {
           </Card>
         ))}
       </div>
+
+      {/* ניקוי Cache */}
+      <Card className="border-destructive/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Trash2 className="h-5 w-5 text-destructive" />
+            ניקוי Cache
+          </CardTitle>
+          <CardDescription>
+            מנקה את כל ה-cache של הדפדפן (נתונים שמורים, query cache, service worker) ומרענן את הדף.
+            השתמש כאשר אתה רואה נתונים ישנים או לאחר עדכון גרסה. ההתחברות נשמרת.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="destructive" size="sm" onClick={handleClearCache} className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            נקה Cache ורענן
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* כלי העברת תמונות מ-WordPress */}
       <WpImageMigrator />
