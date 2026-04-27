@@ -313,6 +313,7 @@ const CashRegistersPage = () => {
                   <TableRow>
                     <TableHead className="text-right">סוג</TableHead>
                     <TableHead className="text-right">תיאור</TableHead>
+                    <TableHead className="text-right">סטטוס הזמנה</TableHead>
                     <TableHead className="text-right">סכום</TableHead>
                     <TableHead className="text-right">תאריך</TableHead>
                   </TableRow>
@@ -326,6 +327,15 @@ const CashRegistersPage = () => {
                       transfer_out: { label: "העברה יוצאת", icon: ArrowUpRight, cls: "text-orange-700 bg-orange-50 border-orange-200" },
                     }[t.type];
                     const Icon = typeMeta.icon;
+                    const statusMeta: Record<string, { label: string; cls: string }> = {
+                      pending: { label: "ממתינה", cls: "text-amber-700 bg-amber-50 border-amber-200" },
+                      processing: { label: "בעיבוד", cls: "text-blue-700 bg-blue-50 border-blue-200" },
+                      picking: { label: "בליקוט", cls: "text-indigo-700 bg-indigo-50 border-indigo-200" },
+                      shipping: { label: "במשלוח", cls: "text-purple-700 bg-purple-50 border-purple-200" },
+                      completed: { label: "הושלמה", cls: "text-green-700 bg-green-50 border-green-200" },
+                      cancelled: { label: "בוטלה", cls: "text-red-700 bg-red-50 border-red-200" },
+                    };
+                    const status = t.order_status ? statusMeta[t.order_status] : null;
                     return (
                       <TableRow key={t.id}>
                         <TableCell>
@@ -337,6 +347,13 @@ const CashRegistersPage = () => {
                         <TableCell className="text-sm">
                           {t.description}
                           {t.reference && <div className="text-xs text-muted-foreground">{t.reference}</div>}
+                        </TableCell>
+                        <TableCell>
+                          {status ? (
+                            <Badge variant="outline" className={status.cls}>{status.label}</Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell className={`font-bold ${t.amount >= 0 ? "text-green-700" : "text-red-700"}`}>
                           {t.amount >= 0 ? "+" : "−"}₪{Math.abs(t.amount).toFixed(2)}
