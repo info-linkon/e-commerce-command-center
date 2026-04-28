@@ -177,7 +177,8 @@ serve(async (req) => {
     const itemsTotalCalc = items
       ? items.reduce((sum: number, i: { amount: number; price: number }) => sum + i.amount * i.price, 0)
       : 0;
-    const total = itemsTotalCalc + (Number(shipping_cost) || 0);
+    const total =
+      itemsTotalCalc + (Number(shipping_cost) || 0) - (Number(discount_amount) || 0);
 
     if (ezResponse.ok && !ezData.errMsg) {
       // Generate short code for the document
