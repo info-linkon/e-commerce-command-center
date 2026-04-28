@@ -37,6 +37,7 @@ export interface CreateDocInput {
   comment?: string;
   dont_send_email?: boolean;
   shipping_cost?: number;
+  discount_amount?: number;
 }
 
 export function useCreateDocument() {
