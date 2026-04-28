@@ -68,6 +68,7 @@ serve(async (req) => {
       comment,
       dont_send_email,
       shipping_cost,
+      discount_amount,
     } = body;
 
     const typeNum = DOC_TYPE_MAP[doc_type];
@@ -107,6 +108,17 @@ serve(async (req) => {
         });
       }
 
+      // Add discount as a negative line item so price_total matches payments
+      const discount = Number(discount_amount) || 0;
+      if (discount > 0) {
+        itemsList.push({
+          details: "הנחה",
+          amount: 1,
+          price: -discount,
+          catalog_number: "DISCOUNT",
+        });
+      }
+
       ezBody.item = itemsList;
     }
 
@@ -123,8 +135,31 @@ serve(async (req) => {
     if (typeNum === 320 && items && items.length > 0) {
       const itemsTotal = items.reduce((sum: number, i: { amount: number; price: number }) => sum + i.amount * i.price, 0);
       const shipping = Number(shipping_cost) || 0;
-      ezBody.price_total = itemsTotal + shipping;
+      const discount = Number(discount_amount) || 0;
+      ezBody.price_total = itemsTotal + shipping - discount;
       ezBody.tax_included = 1;
+
+      // Pre-flight validation: ensure price_total matches sum of payments,
+      // otherwise EZCount will reject with errNum 220.7. Better to fail
+      // here with a clear, actionable error than to log a generic API error.
+      if (payments && payments.length > 0) {
+        const paymentsTotal = payments.reduce(
+          (sum: number, p: { amount: number }) => sum + Number(p.amount),
+          0,
+        );
+        const diff = Math.round((Number(ezBody.price_total) - paymentsTotal) * 100) / 100;
+        if (Math.abs(diff) > 0.01) {
+          const msg =
+            `סכום המסמך (₪${Number(ezBody.price_total).toFixed(2)}) ` +
+            `לא תואם את סכום התשלומים (₪${paymentsTotal.toFixed(2)}). ` +
+            `פער: ₪${diff.toFixed(2)}. ` +
+            `בדוק שההנחה (${discount}) והמשלוח (${shipping}) נשלחו נכון.`;
+          return new Response(JSON.stringify({ success: false, error: msg }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
     }
 
     console.log("Sending to EZCount:", JSON.stringify(ezBody, null, 2));
