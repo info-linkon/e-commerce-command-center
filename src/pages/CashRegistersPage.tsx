@@ -294,13 +294,34 @@ const CashRegistersPage = () => {
             </DialogTitle>
           </DialogHeader>
           {txRegister && (
-            <div className="flex items-center gap-4 px-1 pb-2 border-b text-sm">
-              <span className="text-muted-foreground">יתרה נוכחית:</span>
-              <span className="font-bold text-lg">₪{Number(txRegister.current_balance).toFixed(2)}</span>
-              <span className="text-muted-foreground mr-auto">
-                {transactions?.length || 0} תנועות
-              </span>
-            </div>
+            (() => {
+              const opening = Number(txRegister.opening_balance || 0);
+              const txSum = (transactions || []).reduce((s, t) => s + Number(t.amount), 0);
+              const computed = opening + txSum;
+              const actual = Number(txRegister.current_balance);
+              const diff = actual - computed;
+              return (
+                <div className="px-1 pb-2 border-b text-sm space-y-1">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <span className="text-muted-foreground">יתרה נוכחית:</span>
+                    <span className="font-bold text-lg">₪{actual.toFixed(2)}</span>
+                    <span className="text-muted-foreground mr-auto">
+                      {transactions?.length || 0} תנועות
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
+                    <span>יתרת פתיחה: <span className="font-medium text-foreground">₪{opening.toFixed(2)}</span></span>
+                    <span>+ סיכום תנועות: <span className={`font-medium ${txSum >= 0 ? "text-green-700" : "text-red-700"}`}>{txSum >= 0 ? "+" : "−"}₪{Math.abs(txSum).toFixed(2)}</span></span>
+                    <span>= מחושב: <span className="font-medium text-foreground">₪{computed.toFixed(2)}</span></span>
+                    {Math.abs(diff) > 0.01 && (
+                      <span className="text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+                        פער: {diff >= 0 ? "+" : "−"}₪{Math.abs(diff).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })()
           )}
           <div className="flex-1 overflow-y-auto -mx-6 px-6">
             {txLoading ? (
