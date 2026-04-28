@@ -406,26 +406,53 @@ const CashRegistersPage = () => {
 
               <div className="space-y-2 border-t pt-4">
                 <Label>יתרה נוכחית</Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    value={balanceInput}
-                    onChange={(e) => setBalanceInput(e.target.value)}
-                    step="0.01"
-                  />
-                  <Button onClick={handleSaveBalance} disabled={setBalance.isPending}>
-                    שמור
-                  </Button>
+                <div className="rounded-md border bg-muted/30 p-3 text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">יתרה ב-DB</span>
+                    <span className="font-bold">
+                      ₪{Number(settingsRegister?.current_balance ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+                  {settingsRegisterId && breakdowns?.[settingsRegisterId] && (() => {
+                    const b = breakdowns[settingsRegisterId];
+                    const actual = Number(settingsRegister?.current_balance ?? 0);
+                    const diff = actual - b.computed;
+                    return (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">יתרה מחושבת מהפעילות</span>
+                          <span className="font-bold">₪{b.computed.toFixed(2)}</span>
+                        </div>
+                        {Math.abs(diff) > 0.01 && (
+                          <div className="flex justify-between text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                            <span>פער</span>
+                            <span className="font-bold">
+                              {diff >= 0 ? "+" : "−"}₪{Math.abs(diff).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full gap-2 mt-2"
+                          disabled={setBalance.isPending || Math.abs(diff) <= 0.01}
+                          onClick={() => {
+                            if (!confirm(
+                              `לסנכרן את היתרה ל-₪${b.computed.toFixed(2)} (לפי הפעילות)?`
+                            )) return;
+                            setBalance.mutate({ id: settingsRegisterId, current_balance: b.computed });
+                          }}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          סנכרן יתרה למחושב
+                        </Button>
+                      </>
+                    );
+                  })()}
                 </div>
-                <Button
-                  variant="destructive"
-                  className="w-full gap-2 mt-2"
-                  onClick={handleResetBalance}
-                  disabled={setBalance.isPending}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  אפס יתרה לאפס
-                </Button>
+                <p className="text-xs text-muted-foreground">
+                  היתרה הנוכחית מחושבת אוטומטית מהפעילות (יתרת פתיחה + תשלומים − הוצאות ± העברות) ולא ניתנת לעריכה ידנית.
+                </p>
               </div>
             </div>
           </DialogContent>
