@@ -543,6 +543,7 @@ const OrderDetail = () => {
           paymentLinkUrl={(order as any).payment_link_url || null}
           hypTransactionId={(order as any).hyp_transaction_id || null}
           shippingCost={Number((order as any).shipping_cost) || 0}
+          discountAmount={Number((order as any).discount_amount) || 0}
           orderItems={items.map((item: any) => {
             const varName = item.bundle_variations?.name || item.product_variations?.name || "";
             // Prefer the parent product SKU (e.g. bundle SKU like BKG-3CH) so picking
