@@ -12,6 +12,93 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useCashRegisters, useCreateCashRegister, useCashRegisterTransactions, useSetCashRegisterBalance, useSetCashRegisterOpeningBalance } from "@/hooks/useCashRegisters";
 import { useCashTransfers, useCreateCashTransfer } from "@/hooks/useCashTransfers";
 import { useIsOwner } from "@/hooks/useIsAdmin";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+
+type RegisterBreakdown = {
+  opening: number;
+  payments: number;
+  expenses: number; // positive number representing total expenses
+  transfersIn: number;
+  transfersOut: number; // positive number
+  computed: number;
+};
+
+function useRegistersBreakdown(registerIds: string[]) {
+  return useQuery({
+    queryKey: ["registers-breakdown", registerIds.sort().join(",")],
+    enabled: registerIds.length > 0,
+    queryFn: async (): Promise<Record<string, RegisterBreakdown>> => {
+      const [paymentsRes, expensesRes, transfersRes, registersRes] = await Promise.all([
+        supabase
+          .from("payments")
+          .select("amount, cash_register_id, payment_method, orders(status)")
+          .in("cash_register_id", registerIds),
+        supabase
+          .from("expenses")
+          .select("amount, cash_register_id")
+          .eq("payment_source", "cash_register")
+          .in("cash_register_id", registerIds),
+        supabase
+          .from("cash_transfers")
+          .select("amount, from_register_id, to_register_id")
+          .or(
+            `from_register_id.in.(${registerIds.join(",")}),to_register_id.in.(${registerIds.join(",")})`,
+          ),
+        supabase
+          .from("cash_registers")
+          .select("id, opening_balance, requires_completed_order")
+          .in("id", registerIds),
+      ]);
+      if (paymentsRes.error) throw paymentsRes.error;
+      if (expensesRes.error) throw expensesRes.error;
+      if (transfersRes.error) throw transfersRes.error;
+      if (registersRes.error) throw registersRes.error;
+
+      const result: Record<string, RegisterBreakdown> = {};
+      for (const r of registersRes.data || []) {
+        result[r.id] = {
+          opening: Number(r.opening_balance || 0),
+          payments: 0,
+          expenses: 0,
+          transfersIn: 0,
+          transfersOut: 0,
+          computed: 0,
+        };
+      }
+      const requiresCompleted: Record<string, boolean> = {};
+      for (const r of registersRes.data || []) {
+        requiresCompleted[r.id] = !!(r as any).requires_completed_order;
+      }
+
+      for (const p of paymentsRes.data || []) {
+        const rid = (p as any).cash_register_id;
+        if (!rid || !result[rid]) continue;
+        const status = (p as any).orders?.status;
+        // Mirror the DB trigger: deferred registers only count cash payments from completed orders.
+        if (requiresCompleted[rid] && (p as any).payment_method === "cash" && status !== "completed") continue;
+        result[rid].payments += Number((p as any).amount);
+      }
+      for (const e of expensesRes.data || []) {
+        const rid = (e as any).cash_register_id;
+        if (!rid || !result[rid]) continue;
+        result[rid].expenses += Number((e as any).amount);
+      }
+      for (const t of transfersRes.data || []) {
+        const fromId = (t as any).from_register_id;
+        const toId = (t as any).to_register_id;
+        const amt = Number((t as any).amount);
+        if (toId && result[toId]) result[toId].transfersIn += amt;
+        if (fromId && result[fromId]) result[fromId].transfersOut += amt;
+      }
+      for (const id of Object.keys(result)) {
+        const b = result[id];
+        b.computed = b.opening + b.payments - b.expenses + b.transfersIn - b.transfersOut;
+      }
+      return result;
+    },
+  });
+}
 
 const CashRegistersPage = () => {
   const { data: registers, isLoading } = useCashRegisters();
