@@ -24,7 +24,7 @@ export default function CashflowTab({ startDate, endDate }: Props) {
     queryFn: async () => {
       let q = supabase
         .from("payments")
-        .select("*, orders(order_number), cash_registers(name)")
+        .select("*, orders(order_number, status), cash_registers(name)")
         .gte("created_at", startDate)
         .order("created_at", { ascending: false })
         .limit(300);
@@ -50,9 +50,14 @@ export default function CashflowTab({ startDate, endDate }: Props) {
     },
   });
 
+  // Cash payments are only counted when their order is completed
+  const visiblePayments = (payments || []).filter(
+    (p: any) => p.payment_method !== "cash" || p.orders?.status === "completed",
+  );
+
   const pieData = (() => {
     const byMethod: Record<string, number> = {};
-    for (const p of payments || []) {
+    for (const p of visiblePayments) {
       const label = methodLabels[p.payment_method] || p.payment_method;
       byMethod[label] = (byMethod[label] || 0) + Number(p.amount);
     }
@@ -136,9 +141,9 @@ export default function CashflowTab({ startDate, endDate }: Props) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!(payments?.length) ? (
+              {!visiblePayments.length ? (
                 <TableRow><TableCell colSpan={6} className="text-center py-4 text-muted-foreground">אין תשלומים</TableCell></TableRow>
-              ) : payments.map((p: any) => (
+              ) : visiblePayments.map((p: any) => (
                 <TableRow key={p.id}>
                   <TableCell className="text-xs">{new Date(p.created_at).toLocaleDateString("he-IL")}</TableCell>
                   <TableCell>
