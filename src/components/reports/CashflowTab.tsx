@@ -1,6 +1,8 @@
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +20,7 @@ interface Props {
 
 export default function CashflowTab({ startDate, endDate }: Props) {
   const { data: registers } = useCashRegisters();
+  const [registerFilter, setRegisterFilter] = useState<string>("all");
 
   const { data: payments } = useQuery({
     queryKey: ["report-payments-list", startDate, endDate],
@@ -54,6 +57,12 @@ export default function CashflowTab({ startDate, endDate }: Props) {
   const visiblePayments = (payments || []).filter(
     (p: any) => p.payment_method !== "cash" || p.orders?.status === "completed",
   );
+
+  const filteredPayments = useMemo(() => {
+    if (registerFilter === "all") return visiblePayments;
+    if (registerFilter === "none") return visiblePayments.filter((p: any) => !p.cash_register_id);
+    return visiblePayments.filter((p: any) => p.cash_register_id === registerFilter);
+  }, [visiblePayments, registerFilter]);
 
   const pieData = (() => {
     const byMethod: Record<string, number> = {};
@@ -127,7 +136,23 @@ export default function CashflowTab({ startDate, endDate }: Props) {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>תשלומים בתקופה</CardTitle></CardHeader>
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle>תשלומים בתקופה</CardTitle>
+            <Select value={registerFilter} onValueChange={setRegisterFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="סנן לפי קופה" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">כל הקופות</SelectItem>
+                <SelectItem value="none">ללא קופה</SelectItem>
+                {(registers || []).map((r) => (
+                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
@@ -141,9 +166,9 @@ export default function CashflowTab({ startDate, endDate }: Props) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!visiblePayments.length ? (
+              {!filteredPayments.length ? (
                 <TableRow><TableCell colSpan={6} className="text-center py-4 text-muted-foreground">אין תשלומים</TableCell></TableRow>
-              ) : visiblePayments.map((p: any) => (
+              ) : filteredPayments.map((p: any) => (
                 <TableRow key={p.id}>
                   <TableCell className="text-xs">{new Date(p.created_at).toLocaleDateString("he-IL")}</TableCell>
                   <TableCell>
