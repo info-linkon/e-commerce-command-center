@@ -51,12 +51,13 @@ interface PaymentSectionProps {
   paymentLinkUrl?: string | null;
   hypTransactionId?: string | null;
   shippingCost?: number;
+  discountAmount?: number;
 }
 
 const PaymentSection = ({
   orderId, orderTotal, orderNumber, isDelivered, isCancelled, isCompleted,
   customerName, customerEmail, customerPhone, orderItems, invoiceUrl, paymentMethod: orderPaymentMethod,
-  paymentLinkUrl, hypTransactionId, shippingCost,
+  paymentLinkUrl, hypTransactionId, shippingCost, discountAmount,
 }: PaymentSectionProps) => {
   const { data: existingPayments } = useOrderPayments(orderId);
   const { data: registers } = useCashRegisters();
@@ -176,6 +177,7 @@ const PaymentSection = ({
                 items: orderItems,
                 payments: docPayments,
                 shipping_cost: shippingCost,
+                discount_amount: discountAmount,
               });
 
               // Save short invoice URL to order
@@ -444,6 +446,7 @@ const PaymentSection = ({
                   items: orderItems,
                   payments: docPayments,
                   shipping_cost: shippingCost,
+                  discount_amount: discountAmount,
                 });
                 const shortCode = result?.short_code;
                 const invoiceLink = shortCode ? `/inv/${shortCode}` : result?.doc_url;
