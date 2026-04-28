@@ -127,12 +127,10 @@ const CashRegistersPage = () => {
   const [settingsRegisterId, setSettingsRegisterId] = useState<string | null>(null);
   const settingsRegister = registers?.find((r) => r.id === settingsRegisterId);
   const [openingInput, setOpeningInput] = useState("");
-  const [balanceInput, setBalanceInput] = useState("");
 
   const openSettings = (r: { id: string; opening_balance: number; current_balance: number }) => {
     setSettingsRegisterId(r.id);
     setOpeningInput(String(Number(r.opening_balance)));
-    setBalanceInput(String(Number(r.current_balance)));
   };
 
   const handleSaveOpening = () => {
@@ -140,22 +138,6 @@ const CashRegistersPage = () => {
     const v = parseFloat(openingInput);
     if (!isFinite(v)) return;
     setOpeningBalance.mutate({ id: settingsRegisterId, opening_balance: v });
-  };
-
-  const handleSaveBalance = () => {
-    if (!settingsRegisterId) return;
-    const v = parseFloat(balanceInput);
-    if (!isFinite(v)) return;
-    setBalance.mutate({ id: settingsRegisterId, current_balance: v });
-  };
-
-  const handleResetBalance = () => {
-    if (!settingsRegisterId || !settingsRegister) return;
-    if (!confirm(`לאפס את היתרה הנוכחית של "${settingsRegister.name}" לאפס? פעולה זו אינה משפיעה על היסטוריית התנועות.`)) return;
-    setBalance.mutate(
-      { id: settingsRegisterId, current_balance: 0 },
-      { onSuccess: () => setBalanceInput("0") },
-    );
   };
 
   const handleCreateRegister = () => {
