@@ -332,6 +332,23 @@ const CashRegistersPage = () => {
                           <span className="font-bold">{diff >= 0 ? "+" : "−"}₪{Math.abs(diff).toFixed(2)}</span>
                         </div>
                       )}
+                      {isOwner && Math.abs(diff) > 0.01 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full gap-2 mt-2 border-amber-300 text-amber-800 hover:bg-amber-50"
+                          disabled={setBalance.isPending}
+                          onClick={() => {
+                            if (!confirm(
+                              `לסנכרן את יתרת "${r.name}" ל-₪${b.computed.toFixed(2)} (היתרה המחושבת)?\n\nהיתרה הנוכחית ב-DB: ₪${actual.toFixed(2)}\nפער: ${diff >= 0 ? "+" : "−"}₪${Math.abs(diff).toFixed(2)}\n\nפעולה זו מעדכנת את current_balance בלבד ואינה משנה תנועות היסטוריות.`
+                            )) return;
+                            setBalance.mutate({ id: r.id, current_balance: b.computed });
+                          }}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          סנכרן יתרה למחושב
+                        </Button>
+                      )}
                     </div>
                   );
                 })()}
