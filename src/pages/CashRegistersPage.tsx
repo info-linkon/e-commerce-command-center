@@ -176,6 +176,9 @@ const CashRegistersPage = () => {
 
   const activeRegisters = registers?.filter((r) => r.is_active) || [];
 
+  const registerIds = (registers || []).map((r) => r.id);
+  const { data: breakdowns } = useRegistersBreakdown(registerIds);
+
   // Total of all registers excluding bank account and HYP (credit gateway)
   const isExcludedFromTotal = (name: string) => {
     const n = name.toLowerCase();
@@ -291,6 +294,47 @@ const CashRegistersPage = () => {
                 <div className="text-xs text-muted-foreground mt-1">
                   יתרת פתיחה: ₪{Number(r.opening_balance).toFixed(2)}
                 </div>
+                {breakdowns?.[r.id] && (() => {
+                  const b = breakdowns[r.id];
+                  const actual = Number(r.current_balance);
+                  const diff = actual - b.computed;
+                  return (
+                    <div className="mt-3 rounded-md border bg-muted/30 p-2.5 text-xs space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">יתרת פתיחה</span>
+                        <span className="font-medium">₪{b.opening.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">+ תשלומים</span>
+                        <span className="font-medium text-green-700">+₪{b.payments.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">− הוצאות</span>
+                        <span className="font-medium text-red-700">−₪{b.expenses.toFixed(2)}</span>
+                      </div>
+                      {(b.transfersIn > 0 || b.transfersOut > 0) && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">± העברות</span>
+                          <span className="font-medium">
+                            <span className="text-green-700">+₪{b.transfersIn.toFixed(2)}</span>
+                            {" / "}
+                            <span className="text-red-700">−₪{b.transfersOut.toFixed(2)}</span>
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t pt-1 mt-1">
+                        <span className="text-muted-foreground">= מחושב</span>
+                        <span className="font-bold">₪{b.computed.toFixed(2)}</span>
+                      </div>
+                      {Math.abs(diff) > 0.01 && (
+                        <div className="flex justify-between text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-1">
+                          <span>פער מול יתרה ב-DB</span>
+                          <span className="font-bold">{diff >= 0 ? "+" : "−"}₪{Math.abs(diff).toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <Button
                   variant="outline"
                   size="sm"
