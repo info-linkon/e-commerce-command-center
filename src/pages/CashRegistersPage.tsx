@@ -12,6 +12,93 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useCashRegisters, useCreateCashRegister, useCashRegisterTransactions, useSetCashRegisterBalance, useSetCashRegisterOpeningBalance } from "@/hooks/useCashRegisters";
 import { useCashTransfers, useCreateCashTransfer } from "@/hooks/useCashTransfers";
 import { useIsOwner } from "@/hooks/useIsAdmin";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+
+type RegisterBreakdown = {
+  opening: number;
+  payments: number;
+  expenses: number; // positive number representing total expenses
+  transfersIn: number;
+  transfersOut: number; // positive number
+  computed: number;
+};
+
+function useRegistersBreakdown(registerIds: string[]) {
+  return useQuery({
+    queryKey: ["registers-breakdown", registerIds.sort().join(",")],
+    enabled: registerIds.length > 0,
+    queryFn: async (): Promise<Record<string, RegisterBreakdown>> => {
+      const [paymentsRes, expensesRes, transfersRes, registersRes] = await Promise.all([
+        supabase
+          .from("payments")
+          .select("amount, cash_register_id, payment_method, orders(status)")
+          .in("cash_register_id", registerIds),
+        supabase
+          .from("expenses")
+          .select("amount, cash_register_id")
+          .eq("payment_source", "cash_register")
+          .in("cash_register_id", registerIds),
+        supabase
+          .from("cash_transfers")
+          .select("amount, from_register_id, to_register_id")
+          .or(
+            `from_register_id.in.(${registerIds.join(",")}),to_register_id.in.(${registerIds.join(",")})`,
+          ),
+        supabase
+          .from("cash_registers")
+          .select("id, opening_balance, requires_completed_order")
+          .in("id", registerIds),
+      ]);
+      if (paymentsRes.error) throw paymentsRes.error;
+      if (expensesRes.error) throw expensesRes.error;
+      if (transfersRes.error) throw transfersRes.error;
+      if (registersRes.error) throw registersRes.error;
+
+      const result: Record<string, RegisterBreakdown> = {};
+      for (const r of registersRes.data || []) {
+        result[r.id] = {
+          opening: Number(r.opening_balance || 0),
+          payments: 0,
+          expenses: 0,
+          transfersIn: 0,
+          transfersOut: 0,
+          computed: 0,
+        };
+      }
+      const requiresCompleted: Record<string, boolean> = {};
+      for (const r of registersRes.data || []) {
+        requiresCompleted[r.id] = !!(r as any).requires_completed_order;
+      }
+
+      for (const p of paymentsRes.data || []) {
+        const rid = (p as any).cash_register_id;
+        if (!rid || !result[rid]) continue;
+        const status = (p as any).orders?.status;
+        // Mirror the DB trigger: deferred registers only count cash payments from completed orders.
+        if (requiresCompleted[rid] && (p as any).payment_method === "cash" && status !== "completed") continue;
+        result[rid].payments += Number((p as any).amount);
+      }
+      for (const e of expensesRes.data || []) {
+        const rid = (e as any).cash_register_id;
+        if (!rid || !result[rid]) continue;
+        result[rid].expenses += Number((e as any).amount);
+      }
+      for (const t of transfersRes.data || []) {
+        const fromId = (t as any).from_register_id;
+        const toId = (t as any).to_register_id;
+        const amt = Number((t as any).amount);
+        if (toId && result[toId]) result[toId].transfersIn += amt;
+        if (fromId && result[fromId]) result[fromId].transfersOut += amt;
+      }
+      for (const id of Object.keys(result)) {
+        const b = result[id];
+        b.computed = b.opening + b.payments - b.expenses + b.transfersIn - b.transfersOut;
+      }
+      return result;
+    },
+  });
+}
 
 const CashRegistersPage = () => {
   const { data: registers, isLoading } = useCashRegisters();
@@ -88,6 +175,9 @@ const CashRegistersPage = () => {
   };
 
   const activeRegisters = registers?.filter((r) => r.is_active) || [];
+
+  const registerIds = (registers || []).map((r) => r.id);
+  const { data: breakdowns } = useRegistersBreakdown(registerIds);
 
   // Total of all registers excluding bank account and HYP (credit gateway)
   const isExcludedFromTotal = (name: string) => {
@@ -204,6 +294,47 @@ const CashRegistersPage = () => {
                 <div className="text-xs text-muted-foreground mt-1">
                   יתרת פתיחה: ₪{Number(r.opening_balance).toFixed(2)}
                 </div>
+                {breakdowns?.[r.id] && (() => {
+                  const b = breakdowns[r.id];
+                  const actual = Number(r.current_balance);
+                  const diff = actual - b.computed;
+                  return (
+                    <div className="mt-3 rounded-md border bg-muted/30 p-2.5 text-xs space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">יתרת פתיחה</span>
+                        <span className="font-medium">₪{b.opening.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">+ תשלומים</span>
+                        <span className="font-medium text-green-700">+₪{b.payments.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">− הוצאות</span>
+                        <span className="font-medium text-red-700">−₪{b.expenses.toFixed(2)}</span>
+                      </div>
+                      {(b.transfersIn > 0 || b.transfersOut > 0) && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">± העברות</span>
+                          <span className="font-medium">
+                            <span className="text-green-700">+₪{b.transfersIn.toFixed(2)}</span>
+                            {" / "}
+                            <span className="text-red-700">−₪{b.transfersOut.toFixed(2)}</span>
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t pt-1 mt-1">
+                        <span className="text-muted-foreground">= מחושב</span>
+                        <span className="font-bold">₪{b.computed.toFixed(2)}</span>
+                      </div>
+                      {Math.abs(diff) > 0.01 && (
+                        <div className="flex justify-between text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-1">
+                          <span>פער מול יתרה ב-DB</span>
+                          <span className="font-bold">{diff >= 0 ? "+" : "−"}₪{Math.abs(diff).toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <Button
                   variant="outline"
                   size="sm"
