@@ -304,7 +304,7 @@ const PaymentSection = ({
               <Button
                 variant="outline"
                 className="w-full gap-2"
-                disabled={!isDelivered && !hasPayments}
+                disabled={!isPickup && !isDelivered && !hasPayments}
               >
                 <CreditCard className="h-4 w-4" />
                 {hasPayments ? "הוסף תשלום" : "רשום תשלום (שהתקבל)"}
