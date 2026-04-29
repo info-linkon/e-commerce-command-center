@@ -42,6 +42,7 @@ interface PaymentSectionProps {
   isDelivered: boolean;
   isCancelled: boolean;
   isCompleted: boolean;
+  isPickup?: boolean;
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
@@ -55,7 +56,7 @@ interface PaymentSectionProps {
 }
 
 const PaymentSection = ({
-  orderId, orderTotal, orderNumber, isDelivered, isCancelled, isCompleted,
+  orderId, orderTotal, orderNumber, isDelivered, isCancelled, isCompleted, isPickup = false,
   customerName, customerEmail, customerPhone, orderItems, invoiceUrl, paymentMethod: orderPaymentMethod,
   paymentLinkUrl, hypTransactionId, shippingCost, discountAmount,
 }: PaymentSectionProps) => {
@@ -303,7 +304,7 @@ const PaymentSection = ({
               <Button
                 variant="outline"
                 className="w-full gap-2"
-                disabled={!isDelivered && !hasPayments}
+                disabled={!isPickup && !isDelivered && !hasPayments}
               >
                 <CreditCard className="h-4 w-4" />
                 {hasPayments ? "הוסף תשלום" : "רשום תשלום (שהתקבל)"}
@@ -469,7 +470,7 @@ const PaymentSection = ({
           </Button>
         )}
 
-        {!isCancelled && !isCompleted && !isDelivered && !hasPayments && remaining > 0 && (
+        {!isCancelled && !isCompleted && !isPickup && !isDelivered && !hasPayments && remaining > 0 && (
           <p className="text-xs text-muted-foreground text-center">
             תשלום יהיה זמין לאחר שהמשלוח יסומן כנמסר
           </p>

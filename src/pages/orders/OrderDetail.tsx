@@ -143,6 +143,15 @@ const OrderDetail = () => {
   const isPaid = totalPaid >= order.total && totalPaid > 0;
   const isPartiallyPaid = totalPaid > 0 && totalPaid < order.total;
 
+  // Self-pickup detection: web checkout marks shipping_city / notes; treat
+  // any order with no shipping address and no shipping cost as pickup too.
+  const shippingAddrAny = (order as any).shipping_address as string | null | undefined;
+  const shippingCityAny = (order as any).shipping_city as string | null | undefined;
+  const isPickup =
+    shippingCityAny === "איסוף עצמי" ||
+    (order.notes || "").startsWith("🏪 איסוף עצמי") ||
+    (Number((order as any).shipping_cost || 0) === 0 && !shippingAddrAny && !shippingCityAny);
+
   const handleAssign = () => {
     if (!selectedWarehouse) return;
     assignWarehouse.mutate({ orderId: order.id, warehouseId: selectedWarehouse });
@@ -315,6 +324,11 @@ const OrderDetail = () => {
         </Button>
         <h1 className="text-2xl font-bold">הזמנה #{order.order_number}</h1>
         <Badge className={`${statusColors[status]} border-0`}>{statusLabels[status]}</Badge>
+        {isPickup && (
+          <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary">
+            🏪 איסוף עצמי
+          </Badge>
+        )}
         {order.picking_status && isAssigned && !isCancelled && (
           <Badge variant="outline">{pickingLabels[order.picking_status] || order.picking_status}</Badge>
         )}
@@ -545,8 +559,21 @@ const OrderDetail = () => {
       )}
 
       {/* Delivery Assignment */}
-      {isAssigned && !isCancelled && (
+      {isAssigned && !isCancelled && !isPickup && (
         <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} />
+      )}
+
+      {/* Self-pickup notice (replaces delivery assignment) */}
+      {isAssigned && !isCancelled && isPickup && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 flex items-center gap-3">
+          <span className="text-2xl">🏪</span>
+          <div className="flex-1">
+            <div className="font-semibold">איסוף עצמי</div>
+            <div className="text-sm text-muted-foreground">
+              ההזמנה תיאסף ע״י הלקוח בחנות — אין צורך בשיוך משלוח. ניתן לרשום תשלום ולסגור את ההזמנה ישירות.
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Payment Section — show always except cancelled */}
@@ -558,6 +585,7 @@ const OrderDetail = () => {
           isDelivered={delivery?.status === "delivered"}
           isCancelled={isCancelled}
           isCompleted={isCompleted}
+          isPickup={isPickup}
           customerName={order.customer_name || undefined}
           customerEmail={order.customer_email || undefined}
           customerPhone={order.customer_phone || undefined}
