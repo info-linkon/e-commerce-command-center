@@ -324,6 +324,11 @@ const OrderDetail = () => {
         </Button>
         <h1 className="text-2xl font-bold">הזמנה #{order.order_number}</h1>
         <Badge className={`${statusColors[status]} border-0`}>{statusLabels[status]}</Badge>
+        {isPickup && (
+          <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary">
+            🏪 איסוף עצמי
+          </Badge>
+        )}
         {order.picking_status && isAssigned && !isCancelled && (
           <Badge variant="outline">{pickingLabels[order.picking_status] || order.picking_status}</Badge>
         )}
