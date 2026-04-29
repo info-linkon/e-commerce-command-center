@@ -559,8 +559,21 @@ const OrderDetail = () => {
       )}
 
       {/* Delivery Assignment */}
-      {isAssigned && !isCancelled && (
+      {isAssigned && !isCancelled && !isPickup && (
         <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} />
+      )}
+
+      {/* Self-pickup notice (replaces delivery assignment) */}
+      {isAssigned && !isCancelled && isPickup && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 flex items-center gap-3">
+          <span className="text-2xl">🏪</span>
+          <div className="flex-1">
+            <div className="font-semibold">איסוף עצמי</div>
+            <div className="text-sm text-muted-foreground">
+              ההזמנה תיאסף ע״י הלקוח בחנות — אין צורך בשיוך משלוח. ניתן לרשום תשלום ולסגור את ההזמנה ישירות.
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Payment Section — show always except cancelled */}
