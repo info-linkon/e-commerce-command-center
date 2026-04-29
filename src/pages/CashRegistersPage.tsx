@@ -567,6 +567,7 @@ const CashRegistersPage = () => {
                   <TableHead className="text-right">מקופה</TableHead>
                   <TableHead className="text-right">לקופה</TableHead>
                   <TableHead className="text-right">סכום</TableHead>
+                  <TableHead className="text-right">בוצע ע״י</TableHead>
                   <TableHead className="text-right">הערות</TableHead>
                   <TableHead className="text-right">תאריך</TableHead>
                 </TableRow>
@@ -577,6 +578,7 @@ const CashRegistersPage = () => {
                     <TableCell>{t.from?.name || "—"}</TableCell>
                     <TableCell>{t.to?.name || "—"}</TableCell>
                     <TableCell className="font-medium">₪{Number(t.amount).toFixed(2)}</TableCell>
+                    <TableCell className="text-sm">{t.created_by ? nameOf(t.created_by) : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{t.notes || "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(t.created_at).toLocaleString("he-IL")}
