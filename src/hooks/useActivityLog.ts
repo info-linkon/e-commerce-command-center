@@ -47,7 +47,7 @@ export function useActivityLog(filters: Filters = {}) {
       };
 
       const [
-        profilesRes,
+        profilesData,
         ordersRes,
         ordersUpdRes,
         paymentsRes,
@@ -58,7 +58,11 @@ export function useActivityLog(filters: Filters = {}) {
         cashTransfersRes,
         documentsRes,
       ] = await Promise.all([
-        supabase.from("profiles").select("user_id, display_name"),
+        (async () => {
+          const { data } = await supabase.functions.invoke("admin-list-users", { body: {} });
+          const list = (data?.profiles || []) as Array<{ user_id: string; display_name: string | null; email?: string | null }>;
+          return list;
+        })(),
         range(
           supabase
             .from("orders")
@@ -136,9 +140,10 @@ export function useActivityLog(filters: Filters = {}) {
       ]);
 
       const profileMap = new Map<string, string>();
-      (profilesRes.data || []).forEach((p: any) =>
-        profileMap.set(p.user_id, p.display_name || ""),
-      );
+      (profilesData || []).forEach((p: any) => {
+        const name = p.display_name || (p.email ? String(p.email).split("@")[0] : "") || "";
+        profileMap.set(p.user_id, name);
+      });
       const nameOf = (uid: string | null | undefined) =>
         uid ? profileMap.get(uid) || "משתמש" : null;
 
