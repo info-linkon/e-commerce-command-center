@@ -42,6 +42,7 @@ interface PaymentSectionProps {
   isDelivered: boolean;
   isCancelled: boolean;
   isCompleted: boolean;
+  isPickup?: boolean;
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
@@ -55,7 +56,7 @@ interface PaymentSectionProps {
 }
 
 const PaymentSection = ({
-  orderId, orderTotal, orderNumber, isDelivered, isCancelled, isCompleted,
+  orderId, orderTotal, orderNumber, isDelivered, isCancelled, isCompleted, isPickup = false,
   customerName, customerEmail, customerPhone, orderItems, invoiceUrl, paymentMethod: orderPaymentMethod,
   paymentLinkUrl, hypTransactionId, shippingCost, discountAmount,
 }: PaymentSectionProps) => {
