@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
 import { useOrders, useDeleteOrder, useUpdateOrderStatus, orderInvoiceKind, type OrderStatus } from "@/hooks/useOrders";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
+import { useUserNames } from "@/hooks/useUserNames";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -53,6 +54,7 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
   const [invoiceFilter, setInvoiceFilter] = useState<string>("all");
   const { data: orders, isLoading } = useOrders(statusFilter === "all" ? undefined : statusFilter as OrderStatus);
   const { data: registers } = useCashRegisters();
+  const { nameOf } = useUserNames();
   const deleteOrder = useDeleteOrder();
   const updateStatus = useUpdateOrderStatus();
   const qc = useQueryClient();
@@ -103,6 +105,7 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
     { label: "טלפון", render: (o) => <span dir="ltr" className="text-right">{o.customer_phone || "—"}</span>, hideOnMobile: true },
     { label: "סה״כ", render: (o) => `₪${Number(o.total).toFixed(2)}` },
     { label: "מקור", render: (o) => <Badge variant="outline" className="text-xs">{sourceLabels[o.source] || o.source}</Badge>, hideOnMobile: true },
+    { label: "ע״י", render: (o) => o.created_by ? <span className="text-xs">{nameOf(o.created_by)}</span> : <span className="text-muted-foreground text-xs">—</span>, hideOnMobile: true },
     { label: "אמצעי תשלום", render: (o) => o.payment_method ? <Badge variant="secondary" className="text-xs">{paymentLabels[o.payment_method] || o.payment_method}</Badge> : <span className="text-muted-foreground text-xs">—</span>, hideOnMobile: true },
     {
       label: "חשבונית",

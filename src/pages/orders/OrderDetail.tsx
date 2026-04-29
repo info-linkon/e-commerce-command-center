@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2, Loader2, AlertCircle, FileText, ExternalLink, ShieldCheck, ShieldAlert, Plus, Minus, Trash2, Edit3 } from "lucide-react";
+import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2, Loader2, AlertCircle, FileText, ExternalLink, ShieldCheck, ShieldAlert, Plus, Minus, Trash2, Edit3, User } from "lucide-react";
 import { useOrderPayments } from "@/hooks/usePayments";
 import DeliveryAssignment from "@/components/orders/DeliveryAssignment";
 import PaymentSection from "@/components/orders/PaymentSection";
 import { useOrderDelivery } from "@/hooks/useDeliveries";
+import { useUserNames } from "@/hooks/useUserNames";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -124,6 +125,7 @@ const OrderDetail = () => {
   const updateStatus = useUpdateOrderStatus();
   const assignWarehouse = useAssignWarehouse();
   const cancelOrder = useCancelOrder();
+  const { nameOf } = useUserNames();
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>("");
   const [editingItems, setEditingItems] = useState(false);
 
@@ -441,6 +443,27 @@ const OrderDetail = () => {
               <span>מקור:</span>
               <Badge variant="outline" className="text-xs">{sourceLabels[order.source] || order.source}</Badge>
             </div>
+            {(order as any).created_by && (
+              <div className="flex gap-1.5 items-center text-xs text-muted-foreground">
+                <User className="h-3 w-3" />
+                <span>נוצרה ע״י:</span>
+                <span className="font-medium text-foreground">{nameOf((order as any).created_by)}</span>
+              </div>
+            )}
+            {isCompleted && (order as any).completed_by && (
+              <div className="flex gap-1.5 items-center text-xs text-muted-foreground">
+                <CheckCircle2 className="h-3 w-3 text-green-600" />
+                <span>נסגרה ע״י:</span>
+                <span className="font-medium text-foreground">{nameOf((order as any).completed_by)}</span>
+              </div>
+            )}
+            {isCancelled && (order as any).cancelled_by && (
+              <div className="flex gap-1.5 items-center text-xs text-muted-foreground">
+                <XCircle className="h-3 w-3 text-red-600" />
+                <span>בוטלה ע״י:</span>
+                <span className="font-medium text-foreground">{nameOf((order as any).cancelled_by)}</span>
+              </div>
+            )}
             {(order as any).payment_method && (
               <div className="flex gap-2 items-center text-sm">
                 <span className="text-muted-foreground">תשלום:</span>

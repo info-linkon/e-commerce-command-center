@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useIntakeSessions, useIntakeSessionItems } from "@/hooks/useIntakeSessions";
+import { useUserNames } from "@/hooks/useUserNames";
 import { format } from "date-fns";
 
 const IntakeHistoryPage = () => {
   const { data: sessions, isLoading } = useIntakeSessions();
+  const { nameOf } = useUserNames();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
@@ -34,6 +36,7 @@ const IntakeHistoryPage = () => {
                   <TableHead>אסמכתא</TableHead>
                   <TableHead>פריטים</TableHead>
                   <TableHead>סטטוס</TableHead>
+                  <TableHead>נקלט ע״י</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -57,10 +60,11 @@ const IntakeHistoryPage = () => {
                           {session.status === "completed" ? "הושלם" : "טיוטה"}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-sm">{(session as any).created_by ? nameOf((session as any).created_by) : <span className="text-muted-foreground">—</span>}</TableCell>
                     </TableRow>
                     {expandedId === session.id && (
                       <TableRow key={`${session.id}-details`}>
-                        <TableCell colSpan={7} className="p-0">
+                        <TableCell colSpan={8} className="p-0">
                           <SessionDetails sessionId={session.id} notes={session.notes} />
                         </TableCell>
                       </TableRow>

@@ -13,6 +13,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from "@/lib/utils";
 import { useWarehouses } from "@/hooks/useWarehouses";
 import { useInventoryTransfers, useCreateTransfer } from "@/hooks/useInventoryTransfers";
+import { useUserNames } from "@/hooks/useUserNames";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ interface TransferItem {
 }
 
 const TransfersPage = () => {
+  const { nameOf } = useUserNames();
   const [open, setOpen] = useState(false);
   const [fromWarehouse, setFromWarehouse] = useState("");
   const [toWarehouse, setToWarehouse] = useState("");
@@ -255,14 +257,15 @@ const TransfersPage = () => {
               <TableHead className="text-right">למחסן</TableHead>
               <TableHead className="text-right">פריטים</TableHead>
               <TableHead className="text-right">סטטוס</TableHead>
+              <TableHead className="text-right">בוצע ע״י</TableHead>
               <TableHead className="text-right">הערות</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">טוען...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">טוען...</TableCell></TableRow>
             ) : !transfers?.length ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">אין העברות</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">אין העברות</TableCell></TableRow>
             ) : (
               transfers.map((t: any) => (
                 <TableRow key={t.id}>
@@ -281,6 +284,7 @@ const TransfersPage = () => {
                       {t.status === "completed" ? "הושלם" : "ממתין"}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-xs">{t.created_by ? nameOf(t.created_by) : <span className="text-muted-foreground">—</span>}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{t.notes || "—"}</TableCell>
                 </TableRow>
               ))

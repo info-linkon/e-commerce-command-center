@@ -447,9 +447,11 @@ export function useCancelOrder() {
       }
 
       // 4. Update order status
+      const { data: actorData } = await supabase.auth.getUser();
+      const actorId = actorData?.user?.id || null;
       const { error: updateErr } = await supabase
         .from("orders")
-        .update({ status: "cancelled" as OrderStatus })
+        .update({ status: "cancelled" as OrderStatus, cancelled_by: actorId } as any)
         .eq("id", orderId);
       if (updateErr) throw updateErr;
 
@@ -496,7 +498,12 @@ export function useUpdateOrderStatus() {
         }
       }
 
-      const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+      const { data: actorData } = await supabase.auth.getUser();
+      const actorId = actorData?.user?.id || null;
+      const updatePayload: any = { status };
+      if (status === "completed") updatePayload.completed_by = actorId;
+      if (status === "cancelled") updatePayload.cancelled_by = actorId;
+      const { error } = await supabase.from("orders").update(updatePayload).eq("id", id);
       if (error) throw error;
       if (order?.source === "website") {
         syncOrderStatusToWoo(id);

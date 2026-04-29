@@ -1035,7 +1035,9 @@ export type Database = {
           access_token: string
           assigned_user_id: string | null
           assigned_warehouse_id: string | null
+          cancelled_by: string | null
           cash_register_id: string | null
+          completed_by: string | null
           created_at: string
           created_by: string | null
           customer_email: string | null
@@ -1071,7 +1073,9 @@ export type Database = {
           access_token?: string
           assigned_user_id?: string | null
           assigned_warehouse_id?: string | null
+          cancelled_by?: string | null
           cash_register_id?: string | null
+          completed_by?: string | null
           created_at?: string
           created_by?: string | null
           customer_email?: string | null
@@ -1107,7 +1111,9 @@ export type Database = {
           access_token?: string
           assigned_user_id?: string | null
           assigned_warehouse_id?: string | null
+          cancelled_by?: string | null
           cash_register_id?: string | null
+          completed_by?: string | null
           created_at?: string
           created_by?: string | null
           customer_email?: string | null

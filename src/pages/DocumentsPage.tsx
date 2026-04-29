@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDocuments, useCreateDocument, DOC_TYPE_LABELS, CreateDocInput } from "@/hooks/useDocuments";
+import { useUserNames } from "@/hooks/useUserNames";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ interface PaymentRow {
 export default function DocumentsPage({ embedded = false }: { embedded?: boolean }) {
   const { data: documents, isLoading } = useDocuments();
   const createDoc = useCreateDocument();
+  const { nameOf } = useUserNames();
   const [open, setOpen] = useState(false);
 
   const [docType, setDocType] = useState<CreateDocInput["doc_type"]>("tax_invoice");
@@ -256,6 +258,7 @@ export default function DocumentsPage({ embedded = false }: { embedded?: boolean
                   <TableHead>סכום</TableHead>
                   <TableHead>סטטוס</TableHead>
                   <TableHead>תאריך</TableHead>
+                  <TableHead>הופקה ע״י</TableHead>
                   <TableHead>פעולות</TableHead>
                 </TableRow>
               </TableHeader>
@@ -272,6 +275,7 @@ export default function DocumentsPage({ embedded = false }: { embedded?: boolean
                       </Badge>
                     </TableCell>
                     <TableCell>{format(new Date(doc.created_at), "dd/MM/yyyy HH:mm")}</TableCell>
+                    <TableCell className="text-sm">{doc.orders?.created_by ? nameOf(doc.orders.created_by) : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell>
                       {doc.doc_url && (
                         <Button variant="ghost" size="icon" asChild>

@@ -1,8 +1,9 @@
-import { CheckCircle2, Circle, Loader2, Package } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Package, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { usePickingItems, useTogglePickedItem } from "@/hooks/usePickingItems";
+import { useUserNames } from "@/hooks/useUserNames";
 
 const pickingLabels: Record<string, string> = {
   not_started: "טרם החל",
@@ -24,6 +25,7 @@ interface PickingChecklistProps {
 const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => {
   const { data: items, isLoading } = usePickingItems(orderId);
   const togglePicked = useTogglePickedItem();
+  const { nameOf } = useUserNames();
   const status = pickingStatus || "not_started";
 
   if (isLoading) {
@@ -189,6 +191,15 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
                               <span className="font-mono">{variationSku}</span>
                             )}
                           </div>
+                          {item.picked && item.picked_by && (
+                            <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+                              <User className="h-3 w-3" />
+                              <span>ליקט: <span className="font-medium text-foreground">{nameOf(item.picked_by)}</span></span>
+                              {item.picked_at && (
+                                <span>· {new Date(item.picked_at).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         <div className="text-sm font-medium">×{item.quantity || 0}</div>
