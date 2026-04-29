@@ -17,7 +17,7 @@ export function useDocuments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents" as any)
-        .select("*")
+        .select("*, orders(created_by)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as any[];
