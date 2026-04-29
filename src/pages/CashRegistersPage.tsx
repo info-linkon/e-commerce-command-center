@@ -109,6 +109,7 @@ const CashRegistersPage = () => {
   const setBalance = useSetCashRegisterBalance();
   const setOpeningBalance = useSetCashRegisterOpeningBalance();
   const { isOwner } = useIsOwner();
+  const { nameOf } = useUserNames();
 
   const [newOpen, setNewOpen] = useState(false);
   const [regName, setRegName] = useState("");
