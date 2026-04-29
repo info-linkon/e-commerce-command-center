@@ -291,6 +291,7 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
                   <TableHead>סכום</TableHead>
                   <TableHead>מקור</TableHead>
                   <TableHead>תאריך</TableHead>
+                  <TableHead>נרשם ע״י</TableHead>
                   <TableHead>מסמך</TableHead>
                   <TableHead className="w-[120px]">פעולות</TableHead>
                 </TableRow>
@@ -309,6 +310,7 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(e.created_at).toLocaleString("he-IL")}
                     </TableCell>
+                    <TableCell className="text-sm">{e.created_by ? nameOf(e.created_by) : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell>
                       {(e.document_file || e.document_url) ? (
                         <a href={e.document_file || e.document_url} target="_blank" rel="noopener noreferrer" className="text-primary underline text-sm">
