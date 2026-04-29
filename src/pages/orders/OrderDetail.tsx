@@ -585,6 +585,7 @@ const OrderDetail = () => {
           isDelivered={delivery?.status === "delivered"}
           isCancelled={isCancelled}
           isCompleted={isCompleted}
+          isPickup={isPickup}
           customerName={order.customer_name || undefined}
           customerEmail={order.customer_email || undefined}
           customerPhone={order.customer_phone || undefined}
