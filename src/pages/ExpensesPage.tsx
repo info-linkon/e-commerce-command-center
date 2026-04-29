@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@/hooks/useExpenses";
+import { useUserNames } from "@/hooks/useUserNames";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
 
 const sourceLabels: Record<string, string> = {
