@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDocuments, useCreateDocument, DOC_TYPE_LABELS, CreateDocInput } from "@/hooks/useDocuments";
+import { useUserNames } from "@/hooks/useUserNames";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ interface PaymentRow {
 export default function DocumentsPage({ embedded = false }: { embedded?: boolean }) {
   const { data: documents, isLoading } = useDocuments();
   const createDoc = useCreateDocument();
+  const { nameOf } = useUserNames();
   const [open, setOpen] = useState(false);
 
   const [docType, setDocType] = useState<CreateDocInput["doc_type"]>("tax_invoice");
