@@ -258,6 +258,7 @@ export default function DocumentsPage({ embedded = false }: { embedded?: boolean
                   <TableHead>סכום</TableHead>
                   <TableHead>סטטוס</TableHead>
                   <TableHead>תאריך</TableHead>
+                  <TableHead>הופקה ע״י</TableHead>
                   <TableHead>פעולות</TableHead>
                 </TableRow>
               </TableHeader>
@@ -274,6 +275,7 @@ export default function DocumentsPage({ embedded = false }: { embedded?: boolean
                       </Badge>
                     </TableCell>
                     <TableCell>{format(new Date(doc.created_at), "dd/MM/yyyy HH:mm")}</TableCell>
+                    <TableCell className="text-sm">{doc.orders?.created_by ? nameOf(doc.orders.created_by) : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell>
                       {doc.doc_url && (
                         <Button variant="ghost" size="icon" asChild>
