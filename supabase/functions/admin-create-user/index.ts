@@ -31,12 +31,12 @@ Deno.serve(async (req) => {
     if (userErr || !userData?.user) return json({ error: "Unauthorized" }, 401);
 
     const admin = createClient(supabaseUrl, serviceKey);
-    const { data: isAdmin, error: roleErr } = await admin.rpc("has_role", {
-      _user_id: userData.user.id,
-      _role: "admin",
-    });
-    if (roleErr) return json({ error: roleErr.message }, 500);
-    if (!isAdmin) return json({ error: "Forbidden: admin role required" }, 403);
+    const [{ data: isAdmin, error: adminErr }, { data: isOwner, error: ownerErr }] = await Promise.all([
+      admin.rpc("has_role", { _user_id: userData.user.id, _role: "admin" }),
+      admin.rpc("has_role", { _user_id: userData.user.id, _role: "owner" }),
+    ]);
+    if (adminErr || ownerErr) return json({ error: (adminErr || ownerErr)!.message }, 500);
+    if (!isAdmin && !isOwner) return json({ error: "Forbidden: admin or owner role required" }, 403);
 
     const body = await req.json();
     const username = String(body?.username ?? "").trim().toLowerCase();

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useIsAdmin, useIsOwner } from "@/hooks/useIsAdmin";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,7 +52,10 @@ type RoleRow = {
 const UsersPage = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const { isAdmin, isLoading: roleLoading } = useIsAdmin();
+  const { isAdmin, isLoading: adminLoading } = useIsAdmin();
+  const { isOwner, isLoading: ownerLoading } = useIsOwner();
+  const canManage = isAdmin || isOwner;
+  const roleLoading = adminLoading || ownerLoading;
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -62,7 +65,7 @@ const UsersPage = () => {
 
   const usersQuery = useQuery({
     queryKey: ["admin-users"],
-    enabled: isAdmin,
+    enabled: canManage,
     queryFn: async () => {
       const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] =
         await Promise.all([
@@ -166,7 +169,7 @@ const UsersPage = () => {
     return <div className="text-muted-foreground">טוען...</div>;
   }
 
-  if (!isAdmin) {
+  if (!canManage) {
     return (
       <div className="space-y-4" dir="rtl">
         <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -176,7 +179,7 @@ const UsersPage = () => {
         <Card>
           <CardContent className="pt-6">
             <p className="text-muted-foreground">
-              הגישה מוגבלת למנהלים בלבד.
+              הגישה מוגבלת למנהלים ולבעלים בלבד.
             </p>
           </CardContent>
         </Card>
