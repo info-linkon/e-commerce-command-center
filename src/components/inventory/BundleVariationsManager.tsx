@@ -157,7 +157,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{bv.name}</span>
+                     <span className="font-medium">{(bv as any).name_he || bv.name}</span>
                     <Badge variant="secondary">₪{Number(bv.price).toFixed(2)}</Badge>
                     {(bv as any).sku && <Badge variant="outline">{(bv as any).sku}</Badge>}
                   </div>
@@ -197,12 +197,12 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
           <div className="space-y-4 min-h-0 overflow-y-auto pe-1">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>שם הוריאציה (עברית)</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: מארז קטן" />
+                <Label>שם הוריאציה (ערבית)</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="مثلاً: طقم صغير" dir="rtl" />
               </div>
               <div className="space-y-2">
-                <Label>שם הוריאציה (ערבית)</Label>
-                <Input value={nameHe} onChange={(e) => setNameHe(e.target.value)} placeholder="مثلاً: طقم صغير" />
+                <Label>שם הוריאציה (עברית)</Label>
+                <Input value={nameHe} onChange={(e) => setNameHe(e.target.value)} placeholder="למשל: מארז קטן" dir="rtl" />
               </div>
             </div>
             <div className="space-y-2">
