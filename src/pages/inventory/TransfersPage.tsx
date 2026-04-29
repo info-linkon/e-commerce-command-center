@@ -13,6 +13,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from "@/lib/utils";
 import { useWarehouses } from "@/hooks/useWarehouses";
 import { useInventoryTransfers, useCreateTransfer } from "@/hooks/useInventoryTransfers";
+import { useUserNames } from "@/hooks/useUserNames";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ interface TransferItem {
 }
 
 const TransfersPage = () => {
+  const { nameOf } = useUserNames();
   const [open, setOpen] = useState(false);
   const [fromWarehouse, setFromWarehouse] = useState("");
   const [toWarehouse, setToWarehouse] = useState("");
