@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useCashRegisters, useCreateCashRegister, useCashRegisterTransactions, useSetCashRegisterBalance, useSetCashRegisterOpeningBalance } from "@/hooks/useCashRegisters";
 import { useCashTransfers, useCreateCashTransfer } from "@/hooks/useCashTransfers";
+import { useUserNames } from "@/hooks/useUserNames";
 import { useIsOwner } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
