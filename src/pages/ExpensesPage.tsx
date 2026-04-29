@@ -38,6 +38,7 @@ const ExpensesPage = ({ embedded = false }: { embedded?: boolean }) => {
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
+  const { nameOf } = useUserNames();
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
