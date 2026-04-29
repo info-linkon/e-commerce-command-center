@@ -46,7 +46,7 @@ type ProfileRow = {
 
 type RoleRow = {
   user_id: string;
-  role: "admin" | "user";
+  role: "admin" | "user" | "owner";
 };
 
 const UsersPage = () => {
@@ -313,13 +313,19 @@ const UsersPage = () => {
                       <TableCell>{u.phone || "—"}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
+                          {u.roles.includes("owner") && (
+                            <Badge className="gap-1 bg-amber-500 hover:bg-amber-600">
+                              <ShieldCheck className="h-3 w-3" />
+                              בעלים
+                            </Badge>
+                          )}
                           {u.roles.includes("admin") && (
                             <Badge className="gap-1">
                               <ShieldCheck className="h-3 w-3" />
                               מנהל
                             </Badge>
                           )}
-                          {u.roles.includes("user") && !u.roles.includes("admin") && (
+                          {u.roles.includes("user") && !u.roles.includes("admin") && !u.roles.includes("owner") && (
                             <Badge variant="secondary">משתמש</Badge>
                           )}
                           {u.roles.length === 0 && (
