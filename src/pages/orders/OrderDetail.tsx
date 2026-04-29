@@ -125,6 +125,7 @@ const OrderDetail = () => {
   const updateStatus = useUpdateOrderStatus();
   const assignWarehouse = useAssignWarehouse();
   const cancelOrder = useCancelOrder();
+  const { nameOf } = useUserNames();
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>("");
   const [editingItems, setEditingItems] = useState(false);
 
