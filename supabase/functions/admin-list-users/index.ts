@@ -35,17 +35,28 @@ Deno.serve(async (req) => {
     ]);
     if (!isAdmin && !isOwner) return json({ error: "Forbidden" }, 403);
 
-    const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
+    const [{ data: profiles, error: pErr }, { data: roles, error: rErr }, { data: authList, error: aErr }] = await Promise.all([
       admin
         .from("profiles")
         .select("user_id, display_name, phone, created_at")
         .order("created_at", { ascending: false }),
       admin.from("user_roles").select("user_id, role"),
+      admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     ]);
     if (pErr) return json({ error: pErr.message }, 500);
     if (rErr) return json({ error: rErr.message }, 500);
+    if (aErr) console.error("listUsers error:", aErr.message);
 
-    return json({ success: true, profiles: profiles ?? [], roles: roles ?? [] });
+    const emailMap = new Map<string, string>();
+    (authList?.users || []).forEach((u: any) => {
+      if (u?.id && u?.email) emailMap.set(u.id, u.email);
+    });
+    const profilesWithEmail = (profiles ?? []).map((p: any) => ({
+      ...p,
+      email: emailMap.get(p.user_id) || null,
+    }));
+
+    return json({ success: true, profiles: profilesWithEmail, roles: roles ?? [] });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("admin-list-users error:", msg);
