@@ -143,6 +143,15 @@ const OrderDetail = () => {
   const isPaid = totalPaid >= order.total && totalPaid > 0;
   const isPartiallyPaid = totalPaid > 0 && totalPaid < order.total;
 
+  // Self-pickup detection: web checkout marks shipping_city / notes; treat
+  // any order with no shipping address and no shipping cost as pickup too.
+  const shippingAddrAny = (order as any).shipping_address as string | null | undefined;
+  const shippingCityAny = (order as any).shipping_city as string | null | undefined;
+  const isPickup =
+    shippingCityAny === "איסוף עצמי" ||
+    (order.notes || "").startsWith("🏪 איסוף עצמי") ||
+    (Number((order as any).shipping_cost || 0) === 0 && !shippingAddrAny && !shippingCityAny);
+
   const handleAssign = () => {
     if (!selectedWarehouse) return;
     assignWarehouse.mutate({ orderId: order.id, warehouseId: selectedWarehouse });
