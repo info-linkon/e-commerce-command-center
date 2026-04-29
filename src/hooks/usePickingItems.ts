@@ -183,11 +183,14 @@ export function useTogglePickedItem() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ pickingItemId, picked, orderId }: { pickingItemId: string; picked: boolean; orderId: string }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id || null;
       const { error } = await supabase
         .from("order_picking_items")
         .update({
           picked,
           picked_at: picked ? new Date().toISOString() : null,
+          picked_by: picked ? uid : null,
         })
         .eq("id", pickingItemId);
       if (error) throw error;
