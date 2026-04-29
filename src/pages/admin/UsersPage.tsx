@@ -67,24 +67,24 @@ const UsersPage = () => {
     queryKey: ["admin-users"],
     enabled: canManage,
     queryFn: async () => {
-      const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] =
-        await Promise.all([
-          supabase
-            .from("profiles")
-            .select("user_id, display_name, phone, created_at")
-            .order("created_at", { ascending: false }),
-          supabase.from("user_roles").select("user_id, role"),
-        ]);
-      if (pErr) throw pErr;
-      if (rErr) throw rErr;
+      const { data, error } = await supabase.functions.invoke("admin-list-users", {
+        body: {},
+      });
+      if (error) {
+        const msg = (data as { error?: string } | null)?.error || error.message;
+        throw new Error(msg);
+      }
+      const payload = data as { profiles?: ProfileRow[]; roles?: RoleRow[] } | null;
+      const profiles = payload?.profiles ?? [];
+      const roles = payload?.roles ?? [];
 
-      const roleMap = new Map<string, Set<"admin" | "user">>();
-      (roles as RoleRow[] | null)?.forEach((r) => {
+      const roleMap = new Map<string, Set<string>>();
+      roles.forEach((r) => {
         if (!roleMap.has(r.user_id)) roleMap.set(r.user_id, new Set());
         roleMap.get(r.user_id)!.add(r.role);
       });
 
-      return ((profiles as ProfileRow[] | null) ?? []).map((p) => ({
+      return profiles.map((p) => ({
         ...p,
         roles: Array.from(roleMap.get(p.user_id) ?? []),
       }));
