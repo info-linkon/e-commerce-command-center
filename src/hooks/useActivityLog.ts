@@ -59,9 +59,13 @@ export function useActivityLog(filters: Filters = {}) {
         documentsRes,
       ] = await Promise.all([
         (async () => {
-          const { data } = await supabase.functions.invoke("admin-list-users", { body: {} });
-          const list = (data?.profiles || []) as Array<{ user_id: string; display_name: string | null; email?: string | null }>;
-          return list;
+          try {
+            const { data } = await supabase.functions.invoke("admin-list-users", { body: {} });
+            return (data?.profiles || []) as Array<{ user_id: string; display_name: string | null; email?: string | null }>;
+          } catch {
+            const { data } = await supabase.from("profiles").select("user_id, display_name");
+            return (data || []) as any[];
+          }
         })(),
         range(
           supabase
@@ -308,6 +312,18 @@ export function useActivityUsers() {
   return useQuery({
     queryKey: ["activity_users"],
     queryFn: async () => {
+      try {
+        const { data } = await supabase.functions.invoke("admin-list-users", { body: {} });
+        const profiles = (data?.profiles || []) as Array<{ user_id: string; display_name: string | null; email?: string | null }>;
+        if (profiles.length) {
+          return profiles.map((p) => ({
+            user_id: p.user_id,
+            display_name: p.display_name || (p.email ? String(p.email).split("@")[0] : "משתמש"),
+          }));
+        }
+      } catch {
+        // fall through
+      }
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, display_name")
