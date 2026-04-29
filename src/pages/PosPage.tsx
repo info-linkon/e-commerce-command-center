@@ -291,7 +291,9 @@ const PosPage = () => {
       const newOrder = await createOrder.mutateAsync({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
-        shipping_city: shippingCity.trim() || undefined,
+        shipping_city:
+          shippingCity.trim() ||
+          (deliveryMethod === "pickup" ? "איסוף עצמי" : undefined),
         shipping_address: shippingAddress.trim() || undefined,
         total,
         // For HYP-link flow the order starts as pending_payment and the payment
