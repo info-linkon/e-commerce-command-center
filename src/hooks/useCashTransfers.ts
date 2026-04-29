@@ -35,11 +35,13 @@ export function useCreateCashTransfer() {
       await supabase.from("cash_registers").update({ current_balance: Number(toReg.current_balance) + input.amount }).eq("id", input.to_register_id);
 
       // 3. Record transfer
+      const { data: userData } = await supabase.auth.getUser();
       const { error } = await supabase.from("cash_transfers").insert({
         from_register_id: input.from_register_id,
         to_register_id: input.to_register_id,
         amount: input.amount,
         notes: input.notes || null,
+        created_by: userData?.user?.id || null,
       });
       if (error) throw error;
     },
