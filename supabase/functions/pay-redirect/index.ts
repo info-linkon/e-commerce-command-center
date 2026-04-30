@@ -25,7 +25,9 @@ function page(title: string, bodyHtml: string, status = 200): Response {
 </head>
 <body><div class="wrap">${bodyHtml}</div></body>
 </html>`;
-  return new Response(html, { status, headers: htmlHeaders });
+  // Encode as UTF-8 bytes explicitly. Returning a JS string lets some
+  // gateway/runtime pairs interpret it as latin-1 → mojibake on Hebrew.
+  return new Response(new TextEncoder().encode(html), { status, headers: htmlHeaders });
 }
 
 Deno.serve(async (req) => {
@@ -44,7 +46,7 @@ Deno.serve(async (req) => {
 
     const { data: order } = await supabase
       .from("orders")
-      .select("payment_link_url, status, hyp_transaction_id")
+      .select("id, payment_link_url, status, hyp_transaction_id, total, customer_name, customer_phone, customer_email")
       .eq("order_number", Number(orderNumber))
       .single();
 
@@ -79,11 +81,46 @@ Deno.serve(async (req) => {
     }
 
     if (!order.payment_link_url) {
-      return page(
-        "לינק תשלום לא זמין",
-        `<h1>לינק תשלום לא זמין</h1><p>פנה אלינו כדי שנפיק לינק חדש.</p>`,
-        404,
-      );
+      // No signed HYP URL on file (e.g. order created with cash/bit, or the
+      // initial sign call failed). Generate one on demand and 302 to it.
+      try {
+        const { data: hypData, error: hypErr } = await supabase.functions.invoke("hyp-create-payment", {
+          body: {
+            order_id: order.id,
+            order_number: Number(orderNumber),
+            total: Number(order.total),
+            customer_name: order.customer_name || "",
+            customer_phone: order.customer_phone || "",
+            customer_email: order.customer_email || "",
+            info: `הזמנה #${orderNumber}`,
+          },
+        });
+
+        if (hypErr || !hypData?.success || !hypData?.payment_url) {
+          console.error("pay-redirect: hyp-create-payment failed", hypErr, hypData);
+          return page(
+            "לינק תשלום לא זמין",
+            `<h1>לינק תשלום לא זמין כרגע</h1>
+             <p>אירעה תקלה ביצירת דף התשלום. אנא פנה אלינו בוואטסאפ ונפיק לינק חדש.</p>
+             <a class="btn" href="/">חזרה לדף הבית</a>`,
+            503,
+          );
+        }
+
+        return new Response(null, {
+          status: 302,
+          headers: { Location: hypData.payment_url },
+        });
+      } catch (createErr) {
+        console.error("pay-redirect: failed to invoke hyp-create-payment", createErr);
+        return page(
+          "לינק תשלום לא זמין",
+          `<h1>לינק תשלום לא זמין כרגע</h1>
+           <p>אירעה תקלה ביצירת דף התשלום. אנא פנה אלינו בוואטסאפ ונפיק לינק חדש.</p>
+           <a class="btn" href="/">חזרה לדף הבית</a>`,
+          503,
+        );
+      }
     }
 
     return new Response(null, {
