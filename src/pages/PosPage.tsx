@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
+import { Switch } from "@/components/ui/switch";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateOrder } from "@/hooks/useOrders";
@@ -62,6 +63,9 @@ const PosPage = () => {
   const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [cashRegisterId, setCashRegisterId] = useState<string>("");
+  const [splitMode, setSplitMode] = useState<boolean>(false);
+  type SplitLine = { amount: string; method: "cash" | "credit" | "bit"; cash_register_id: string; reference: string };
+  const [splitLines, setSplitLines] = useState<SplitLine[]>([]);
   const [variationPicker, setVariationPicker] = useState<GroupedProduct | null>(null);
   const [discountType, setDiscountType] = useState<"none" | "percent" | "fixed">("none");
   const [discountValue, setDiscountValue] = useState<number>(0);
@@ -282,10 +286,20 @@ const PosPage = () => {
   const handleCreateOrder = async () => {
     if (!customerName.trim()) { toast.error("שם לקוח הוא שדה חובה"); return; }
     if (!customerPhone.trim()) { toast.error("טלפון הוא שדה חובה"); return; }
-    if (paymentMethod === "cash" && !cashRegisterId) { toast.error("בחר קופה לתשלום במזומן"); return; }
+    if (!splitMode && paymentMethod === "cash" && !cashRegisterId) { toast.error("בחר קופה לתשלום במזומן"); return; }
+
+    // Split-payment validations
+    if (splitMode) {
+      if (splitLines.length === 0) { toast.error("הוסף לפחות שורת תשלום אחת"); return; }
+      const amounts = splitLines.map((l) => parseFloat(l.amount));
+      if (amounts.some((a) => !a || a <= 0)) { toast.error("כל שורת תשלום חייבת סכום חיובי"); return; }
+      const sum = amounts.reduce((s, a) => s + a, 0);
+      if (Math.abs(sum - total) > 0.01) { toast.error(`סך התשלומים (₪${sum.toFixed(2)}) שונה מסך ההזמנה (₪${total.toFixed(2)})`); return; }
+      if (splitLines.some((l) => l.method === "cash" && !l.cash_register_id)) { toast.error("בחר קופה לכל שורת מזומן"); return; }
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
-    const isHypLink = paymentMethod === "credit_link";
+    const isHypLink = !splitMode && paymentMethod === "credit_link";
 
     try {
       const newOrder = await createOrder.mutateAsync({
@@ -301,8 +315,8 @@ const PosPage = () => {
         status: isHypLink ? "pending_payment" : "pending",
         source: "pos" as any,
         created_by: user?.id || undefined,
-        payment_method: isHypLink ? "credit" : paymentMethod,
-        cash_register_id: paymentMethod === "cash" ? cashRegisterId : undefined,
+        payment_method: splitMode ? "split" : (isHypLink ? "credit" : paymentMethod),
+        cash_register_id: !splitMode && paymentMethod === "cash" ? cashRegisterId : undefined,
         delivery_method: deliveryMethod,
         discount_type: discountType !== "none" ? discountType : undefined,
         discount_value: discountType !== "none" ? discountValue : undefined,
@@ -310,6 +324,14 @@ const PosPage = () => {
         shipping_cost: shippingPrice > 0 ? shippingPrice : undefined,
         created_at: orderDate.toISOString(),
         skip_auto_payment: isHypLink,
+        payments: splitMode
+          ? splitLines.map((l) => ({
+              amount: parseFloat(l.amount),
+              payment_method: l.method,
+              cash_register_id: l.method === "cash" ? l.cash_register_id : undefined,
+              reference: l.reference || undefined,
+            }))
+          : undefined,
         items: cart.map((c) => ({
           variation_id: c.variation_id, // may be undefined for custom items — handled in useOrders
           quantity: c.quantity,
@@ -348,6 +370,8 @@ const PosPage = () => {
       setDeliveryMethod("pickup");
       setPaymentMethod("cash");
       setCashRegisterId("");
+      setSplitMode(false);
+      setSplitLines([]);
       setDiscountType("none");
       setDiscountValue(0);
       setShippingPrice(0);
