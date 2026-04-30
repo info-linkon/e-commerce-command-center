@@ -47,7 +47,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex justify-between items-center flex-wrap gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold">דשבורד</h1>
+        <h1 className="text-2xl font-bold sm:text-2xl">דשבורד</h1>
         <div className="flex items-center gap-2 flex-wrap">
           <ToggleGroup type="single" value={period} onValueChange={(v) => v && setPeriod(v)} variant="outline" className="gap-1" dir="rtl">
             <ToggleGroupItem value="today" className="rounded-full px-3 h-8 text-xs">היום</ToggleGroupItem>
