@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
+import { Switch } from "@/components/ui/switch";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateOrder } from "@/hooks/useOrders";
@@ -62,6 +63,9 @@ const PosPage = () => {
   const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [cashRegisterId, setCashRegisterId] = useState<string>("");
+  const [splitMode, setSplitMode] = useState<boolean>(false);
+  type SplitLine = { amount: string; method: "cash" | "credit" | "bit"; cash_register_id: string; reference: string };
+  const [splitLines, setSplitLines] = useState<SplitLine[]>([]);
   const [variationPicker, setVariationPicker] = useState<GroupedProduct | null>(null);
   const [discountType, setDiscountType] = useState<"none" | "percent" | "fixed">("none");
   const [discountValue, setDiscountValue] = useState<number>(0);
@@ -282,10 +286,20 @@ const PosPage = () => {
   const handleCreateOrder = async () => {
     if (!customerName.trim()) { toast.error("שם לקוח הוא שדה חובה"); return; }
     if (!customerPhone.trim()) { toast.error("טלפון הוא שדה חובה"); return; }
-    if (paymentMethod === "cash" && !cashRegisterId) { toast.error("בחר קופה לתשלום במזומן"); return; }
+    if (!splitMode && paymentMethod === "cash" && !cashRegisterId) { toast.error("בחר קופה לתשלום במזומן"); return; }
+
+    // Split-payment validations
+    if (splitMode) {
+      if (splitLines.length === 0) { toast.error("הוסף לפחות שורת תשלום אחת"); return; }
+      const amounts = splitLines.map((l) => parseFloat(l.amount));
+      if (amounts.some((a) => !a || a <= 0)) { toast.error("כל שורת תשלום חייבת סכום חיובי"); return; }
+      const sum = amounts.reduce((s, a) => s + a, 0);
+      if (Math.abs(sum - total) > 0.01) { toast.error(`סך התשלומים (₪${sum.toFixed(2)}) שונה מסך ההזמנה (₪${total.toFixed(2)})`); return; }
+      if (splitLines.some((l) => l.method === "cash" && !l.cash_register_id)) { toast.error("בחר קופה לכל שורת מזומן"); return; }
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
-    const isHypLink = paymentMethod === "credit_link";
+    const isHypLink = !splitMode && paymentMethod === "credit_link";
 
     try {
       const newOrder = await createOrder.mutateAsync({
@@ -301,8 +315,8 @@ const PosPage = () => {
         status: isHypLink ? "pending_payment" : "pending",
         source: "pos" as any,
         created_by: user?.id || undefined,
-        payment_method: isHypLink ? "credit" : paymentMethod,
-        cash_register_id: paymentMethod === "cash" ? cashRegisterId : undefined,
+        payment_method: splitMode ? "split" : (isHypLink ? "credit" : paymentMethod),
+        cash_register_id: !splitMode && paymentMethod === "cash" ? cashRegisterId : undefined,
         delivery_method: deliveryMethod,
         discount_type: discountType !== "none" ? discountType : undefined,
         discount_value: discountType !== "none" ? discountValue : undefined,
@@ -310,6 +324,14 @@ const PosPage = () => {
         shipping_cost: shippingPrice > 0 ? shippingPrice : undefined,
         created_at: orderDate.toISOString(),
         skip_auto_payment: isHypLink,
+        payments: splitMode
+          ? splitLines.map((l) => ({
+              amount: parseFloat(l.amount),
+              payment_method: l.method,
+              cash_register_id: l.method === "cash" ? l.cash_register_id : undefined,
+              reference: l.reference || undefined,
+            }))
+          : undefined,
         items: cart.map((c) => ({
           variation_id: c.variation_id, // may be undefined for custom items — handled in useOrders
           quantity: c.quantity,
@@ -348,6 +370,8 @@ const PosPage = () => {
       setDeliveryMethod("pickup");
       setPaymentMethod("cash");
       setCashRegisterId("");
+      setSplitMode(false);
+      setSplitLines([]);
       setDiscountType("none");
       setDiscountValue(0);
       setShippingPrice(0);
@@ -687,21 +711,159 @@ const PosPage = () => {
             </div>
             <div>
               <Label>שיטת תשלום *</Label>
-              <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (v !== "cash") setCashRegisterId(""); }} dir="rtl">
-                <SelectTrigger dir="rtl" className="text-right"><SelectValue /></SelectTrigger>
-                <SelectContent dir="rtl">
-                  <SelectItem value="cash">מזומן</SelectItem>
-                  <SelectItem value="credit">אשראי (רישום ידני)</SelectItem>
-                  <SelectItem value="credit_link">אשראי - שלח לינק HYP ב-SMS</SelectItem>
-                </SelectContent>
-              </Select>
-              {paymentMethod === "credit_link" && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  הלקוח יקבל SMS עם לינק תשלום. ההזמנה תסומן כ"ממתינה לתשלום" עד שהוא ישלם.
-                </p>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground">פצל בין מספר אמצעי תשלום</span>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="split-mode" className="text-xs cursor-pointer">פיצול תשלום</Label>
+                  <Switch
+                    id="split-mode"
+                    checked={splitMode}
+                    onCheckedChange={(v) => {
+                      setSplitMode(v);
+                      if (v) {
+                        setSplitLines([{ amount: total.toFixed(2), method: "cash", cash_register_id: "", reference: "" }]);
+                      } else {
+                        setSplitLines([]);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              {!splitMode && (
+                <>
+                  <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); if (v !== "cash") setCashRegisterId(""); }} dir="rtl">
+                    <SelectTrigger dir="rtl" className="text-right"><SelectValue /></SelectTrigger>
+                    <SelectContent dir="rtl">
+                      <SelectItem value="cash">מזומן</SelectItem>
+                      <SelectItem value="credit">אשראי (רישום ידני)</SelectItem>
+                      <SelectItem value="credit_link">אשראי - שלח לינק HYP ב-SMS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {paymentMethod === "credit_link" && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      הלקוח יקבל SMS עם לינק תשלום. ההזמנה תסומן כ"ממתינה לתשלום" עד שהוא ישלם.
+                    </p>
+                  )}
+                </>
+              )}
+              {splitMode && (
+                <div className="space-y-2 border rounded-md p-2 bg-muted/30">
+                  {splitLines.map((line, idx) => {
+                    const sumSoFar = splitLines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+                    return (
+                      <div key={idx} className="space-y-2 border-b last:border-b-0 pb-2 last:pb-0">
+                        <div className="flex gap-2 items-end">
+                          <div className="flex-1">
+                            <Label className="text-xs">סכום</Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              step={0.01}
+                              value={line.amount}
+                              onChange={(e) => {
+                                const next = [...splitLines];
+                                next[idx] = { ...next[idx], amount: e.target.value };
+                                setSplitLines(next);
+                              }}
+                              dir="ltr"
+                              className="text-left h-9"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <Label className="text-xs">אמצעי</Label>
+                            <Select
+                              value={line.method}
+                              onValueChange={(v) => {
+                                const next = [...splitLines];
+                                next[idx] = { ...next[idx], method: v as any, cash_register_id: v === "cash" ? next[idx].cash_register_id : "" };
+                                setSplitLines(next);
+                              }}
+                              dir="rtl"
+                            >
+                              <SelectTrigger dir="rtl" className="text-right h-9"><SelectValue /></SelectTrigger>
+                              <SelectContent dir="rtl">
+                                <SelectItem value="cash">מזומן</SelectItem>
+                                <SelectItem value="credit">אשראי</SelectItem>
+                                <SelectItem value="bit">bit</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={() => setSplitLines(splitLines.filter((_, i) => i !== idx))}
+                            disabled={splitLines.length === 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {line.method === "cash" && (
+                          <div>
+                            <Label className="text-xs">קופה *</Label>
+                            <Select
+                              value={line.cash_register_id}
+                              onValueChange={(v) => {
+                                const next = [...splitLines];
+                                next[idx] = { ...next[idx], cash_register_id: v };
+                                setSplitLines(next);
+                              }}
+                              dir="rtl"
+                            >
+                              <SelectTrigger dir="rtl" className="text-right h-9"><SelectValue placeholder="בחר קופה..." /></SelectTrigger>
+                              <SelectContent dir="rtl">
+                                {cashRegisters?.filter(r => r.is_active).map((r) => (
+                                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                        {line.method !== "cash" && (
+                          <Input
+                            value={line.reference}
+                            onChange={(e) => {
+                              const next = [...splitLines];
+                              next[idx] = { ...next[idx], reference: e.target.value };
+                              setSplitLines(next);
+                            }}
+                            placeholder="אסמכתא (אופציונלי)"
+                            className="h-9 text-right"
+                            dir="rtl"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      const sumSoFar = splitLines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+                      const leftover = Math.max(0, total - sumSoFar);
+                      setSplitLines([...splitLines, { amount: leftover.toFixed(2), method: "cash", cash_register_id: "", reference: "" }]);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 ms-1" /> הוסף שורת תשלום
+                  </Button>
+                  {(() => {
+                    const sumSoFar = splitLines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+                    const remaining = total - sumSoFar;
+                    const ok = Math.abs(remaining) < 0.01;
+                    return (
+                      <div className={`text-xs flex justify-between px-1 ${ok ? "text-green-600" : "text-destructive"}`}>
+                        <span>סך תשלומים: ₪{sumSoFar.toFixed(2)}</span>
+                        <span>{ok ? "✓ מאוזן" : `נותר: ₪${remaining.toFixed(2)}`}</span>
+                      </div>
+                    );
+                  })()}
+                </div>
               )}
             </div>
-            {paymentMethod === "cash" && (
+            {!splitMode && paymentMethod === "cash" && (
               <div>
                 <Label>קופה *</Label>
                 <Select value={cashRegisterId} onValueChange={setCashRegisterId} dir="rtl">
