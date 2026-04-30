@@ -117,8 +117,9 @@ export function useCreateOrder() {
       created_at?: string;
       skip_auto_payment?: boolean;
       items: OrderItem[];
+      payments?: { amount: number; payment_method: "cash" | "credit" | "bit"; cash_register_id?: string; reference?: string }[];
     }) => {
-      const { items, source, cash_register_id, payment_method, delivery_method, created_by, discount_type, discount_value, discount_amount, created_at, skip_auto_payment, ...rest } = input;
+      const { items, source, cash_register_id, payment_method, delivery_method, created_by, discount_type, discount_value, discount_amount, created_at, skip_auto_payment, payments: splitPayments, ...rest } = input;
       const orderPayload: any = { ...rest };
       if (source) orderPayload.source = source;
       if (cash_register_id) orderPayload.cash_register_id = cash_register_id;
@@ -148,10 +149,51 @@ export function useCreateOrder() {
         if (itemsError) throw itemsError;
       }
 
+      // Split-payment path: caller provided multiple payment lines (POS split mode).
+      // Bulk-insert all rows, then increment non-deferred cash registers per line.
+      if (splitPayments && splitPayments.length > 0) {
+        const rows = splitPayments.map((p) => ({
+          order_id: order.id,
+          amount: p.amount,
+          payment_method: p.payment_method as any,
+          cash_register_id: p.payment_method === "cash" ? (p.cash_register_id || null) : null,
+          reference: p.reference || null,
+        }));
+        const { error: payErr } = await supabase.from("payments").insert(rows);
+        if (payErr) throw payErr;
+
+        const cashRegIds = Array.from(new Set(
+          splitPayments
+            .filter((p) => p.payment_method === "cash" && p.cash_register_id)
+            .map((p) => p.cash_register_id as string),
+        ));
+        const deferredIds = new Set<string>();
+        if (cashRegIds.length > 0) {
+          const { data: regs } = await supabase
+            .from("cash_registers")
+            .select("id, requires_completed_order")
+            .in("id", cashRegIds);
+          for (const r of (regs as any[]) || []) {
+            if (r.requires_completed_order) deferredIds.add(r.id);
+          }
+        }
+        for (const p of splitPayments) {
+          if (
+            p.payment_method === "cash" &&
+            p.cash_register_id &&
+            !deferredIds.has(p.cash_register_id)
+          ) {
+            await supabase.rpc("increment_cash_register" as any, {
+              reg_id: p.cash_register_id,
+              delta: p.amount,
+            });
+          }
+        }
+      }
       // Auto-create payment record for POS orders (unless caller opts out, e.g.
       // HYP-link flow where the payment is recorded by hyp-verify after the
       // customer actually pays).
-      if (source === "pos" && payment_method && !skip_auto_payment) {
+      else if (source === "pos" && payment_method && !skip_auto_payment) {
         const paymentRecord: any = {
           order_id: order.id,
           amount: input.total,
