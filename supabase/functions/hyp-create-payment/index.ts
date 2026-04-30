@@ -81,13 +81,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Guard against re-issuing a link for an already-paid order
+    // Guard against re-issuing a link for an already-paid order. Operational
+    // statuses (processing/picking/shipping) do NOT imply payment — only a
+    // recorded HYP transaction id or a fully closed order do. This mirrors
+    // the same logic in pay-redirect.
     const { data: existing } = await supabase
       .from("orders")
       .select("hyp_transaction_id, status")
       .eq("id", order_id)
       .maybeSingle();
-    const blockedStatuses = new Set(["processing", "picking", "shipping", "completed", "cancelled"]);
+    const blockedStatuses = new Set(["completed", "cancelled"]);
     if (existing?.hyp_transaction_id || blockedStatuses.has(existing?.status || "")) {
       return new Response(
         JSON.stringify({ error: "ההזמנה כבר שולמה או סגורה", already_paid: !!existing?.hyp_transaction_id }),
