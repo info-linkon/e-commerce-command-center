@@ -188,14 +188,43 @@ export function useDeleteVariation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, productId }: { id: string; productId: string }) => {
+      // Pre-flight: check what blocks deletion so we can surface a clear, actionable error.
+      const [orderItems, bundleItems, bvi, inv, invLog] = await Promise.all([
+        supabase.from("order_items").select("id", { count: "exact", head: true }).eq("variation_id", id),
+        supabase.from("bundle_items").select("id", { count: "exact", head: true }).eq("variation_id", id),
+        supabase.from("bundle_variation_items").select("id", { count: "exact", head: true }).eq("variation_id", id),
+        supabase.from("inventory").select("id", { count: "exact", head: true }).eq("variation_id", id),
+        supabase.from("inventory_log").select("id", { count: "exact", head: true }).eq("variation_id", id),
+      ]);
+
+      if ((orderItems.count || 0) > 0) {
+        throw new Error(`לא ניתן למחוק — הוריאציה מופיעה ב-${orderItems.count} הזמנות. ניתן לבטל הצגתה במקום למחוק.`);
+      }
+      if ((bundleItems.count || 0) > 0 || (bvi.count || 0) > 0) {
+        throw new Error("לא ניתן למחוק — הוריאציה משמשת כרכיב בחבילה. הסר אותה מהחבילה תחילה.");
+      }
+
+      // Clean up safe references (inventory rows + log entries) to allow deletion.
+      if ((inv.count || 0) > 0) {
+        const { error: invErr } = await supabase.from("inventory").delete().eq("variation_id", id);
+        if (invErr) throw new Error(`לא ניתן למחוק — שגיאה בניקוי מלאי: ${invErr.message}`);
+      }
+      if ((invLog.count || 0) > 0) {
+        // inventory_log has variation_id nullable — set to null instead of deleting (preserve audit trail)
+        const { error: logErr } = await supabase.from("inventory_log").update({ variation_id: null }).eq("variation_id", id);
+        if (logErr) throw new Error(`לא ניתן למחוק — שגיאה בעדכון יומן מלאי: ${logErr.message}`);
+      }
+
       const { error } = await supabase.from("product_variations").delete().eq("id", id);
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       return productId;
     },
     onSuccess: (productId) => {
       qc.invalidateQueries({ queryKey: ["product_variations", productId] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["inventory_log"] });
       toast.success("הוריאציה נמחקה בהצלחה");
     },
-    onError: () => toast.error("שגיאה במחיקת וריאציה"),
+    onError: (err: Error) => toast.error(err.message || "שגיאה במחיקת וריאציה"),
   });
 }
