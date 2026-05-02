@@ -220,7 +220,7 @@ import { QueryClient } from "@tanstack/react-query";
 // internal `mutationFn` via React Query's mutation observer — easier path:
 // just re-implement by extracting via the hook's options. Here we cheat by
 // invoking the hook through a fresh QueryClient and a direct mutate call.
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 
@@ -494,6 +494,3 @@ describe("useDeleteOrder — inventory restoration", () => {
     expect(rpcCalls.filter((c) => c.name === "increment_cash_register").length).toBe(0);
   });
 });
-
-// Reference: prevents `waitFor` import from being tree-shaken by ts-strict.
-void waitFor;
