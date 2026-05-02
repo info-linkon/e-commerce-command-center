@@ -44,17 +44,20 @@ const TransfersPage = () => {
   const { data: variations } = useQuery({
     queryKey: ["all-variations-non-bundle"],
     queryFn: async () => {
+      // Identify bundle product_ids from the bundles table (the source of truth)
+      const { data: bundleRows, error: bErr } = await supabase
+        .from("bundles")
+        .select("product_id");
+      if (bErr) throw bErr;
+      const bundleProductIds = new Set((bundleRows || []).map((b: any) => b.product_id));
+
       const { data, error } = await supabase
         .from("product_variations")
         .select("*, products(name, name_ar, product_type)")
         .order("name");
       if (error) throw error;
       // Filter out bundle shells — bundles don't hold real inventory
-      return (data || []).filter(
-        (v: any) =>
-          v.products?.product_type !== "simple_bundle" &&
-          v.products?.product_type !== "variable_bundle"
-      );
+      return (data || []).filter((v: any) => !bundleProductIds.has(v.product_id));
     },
   });
 
