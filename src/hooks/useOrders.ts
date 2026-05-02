@@ -567,7 +567,6 @@ export function useUpdateOrderStatus() {
       const actorId = actorData?.user?.id || null;
       const updatePayload: any = { status };
       if (status === "completed") updatePayload.completed_by = actorId;
-      if (status === "cancelled") updatePayload.cancelled_by = actorId;
       const { error } = await supabase.from("orders").update(updatePayload).eq("id", id);
       if (error) throw error;
       if (order?.source === "website") {
