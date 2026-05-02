@@ -301,20 +301,6 @@ export default function WebProductPage() {
               />
             ) : null;
           })()}
-          {lang === "he" ? (
-            (product.description || product.description_ar) && (
-              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description || product.description_ar }} />
-            )
-          ) : (
-            product.description_ar ? (
-              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description_ar }} />
-            ) : product.description ? (
-              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description }} />
-            ) : null
-          )}
 
           <div className="flex items-center gap-3 mb-6">
             <span className="text-3xl font-black text-primary">₪{price.toFixed(2)}</span>
@@ -399,6 +385,21 @@ export default function WebProductPage() {
               {isOutOfStock ? t("غير متوفر", "אזל מהמלאי") : t("أضف إلى السلة", "הוסף לסל")}
             </Button>
           </div>
+
+          {lang === "he" ? (
+            (product.description || product.description_ar) && (
+              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description || product.description_ar }} />
+            )
+          ) : (
+            product.description_ar ? (
+              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description_ar }} />
+            ) : product.description ? (
+              <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description }} />
+            ) : null
+          )}
         </div>
       </div>
     </div>
