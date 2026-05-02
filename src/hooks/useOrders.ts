@@ -403,7 +403,19 @@ export function useCancelOrder() {
 
       // 2. If warehouse was assigned, restore inventory
       if (warehouseId) {
-        const inventoryRows = await expandToInventoryRows(items as any);
+        // Idempotency guard: if a restore log entry already exists for this
+        // order, skip the inventory step entirely (a previous run succeeded).
+        const { data: existingRestore } = await supabase
+          .from("inventory_log")
+          .select("id")
+          .eq("reference_id", orderId)
+          .eq("action_type", "adjustment")
+          .ilike("notes", "%החזרת מלאי%")
+          .limit(1);
+
+        const inventoryRows = existingRestore && existingRestore.length > 0
+          ? []
+          : await expandToInventoryRows(items as any);
 
         for (const row of inventoryRows) {
           const { data: inv } = await supabase
@@ -417,11 +429,13 @@ export function useCancelOrder() {
           const newQty = currentQty + row.quantity;
 
           if (inv) {
-            await supabase.from("inventory").update({ quantity: newQty }).eq("id", inv.id);
+            const { error: upErr } = await supabase.from("inventory").update({ quantity: newQty }).eq("id", inv.id);
+            if (upErr) throw new Error(`שגיאה בהחזרת מלאי: ${upErr.message}`);
           } else {
-            await supabase
+            const { error: insErr } = await supabase
               .from("inventory")
               .insert({ variation_id: row.variation_id, warehouse_id: warehouseId, quantity: newQty });
+            if (insErr) throw new Error(`שגיאה בהחזרת מלאי: ${insErr.message}`);
           }
 
           await logInventoryChange({
@@ -435,8 +449,10 @@ export function useCancelOrder() {
           });
         }
 
-        // Sync restored stock to WooCommerce.
-        syncMultipleStockToWoo(inventoryRows.map((r) => r.variation_id));
+        if (inventoryRows.length > 0) {
+          // Sync restored stock to WooCommerce.
+          syncMultipleStockToWoo(inventoryRows.map((r) => r.variation_id));
+        }
       }
 
       // 3. Reverse payments — refund cash to register, then delete payment records
@@ -518,6 +534,13 @@ export function useUpdateOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
+      // Block direct cancellation through the generic status updater —
+      // cancellation must go through useCancelOrder so inventory and
+      // payments are properly reversed.
+      if (status === "cancelled") {
+        throw new Error("לביטול הזמנה השתמש בכפתור 'בטל הזמנה'");
+      }
+
       const { data: order } = await supabase.from("orders").select("source, total").eq("id", id).single();
 
       // Prevent completing an order without full payment
@@ -544,7 +567,6 @@ export function useUpdateOrderStatus() {
       const actorId = actorData?.user?.id || null;
       const updatePayload: any = { status };
       if (status === "completed") updatePayload.completed_by = actorId;
-      if (status === "cancelled") updatePayload.cancelled_by = actorId;
       const { error } = await supabase.from("orders").update(updatePayload).eq("id", id);
       if (error) throw error;
       if (order?.source === "website") {
@@ -563,7 +585,64 @@ export function useDeleteOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // 1. Reverse cash register balances for any cash payments on
+      // 1. Load order header (status + warehouse) so we know whether to
+      //    restore inventory and reverse register balances.
+      const { data: ord } = await supabase
+        .from("orders")
+        .select("status, assigned_warehouse_id, order_number")
+        .eq("id", id)
+        .single();
+
+      // 2. Restore inventory if the order was assigned to a warehouse AND
+      //    it wasn't already cancelled (cancelled orders had inventory
+      //    restored at cancel time — restoring again would double-credit).
+      if (ord?.assigned_warehouse_id && ord.status !== "cancelled") {
+        const { data: itemsForRestore } = await supabase
+          .from("order_items")
+          .select("variation_id, quantity, product_variations(product_id)")
+          .eq("order_id", id);
+
+        const inventoryRows = await expandToInventoryRows((itemsForRestore || []) as any);
+        const warehouseId = ord.assigned_warehouse_id;
+
+        for (const row of inventoryRows) {
+          const { data: inv } = await supabase
+            .from("inventory")
+            .select("*")
+            .eq("variation_id", row.variation_id)
+            .eq("warehouse_id", warehouseId)
+            .maybeSingle();
+
+          const currentQty = inv?.quantity || 0;
+          const newQty = currentQty + row.quantity;
+
+          if (inv) {
+            const { error: upErr } = await supabase.from("inventory").update({ quantity: newQty }).eq("id", inv.id);
+            if (upErr) throw new Error(`שגיאה בהחזרת מלאי: ${upErr.message}`);
+          } else {
+            const { error: insErr } = await supabase
+              .from("inventory")
+              .insert({ variation_id: row.variation_id, warehouse_id: warehouseId, quantity: newQty });
+            if (insErr) throw new Error(`שגיאה בהחזרת מלאי: ${insErr.message}`);
+          }
+
+          await logInventoryChange({
+            variation_id: row.variation_id,
+            warehouse_id: warehouseId,
+            quantity_change: row.quantity,
+            quantity_after: newQty,
+            action_type: "adjustment",
+            reference_id: id,
+            notes: `מחיקת הזמנה #${ord.order_number} — החזרת מלאי`,
+          });
+        }
+
+        if (inventoryRows.length > 0) {
+          syncMultipleStockToWoo(inventoryRows.map((r) => r.variation_id));
+        }
+      }
+
+      // 3. Reverse cash register balances for any cash payments on
       //    non-deferred registers (deferred registers are managed by trigger
       //    and only reflect completed orders — nothing to reverse).
       const { data: payments } = await supabase
@@ -590,7 +669,6 @@ export function useDeleteOrder() {
       }
       // Only reverse balance if order is currently completed (otherwise
       // balance was never added). For deferred registers — never reverse.
-      const { data: ord } = await supabase.from("orders").select("status").eq("id", id).single();
       if (ord?.status === "completed") {
         for (const p of payments || []) {
           if (
@@ -606,7 +684,7 @@ export function useDeleteOrder() {
         }
       }
 
-      // 2. Delete dependent rows (no FK CASCADE on most tables)
+      // 4. Delete dependent rows (no FK CASCADE on most tables)
       await supabase.from("deliveries").delete().eq("order_id", id);
       await supabase.from("order_picking_items").delete().eq("order_id", id);
       await supabase.from("payments").delete().eq("order_id", id);
@@ -614,7 +692,7 @@ export function useDeleteOrder() {
       await supabase.from("documents").delete().eq("order_id", id);
       await supabase.from("order_items").delete().eq("order_id", id);
 
-      // 3. Finally delete the order
+      // 5. Finally delete the order
       const { error } = await supabase.from("orders").delete().eq("id", id);
       if (error) throw error;
     },
@@ -623,6 +701,8 @@ export function useDeleteOrder() {
       qc.invalidateQueries({ queryKey: ["payments"] });
       qc.invalidateQueries({ queryKey: ["cash_registers"] });
       qc.invalidateQueries({ queryKey: ["deliveries"] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["inventory_log"] });
       toast.success("ההזמנה נמחקה");
     },
     onError: (err: any) => toast.error(err?.message || "שגיאה במחיקת הזמנה"),
