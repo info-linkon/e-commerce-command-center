@@ -23,6 +23,8 @@ interface TransferItem {
   variation_name: string;
   product_name: string;
   quantity: number;
+  source_bundle_variation_id?: string;
+  source_bundle_label?: string;
 }
 
 const TransfersPage = () => {
@@ -32,7 +34,7 @@ const TransfersPage = () => {
   const [toWarehouse, setToWarehouse] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<TransferItem[]>([]);
-  const [selectedVariation, setSelectedVariation] = useState("");
+  const [selectedKey, setSelectedKey] = useState(""); // "var:<id>" or "bv:<id>"
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const { data: warehouses } = useWarehouses();
@@ -56,6 +58,21 @@ const TransfersPage = () => {
     },
   });
 
+  // Bundle variations + their component breakdown (real stock-bearing variations)
+  const { data: bundleVariations } = useQuery({
+    queryKey: ["all-bundle-variations-with-items"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bundle_variations")
+        .select(
+          "id, name, sku, bundle_id, bundles!inner(product_id, products!inner(name, name_ar)), bundle_variation_items(quantity, variation_id, product_variations(id, name, products(name, name_ar)))"
+        )
+        .order("name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const getProductLabel = (v: any) =>
     (v.products as any)?.name_ar || (v.products as any)?.name || "";
 
@@ -67,23 +84,73 @@ const TransfersPage = () => {
     return `${product}${variation}${sku}`;
   };
 
-  const selectedVariationObj = variations?.find((v) => v.id === selectedVariation);
+  const getBundleLabel = (bv: any) => {
+    const productName =
+      (bv.bundles?.products as any)?.name_ar || bv.bundles?.products?.name || "";
+    const isDefault = !bv.name || bv.name.toLowerCase() === "default";
+    const variation = isDefault ? "" : ` — ${bv.name}`;
+    const sku = bv.sku ? ` (${bv.sku})` : "";
+    return `📦 ${productName}${variation}${sku}`;
+  };
+
+  const selectedVariationObj =
+    selectedKey.startsWith("var:")
+      ? variations?.find((v) => v.id === selectedKey.slice(4))
+      : null;
+  const selectedBundleObj =
+    selectedKey.startsWith("bv:")
+      ? bundleVariations?.find((bv: any) => bv.id === selectedKey.slice(3))
+      : null;
+
+  const selectedLabel = selectedVariationObj
+    ? getDisplayLabel(selectedVariationObj)
+    : selectedBundleObj
+    ? getBundleLabel(selectedBundleObj)
+    : "";
 
   const addItem = () => {
-    if (!selectedVariation) return;
-    if (items.find((i) => i.variation_id === selectedVariation)) {
-      toast.error("הפריט כבר ברשימה");
+    if (selectedVariationObj) {
+      const v = selectedVariationObj;
+      if (items.find((i) => i.variation_id === v.id && !i.source_bundle_variation_id)) {
+        toast.error("הפריט כבר ברשימה");
+        return;
+      }
+      setItems([
+        ...items,
+        {
+          variation_id: v.id,
+          variation_name: v.name,
+          product_name: getProductLabel(v),
+          quantity: 1,
+        },
+      ]);
+      setSelectedKey("");
       return;
     }
-    const v = selectedVariationObj;
-    if (!v) return;
-    setItems([...items, {
-      variation_id: v.id,
-      variation_name: v.name,
-      product_name: getProductLabel(v),
-      quantity: 1,
-    }]);
-    setSelectedVariation("");
+    if (selectedBundleObj) {
+      const bv: any = selectedBundleObj;
+      const components = bv.bundle_variation_items || [];
+      if (!components.length) {
+        toast.error("לחבילה זו אין רכיבים");
+        return;
+      }
+      const bundleLabel = getBundleLabel(bv);
+      const newItems: TransferItem[] = components.map((c: any) => ({
+        variation_id: c.variation_id,
+        variation_name: c.product_variations?.name || "",
+        product_name:
+          (c.product_variations?.products as any)?.name_ar ||
+          c.product_variations?.products?.name ||
+          "",
+        quantity: c.quantity || 1,
+        source_bundle_variation_id: bv.id,
+        source_bundle_label: bundleLabel,
+      }));
+      setItems([...items, ...newItems]);
+      toast.success(`נוספו ${newItems.length} רכיבים מהחבילה`);
+      setSelectedKey("");
+      return;
+    }
   };
 
   const handleSubmit = async () => {
@@ -91,11 +158,20 @@ const TransfersPage = () => {
     if (fromWarehouse === toWarehouse) { toast.error("המחסנים חייבים להיות שונים"); return; }
     if (items.length === 0) { toast.error("הוסף פריטים"); return; }
 
+    // Merge duplicate variation_ids (same component can appear in multiple bundles)
+    const merged = new Map<string, number>();
+    for (const i of items) {
+      merged.set(i.variation_id, (merged.get(i.variation_id) || 0) + i.quantity);
+    }
+
     await createTransfer.mutateAsync({
       from_warehouse_id: fromWarehouse,
       to_warehouse_id: toWarehouse,
       notes: notes || undefined,
-      items: items.map((i) => ({ variation_id: i.variation_id, quantity: i.quantity })),
+      items: Array.from(merged.entries()).map(([variation_id, quantity]) => ({
+        variation_id,
+        quantity,
+      })),
     });
 
     setOpen(false);
@@ -154,7 +230,7 @@ const TransfersPage = () => {
                       className="flex-1 justify-between font-normal"
                     >
                       <span className="truncate">
-                        {selectedVariationObj ? getDisplayLabel(selectedVariationObj) : "בחר פריט..."}
+                        {selectedLabel || "בחר פריט או חבילה..."}
                       </span>
                       <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
                     </Button>
@@ -169,23 +245,55 @@ const TransfersPage = () => {
                       <CommandInput placeholder="חיפוש מוצר, וריאציה או מק״ט..." />
                       <CommandList>
                         <CommandEmpty>לא נמצאו פריטים</CommandEmpty>
-                        <CommandGroup>
+                        {bundleVariations && bundleVariations.length > 0 && (
+                          <CommandGroup heading="חבילות (פירוק לרכיבים)">
+                            {bundleVariations.map((bv: any) => {
+                              const label = getBundleLabel(bv);
+                              const productName =
+                                (bv.bundles?.products as any)?.name_ar ||
+                                bv.bundles?.products?.name ||
+                                "";
+                              const searchValue = `${productName} ${bv.name || ""} ${bv.sku || ""} bundle חבילה`;
+                              const key = `bv:${bv.id}`;
+                              return (
+                                <CommandItem
+                                  key={key}
+                                  value={searchValue}
+                                  onSelect={() => {
+                                    setSelectedKey(key);
+                                    setPickerOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "ml-2 h-4 w-4",
+                                      selectedKey === key ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <span className="truncate">{label}</span>
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        )}
+                        <CommandGroup heading="פריטים">
                           {variations?.map((v) => {
                             const label = getDisplayLabel(v);
                             const searchValue = `${getProductLabel(v)} ${v.name || ""} ${v.sku || ""} ${(v.products as any)?.name || ""}`;
+                            const key = `var:${v.id}`;
                             return (
                               <CommandItem
-                                key={v.id}
+                                key={key}
                                 value={searchValue}
                                 onSelect={() => {
-                                  setSelectedVariation(v.id);
+                                  setSelectedKey(key);
                                   setPickerOpen(false);
                                 }}
                               >
                                 <Check
                                   className={cn(
                                     "ml-2 h-4 w-4",
-                                    selectedVariation === v.id ? "opacity-100" : "opacity-0"
+                                    selectedKey === key ? "opacity-100" : "opacity-0"
                                   )}
                                 />
                                 <span className="truncate">{label}</span>
@@ -197,7 +305,7 @@ const TransfersPage = () => {
                     </Command>
                   </PopoverContent>
                 </Popover>
-                <Button onClick={addItem} disabled={!selectedVariation}>
+                <Button onClick={addItem} disabled={!selectedKey}>
                   <Plus className="h-4 w-4 ml-1" />הוסף
                 </Button>
               </div>
@@ -214,8 +322,15 @@ const TransfersPage = () => {
                   </TableHeader>
                   <TableBody>
                     {items.map((item, idx) => (
-                      <TableRow key={item.variation_id}>
-                        <TableCell>{item.product_name}</TableCell>
+                      <TableRow key={`${item.variation_id}-${idx}`}>
+                        <TableCell>
+                          {item.product_name}
+                          {item.source_bundle_label && (
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              {item.source_bundle_label}
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell>{item.variation_name}</TableCell>
                         <TableCell>
                           <Input
