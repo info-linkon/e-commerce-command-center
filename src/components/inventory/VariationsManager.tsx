@@ -112,7 +112,16 @@ export function VariationsManager({ productId }: VariationsManagerProps) {
                       <Button variant="ghost" size="icon" onClick={() => openEdit(v)}>
                         <Pencil className="h-3 w-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteVariation.mutate({ id: v.id, productId })}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={deleteVariation.isPending}
+                        onClick={() => {
+                          if (confirm(`למחוק את הוריאציה "${v.name}"?`)) {
+                            deleteVariation.mutate({ id: v.id, productId });
+                          }
+                        }}
+                      >
                         <Trash2 className="h-3 w-3 text-destructive" />
                       </Button>
                     </div>
