@@ -403,7 +403,19 @@ export function useCancelOrder() {
 
       // 2. If warehouse was assigned, restore inventory
       if (warehouseId) {
-        const inventoryRows = await expandToInventoryRows(items as any);
+        // Idempotency guard: if a restore log entry already exists for this
+        // order, skip the inventory step entirely (a previous run succeeded).
+        const { data: existingRestore } = await supabase
+          .from("inventory_log")
+          .select("id")
+          .eq("reference_id", orderId)
+          .eq("action_type", "adjustment")
+          .ilike("notes", "%החזרת מלאי%")
+          .limit(1);
+
+        const inventoryRows = existingRestore && existingRestore.length > 0
+          ? []
+          : await expandToInventoryRows(items as any);
 
         for (const row of inventoryRows) {
           const { data: inv } = await supabase
@@ -417,11 +429,13 @@ export function useCancelOrder() {
           const newQty = currentQty + row.quantity;
 
           if (inv) {
-            await supabase.from("inventory").update({ quantity: newQty }).eq("id", inv.id);
+            const { error: upErr } = await supabase.from("inventory").update({ quantity: newQty }).eq("id", inv.id);
+            if (upErr) throw new Error(`שגיאה בהחזרת מלאי: ${upErr.message}`);
           } else {
-            await supabase
+            const { error: insErr } = await supabase
               .from("inventory")
               .insert({ variation_id: row.variation_id, warehouse_id: warehouseId, quantity: newQty });
+            if (insErr) throw new Error(`שגיאה בהחזרת מלאי: ${insErr.message}`);
           }
 
           await logInventoryChange({
@@ -435,8 +449,10 @@ export function useCancelOrder() {
           });
         }
 
-        // Sync restored stock to WooCommerce.
-        syncMultipleStockToWoo(inventoryRows.map((r) => r.variation_id));
+        if (inventoryRows.length > 0) {
+          // Sync restored stock to WooCommerce.
+          syncMultipleStockToWoo(inventoryRows.map((r) => r.variation_id));
+        }
       }
 
       // 3. Reverse payments — refund cash to register, then delete payment records
@@ -518,6 +534,13 @@ export function useUpdateOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
+      // Block direct cancellation through the generic status updater —
+      // cancellation must go through useCancelOrder so inventory and
+      // payments are properly reversed.
+      if (status === "cancelled") {
+        throw new Error("לביטול הזמנה השתמש בכפתור 'בטל הזמנה'");
+      }
+
       const { data: order } = await supabase.from("orders").select("source, total").eq("id", id).single();
 
       // Prevent completing an order without full payment
