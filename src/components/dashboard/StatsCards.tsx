@@ -21,7 +21,7 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
           .neq("status", "cancelled"),
         supabase
           .from("payments")
-          .select("amount, payment_method, reference, orders!inner(status)")
+          .select("amount, payment_method, reference, order_id, orders!inner(status)")
           .gte("created_at", startDate)
           .lte("created_at", endDate),
         supabase
