@@ -30,50 +30,181 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Check inventory for each product
-  const { data: inventory } = await supabase
-    .from("inventory")
-    .select("variation_id, quantity");
+  // Load all relevant lookup tables in parallel
+  const [invRes, varRes, bundlesRes, biRes, bvRes, bviRes] = await Promise.all([
+    supabase.from("inventory").select("variation_id, quantity"),
+    supabase.from("product_variations").select("id, product_id, name, name_ar, sku, price, image_url"),
+    supabase.from("bundles").select("id, product_id, bundle_type"),
+    supabase.from("bundle_items").select("bundle_id, variation_id, quantity"),
+    supabase.from("bundle_variations").select("id, bundle_id, name, name_he, sku, price"),
+    supabase.from("bundle_variation_items").select("bundle_variation_id, variation_id, quantity"),
+  ]);
 
-  const { data: variations } = await supabase
-    .from("product_variations")
-    .select("id, product_id");
+  const inventory = invRes.data || [];
+  const variations = varRes.data || [];
+  const bundles = bundlesRes.data || [];
+  const bundleItems = biRes.data || [];
+  const bundleVars = bvRes.data || [];
+  const bundleVarItems = bviRes.data || [];
 
-  // Build product_id -> total stock map
-  const stockMap = new Map<string, number>();
-  if (variations && inventory) {
-    for (const v of variations) {
-      const invItems = inventory.filter((i) => i.variation_id === v.id);
-      const total = invItems.reduce((sum, i) => sum + i.quantity, 0);
-      stockMap.set(v.product_id, (stockMap.get(v.product_id) || 0) + total);
-    }
+  // variation_id -> total stock across warehouses
+  const varStock = new Map<string, number>();
+  for (const i of inventory) {
+    varStock.set(i.variation_id, (varStock.get(i.variation_id) || 0) + (i.quantity || 0));
   }
 
-  const items = (products || []).map((p: any) => {
-    const title = p.name_ar || p.name;
-    const desc = p.short_description_ar || p.short_description || p.description_ar || p.description || title;
-    // Strip HTML tags for description
+  // product_id -> variations
+  const varsByProduct = new Map<string, any[]>();
+  for (const v of variations) {
+    if (!varsByProduct.has(v.product_id)) varsByProduct.set(v.product_id, []);
+    varsByProduct.get(v.product_id)!.push(v);
+  }
+
+  // product_id -> bundle
+  const bundleByProduct = new Map<string, any>();
+  for (const b of bundles) bundleByProduct.set(b.product_id, b);
+
+  // bundle_id -> components (for simple_bundle)
+  const componentsByBundle = new Map<string, any[]>();
+  for (const bi of bundleItems) {
+    if (!componentsByBundle.has(bi.bundle_id)) componentsByBundle.set(bi.bundle_id, []);
+    componentsByBundle.get(bi.bundle_id)!.push(bi);
+  }
+
+  // bundle_variation_id -> components
+  const componentsByBundleVar = new Map<string, any[]>();
+  for (const bvi of bundleVarItems) {
+    if (!componentsByBundleVar.has(bvi.bundle_variation_id)) componentsByBundleVar.set(bvi.bundle_variation_id, []);
+    componentsByBundleVar.get(bvi.bundle_variation_id)!.push(bvi);
+  }
+
+  // bundle_id -> bundle_variations
+  const bundleVarsByBundle = new Map<string, any[]>();
+  for (const bv of bundleVars) {
+    if (!bundleVarsByBundle.has(bv.bundle_id)) bundleVarsByBundle.set(bv.bundle_id, []);
+    bundleVarsByBundle.get(bv.bundle_id)!.push(bv);
+  }
+
+  const computeBundleStock = (components: any[]): number => {
+    if (!components || components.length === 0) return 0;
+    let min = Infinity;
+    for (const c of components) {
+      const s = varStock.get(c.variation_id) || 0;
+      const possible = Math.floor(s / Math.max(1, c.quantity || 1));
+      if (possible < min) min = possible;
+    }
+    return min === Infinity ? 0 : min;
+  };
+
+  const escapeXml = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  const items: string[] = [];
+
+  for (const p of (products || []) as any[]) {
+    const baseTitle = p.name_ar || p.name;
+    const desc = p.short_description_ar || p.short_description || p.description_ar || p.description || baseTitle;
     const cleanDesc = desc.replace(/<[^>]*>/g, "").substring(0, 5000);
-    const stock = stockMap.get(p.id) || 0;
-    const availability = stock > 0 ? "in stock" : "out of stock";
     const category = p.categories?.name || "General";
     const imageUrl = p.image_url || "";
     const link = `${siteUrl}/product/${p.product_number}`;
+    const groupId = String(p.product_number);
+    const bundle = bundleByProduct.get(p.id);
+    const productVars = varsByProduct.get(p.id) || [];
 
-    return `    <item>
-      <g:id>${p.sku || p.product_number}</g:id>
-      <g:title><![CDATA[${title}]]></g:title>
+    const renderItem = (opts: {
+      id: string;
+      title: string;
+      price: number;
+      stock: number;
+      image: string;
+      sku?: string | null;
+      groupId?: string;
+    }) => {
+      const availability = opts.stock > 0 ? "in stock" : "out of stock";
+      return `    <item>
+      <g:id>${escapeXml(opts.id)}</g:id>
+      <g:title><![CDATA[${opts.title}]]></g:title>
       <g:description><![CDATA[${cleanDesc}]]></g:description>
       <g:link>${link}</g:link>
-      <g:image_link>${imageUrl}</g:image_link>
-      <g:price>${Number(p.sale_price).toFixed(2)} ILS</g:price>
+      <g:image_link>${opts.image}</g:image_link>
+      <g:price>${Number(opts.price).toFixed(2)} ILS</g:price>
       <g:availability>${availability}</g:availability>
       <g:condition>new</g:condition>
       <g:brand>ELWEJHA</g:brand>
       <g:product_type><![CDATA[${category}]]></g:product_type>
-      ${p.sku ? `<g:mpn>${p.sku}</g:mpn>` : ""}
+      ${opts.groupId ? `<g:item_group_id>${escapeXml(opts.groupId)}</g:item_group_id>` : ""}
+      ${opts.sku ? `<g:mpn>${escapeXml(opts.sku)}</g:mpn>` : ""}
     </item>`;
-  });
+    };
+
+    // Case 1: Bundle product
+    if (bundle) {
+      if (bundle.bundle_type === "variable_bundle") {
+        const bvs = bundleVarsByBundle.get(bundle.id) || [];
+        if (bvs.length === 0) continue;
+        for (const bv of bvs) {
+          const components = componentsByBundleVar.get(bv.id) || [];
+          const stock = computeBundleStock(components);
+          const variantTitle = `${baseTitle} - ${bv.name_he || bv.name}`;
+          items.push(renderItem({
+            id: bv.sku || `${p.product_number}-${bv.id.substring(0, 8)}`,
+            title: variantTitle,
+            price: Number(bv.price) || Number(p.sale_price),
+            stock,
+            image: imageUrl,
+            sku: bv.sku,
+            groupId,
+          }));
+        }
+      } else {
+        const components = componentsByBundle.get(bundle.id) || [];
+        const stock = computeBundleStock(components);
+        items.push(renderItem({
+          id: p.sku || String(p.product_number),
+          title: baseTitle,
+          price: Number(p.sale_price),
+          stock,
+          image: imageUrl,
+          sku: p.sku,
+        }));
+      }
+      continue;
+    }
+
+    // Case 2: Regular product with multiple real variations (>1, or single non-Default)
+    const realVars = productVars.filter((v) => (v.name || "").toLowerCase() !== "default");
+    if (productVars.length > 1 || realVars.length >= 1 && productVars.length > 1) {
+      for (const v of productVars) {
+        const stock = varStock.get(v.id) || 0;
+        const vName = v.name_ar || v.name;
+        const isDefault = (v.name || "").toLowerCase() === "default";
+        const title = isDefault ? baseTitle : `${baseTitle} - ${vName}`;
+        items.push(renderItem({
+          id: v.sku || `${p.product_number}-${v.id.substring(0, 8)}`,
+          title,
+          price: Number(v.price) || Number(p.sale_price),
+          stock,
+          image: v.image_url || imageUrl,
+          sku: v.sku,
+          groupId,
+        }));
+      }
+      continue;
+    }
+
+    // Case 3: Simple product (single Default variation or none)
+    const onlyVar = productVars[0];
+    const stock = onlyVar ? (varStock.get(onlyVar.id) || 0) : 0;
+    items.push(renderItem({
+      id: p.sku || String(p.product_number),
+      title: baseTitle,
+      price: Number(p.sale_price),
+      stock,
+      image: imageUrl,
+      sku: p.sku,
+    }));
+  }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
