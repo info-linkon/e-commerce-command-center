@@ -34,6 +34,11 @@ const Dashboard = () => {
       const day = start.getDay();
       start.setDate(start.getDate() - day);
       start.setHours(0, 0, 0, 0);
+    } else if (period === "prev_month") {
+      start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const end = new Date(now.getFullYear(), now.getMonth(), 0);
+      end.setHours(23, 59, 59, 999);
+      return { startDate: start.toISOString(), endDate: end.toISOString() };
     } else {
       // month
       start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -53,6 +58,7 @@ const Dashboard = () => {
             <ToggleGroupItem value="today" className="rounded-full px-3 h-8 text-xs">היום</ToggleGroupItem>
             <ToggleGroupItem value="week" className="rounded-full px-3 h-8 text-xs">השבוע</ToggleGroupItem>
             <ToggleGroupItem value="month" className="rounded-full px-3 h-8 text-xs">החודש</ToggleGroupItem>
+            <ToggleGroupItem value="prev_month" className="rounded-full px-3 h-8 text-xs">חודש קודם</ToggleGroupItem>
             <ToggleGroupItem value="custom" className="rounded-full px-3 h-8 text-xs">טווח מותאם</ToggleGroupItem>
           </ToggleGroup>
 
