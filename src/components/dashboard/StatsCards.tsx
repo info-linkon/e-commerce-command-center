@@ -12,7 +12,7 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
   const { data } = useQuery({
     queryKey: ["dashboard-stats", startDate, endDate],
     queryFn: async () => {
-      const [salesOrders, payments, successEvents] = await Promise.all([
+      const [salesOrders, payments] = await Promise.all([
         supabase
           .from("orders")
           .select("total")
@@ -21,40 +21,25 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
           .neq("status", "cancelled"),
         supabase
           .from("payments")
-          .select("amount, payment_method, reference, order_id, orders!inner(status)")
+          .select("amount, payment_method, orders!inner(status)")
           .gte("created_at", startDate)
           .lte("created_at", endDate),
-        supabase
-          .from("payment_events")
-          .select("order_id, event_type, success")
-          .like("event_type", "hyp_verify_%")
-          .eq("success", true),
       ]);
 
       const salesTotal = (salesOrders.data || []).reduce((s, o) => s + Number(o.total), 0);
       const ordersCount = salesOrders.data?.length || 0;
 
       const paymentsList = payments.data || [];
-      const successOrderIds = new Set(
-        (successEvents.data || []).map((e: any) => e.order_id).filter(Boolean),
-      );
+      // "כסף נכנס" = payments on orders that were actually paid in practice
+      // (i.e. not cancelled). Cash still requires the order to be completed.
       const cashTotal = paymentsList
-        .filter((p) => p.payment_method === "cash" && (p.orders as any)?.status === "completed")
+        .filter((p: any) => p.payment_method === "cash" && p.orders?.status === "completed")
         .reduce((s, p) => s + Number(p.amount), 0);
-      // Credit counts as successful when EITHER:
-      //  - a non-empty reference (e.g. HYP-<id>) is stored on the payment, OR
-      //  - a successful hyp_verify_* event exists for the order (covers older
-      //    rows where the reference field wasn't backfilled).
       const creditTotal = paymentsList
-        .filter((p: any) => {
-          if (p.payment_method !== "credit") return false;
-          const hasRef = !!p.reference && String(p.reference).trim() !== "";
-          const hasSuccessEvent = successOrderIds.has((p as any).order_id);
-          return hasRef || hasSuccessEvent;
-        })
+        .filter((p: any) => p.payment_method === "credit" && p.orders?.status !== "cancelled")
         .reduce((s, p) => s + Number(p.amount), 0);
       const bitTotal = paymentsList
-        .filter((p) => p.payment_method === "bit")
+        .filter((p: any) => p.payment_method === "bit" && p.orders?.status !== "cancelled")
         .reduce((s, p) => s + Number(p.amount), 0);
       const totalIncome = cashTotal + creditTotal + bitTotal;
 
