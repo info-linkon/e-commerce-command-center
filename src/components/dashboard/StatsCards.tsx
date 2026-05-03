@@ -35,16 +35,9 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
       const cashTotal = paymentsList
         .filter((p: any) => p.payment_method === "cash" && p.orders?.status === "completed")
         .reduce((s, p) => s + Number(p.amount), 0);
-      // Credit = HYP transactions only (must have a reference/transaction id).
-      // Manual "credit" entries from POS without a reference are excluded.
+      // Credit covers all digital payments (POS + website), excluding cancelled orders.
       const creditTotal = paymentsList
-        .filter(
-          (p: any) =>
-            p.payment_method === "credit" &&
-            p.orders?.status !== "cancelled" &&
-            !!p.reference &&
-            String(p.reference).trim() !== "",
-        )
+        .filter((p: any) => p.payment_method === "credit" && p.orders?.status !== "cancelled")
         .reduce((s, p) => s + Number(p.amount), 0);
       const bitTotal = paymentsList
         .filter((p: any) => p.payment_method === "bit" && p.orders?.status !== "cancelled")
