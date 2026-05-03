@@ -21,7 +21,7 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
           .neq("status", "cancelled"),
         supabase
           .from("payments")
-          .select("amount, payment_method, orders!inner(status)")
+          .select("amount, payment_method, reference, orders!inner(status)")
           .gte("created_at", startDate)
           .lte("created_at", endDate),
       ]);
@@ -34,7 +34,7 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
         .filter((p) => p.payment_method === "cash" && (p.orders as any)?.status === "completed")
         .reduce((s, p) => s + Number(p.amount), 0);
       const creditTotal = paymentsList
-        .filter((p) => p.payment_method === "credit")
+        .filter((p) => p.payment_method === "credit" && !!p.reference && String(p.reference).trim() !== "")
         .reduce((s, p) => s + Number(p.amount), 0);
       const bitTotal = paymentsList
         .filter((p) => p.payment_method === "bit")
