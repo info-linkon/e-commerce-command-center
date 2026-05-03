@@ -21,7 +21,7 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
           .neq("status", "cancelled"),
         supabase
           .from("payments")
-          .select("amount, payment_method, orders!inner(status)")
+          .select("amount, payment_method, reference, orders!inner(status)")
           .gte("created_at", startDate)
           .lte("created_at", endDate),
       ]);
@@ -35,8 +35,16 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
       const cashTotal = paymentsList
         .filter((p: any) => p.payment_method === "cash" && p.orders?.status === "completed")
         .reduce((s, p) => s + Number(p.amount), 0);
+      // Credit = HYP transactions only (must have a reference/transaction id).
+      // Manual "credit" entries from POS without a reference are excluded.
       const creditTotal = paymentsList
-        .filter((p: any) => p.payment_method === "credit" && p.orders?.status !== "cancelled")
+        .filter(
+          (p: any) =>
+            p.payment_method === "credit" &&
+            p.orders?.status !== "cancelled" &&
+            !!p.reference &&
+            String(p.reference).trim() !== "",
+        )
         .reduce((s, p) => s + Number(p.amount), 0);
       const bitTotal = paymentsList
         .filter((p: any) => p.payment_method === "bit" && p.orders?.status !== "cancelled")
