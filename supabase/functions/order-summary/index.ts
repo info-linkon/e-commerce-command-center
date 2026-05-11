@@ -87,12 +87,12 @@ Deno.serve(async (req) => {
     // Sum recorded payments (so the public page can show paid / remaining)
     const { data: paymentRows } = await supabase
       .from("payments")
-      .select("amount")
+      .select("amount, payment_method, cash_registers(requires_completed_order)")
       .eq("order_id", (order as any).id);
-    const totalPaid = (paymentRows || []).reduce(
-      (s: number, p: any) => s + Number(p.amount || 0),
-      0,
-    );
+    const totalPaid = (paymentRows || []).reduce((s: number, p: any) => {
+      const isDeferredCash = p.payment_method === "cash" && p.cash_registers?.requires_completed_order;
+      return isDeferredCash ? s : s + Number(p.amount || 0);
+    }, 0);
     (safeOrder as any).total_paid = totalPaid;
 
     // Get order items with product/variation info
