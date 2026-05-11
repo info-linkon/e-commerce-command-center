@@ -303,7 +303,7 @@ export async function runHypVerify(
   // ── Fetch order for amount check + side-effects ──
   const { data: orderData } = await supabase
     .from("orders")
-    .select("total, customer_name, customer_email, customer_phone, source, shipping_cost, discount_amount")
+    .select("total, customer_name, customer_email, customer_phone, source, shipping_cost, discount_amount, payment_method, digital_payment_amount")
     .eq("id", resolvedOrderId)
     .single();
 
@@ -316,13 +316,27 @@ export async function runHypVerify(
   }
 
   // ── Amount verification (Coin=1 → ILS, Amount is actually charged) ──
+  // For split-payment orders, only the digital portion is charged online —
+  // the rest is collected as cash on delivery. Compare against that, not
+  // the full order total, otherwise legitimate split payments are rejected.
   const chargedAmount = Number(Amount || 0);
   const orderTotal = Number(orderData.total);
-  if (!isFinite(chargedAmount) || Math.abs(chargedAmount - orderTotal) > 0.01) {
-    await logEvent(supabase, resolvedOrderId, "hyp_amount_mismatch", false, `charged=${chargedAmount} total=${orderTotal}`, { Id, source });
+  const isSplit = (orderData as { payment_method?: string }).payment_method === "split";
+  const expectedAmount = isSplit
+    ? Number((orderData as { digital_payment_amount?: number }).digital_payment_amount || 0)
+    : orderTotal;
+  if (!isFinite(chargedAmount) || !(expectedAmount > 0) || Math.abs(chargedAmount - expectedAmount) > 0.01) {
+    await logEvent(
+      supabase,
+      resolvedOrderId,
+      "hyp_amount_mismatch",
+      false,
+      `charged=${chargedAmount} expected=${expectedAmount} total=${orderTotal} split=${isSplit}`,
+      { Id, source, expected: expectedAmount, total: orderTotal, split: isSplit },
+    );
     await supabase
       .from("orders")
-      .update({ woo_sync_error: `HYP amount mismatch: charged ₪${chargedAmount}, order total ₪${orderTotal}` })
+      .update({ woo_sync_error: `HYP amount mismatch: charged ₪${chargedAmount}, expected ₪${expectedAmount}` })
       .eq("id", resolvedOrderId);
     return { verified: false, CCode: "0", amount_mismatch: true, reason: "amount_mismatch" };
   }
