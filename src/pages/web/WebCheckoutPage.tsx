@@ -106,7 +106,7 @@ export default function WebCheckoutPage() {
 
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
   const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
-  const { t } = useLanguage();
+  const { t, localizedPath } = useLanguage();
 
   const shippingSettings = (shippingSettingsRow?.content || {}) as any;
   const deliveryEnabled = shippingSettings.delivery_enabled !== false;
@@ -344,7 +344,7 @@ export default function WebCheckoutPage() {
           body: { order_id: order.id },
         }).catch(console.error);
         submittedRef.current = true;
-        navigate(`/order-confirmation/${order.order_number}`);
+        navigate(localizedPath(`/order-confirmation/${order.order_number}`));
         clearCart();
         return;
       }
@@ -370,7 +370,7 @@ export default function WebCheckoutPage() {
         // failure reason (it has the service role; anon can't UPDATE orders).
         toast.error(t("حدث خطأ في إنشاء صفحة الدفع — سيتواصل معك ممثلنا", "שגיאה ביצירת דף תשלום — נציג יצור איתך קשר"));
         submittedRef.current = true;
-        navigate(`/order-confirmation/${order.order_number}?payment=pending`);
+        navigate(localizedPath(`/order-confirmation/${order.order_number}?payment=pending`));
         clearCart();
         return;
       }
@@ -392,7 +392,7 @@ export default function WebCheckoutPage() {
   };
 
   if (items.length === 0 && !hypPaymentUrl && !submittedRef.current) {
-    navigate("/cart");
+    navigate(localizedPath("/cart"));
     return null;
   }
 
@@ -418,7 +418,7 @@ export default function WebCheckoutPage() {
             size="sm"
             onClick={() => {
               setHypPaymentUrl(null);
-              navigate("/cart");
+              navigate(localizedPath("/cart"));
             }}
           >
             <X className="w-4 h-4 ml-1" />
@@ -478,7 +478,7 @@ export default function WebCheckoutPage() {
           <span className="text-lg font-bold text-foreground">الوجهة</span>
         </div>
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link to="/cart" className="hover:text-foreground transition-colors flex items-center gap-1">
+          <Link to={localizedPath("/cart")} className="hover:text-foreground transition-colors flex items-center gap-1">
             <ShoppingBag className="w-4 h-4" />
             {t("السلة", "הסל")}
           </Link>
