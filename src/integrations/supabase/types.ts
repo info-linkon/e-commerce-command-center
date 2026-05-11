@@ -1630,6 +1630,7 @@ export type Database = {
         | "order_completed"
         | "order_picking"
         | "order_shipping"
+        | "invoice_issued"
       transfer_status: "pending" | "completed"
     }
     CompositeTypes: {
@@ -1790,6 +1791,7 @@ export const Constants = {
         "order_completed",
         "order_picking",
         "order_shipping",
+        "invoice_issued",
       ],
       transfer_status: ["pending", "completed"],
     },
