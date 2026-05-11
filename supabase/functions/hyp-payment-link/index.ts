@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     // Fetch order details + paid-status guard
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("id, order_number, total, customer_name, customer_phone, customer_email, status, hyp_transaction_id")
+      .select("id, order_number, total, payment_method, digital_payment_amount, customer_name, customer_phone, customer_email, status, hyp_transaction_id")
       .eq("id", order_id)
       .single();
 
@@ -123,7 +123,11 @@ Deno.serve(async (req) => {
       Masof: masof,
       KEY: api_key,
       PassP: passp,
-      Amount: String(order.total),
+      Amount: String(
+        order.payment_method === "split"
+          ? Number(order.digital_payment_amount || 0).toFixed(2)
+          : order.total,
+      ),
       Order: String(order.order_number),
       Info: `הזמנה #${order.order_number}`,
       ClientName: order.customer_name || "",
@@ -208,7 +212,11 @@ Deno.serve(async (req) => {
       formattedPhone = "972" + formattedPhone;
     }
 
-    const smsMessage = `שלום ${order.customer_name || ""}, לתשלום הזמנה #${order.order_number} בסך ₪${order.total} לחץ כאן: ${shortPaymentUrl}`;
+    const smsAmount =
+      order.payment_method === "split"
+        ? Number(order.digital_payment_amount || 0).toFixed(2)
+        : String(order.total);
+    const smsMessage = `שלום ${order.customer_name || ""}, לתשלום הזמנה #${order.order_number} בסך ₪${smsAmount} לחץ כאן: ${shortPaymentUrl}`;
 
     console.log("Sending payment link SMS to:", formattedPhone, "URL:", shortPaymentUrl);
 
