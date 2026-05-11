@@ -235,8 +235,12 @@ export default function WebOrderSummary() {
           const subtotal = (items || []).reduce((sum: number, it: any) => sum + Number(it.totalPrice || 0), 0);
           const shipping = Number(order.shipping_cost || 0);
           const discount = Number(order.discount_amount || 0);
+          const total = Number(order.total || 0);
           const paid = Number(order.total_paid || 0);
-          const remaining = Math.max(0, Number(order.total || 0) - paid);
+          const isSplit = order.payment_method === "split";
+          const digitalDue = isSplit ? Number(order.digital_payment_amount || 0) : total;
+          const onlineRemaining = Math.max(0, digitalDue - paid);
+          const cashOnDelivery = isSplit ? Math.max(0, total - digitalDue) : Math.max(0, total - paid - onlineRemaining);
           return (
             <>
               <div className="flex justify-between text-sm mb-2">
@@ -264,13 +268,19 @@ export default function WebOrderSummary() {
                     <span className="text-green-700">{t("المدفوع", "שולם")}</span>
                     <span className="text-green-700 font-medium">₪{paid.toFixed(2)}</span>
                   </div>
-                  {remaining > 0 && (
-                    <div className="flex justify-between text-sm font-bold">
-                      <span className="text-destructive">{t("الباقي للدفع عند الاستلام", "נותר לתשלום במסירה")}</span>
-                      <span className="text-destructive">₪{remaining.toFixed(2)}</span>
-                    </div>
-                  )}
                 </>
+              )}
+              {onlineRemaining > 0 && (
+                <div className="flex justify-between text-sm mt-2 font-bold">
+                  <span className="text-primary">{t("للدفع الآن (بطاقة ائتمان)", "לתשלום עכשיו (אשראי)")}</span>
+                  <span className="text-primary">₪{onlineRemaining.toFixed(2)}</span>
+                </div>
+              )}
+              {cashOnDelivery > 0 && (
+                <div className="flex justify-between text-sm mt-1">
+                  <span className="text-muted-foreground">{t("يُدفع نقدًا عند الاستلام", "מזומן במסירה")}</span>
+                  <span>₪{cashOnDelivery.toFixed(2)}</span>
+                </div>
               )}
             </>
           );
@@ -280,9 +290,12 @@ export default function WebOrderSummary() {
       {/* Pay-now CTA — only when the order is not yet paid and still open */}
       {(() => {
         const isClosed = order.status === "completed" || order.status === "cancelled";
+        const total = Number(order.total || 0);
         const paid = Number(order.total_paid || 0);
-        const remaining = Math.max(0, Number(order.total || 0) - paid);
-        const isPaid = !!order.hyp_transaction_id || remaining <= 0;
+        const isSplit = order.payment_method === "split";
+        const digitalDue = isSplit ? Number(order.digital_payment_amount || 0) : total;
+        const onlineRemaining = Math.max(0, digitalDue - paid);
+        const isPaid = !!order.hyp_transaction_id || onlineRemaining <= 0;
         if (isClosed || isPaid) return null;
         return (
           <div className="bg-card border border-primary/30 rounded-xl p-5 mt-4 text-center">
@@ -293,7 +306,7 @@ export default function WebOrderSummary() {
             <Button asChild size="lg" className="w-full sm:w-auto">
               <a href={`/pay/${order.order_number}`}>
                 <CreditCard className="h-4 w-4 ms-2" />
-                {t(`ادفع ₪${remaining.toFixed(2)}`, `שלם ₪${remaining.toFixed(2)}`)}
+                {t(`ادفع ₪${onlineRemaining.toFixed(2)}`, `שלם ₪${onlineRemaining.toFixed(2)}`)}
               </a>
             </Button>
           </div>
