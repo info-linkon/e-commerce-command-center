@@ -1,34 +1,41 @@
-# סבב 2 — תיקונים נותרים
+# סבב QA — תיקון פערים שנמצאו
 
-## 1. Meta Pixel — אירוע Purchase + מקטים
+עברתי על כל מה שנעשה בסבבים הקודמים. רוב המשימות עובדות נכון. נמצאו 4 פערים שצריך לסגור כדי שהזרימה תהיה שלמה ולא תישבר.
 
-**הבעיה:** אירוע `Purchase` לא נורה כי `order-summary` לא מחזיר items ל-pixel, ו-`content_ids` משתמש במספר הזמנה במקום מק"ט.
+## 1. SMS חשבונית — `{invoice_url}` לא מוחלף בפועל ⚠️ באג
 
-### שינויים
-- **`supabase/functions/order-summary/index.ts`** — להוסיף `sku` בכל item שמוחזר (גם variation וגם bundle_variation). זה ציבורי בלי חשיפת מידע רגיש.
-- **`src/pages/web/WebOrderConfirmation.tsx`** — `firePurchasePixel` יקבל את ה-items מהsummary, יבנה `content_ids` ממקטים, `contents: [{id: sku, quantity}]`, `num_items`, `value`, `currency`. נוודא שהפונקציה אכן רצה גם במסלול הצלחה רגיל וגם בפלואו verify fallback (היום ב-fallback היא לא נקראת אחרי הצלחה).
-- **`src/pages/web/WebProductPage.tsx`** ו-**`src/pages/web/WebCheckoutPage.tsx`** — להחליף את ה-`content_ids` שמשתמשים ב-product_number/order_number ב-SKU של ה-variation. אם אין SKU — fallback ל-product_number.
-- **`src/lib/meta-pixel.ts`** — להרחיב טיפוס ולתעד שדות מומלצים (contents/content_type=product).
+**הבעיה:** התבנית החדשה `invoice_issued` משתמשת ב-`{invoice_url}`, אבל `supabase/functions/order-sms-trigger/index.ts` לא מבצע replace ל-placeholder הזה ולא קורא את `orders.invoice_url`. בנוסף, `CompleteOrderDialog` שומר נתיב יחסי (`/inv/{shortCode}`) שלא ניתן ללחוץ עליו מ-SMS.
 
-## 2. שפה בכתובת — prefix `/he`
+**תיקון:**
+- ב-`order-sms-trigger`: להוסיף תחליף `{invoice_url}` שקורא מ-`order.invoice_url`. אם הערך מתחיל ב-`/inv/` או ב-`/` → להוסיף prefix `https://elwejha.co.il`.
+- ב-`CompleteOrderDialog.tsx`: לשמור URL מלא (`https://elwejha.co.il/inv/{shortCode}`) במקום נתיב יחסי, כך שגם פתיחה ישירה ב-CRM או בדואר תעבוד.
 
-**הבעיה:** החלפת שפה לא משנה את ה-URL, לא ניתן לשתף לינק עברי ויש מקומות שלא תורגמו.
+## 2. WebOrderConfirmation — לינק "חזרה לבית" שובר את `/he`
 
-### שינויים
-- **`src/hooks/useLanguage.tsx`** — לקרוא את השפה מ-`location.pathname` (`/he` prefix → `he`, אחרת `ar`). `toggleLang` יבצע `navigate` לאותו נתיב עם/בלי `/he`. שמירה ב-localStorage נשארת רק כ-fallback ראשוני.
-- **`src/App.tsx`** — להוסיף עץ ראוטים מקביל תחת `/he` שמצביע לאותם דפים תחת `<WebLayout />`. הראוטים הציבוריים בלבד (home/shop/category/product/cart/checkout/order-confirmation/order/search/about/contact). CRM ו-`/inv`,`/pay` נשארים בלי prefix.
-- **`src/components/web/WebLayout.tsx`** וכל קומפוננטה שמשתמשת ב-`Link`/`navigate` בנתיבים ציבוריים — להוסיף helper `webPath(path)` שמחזיר `/he/...` כשהשפה היא he. לרכז את זה ב-`useLanguage` כ-`localizedPath()`.
-- **שיתוף/SEO**: `meta-tags` Edge Function ו-`sitemap`/feeds — להוסיף לינק עברי כאלטרנטיבה (`<link rel="alternate" hreflang="he" />`).
-- **תרגומים חסרים**: לסרוק את `WebLayout`, פוטר, `WebHome`, `WebShopPage`, `WebCheckoutPage` על מחרוזות hardcoded ולהעביר ל-`t(ar, he)`. סבב מיקוד על המקומות שהמשתמש סימן בתמונה (יזוהו בהרצה).
+**הבעיה:** שני `<Link to="/">` קשיחים (שורות 164, 189) מובילים לערבית גם כשהמשתמש בעברית.
 
-## 3. תבנית SMS — `invoice_issued`
+**תיקון:** לעבור דרך `localizedPath("/")` כמו בשאר הדפים. גם להחליף קריאת `useLanguage` אם חסרה.
 
-הטריגר נוסף בסבב הקודם ל-enum, אך אין תבנית UI ניהולית.
+## 3. SEO — חסר `hreflang` alternate בין `/` ל-`/he`
 
-### שינויים
-- **`src/pages/admin/SmsTemplatesPage.tsx`** — להוסיף את `invoice_issued` לרשימת הטריגרים עם תיאור: "נשלח כשהונפקה חשבונית/קבלה אוטומטית". משתנים זמינים: `{order_number}`, `{customer_name}`, `{invoice_url}`, `{total}`.
-- **Migration נתונים** — INSERT תבנית ברירת מחדל אחת (ערבית) אם לא קיימת.
+**הבעיה:** Google לא יודע שיש שתי גרסאות שפה לאותו דף, פוגע באינדוקס.
 
-## הערות טכניות
-- שינוי ה-prefix העברי הוא הכי רחב — עלול לגעת ב-15-25 קבצים. נוסיף helper מרכזי כדי למזער שינויים ולשמור על עקביות.
-- אחרי השינויים נריץ build ונאמת ב-preview שניתן לשתף `/he/product/123` ושאירוע Purchase נורה עם content_ids נכונים.
+**תיקון:** ב-`index.html` להוסיף שני tags גנריים, וב-edge function `meta-tags`/`product-share` (אם נטען) להוסיף `<link rel="alternate" hreflang="ar" href="..."/>` ו-`hreflang="he"` עם `x-default` ל-ערבית. נתחיל בגרסה גלובלית ב-`index.html` בלבד אם ה-Edge Function לא רלוונטי לכל המסלולים.
+
+## 4. אימות עקיף שלא נשבר כלום
+
+לא נדרש שינוי קוד — רק לוודא:
+- `useCreateExpense` חתימה תואמת לקריאה מ-CompleteOrderDialog ✓ (אומת).
+- `useCreateDocument` מחזיר `short_code`/`doc_url` ✓ (אומת).
+- `OrderTypeTab` הוסר ולא מיובא בשום מקום ✓ (אומת).
+- כל ניווטי הדפים הציבוריים עוברים דרך `localizedPath` ✓ (פרט ל-WebOrderConfirmation שבסעיף 2).
+- `pg_cron` רץ ל-`auto-cancel-pending` כל 10 דקות ✓ (מיגרציה קיימת).
+- תבנית ברירת מחדל ל-`invoice_issued` קיימת ב-DB ✓ (מיגרציה קיימת).
+
+## קבצים שיתעדכנו
+- `supabase/functions/order-sms-trigger/index.ts` — תחליף `{invoice_url}`.
+- `src/components/orders/CompleteOrderDialog.tsx` — שמירת URL מלא.
+- `src/pages/web/WebOrderConfirmation.tsx` — `localizedPath` ב-2 לינקים.
+- `index.html` — תגי `hreflang`.
+
+זהו תיקון ממוקד וקטן יחסית. אחרי הביצוע אריץ build ואוודא שאין רגרסיות.
