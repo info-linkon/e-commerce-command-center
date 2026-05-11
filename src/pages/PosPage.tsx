@@ -300,6 +300,13 @@ const PosPage = () => {
 
     const { data: { user } } = await supabase.auth.getUser();
     const isHypLink = !splitMode && paymentMethod === "credit_link";
+    const digitalPaymentAmount = splitMode
+      ? splitLines
+          .filter((l) => l.method === "credit" || l.method === "bit")
+          .reduce((sum, l) => sum + (parseFloat(l.amount) || 0), 0)
+      : isHypLink || paymentMethod === "credit"
+      ? total
+      : 0;
 
     try {
       const newOrder = await createOrder.mutateAsync({
@@ -316,6 +323,7 @@ const PosPage = () => {
         source: "pos" as any,
         created_by: user?.id || undefined,
         payment_method: splitMode ? "split" : (isHypLink ? "credit" : paymentMethod),
+        digital_payment_amount: digitalPaymentAmount,
         cash_register_id: !splitMode && paymentMethod === "cash" ? cashRegisterId : undefined,
         delivery_method: deliveryMethod,
         discount_type: discountType !== "none" ? discountType : undefined,
