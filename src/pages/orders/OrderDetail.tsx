@@ -799,6 +799,33 @@ const OrderDetail = () => {
           </AlertDialog>
         </div>
       )}
+
+      <CompleteOrderDialog
+        open={completeDialogOpen}
+        onOpenChange={setCompleteDialogOpen}
+        orderId={order.id}
+        orderNumber={order.order_number}
+        customerName={order.customer_name || undefined}
+        customerEmail={order.customer_email || undefined}
+        customerPhone={order.customer_phone || undefined}
+        shippingCost={Number((order as any).shipping_cost) || 0}
+        discountAmount={Number((order as any).discount_amount) || 0}
+        hasInvoice={!!(order as any).invoice_url}
+        orderItems={items.map((item: any) => {
+          const varName = item.bundle_variations?.name || item.product_variations?.name || "";
+          const varSku =
+            item.bundle_variations?.sku ||
+            item.product_variations?.products?.sku ||
+            item.product_variations?.sku ||
+            undefined;
+          return {
+            details: `${item.product_variations?.products?.name_ar || item.product_variations?.products?.name || ""}${varName && !["ברירת מחדל", "default"].includes(varName.toLowerCase()) ? ` - ${varName}` : ""}`.trim(),
+            amount: item.quantity,
+            price: Number(item.unit_price),
+            catalog_number: varSku,
+          };
+        })}
+      />
     </div>
   );
 };
