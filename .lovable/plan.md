@@ -1,41 +1,22 @@
-# סבב QA — תיקון פערים שנמצאו
+## מטרה
 
-עברתי על כל מה שנעשה בסבבים הקודמים. רוב המשימות עובדות נכון. נמצאו 4 פערים שצריך לסגור כדי שהזרימה תהיה שלמה ולא תישבר.
+בעת סימון הזמנה כ"הושלמה", להנפיק חשבונית מס/קבלה (320) **רק עבור חלק המזומן/ביט** של התשלום. תשלומי אשראי (HYP) ימשיכו להנפיק חשבונית משלהם בנפרד בעת התשלום עצמו (כפי שקורה היום ב-`hyp-callback`).
 
-## 1. SMS חשבונית — `{invoice_url}` לא מוחלף בפועל ⚠️ באג
+זה פותר את התרחיש של הזמנה #303: שולם 700₪ באשראי מראש (וכבר הונפקה חשבונית 320 ע"ס 700₪ ע"י HYP), והיתרה נגבית במזומן במסירה — בעת ההשלמה תונפק חשבונית 320 נוספת רק על חלק המזומן.
 
-**הבעיה:** התבנית החדשה `invoice_issued` משתמשת ב-`{invoice_url}`, אבל `supabase/functions/order-sms-trigger/index.ts` לא מבצע replace ל-placeholder הזה ולא קורא את `orders.invoice_url`. בנוסף, `CompleteOrderDialog` שומר נתיב יחסי (`/inv/{shortCode}`) שלא ניתן ללחוץ עליו מ-SMS.
+## שינויים
 
-**תיקון:**
-- ב-`order-sms-trigger`: להוסיף תחליף `{invoice_url}` שקורא מ-`order.invoice_url`. אם הערך מתחיל ב-`/inv/` או ב-`/` → להוסיף prefix `https://elwejha.co.il`.
-- ב-`CompleteOrderDialog.tsx`: לשמור URL מלא (`https://elwejha.co.il/inv/{shortCode}`) במקום נתיב יחסי, כך שגם פתיחה ישירה ב-CRM או בדואר תעבוד.
+### `src/components/orders/CompleteOrderDialog.tsx`
 
-## 2. WebOrderConfirmation — לינק "חזרה לבית" שובר את `/he`
+בלוק האוטו-הנפקה (שורות 106-162) ישתנה כך:
 
-**הבעיה:** שני `<Link to="/">` קשיחים (שורות 164, 189) מובילים לערבית גם כשהמשתמש בעברית.
-
-**תיקון:** לעבור דרך `localizedPath("/")` כמו בשאר הדפים. גם להחליף קריאת `useLanguage` אם חסרה.
-
-## 3. SEO — חסר `hreflang` alternate בין `/` ל-`/he`
-
-**הבעיה:** Google לא יודע שיש שתי גרסאות שפה לאותו דף, פוגע באינדוקס.
-
-**תיקון:** ב-`index.html` להוסיף שני tags גנריים, וב-edge function `meta-tags`/`product-share` (אם נטען) להוסיף `<link rel="alternate" hreflang="ar" href="..."/>` ו-`hreflang="he"` עם `x-default` ל-ערבית. נתחיל בגרסה גלובלית ב-`index.html` בלבד אם ה-Edge Function לא רלוונטי לכל המסלולים.
-
-## 4. אימות עקיף שלא נשבר כלום
-
-לא נדרש שינוי קוד — רק לוודא:
-- `useCreateExpense` חתימה תואמת לקריאה מ-CompleteOrderDialog ✓ (אומת).
-- `useCreateDocument` מחזיר `short_code`/`doc_url` ✓ (אומת).
-- `OrderTypeTab` הוסר ולא מיובא בשום מקום ✓ (אומת).
-- כל ניווטי הדפים הציבוריים עוברים דרך `localizedPath` ✓ (פרט ל-WebOrderConfirmation שבסעיף 2).
-- `pg_cron` רץ ל-`auto-cancel-pending` כל 10 דקות ✓ (מיגרציה קיימת).
-- תבנית ברירת מחדל ל-`invoice_issued` קיימת ב-DB ✓ (מיגרציה קיימת).
-
-## קבצים שיתעדכנו
-- `supabase/functions/order-sms-trigger/index.ts` — תחליף `{invoice_url}`.
-- `src/components/orders/CompleteOrderDialog.tsx` — שמירת URL מלא.
-- `src/pages/web/WebOrderConfirmation.tsx` — `localizedPath` ב-2 לינקים.
-- `index.html` — תגי `hreflang`.
-
-זהו תיקון ממוקד וקטן יחסית. אחרי הביצוע אריץ build ואוודא שאין רגרסיות.
+1. **שליפת תשלומים** — נוספת ל-query גם בדיקה אם קיימת כבר חשבונית מס/קבלה (במקום להסתמך רק על prop `hasInvoice` של ההזמנה כולה — נשאר כמו היום, אבל לא חוסם ניית חשבונית נוספת לחלק המזומן).
+2. **סינון** — מתוך כל ה-payments, מסננים רק `payment_method IN ('cash','bit')`. אם הסכום המסונן = 0 → לא להנפיק כלום (עסקה אשראי בלבד; חשבונית כבר קיימת מ-HYP).
+3. **בניית items לחשבונית הנפרדת** — שורה אחת מסכמת:
+   ```
+   { details: `תשלום במסירה — הזמנה #${orderNumber}`,
+     amount: 1, price: cashTotal, catalog_number: undefined }
+   ```
+   זה שומר על איזון `סה"כ פריטים == סה"כ תשלומים` שדורש EZcount, ומונע כפילות מול החשבונית האשראית (שכבר כוללת את פירוט הפריטים המלא).
+   `shipping_cost` ו-`discount_amount` **לא** מועברים (כדי לא להפיל את האיזון; הם כבר חושבו בחשבונית האשראי / ובסכום המזומן הסופי).
+4. **תנאי הצגה של ההודעה הצהובה** "קיימת חשבונית קיימת" — להיעלם / להפוך להבהרה: "

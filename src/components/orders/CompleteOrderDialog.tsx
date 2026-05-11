@@ -103,33 +103,40 @@ export default function CompleteOrderDialog({
         })
         .catch(console.error);
 
-      // 4. Auto-issue invoice/receipt (320) if not already
-      if (!hasInvoice && customerName && orderItems && orderItems.length > 0) {
+      // 4. Auto-issue invoice/receipt (320) for the CASH/BIT portion only.
+      //    Credit (HYP) payments already issued their own 320 at payment time.
+      if (customerName) {
         try {
           const { data: pays } = await supabase
             .from("payments")
             .select("amount, payment_method")
             .eq("order_id", orderId);
-          const docPayments = (pays || []).map((p: any) => ({
-            type:
-              p.payment_method === "cash"
-                ? "cash"
-                : p.payment_method === "bit"
-                ? "bit"
-                : "credit",
+          const cashPays = (pays || []).filter(
+            (p: any) => p.payment_method === "cash" || p.payment_method === "bit"
+          );
+          const cashTotal = cashPays.reduce((s, p: any) => s + Number(p.amount), 0);
+          const docPayments = cashPays.map((p: any) => ({
+            type: p.payment_method === "cash" ? "cash" : "bit",
             amount: Number(p.amount),
           }));
-          if (docPayments.length > 0) {
+          if (cashTotal > 0) {
+            // Single summary line so items total == payments total (EZcount balance rule).
+            // Avoids duplicating the line items already covered by the credit invoice.
+            const summaryItems = [
+              {
+                details: `תשלום במסירה — הזמנה #${orderNumber}`,
+                amount: 1,
+                price: cashTotal,
+              },
+            ];
             const result = await createDocument.mutateAsync({
               doc_type: "invoice_receipt",
               order_id: orderId,
               customer_name: customerName,
               customer_email: customerEmail,
               customer_phone: customerPhone,
-              items: orderItems,
+              items: summaryItems,
               payments: docPayments,
-              shipping_cost: shippingCost,
-              discount_amount: discountAmount,
             });
             const shortCode = result?.short_code;
             const invoiceLink = shortCode
@@ -153,7 +160,7 @@ export default function CompleteOrderDialog({
                   .catch(console.error);
               }
             }
-            toast.success("חשבונית מס/קבלה הונפקה אוטומטית ונשלחה ללקוח");
+            toast.success("חשבונית מס/קבלה לחלק המזומן הונפקה ונשלחה ללקוח");
           }
         } catch (err: any) {
           console.error("Auto invoice error:", err);
