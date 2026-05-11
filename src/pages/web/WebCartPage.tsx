@@ -6,7 +6,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 
 export default function WebCartPage() {
   const { items, removeItem, updateQuantity, clearCart, totalPrice, shippingCost } = useCartStore();
-  const { t } = useLanguage();
+  const { t, localizedPath } = useLanguage();
 
   if (items.length === 0) {
     return (
@@ -15,7 +15,7 @@ export default function WebCartPage() {
         <h1 className="text-2xl font-bold mb-2">{t("السلة فارغة", "הסל ריק")}</h1>
         <p className="text-muted-foreground mb-6">{t("لم تقم بإضافة أي منتجات بعد", "עדיין לא הוספת מוצרים")}</p>
         <Button asChild className="bg-gold text-gold-foreground hover:bg-gold/90">
-          <Link to="/shop">{t("تصفح المنتجات", "עיון במוצרים")}</Link>
+          <Link to={localizedPath("/shop")}>{t("تصفح المنتجات", "עיון במוצרים")}</Link>
         </Button>
       </div>
     );
@@ -105,7 +105,7 @@ export default function WebCartPage() {
             <p className="text-xs text-muted-foreground text-center mt-1">{t("شامل ض.ق.م", "כולל מע״מ")}</p>
           </div>
           <Button asChild size="lg" className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold">
-            <Link to="/checkout">{t("إتمام الطلب", "לסיום הזמנה")}</Link>
+            <Link to={localizedPath("/checkout")}>{t("إتمام الطلب", "לסיום הזמנה")}</Link>
           </Button>
           <button onClick={clearCart} className="w-full text-sm text-muted-foreground hover:text-destructive mt-3 transition-colors">
             {t("إفراغ السلة", "רוקן סל")}

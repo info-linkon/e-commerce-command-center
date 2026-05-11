@@ -205,7 +205,7 @@ export default function WebOrderConfirmation() {
 // way the confirmation page can read its own order back.
 async function fetchOrderSummary(
   orderNumber: string | null,
-): Promise<{ id?: string; total?: number; status?: string; hyp_transaction_id?: string | null } | null> {
+): Promise<{ order: any; items: any[] } | null> {
   if (!orderNumber) return null;
   const token = sessionStorage.getItem("hyp_order_token") || "";
   try {
@@ -221,7 +221,7 @@ async function fetchOrderSummary(
     });
     if (!res.ok) return null;
     const json = await res.json();
-    return json.order || null;
+    return { order: json.order || null, items: json.items || [] };
   } catch (err) {
     console.error("order-summary fetch failed:", err);
     return null;
@@ -232,10 +232,23 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
   if (!orderNumber) return;
   const amount = amountStr ? parseFloat(amountStr) : NaN;
   const summary = await fetchOrderSummary(orderNumber);
-  if (!summary) return;
-  const value = isFinite(amount) ? amount : Number(summary.total || 0);
-  // order-summary doesn't expose SKUs today; use order_number as fallback id.
-  fbq("Purchase", { content_ids: [String(orderNumber)], value, currency: "ILS", content_type: "product" });
+  const order = summary?.order;
+  const items = summary?.items || [];
+  const value = isFinite(amount) ? amount : Number(order?.total || 0);
+  const contents = items
+    .filter((it: any) => it && it.sku)
+    .map((it: any) => ({ id: String(it.sku), quantity: Number(it.quantity || 1) }));
+  const content_ids = contents.length
+    ? contents.map((c) => c.id)
+    : [String(orderNumber)];
+  fbq("Purchase", {
+    content_ids,
+    contents: contents.length ? contents : undefined,
+    content_type: "product",
+    num_items: items.reduce((s: number, it: any) => s + Number(it.quantity || 0), 0) || undefined,
+    value,
+    currency: "ILS",
+  });
 }
 
 async function firePurchasePixelForOrder(orderNumber: string | null): Promise<void> {
@@ -257,7 +270,7 @@ function runFallbackVerify(
       const hypOrderNum = searchParams.get("Order") || orderNumber;
       if (hypOrderNum) {
         const summary = await fetchOrderSummary(hypOrderNum);
-        orderId = summary?.id || null;
+        orderId = summary?.order?.id || null;
       }
     }
 
@@ -315,7 +328,8 @@ async function pollOrderAfterFailure(
   while (Date.now() < deadline) {
     try {
       const summary = await fetchOrderSummary(orderNumber);
-      if (summary && (summary.hyp_transaction_id || PAID_STATUSES.has(String(summary.status)))) {
+      const ord = summary?.order;
+      if (ord && (ord.hyp_transaction_id || PAID_STATUSES.has(String(ord.status)))) {
         setStatus("success");
         sessionStorage.removeItem("hyp_order_id");
         sessionStorage.removeItem("hyp_order_number");

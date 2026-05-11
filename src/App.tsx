@@ -79,8 +79,23 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public Website — root */}
+            {/* Public Website — root (Arabic) */}
             <Route path="/" element={<WebLayout />}>
+              <Route index element={<WebHome />} />
+              <Route path="shop" element={<WebShopPage />} />
+              <Route path="category/:id" element={<WebCategoryPage />} />
+              <Route path="product/:id" element={<WebProductPage />} />
+              <Route path="cart" element={<WebCartPage />} />
+              <Route path="checkout" element={<WebCheckoutPage />} />
+              <Route path="order-confirmation/:orderNumber?" element={<WebOrderConfirmation />} />
+              <Route path="order/:orderNumber" element={<WebOrderSummary />} />
+              <Route path="search" element={<WebSearchPage />} />
+              <Route path="about" element={<WebAboutPage />} />
+              <Route path="contact" element={<WebContactPage />} />
+            </Route>
+
+            {/* Public Website — Hebrew prefix */}
+            <Route path="/he" element={<WebLayout />}>
               <Route index element={<WebHome />} />
               <Route path="shop" element={<WebShopPage />} />
               <Route path="category/:id" element={<WebCategoryPage />} />

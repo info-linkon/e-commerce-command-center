@@ -28,7 +28,7 @@ export default function WebShopPage() {
   const { data: products, isLoading } = useWebProducts(selectedCategory);
   const { data: categories } = useWebCategories();
   const [showAll, setShowAll] = useState(false);
-  const { lang, t } = useLanguage();
+  const { lang, t, localizedPath } = useLanguage();
 
   // Default: show categories grid. "الكل" shows all products.
   if (!showAll) {
@@ -43,7 +43,7 @@ export default function WebShopPage() {
             return (
               <Link
                 key={cat.id}
-                to={`/category/${(cat as any).category_number || cat.id}`}
+                to={localizedPath(`/category/${(cat as any).category_number || cat.id}`)}
                 className="group relative rounded-xl overflow-hidden aspect-square border border-border hover:shadow-xl transition-all duration-300"
               >
                 {imgSrc ? (

@@ -61,7 +61,7 @@ const StatCard = ({ end, suffix, desc, iconIndex }: { end: number; suffix: strin
 };
 
 export default function WebAboutPage() {
-  const { lang, t } = useLanguage();
+  const { lang, t, localizedPath } = useLanguage();
   const { data: heroSection } = useSiteSection("about", "hero");
   const { data: storySection } = useSiteSection("about", "story");
   const { data: valuesSection } = useSiteSection("about", "values");
@@ -198,7 +198,7 @@ export default function WebAboutPage() {
             {t("اكتشف مجموعتنا الواسعة من المنتجات الأصلية", "גלה את מגוון המוצרים המקוריים שלנו")}
           </p>
           <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
-            <Link to="/shop">{t("تسوق الآن", "קנה עכשיו")}</Link>
+            <Link to={localizedPath("/shop")}>{t("تسوق الآن", "קנה עכשיו")}</Link>
           </Button>
         </div>
       </section>
