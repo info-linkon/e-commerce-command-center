@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       .eq("order_id", (order as any).id);
     const totalPaid = (paymentRows || []).reduce((s: number, p: any) => {
       const isDeferredCash = p.payment_method === "cash" && p.cash_registers?.requires_completed_order;
-      return isDeferredCash ? s : s + Number(p.amount || 0);
+      return safeOrder.status !== "completed" && isDeferredCash ? s : s + Number(p.amount || 0);
     }, 0);
     (safeOrder as any).total_paid = totalPaid;
 
