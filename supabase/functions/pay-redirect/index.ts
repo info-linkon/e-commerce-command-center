@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
 
     const { data: order } = await supabase
       .from("orders")
-      .select("id, payment_link_url, status, hyp_transaction_id, total, customer_name, customer_phone, customer_email")
+      .select("id, payment_link_url, status, hyp_transaction_id, total, payment_method, digital_payment_amount, customer_name, customer_phone, customer_email")
       .eq("order_number", Number(orderNumber))
       .single();
 
@@ -80,15 +80,34 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!order.payment_link_url) {
+    // For split-payment orders, only the digital portion should be charged
+    // online — the rest is collected as cash on delivery. The pre-stored
+    // payment_link_url may have been signed for the full total, so always
+    // re-issue a link for the digital amount in that case.
+    const isSplit = order.payment_method === "split";
+    const chargeAmount = isSplit
+      ? Number(order.digital_payment_amount || 0)
+      : Number(order.total || 0);
+
+    if (isSplit && !(chargeAmount > 0)) {
+      return page(
+        "סכום לתשלום לא תקין",
+        `<h1>לא ניתן להפיק לינק תשלום</h1>
+         <p>הזמנה #${orderNumber} מוגדרת כתשלום מפוצל אך אין סכום דיגיטלי לחיוב. פנה אלינו בוואטסאפ.</p>`,
+        400,
+      );
+    }
+
+    if (isSplit || !order.payment_link_url) {
       // No signed HYP URL on file (e.g. order created with cash/bit, or the
-      // initial sign call failed). Generate one on demand and 302 to it.
+      // initial sign call failed, or this is a split order where we must
+      // charge only the digital portion). Generate one on demand and 302 to it.
       try {
         const { data: hypData, error: hypErr } = await supabase.functions.invoke("hyp-create-payment", {
           body: {
             order_id: order.id,
             order_number: Number(orderNumber),
-            total: Number(order.total),
+            total: chargeAmount,
             customer_name: order.customer_name || "",
             customer_phone: order.customer_phone || "",
             customer_email: order.customer_email || "",
