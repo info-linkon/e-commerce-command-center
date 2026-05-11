@@ -237,6 +237,10 @@ export default function WebCheckoutPage() {
       if (matchedVariationsError) throw matchedVariationsError;
 
       const matchedVariationIds = new Set((matchedVariations || []).map((variation) => variation.id));
+      // Safety net for stale carts: items added before the bundle fix may have
+      // `variationId` set to a bundle_variation.id (which won't exist in
+      // product_variations). For those, resolve via the bundle's product_id
+      // → "ברירת מחדל" product_variation just like the WebProductPage now does.
       const fallbackProductIds = Array.from(
         new Set(items.filter((item) => !matchedVariationIds.has(item.variationId)).map((item) => item.productId))
       );
