@@ -55,7 +55,18 @@ jobs:
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          supabase db push --db-url "$SUPABASE_DB_URL" --yes
+          # Retry to ride out transient IPv6/network blips between GitHub
+          # Actions runners and db.<ref>.supabase.co.
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i..."
+            if supabase db push --db-url "$SUPABASE_DB_URL" --yes; then
+              exit 0
+            fi
+            echo "Attempt $i failed, sleeping before retry..."
+            sleep $((i * 10))
+          done
+          echo "::error::All db push attempts failed."
+          exit 1
 
       - name: Summary
         if: success()
