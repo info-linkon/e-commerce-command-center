@@ -105,7 +105,7 @@ export default function WebCartPage() {
             <p className="text-xs text-muted-foreground text-center mt-1">{t("شامل ض.ق.م", "כולל מע״מ")}</p>
           </div>
           <Button asChild size="lg" className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold">
-            <Link to="/checkout">{t("إتمام الطلب", "לסיום הזמנה")}</Link>
+            <Link to={localizedPath("/checkout")}>{t("إتمام الطلب", "לסיום הזמנה")}</Link>
           </Button>
           <button onClick={clearCart} className="w-full text-sm text-muted-foreground hover:text-destructive mt-3 transition-colors">
             {t("إفراغ السلة", "רוקן סל")}
