@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     // Get order
     const { data: order, error: orderErr } = await supabase
       .from("orders")
-      .select("id, order_number, status, total, created_at, customer_name, customer_phone, shipping_address, shipping_city, payment_method, discount_amount, shipping_cost, notes, source, hyp_transaction_id, payment_link_url, access_token")
+      .select("id, order_number, status, total, digital_payment_amount, created_at, customer_name, customer_phone, shipping_address, shipping_city, payment_method, discount_amount, shipping_cost, notes, source, hyp_transaction_id, payment_link_url, access_token")
       .eq("order_number", num)
       .single();
 
@@ -87,13 +87,20 @@ Deno.serve(async (req) => {
     // Sum recorded payments (so the public page can show paid / remaining)
     const { data: paymentRows } = await supabase
       .from("payments")
-      .select("amount")
+      .select("amount, payment_method, cash_registers(requires_completed_order)")
       .eq("order_id", (order as any).id);
-    const totalPaid = (paymentRows || []).reduce(
-      (s: number, p: any) => s + Number(p.amount || 0),
-      0,
-    );
+    const plannedCredit = (paymentRows || []).reduce((s: number, p: any) => {
+      return safeOrder.payment_method === "split" && p.payment_method === "credit" && !p.reference
+        ? s + Number(p.amount || 0)
+        : s;
+    }, 0);
+    const totalPaid = (paymentRows || []).reduce((s: number, p: any) => {
+      const isPlannedSplitCredit = safeOrder.payment_method === "split" && p.payment_method === "credit" && !p.reference;
+      const isDeferredCash = p.payment_method === "cash" && p.cash_registers?.requires_completed_order;
+      return isPlannedSplitCredit || (safeOrder.status !== "completed" && isDeferredCash) ? s : s + Number(p.amount || 0);
+    }, 0);
     (safeOrder as any).total_paid = totalPaid;
+    (safeOrder as any).digital_payment_amount = Number((safeOrder as any).digital_payment_amount || 0) || plannedCredit;
 
     // Get order items with product/variation info
     const { data: rawItems } = await supabase

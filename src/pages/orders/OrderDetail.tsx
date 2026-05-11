@@ -141,7 +141,19 @@ const OrderDetail = () => {
   const isCompleted = status === "completed";
   const warehouseName = (order as any).warehouses?.name;
 
-  const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalPaid = (payments || []).reduce((sum, p: any) => {
+    const isPlannedSplitCredit =
+      (order as any).payment_method === "split" && p.payment_method === "credit" && !p.reference;
+    const isDeferredCash =
+      p.payment_method === "cash" && p.cash_registers?.requires_completed_order;
+    return isPlannedSplitCredit || (!isCompleted && isDeferredCash) ? sum : sum + Number(p.amount);
+  }, 0);
+  const plannedDigitalPayment = Number((order as any).digital_payment_amount || 0) ||
+    (payments || []).reduce((sum, p: any) => (
+      (order as any).payment_method === "split" && p.payment_method === "credit" && !p.reference
+        ? sum + Number(p.amount)
+        : sum
+    ), 0);
   const isPaid = totalPaid >= order.total && totalPaid > 0;
   const isPartiallyPaid = totalPaid > 0 && totalPaid < order.total;
 
@@ -308,6 +320,8 @@ const OrderDetail = () => {
               <span className="text-sm mr-2 opacity-80">
                 — {isPaid ? "" : isPartiallyPaid 
                   ? `שולם ₪${totalPaid.toFixed(2)} מתוך ₪${Number(order.total).toFixed(2)}`
+                  : plannedDigitalPayment > 0
+                  ? `לתשלום דיגיטלי: ₪${plannedDigitalPayment.toFixed(2)} | לגבייה במסירה: ₪${Math.max(0, Number(order.total) - plannedDigitalPayment).toFixed(2)}`
                   : `סה״כ לתשלום: ₪${Number(order.total).toFixed(2)}`}
               </span>
             )}

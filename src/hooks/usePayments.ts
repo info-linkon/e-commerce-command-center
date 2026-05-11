@@ -12,7 +12,7 @@ export function useOrderPayments(orderId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payments")
-        .select("*, cash_registers(name)")
+        .select("*, cash_registers(name, requires_completed_order)")
         .eq("order_id", orderId!)
         .order("created_at");
       if (error) throw error;

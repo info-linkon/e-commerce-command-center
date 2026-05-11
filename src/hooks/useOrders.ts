@@ -118,13 +118,15 @@ export function useCreateOrder() {
       skip_auto_payment?: boolean;
       items: OrderItem[];
       payments?: { amount: number; payment_method: "cash" | "credit" | "bit"; cash_register_id?: string; reference?: string }[];
+      digital_payment_amount?: number;
     }) => {
-      const { items, source, cash_register_id, payment_method, delivery_method, created_by, discount_type, discount_value, discount_amount, created_at, skip_auto_payment, payments: splitPayments, ...rest } = input;
+      const { items, source, cash_register_id, payment_method, delivery_method, created_by, discount_type, discount_value, discount_amount, created_at, skip_auto_payment, payments: splitPayments, digital_payment_amount, ...rest } = input;
       const orderPayload: any = { ...rest };
       if (source) orderPayload.source = source;
       if (cash_register_id) orderPayload.cash_register_id = cash_register_id;
       if (payment_method) orderPayload.payment_method = payment_method;
       if (created_by) orderPayload.created_by = created_by;
+      if (typeof digital_payment_amount === "number") orderPayload.digital_payment_amount = digital_payment_amount;
       if (created_at) orderPayload.created_at = created_at;
       if (discount_type && discount_type !== "none") {
         orderPayload.discount_type = discount_type;
@@ -152,7 +154,7 @@ export function useCreateOrder() {
       // Split-payment path: caller provided multiple payment lines (POS split mode).
       // Bulk-insert all rows, then increment non-deferred cash registers per line.
       if (splitPayments && splitPayments.length > 0) {
-        const rows = splitPayments.map((p) => ({
+        const rows = splitPayments.filter((p) => p.payment_method !== "credit").map((p) => ({
           order_id: order.id,
           amount: p.amount,
           payment_method: p.payment_method as any,
