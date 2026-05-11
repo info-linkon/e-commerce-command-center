@@ -68,13 +68,20 @@ Deno.serve(async (req) => {
       const tokenParam = (order as any).access_token ? `?t=${(order as any).access_token}` : "";
       const orderLink = `https://elwejha.co.il/order/${order.order_number}${tokenParam}`;
 
+      // Build absolute invoice URL (handles both relative legacy paths and full URLs)
+      const rawInvoice = (order as any).invoice_url || "";
+      const invoiceUrl = rawInvoice
+        ? (rawInvoice.startsWith("http") ? rawInvoice : `https://elwejha.co.il${rawInvoice.startsWith("/") ? "" : "/"}${rawInvoice}`)
+        : "";
+
       let message = template.template_text
         .replace(/{customer_name}/g, order.customer_name || "")
         .replace(/{order_number}/g, String(order.order_number))
         .replace(/{total}/g, Number(order.total).toFixed(2))
         .replace(/{status}/g, order.status)
         .replace(/{phone}/g, order.customer_phone || "")
-        .replace(/{order_link}/g, orderLink);
+        .replace(/{order_link}/g, orderLink)
+        .replace(/{invoice_url}/g, invoiceUrl);
 
       // Call send-sms function
       const { error: smsErr } = await supabase.functions.invoke("send-sms", {

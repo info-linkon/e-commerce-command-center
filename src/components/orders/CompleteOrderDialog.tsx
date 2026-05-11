@@ -132,7 +132,9 @@ export default function CompleteOrderDialog({
               discount_amount: discountAmount,
             });
             const shortCode = result?.short_code;
-            const invoiceLink = shortCode ? `/inv/${shortCode}` : result?.doc_url;
+            const invoiceLink = shortCode
+              ? `https://elwejha.co.il/inv/${shortCode}`
+              : result?.doc_url;
             if (invoiceLink) {
               await supabase
                 .from("orders")

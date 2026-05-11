@@ -38,7 +38,7 @@ export default function WebOrderConfirmation() {
   const { orderNumber: routeOrderNumber } = useParams();
   const [searchParams] = useSearchParams();
   const clearCart = useCartStore((s) => s.clearCart);
-  const { t } = useLanguage();
+  const { t, localizedPath } = useLanguage();
   const orderNumber = routeOrderNumber || searchParams.get("Order");
   const [status, setStatus] = useState<UiState>(() => {
     if (typeof window === "undefined") return "loading";
@@ -161,7 +161,7 @@ export default function WebOrderConfirmation() {
         <p className="text-muted-foreground mb-2">{t("رقم الطلب:", "מספר הזמנה:")} <span className="font-bold text-primary">#{orderNumber}</span></p>
         <p className="text-muted-foreground mb-8">{errorBody}</p>
         <Link
-          to="/"
+          to={localizedPath("/")}
           className="px-6 py-3 web-gold-gradient text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-md"
         >
           {t("العودة للرئيسية", "חזרה לדף הבית")}
@@ -186,7 +186,7 @@ export default function WebOrderConfirmation() {
       </p>
       <div className="flex gap-4 justify-center">
         <Link
-          to="/"
+          to={localizedPath("/")}
           className="px-6 py-3 web-gold-gradient text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-md"
         >
           {t("العودة للرئيسية", "חזרה לדף הבית")}
