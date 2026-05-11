@@ -94,7 +94,7 @@ const PaymentSection = ({
   const totalPaid = existingPayments?.reduce((s, p: any) => {
     const isDeferredCash =
       p.payment_method === "cash" && p.cash_registers?.requires_completed_order;
-    return isDeferredCash ? s : s + Number(p.amount);
+    return !isCompleted && isDeferredCash ? s : s + Number(p.amount);
   }, 0) || 0;
   const hasCreditPayment = existingPayments?.some((p: any) => p.payment_method === "credit") || false;
   const isPaidByCredit = !!hypTransactionId;
