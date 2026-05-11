@@ -201,7 +201,17 @@ export default function WebProductPage() {
     let variationId: string;
     let variationName = "";
     if (isVariableBundle && activeBundleVariation) {
-      variationId = activeBundleVariation.id;
+      // Variable bundle — order line MUST point at a real product_variation
+      // (the checkout normalizer + order_items.variation_id FK both expect
+      // a product_variations.id, not a bundle_variations.id). Use the
+      // canonical "ברירת מחדל" product_variation, and keep the chosen
+      // bundle_variation_id alongside via `bundleVariationId` below.
+      const defaultVar = variations?.find((v) => v.name === "ברירת מחדל");
+      if (!defaultVar) {
+        toast.error(t("المنتج غير متوفر", "המוצר אינו זמין"));
+        return;
+      }
+      variationId = defaultVar.id;
       variationName = activeBundleVariation.name;
     } else if (isBundle) {
       // simple_bundle — use ONLY the canonical "ברירת מחדל" variation.
