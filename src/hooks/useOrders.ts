@@ -154,7 +154,7 @@ export function useCreateOrder() {
       // Split-payment path: caller provided multiple payment lines (POS split mode).
       // Bulk-insert all rows, then increment non-deferred cash registers per line.
       if (splitPayments && splitPayments.length > 0) {
-        const rows = splitPayments.map((p) => ({
+        const rows = splitPayments.filter((p) => p.payment_method !== "credit").map((p) => ({
           order_id: order.id,
           amount: p.amount,
           payment_method: p.payment_method as any,
