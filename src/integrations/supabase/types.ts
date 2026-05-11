@@ -1044,6 +1044,7 @@ export type Database = {
           customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
+          digital_payment_amount: number
           discount_amount: number | null
           discount_type: string | null
           discount_value: number | null
@@ -1082,6 +1083,7 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          digital_payment_amount?: number
           discount_amount?: number | null
           discount_type?: string | null
           discount_value?: number | null
@@ -1120,6 +1122,7 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          digital_payment_amount?: number
           discount_amount?: number | null
           discount_type?: string | null
           discount_value?: number | null
