@@ -117,7 +117,13 @@ const PaymentSection = ({
   const totalPaid = actualPayments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
   const isPaidByCredit = !!hypTransactionId;
   const isPaymentLinkSent = !!paymentLinkUrl;
-  const remaining = Math.max(0, orderTotal - totalPaid);
+  // "remaining" = still needs an action (collect cash on delivery doesn't count —
+  // it's already recorded against the order, just deferred. Same for the planned
+  // digital portion of a split order, which has its own pending banner).
+  const remaining = Math.max(
+    0,
+    orderTotal - totalPaid - pendingCashCollection - pendingDigitalPayment,
+  );
 
   const hasCashLine = lines.some((l) => l.method === "cash" && parseFloat(l.amount) > 0);
   const hasCashWithoutRegister = lines.some((l) => l.method === "cash" && parseFloat(l.amount) > 0 && !l.cash_register_id);
