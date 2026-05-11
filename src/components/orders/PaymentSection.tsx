@@ -115,7 +115,6 @@ const PaymentSection = ({
     isDeferredCashPayment(p) ? s + Number(p.amount || 0) : s
   ), 0);
   const totalPaid = actualPayments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
-  const hasCreditPayment = existingPayments?.some((p: any) => p.payment_method === "credit") || false;
   const isPaidByCredit = !!hypTransactionId;
   const isPaymentLinkSent = !!paymentLinkUrl;
   const remaining = Math.max(0, orderTotal - totalPaid);
