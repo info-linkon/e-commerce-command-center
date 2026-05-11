@@ -84,6 +84,17 @@ Deno.serve(async (req) => {
     delete safeOrder.access_token;
     delete safeOrder.customer_phone; // never expose phone publicly
 
+    // Sum recorded payments (so the public page can show paid / remaining)
+    const { data: paymentRows } = await supabase
+      .from("payments")
+      .select("amount")
+      .eq("order_id", (order as any).id);
+    const totalPaid = (paymentRows || []).reduce(
+      (s: number, p: any) => s + Number(p.amount || 0),
+      0,
+    );
+    (safeOrder as any).total_paid = totalPaid;
+
     // Get order items with product/variation info
     const { data: rawItems } = await supabase
       .from("order_items")
