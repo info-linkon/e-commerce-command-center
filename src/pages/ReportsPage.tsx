@@ -13,7 +13,7 @@ import InventoryLogTab from "@/components/reports/InventoryLogTab";
 import CashflowTab from "@/components/reports/CashflowTab";
 import ExpensesTab from "@/components/reports/ExpensesTab";
 import ProfitabilityTab from "@/components/reports/ProfitabilityTab";
-import OrderTypeTab from "@/components/reports/OrderTypeTab";
+// OrderTypeTab removed — invoice with/without view no longer relevant
 import ActivityLogTab from "@/components/reports/ActivityLogTab";
 
 const ReportsPage = () => {
@@ -112,7 +112,6 @@ const ReportsPage = () => {
           <TabsTrigger value="cashflow">קופות ותשלומים</TabsTrigger>
           <TabsTrigger value="expenses">הוצאות</TabsTrigger>
           <TabsTrigger value="profitability">רווחיות</TabsTrigger>
-          <TabsTrigger value="order-type">סוג הזמנה</TabsTrigger>
           <TabsTrigger value="activity-log">לוג פעילות</TabsTrigger>
         </TabsList>
 
@@ -133,9 +132,6 @@ const ReportsPage = () => {
         </TabsContent>
         <TabsContent value="profitability">
           <ProfitabilityTab startDate={startDate} endDate={endDate} />
-        </TabsContent>
-        <TabsContent value="order-type">
-          <OrderTypeTab startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="activity-log">
           <ActivityLogTab startDate={startDate} endDate={endDate} />

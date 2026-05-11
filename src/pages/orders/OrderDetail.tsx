@@ -30,6 +30,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useWarehouses } from "@/hooks/useWarehouses";
 import PickingChecklist from "@/components/orders/PickingChecklist";
 import AddOrderItemDialog from "@/components/orders/AddOrderItemDialog";
+import CompleteOrderDialog from "@/components/orders/CompleteOrderDialog";
 
 const statusLabels: Record<string, string> = {
   pending: "ממתינה",
@@ -128,6 +129,7 @@ const OrderDetail = () => {
   const { nameOf } = useUserNames();
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>("");
   const [editingItems, setEditingItems] = useState(false);
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
 
   if (isLoading) return <div className="py-12 text-center text-muted-foreground">טוען...</div>;
   if (!order) return <div className="py-12 text-center text-muted-foreground">הזמנה לא נמצאה</div>;
@@ -733,12 +735,7 @@ const OrderDetail = () => {
           {status === "shipping" && (
             <Button
               className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => {
-                updateStatus.mutate({ id: order.id, status: "completed" as OrderStatus });
-                supabase.functions.invoke("order-sms-trigger", {
-                  body: { order_id: order.id, trigger_type: "order_completed" },
-                }).catch(console.error);
-              }}
+              onClick={() => setCompleteDialogOpen(true)}
             >
               <CheckCircle2 className="h-4 w-4" />
               סמן כהושלמה
@@ -747,6 +744,10 @@ const OrderDetail = () => {
 
           {/* Status selector for non-assigned orders or general override */}
           <Select value={status} onValueChange={(v) => {
+            if (v === "completed") {
+              setCompleteDialogOpen(true);
+              return;
+            }
             updateStatus.mutate({ id: order.id, status: v as OrderStatus });
             const triggerMap: Record<string, string> = { processing: "order_created", picking: "order_picking", shipping: "order_shipping", completed: "order_completed" };
             const smsTrigger = triggerMap[v];
@@ -798,6 +799,33 @@ const OrderDetail = () => {
           </AlertDialog>
         </div>
       )}
+
+      <CompleteOrderDialog
+        open={completeDialogOpen}
+        onOpenChange={setCompleteDialogOpen}
+        orderId={order.id}
+        orderNumber={order.order_number}
+        customerName={order.customer_name || undefined}
+        customerEmail={order.customer_email || undefined}
+        customerPhone={order.customer_phone || undefined}
+        shippingCost={Number((order as any).shipping_cost) || 0}
+        discountAmount={Number((order as any).discount_amount) || 0}
+        hasInvoice={!!(order as any).invoice_url}
+        orderItems={items.map((item: any) => {
+          const varName = item.bundle_variations?.name || item.product_variations?.name || "";
+          const varSku =
+            item.bundle_variations?.sku ||
+            item.product_variations?.products?.sku ||
+            item.product_variations?.sku ||
+            undefined;
+          return {
+            details: `${item.product_variations?.products?.name_ar || item.product_variations?.products?.name || ""}${varName && !["ברירת מחדל", "default"].includes(varName.toLowerCase()) ? ` - ${varName}` : ""}`.trim(),
+            amount: item.quantity,
+            price: Number(item.unit_price),
+            catalog_number: varSku,
+          };
+        })}
+      />
     </div>
   );
 };
