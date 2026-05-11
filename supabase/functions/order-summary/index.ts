@@ -100,20 +100,23 @@ Deno.serve(async (req) => {
       if (item.variation_id) {
         const { data: variation } = await supabase
           .from("product_variations")
-          .select("name, name_ar, image_url, product_id")
+          .select("name, name_ar, image_url, product_id, sku")
           .eq("id", item.variation_id)
           .single();
 
         if (variation) {
           variationName = variation.name_ar || variation.name;
+          // capture sku for downstream pixel use
+          (item as any)._sku = variation.sku || null;
           const { data: product } = await supabase
             .from("products")
-            .select("name, name_ar, image_url")
+            .select("name, name_ar, image_url, sku")
             .eq("id", variation.product_id)
             .single();
           if (product) {
             name = product.name_ar || product.name;
             imageUrl = variation.image_url || product.image_url || "";
+            if (!(item as any)._sku) (item as any)._sku = product.sku || null;
           }
         }
       }
@@ -121,11 +124,12 @@ Deno.serve(async (req) => {
       if (item.bundle_variation_id) {
         const { data: bv } = await supabase
           .from("bundle_variations")
-          .select("name, name_he, bundle_id")
+          .select("name, name_he, bundle_id, sku")
           .eq("id", item.bundle_variation_id)
           .single();
         if (bv) {
           variationName = bv.name;
+          (item as any)._sku = bv.sku || null;
         }
       }
 
@@ -133,6 +137,7 @@ Deno.serve(async (req) => {
         name,
         variationName,
         imageUrl,
+        sku: (item as any)._sku || null,
         quantity: item.quantity,
         unitPrice: item.unit_price,
         totalPrice: item.total_price,
