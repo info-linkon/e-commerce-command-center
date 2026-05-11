@@ -198,7 +198,7 @@ export default function WebAboutPage() {
             {t("اكتشف مجموعتنا الواسعة من المنتجات الأصلية", "גלה את מגוון המוצרים המקוריים שלנו")}
           </p>
           <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
-            <Link to="/shop">{t("تسوق الآن", "קנה עכשיו")}</Link>
+            <Link to={localizedPath("/shop")}>{t("تسوق الآن", "קנה עכשיו")}</Link>
           </Button>
         </div>
       </section>
