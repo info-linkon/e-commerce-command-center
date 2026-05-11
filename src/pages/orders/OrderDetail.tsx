@@ -144,7 +144,7 @@ const OrderDetail = () => {
   const totalPaid = (payments || []).reduce((sum, p: any) => {
     const isDeferredCash =
       p.payment_method === "cash" && p.cash_registers?.requires_completed_order;
-    return isDeferredCash ? sum : sum + Number(p.amount);
+    return !isCompleted && isDeferredCash ? sum : sum + Number(p.amount);
   }, 0);
   const isPaid = totalPaid >= order.total && totalPaid > 0;
   const isPartiallyPaid = totalPaid > 0 && totalPaid < order.total;
