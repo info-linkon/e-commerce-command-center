@@ -16,7 +16,7 @@ interface WebProductCardProps {
 }
 
 export function WebProductCard({ id, productNumber, name, nameAr, price, originalPrice, imageUrl, categoryName, outOfStock }: WebProductCardProps) {
-  const { lang } = useLanguage();
+  const { lang, localizedPath } = useLanguage();
   const displayName = lang === "he" ? (name || nameAr || "") : (nameAr || name);
   const linkId = productNumber || id;
 
@@ -35,7 +35,7 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, origina
           -{discountPercent}%
         </div>
       )}
-      <Link to={`/product/${linkId}`} className="block relative overflow-hidden">
+      <Link to={localizedPath(`/product/${linkId}`)} className="block relative overflow-hidden">
         <div className="aspect-square bg-muted flex items-center justify-center">
           {imageUrl ? (
             <img
@@ -56,7 +56,7 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, origina
         {categoryName && (
           <p className="text-xs text-gold font-medium mb-1">{categoryName}</p>
         )}
-        <Link to={`/product/${linkId}`}>
+        <Link to={localizedPath(`/product/${linkId}`)}>
           <h3 className="font-semibold text-xs md:text-sm leading-snug mb-2 line-clamp-2 hover:text-primary transition-colors">
             {displayName}
           </h3>
@@ -74,7 +74,7 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, origina
             className="h-9 w-9 bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary"
             asChild
           >
-            <Link to={`/product/${linkId}`}>
+            <Link to={localizedPath(`/product/${linkId}`)}>
               <ShoppingCart className="w-4 h-4" />
             </Link>
           </Button>
