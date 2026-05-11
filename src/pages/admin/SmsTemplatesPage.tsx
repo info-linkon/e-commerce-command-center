@@ -18,6 +18,9 @@ const triggerLabels: Record<string, string> = {
   order_created: "הזמנה חדשה",
   order_shipped: "הזמנה נשלחה",
   order_completed: "הזמנה הושלמה",
+  order_picking: "הזמנה בליקוט",
+  order_shipping: "הזמנה במשלוח",
+  invoice_issued: "חשבונית/קבלה הונפקה",
 };
 
 const placeholders = [
@@ -27,6 +30,7 @@ const placeholders = [
   { key: "{phone}", desc: "טלפון הלקוח" },
   { key: "{status}", desc: "סטטוס ההזמנה" },
   { key: "{order_link}", desc: "לינק סיכום הזמנה" },
+  { key: "{invoice_url}", desc: "לינק חשבונית (לטריגר חשבונית)" },
 ];
 
 export default function SmsTemplatesPage() {
