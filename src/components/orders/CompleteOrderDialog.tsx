@@ -190,7 +190,7 @@ export default function CompleteOrderDialog({
         <DialogHeader>
           <DialogTitle>השלמת הזמנה #{orderNumber}</DialogTitle>
           <DialogDescription>
-            הזן את עלות המשלוח בפועל. תרשם הוצאה אוטומטית, וחשבונית מס/קבלה תונפק ותישלח ללקוח.
+            הזן את עלות המשלוח בפועל. תרשם הוצאה אוטומטית. חשבונית מס/קבלה תונפק רק עבור חלק המזומן/ביט (אשראי כבר הונפק בנפרד).
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -239,11 +239,6 @@ export default function CompleteOrderDialog({
             </>
           )}
 
-          {hasInvoice && (
-            <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded">
-              קיימת חשבונית קיימת להזמנה — לא תונפק חשבונית נוספת.
-            </p>
-          )}
         </div>
         <DialogFooter className="gap-2">
           <Button
