@@ -277,7 +277,7 @@ const PaymentSection = ({
                 </div>
               );
             })}
-            {pendingDigitalPayment > 0 && !existingPayments.some((p: any) => isPlannedSplitCredit(p)) && (
+            {pendingDigitalPayment > 0 && !(existingPayments || []).some((p: any) => isPlannedSplitCredit(p)) && (
               <div className="flex items-center justify-between text-sm p-2 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />
