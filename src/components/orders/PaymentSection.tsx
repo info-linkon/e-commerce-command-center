@@ -51,6 +51,7 @@ interface PaymentSectionProps {
   paymentMethod?: string | null;
   paymentLinkUrl?: string | null;
   hypTransactionId?: string | null;
+  digitalPaymentAmount?: number;
   shippingCost?: number;
   discountAmount?: number;
 }
@@ -58,7 +59,7 @@ interface PaymentSectionProps {
 const PaymentSection = ({
   orderId, orderTotal, orderNumber, isDelivered, isCancelled, isCompleted, isPickup = false,
   customerName, customerEmail, customerPhone, orderItems, invoiceUrl, paymentMethod: orderPaymentMethod,
-  paymentLinkUrl, hypTransactionId, shippingCost, discountAmount,
+  paymentLinkUrl, hypTransactionId, digitalPaymentAmount = 0, shippingCost, discountAmount,
 }: PaymentSectionProps) => {
   const { data: existingPayments } = useOrderPayments(orderId);
   const { data: registers } = useCashRegisters();
@@ -91,15 +92,33 @@ const PaymentSection = ({
   });
   const hasInvoiceReceipt = (existingInvoiceDocs && existingInvoiceDocs.length > 0) || !!invoiceUrl;
 
-  const totalPaid = existingPayments?.reduce((s, p: any) => {
-    const isDeferredCash =
-      p.payment_method === "cash" && p.cash_registers?.requires_completed_order;
-    return !isCompleted && isDeferredCash ? s : s + Number(p.amount);
-  }, 0) || 0;
+  const isSplitOrder = orderPaymentMethod === "split";
+  const isPlannedSplitCredit = (p: any) =>
+    isSplitOrder && p.payment_method === "credit" && !p.reference;
+  const isDeferredCashPayment = (p: any) =>
+    !isCompleted && p.payment_method === "cash" && p.cash_registers?.requires_completed_order;
+  const actualPayments = (existingPayments || []).filter(
+    (p: any) => !isPlannedSplitCredit(p) && !isDeferredCashPayment(p)
+  );
+  const plannedDigitalDue = isSplitOrder
+    ? Number(digitalPaymentAmount || 0) || (existingPayments || []).reduce((s: number, p: any) => (
+        isPlannedSplitCredit(p) ? s + Number(p.amount || 0) : s
+      ), 0)
+    : 0;
+  const actualCreditPaid = actualPayments.reduce((s: number, p: any) => (
+    p.payment_method === "credit" ? s + Number(p.amount || 0) : s
+  ), 0);
+  const pendingDigitalPayment = isSplitOrder && !hypTransactionId
+    ? Math.max(0, plannedDigitalDue - actualCreditPaid)
+    : 0;
+  const pendingCashCollection = (existingPayments || []).reduce((s: number, p: any) => (
+    isDeferredCashPayment(p) ? s + Number(p.amount || 0) : s
+  ), 0);
+  const totalPaid = actualPayments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
   const hasCreditPayment = existingPayments?.some((p: any) => p.payment_method === "credit") || false;
   const isPaidByCredit = !!hypTransactionId;
   const isPaymentLinkSent = !!paymentLinkUrl;
-  const remaining = orderTotal - totalPaid;
+  const remaining = Math.max(0, orderTotal - totalPaid);
 
   const hasCashLine = lines.some((l) => l.method === "cash" && parseFloat(l.amount) > 0);
   const hasCashWithoutRegister = lines.some((l) => l.method === "cash" && parseFloat(l.amount) > 0 && !l.cash_register_id);
