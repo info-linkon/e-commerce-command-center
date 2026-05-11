@@ -609,6 +609,7 @@ const OrderDetail = () => {
           paymentMethod={(order as any).payment_method}
           paymentLinkUrl={(order as any).payment_link_url || null}
           hypTransactionId={(order as any).hyp_transaction_id || null}
+          digitalPaymentAmount={Number((order as any).digital_payment_amount || 0)}
           shippingCost={Number((order as any).shipping_cost) || 0}
           discountAmount={Number((order as any).discount_amount) || 0}
           orderItems={items.map((item: any) => {
