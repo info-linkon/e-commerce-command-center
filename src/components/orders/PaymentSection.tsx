@@ -262,6 +262,7 @@ const PaymentSection = ({
           <div className="space-y-2">
             {existingPayments.map((p: any) => {
               const Icon = methodIcons[p.payment_method as PaymentMethod] || CreditCard;
+              const isPendingPayment = isPlannedSplitCredit(p) || isDeferredCashPayment(p);
               return (
                 <div key={p.id} className="flex items-center justify-between text-sm p-2 rounded-lg bg-muted/50">
                   <div className="flex items-center gap-2">
@@ -271,15 +272,38 @@ const PaymentSection = ({
                       <span className="text-muted-foreground">({p.cash_registers.name})</span>
                     )}
                     {p.reference && <span className="text-muted-foreground">• {p.reference}</span>}
+                    {isPendingPayment && <span className="text-muted-foreground">• ממתין לגבייה</span>}
                   </div>
-                  <span className="font-medium">₪{Number(p.amount).toFixed(2)}</span>
+                  <span className={`font-medium ${isPendingPayment ? "text-muted-foreground" : ""}`}>₪{Number(p.amount).toFixed(2)}</span>
                 </div>
               );
             })}
+            {pendingDigitalPayment > 0 && !existingPayments.some((p: any) => isPlannedSplitCredit(p)) && (
+              <div className="flex items-center justify-between text-sm p-2 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  <span>תשלום דיגיטלי</span>
+                  <span className="text-muted-foreground">• ממתין לתשלום</span>
+                </div>
+                <span className="font-medium text-muted-foreground">₪{pendingDigitalPayment.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm pt-1 border-t">
               <span className="text-muted-foreground">שולם</span>
               <span className="font-bold">₪{totalPaid.toFixed(2)}</span>
             </div>
+            {pendingDigitalPayment > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-destructive">ממתין לתשלום דיגיטלי</span>
+                <span className="font-bold text-destructive">₪{pendingDigitalPayment.toFixed(2)}</span>
+              </div>
+            )}
+            {pendingCashCollection > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">מזומן לגבייה במסירה</span>
+                <span className="font-bold text-muted-foreground">₪{pendingCashCollection.toFixed(2)}</span>
+              </div>
+            )}
             {remaining > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-destructive">נותר</span>
