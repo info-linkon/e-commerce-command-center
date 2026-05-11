@@ -7,7 +7,7 @@ import logo from "@/assets/logo.webp";
 
 export function WebFooter() {
   const { data: categories } = useWebCategories();
-  const { lang, t } = useLanguage();
+  const { lang, t, localizedPath } = useLanguage();
   const { data: settingsData } = useSiteSection("settings", "general");
   const settings = (settingsData?.content || {}) as any;
   const storeName = t(settings.store_name || "الوجهة", settings.store_name_he || "");
@@ -23,7 +23,7 @@ export function WebFooter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {/* Brand */}
           <div className="flex flex-col items-start gap-3 col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-3">
+            <Link to={localizedPath("/")} className="flex items-center gap-3">
               <img src={logo} alt={storeName} className="w-11 h-11 rounded-full ring-2 ring-gold/30" />
               <span className="text-xl font-bold web-text-gradient-gold">{storeName}</span>
             </Link>
@@ -49,10 +49,10 @@ export function WebFooter() {
               {t("روابط سريعة", "קישורים מהירים")}
             </h3>
             <div className="flex flex-col gap-2.5">
-              <Link to="/" className="text-sm text-sand/70 hover:text-gold transition-colors">{t("الرئيسية", "ראשי")}</Link>
-              <Link to="/shop" className="text-sm text-sand/70 hover:text-gold transition-colors">{t("المتجر", "חנות")}</Link>
-              <Link to="/about" className="text-sm text-sand/70 hover:text-gold transition-colors">{t("من نحن", "אודותינו")}</Link>
-              <Link to="/contact" className="text-sm text-sand/70 hover:text-gold transition-colors">{t("تواصل معنا", "צור קשר")}</Link>
+              <Link to={localizedPath("/")} className="text-sm text-sand/70 hover:text-gold transition-colors">{t("الرئيسية", "ראשי")}</Link>
+              <Link to={localizedPath("/shop")} className="text-sm text-sand/70 hover:text-gold transition-colors">{t("المتجر", "חנות")}</Link>
+              <Link to={localizedPath("/about")} className="text-sm text-sand/70 hover:text-gold transition-colors">{t("من نحن", "אודותינו")}</Link>
+              <Link to={localizedPath("/contact")} className="text-sm text-sand/70 hover:text-gold transition-colors">{t("تواصل معنا", "צור קשר")}</Link>
             </div>
           </div>
 
@@ -64,7 +64,7 @@ export function WebFooter() {
               </h3>
               <div className="flex flex-col gap-2.5">
                 {categories.map((cat) => (
-                  <Link key={cat.id} to={`/category/${(cat as any).category_number || cat.id}`} className="text-sm text-sand/70 hover:text-gold transition-colors">
+                  <Link key={cat.id} to={localizedPath(`/category/${(cat as any).category_number || cat.id}`)} className="text-sm text-sand/70 hover:text-gold transition-colors">
                     {lang === "he" ? ((cat as any).name_he || cat.name) : cat.name}
                   </Link>
                 ))}
