@@ -30,6 +30,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useWarehouses } from "@/hooks/useWarehouses";
 import PickingChecklist from "@/components/orders/PickingChecklist";
 import AddOrderItemDialog from "@/components/orders/AddOrderItemDialog";
+import CompleteOrderDialog from "@/components/orders/CompleteOrderDialog";
 
 const statusLabels: Record<string, string> = {
   pending: "ממתינה",
@@ -128,6 +129,7 @@ const OrderDetail = () => {
   const { nameOf } = useUserNames();
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>("");
   const [editingItems, setEditingItems] = useState(false);
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
 
   if (isLoading) return <div className="py-12 text-center text-muted-foreground">טוען...</div>;
   if (!order) return <div className="py-12 text-center text-muted-foreground">הזמנה לא נמצאה</div>;
@@ -733,12 +735,7 @@ const OrderDetail = () => {
           {status === "shipping" && (
             <Button
               className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => {
-                updateStatus.mutate({ id: order.id, status: "completed" as OrderStatus });
-                supabase.functions.invoke("order-sms-trigger", {
-                  body: { order_id: order.id, trigger_type: "order_completed" },
-                }).catch(console.error);
-              }}
+              onClick={() => setCompleteDialogOpen(true)}
             >
               <CheckCircle2 className="h-4 w-4" />
               סמן כהושלמה
@@ -747,6 +744,10 @@ const OrderDetail = () => {
 
           {/* Status selector for non-assigned orders or general override */}
           <Select value={status} onValueChange={(v) => {
+            if (v === "completed") {
+              setCompleteDialogOpen(true);
+              return;
+            }
             updateStatus.mutate({ id: order.id, status: v as OrderStatus });
             const triggerMap: Record<string, string> = { processing: "order_created", picking: "order_picking", shipping: "order_shipping", completed: "order_completed" };
             const smsTrigger = triggerMap[v];
