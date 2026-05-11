@@ -270,7 +270,7 @@ function runFallbackVerify(
       const hypOrderNum = searchParams.get("Order") || orderNumber;
       if (hypOrderNum) {
         const summary = await fetchOrderSummary(hypOrderNum);
-        orderId = summary?.id || null;
+        orderId = summary?.order?.id || null;
       }
     }
 
