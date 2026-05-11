@@ -124,7 +124,7 @@ export default function WebHome() {
                         )}
                         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                           <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base px-8">
-                            <Link to={slide.link || hero.cta_link || "/shop"}>
+                           <Link to={slide.link || hero.cta_link || localizedPath("/shop")}>
                               {t(hero.cta_text || "تسوق الآن", hero.cta_text_he || "קנה עכשיו")}
                               <ArrowLeft className="w-4 h-4 mr-2" />
                             </Link>
@@ -194,7 +194,7 @@ export default function WebHome() {
               return (
                 <Link
                   key={cat.id}
-                  to={`/category/${(cat as any).category_number || cat.id}`}
+                  to={localizedPath(`/category/${(cat as any).category_number || cat.id}`)}
                   className="group relative rounded-xl overflow-hidden aspect-square border border-border hover:shadow-xl transition-all duration-300"
                 >
                   {imgSrc ? (
