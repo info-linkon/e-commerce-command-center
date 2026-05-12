@@ -108,7 +108,10 @@ Deno.serve(async (req) => {
     const category = p.categories?.name || "General";
     const imageUrl = p.image_url || "";
     const link = `${siteUrl}/product/${p.product_number}`;
-    const groupId = String(p.product_number);
+    // Group all variations under the parent product's SKU so Meta Catalog
+    // groups them as one product. Fall back to product_number for legacy
+    // products that don't have a SKU yet.
+    const groupId = p.sku || String(p.product_number);
     const bundle = bundleByProduct.get(p.id);
     const productVars = varsByProduct.get(p.id) || [];
 

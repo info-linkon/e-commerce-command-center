@@ -1,42 +1,52 @@
-## למה מופיעה השגיאה "يوجد منتج غير صالح في السلة"
+## מטרה
 
-### האבחנה
+1. לוודא שאירוע **Purchase** של Meta Pixel נורה בכל סיום הזמנה (כרגע רק PageView/ViewContent/AddToCart מופיעים).
+2. ב-Product Feed וב-pixel events – ה-`item_group_id` (מזהה הקבוצה במטה) יהיה ה-**SKU של המוצר** במקום `product_number`.
 
-המוצר בעגלה הוא **חבילת ג׳לסת אלריף** (`91e34f1f-...`), שהיא **bundle משתנה (variable)** עם 2 ואריאציות באקלוסיבי בטבלת `bundle_variations`:
-- `שנטה הארייאף עם בידוד תרמי - כתום`
-- `שנטה הארייאף עם בידוד תרמי - ירוק` ← זה שנבחר
+---
 
-**הבאג בקוד:**
-1. ב-`WebProductPage.tsx` (שורה 204), כשמוסיפים bundle משתנה לעגלה, `variationId = activeBundleVariation.id` — כלומר ID מטבלת `bundle_variations`.
-2. ב-`WebCheckoutPage.tsx` (שורות 232–282), הוולידציה מחפשת את ה-ID הזה בטבלת `product_variations` בלבד. לא נמצא.
-3. נופל ל-fallback: מחפש "ברירת מחדל" ב-`product_variations` של אותו `product_id` — אבל ל-bundle הזה **אין כלל product_variations** (בדקתי: 0 שורות).
-4. `orderVariationId` נשאר `null` → toast: "يوجد منتج غير صالح…".
+## ניתוח (קצר)
 
-זה סותר את הכלל בזיכרון: *"Bundles must always have a default variation for POS/Web cart compatibility"*. ה-bundle הזה נוצר/יובא בלי ברירת מחדל ב-`product_variations`.
+**Purchase לא מופיע** – יש כמה כשלים אפשריים שמסבירים את התופעה:
+- אירוע ה-Purchase נורה רק אחרי `await fetchOrderSummary` שדורש `access_token` מ-`sessionStorage`. אם המשתמש חזר מ-HYP בטאב/חלון אחר, או שמסך ה-iframe נשבר ל-top window בנסיבות מסוימות, ה-token חסר → הקריאה ל-`order-summary` נכשלת (401), ועל אף שהקוד עדיין יורה fbq, הוא רץ אחרי המתנה ארוכה ולעיתים אחרי שהמשתמש כבר עזב את הדף.
+- ה-Pixel init רץ ב-`WebLayout` עם retry של עד 10 שניות. בזרימת `status=ok` ה-Purchase יורה לעיתים לפני שה-init הסתיים, ולמרות שהוא נכנס לתור – הוא מאוחר/לא נספר אם הדף נסגר.
+- אין fallback: אם `order-summary` נכשל, אין "Purchase מינימלי" שנורה מיד עם הנתונים שכבר ידועים (orderNumber + amount מה-URL).
 
-יש כנראה bundles נוספים באותו מצב — להלן רשימת ה-bundles המשתנים שצריך לבדוק: `חבילת אלונאסה פרימיום`, `חבילת ג׳לסת אלריף`, `משענת יד מרכּא`, `ערכת קפה ותה אלרוחה פרימיום`, `ערקת קפה ותה רוחה בייסיק`.
+**SKU כ-item_group_id** – כיום ב-feed:
+- `g:item_group_id` = `product_number` (מספרי).
+- ב-pixel events `content_ids` כבר משתמשים ב-SKU (טוב), אבל אין שדה ייעודי לקבוצה.
 
-### התיקון המוצע
+---
 
-**שלב 1 — תיקון נתונים (migration):**
-לכל מוצר עם `product_type='variable'` שיש לו רשומה ב-`bundles` אבל אין לו אף רשומה ב-`product_variations` — ליצור אוטומטית `product_variation` בודדת בשם `"ברירת מחדל"` (כפי שכבר נהוג עבור simple bundles בקוד).
+## תוכנית
 
-**שלב 2 — תיקון קוד (`WebProductPage.tsx`):**
-ב-bundle משתנה, להפסיק להציב `variationId = activeBundleVariation.id`. במקום זאת:
-- `variationId` = ה-`product_variation` של "ברירת מחדל" של מוצר ה-bundle (תואם לאיך ש-simple bundles עובדים היום).
-- `bundleVariationId` ממשיך להחזיק את `activeBundleVariation.id` (כבר קיים בשורה 236).
+### 1. תיקון אירוע Purchase
 
-כך כל פריט בעגלה מצביע על `product_variation` תקף, וגם המידע על ואריאציית ה-bundle שנבחרה נשמר ל-`web-create-order` / לרשימת הליקוט.
+`src/pages/web/WebOrderConfirmation.tsx`:
+- לפני `await fetchOrderSummary`, לירות **Purchase מיידי** עם הנתונים הזמינים (orderNumber + Amount מה-URL כ-`value`, `currency: "ILS"`). זה מבטיח שה-event יירשם תמיד.
+- אחרי שה-summary חוזר עם פירוט פריטים – לא לירות שוב (כפילות). העשרה מלאה (contents/SKUs) תיעשה רק אם ה-summary מצליח, ובמקרה זה ה-Purchase המיידי כבר הספיק.
+- חלופה ניקיה יותר: להמתין ל-summary רק עד 1.5 שניות (Promise.race עם timeout). אם הספיק – לירות עם פירוט; אם לא – לירות מיד עם המינימום.
 
-**שלב 3 — חיזוק checkout (`WebCheckoutPage.tsx`):**
-אם בכל זאת `variationId` לא נמצא ב-`product_variations` אבל יש `bundleVariationId` ב-cart item — לבצע fallback אחרון דרך `bundles` → לאחזר את ברירת המחדל של ה-product. נותן רשת ביטחון לעגלות ישנות שכבר נשמרו ב-localStorage עם ה-ID הישן.
+`src/lib/meta-pixel.ts`:
+- להוסיף לוג מינימלי (`console.debug`) כשאירוע נורה לפני init – יעזור לאבחן בעתיד.
+- לוודא שה-fallback init מסתיים גם בדף /order-confirmation (כבר קיים, רק לוודא שה-`pixel_id` נטען).
 
-**שלב 4 — אימות:**
-- להריץ את ה-migration ולוודא שכל ה-bundles המשתנים קיבלו "ברירת מחדל".
-- לרענן את העגלה הקיימת ולהוסיף שוב את חבילת ג׳לסת אלריף; checkout אמור לעבור בלי השגיאה.
-- לוודא ש-`web-create-order` עדיין רושם את `bundle_variation_id` הנכון בשורת ההזמנה.
+### 2. SKU כ-item_group_id
 
-### קבצים שייגעו
-- מיגרציה חדשה תחת `supabase/migrations/`
-- `src/pages/web/WebProductPage.tsx`
-- `src/pages/web/WebCheckoutPage.tsx`
+`supabase/functions/meta-product-feed/index.ts`:
+- `groupId = p.sku || String(p.product_number)` (במקום רק `product_number`).
+- כך כל הוריאציות של מוצר יקובצו ב-Catalog לפי ה-SKU של ה-Parent.
+
+`src/pages/web/WebProductPage.tsx` ו-`src/pages/web/WebCheckoutPage.tsx` ו-`WebOrderConfirmation.tsx`:
+- להוסיף לאירועי Pixel את `content_group_id` עם ה-parent SKU (כשרלוונטי), כדי שגם דיווחי הפיקסל יתאימו ל-Catalog.
+
+---
+
+## קבצים שישונו
+
+- `src/pages/web/WebOrderConfirmation.tsx` – ירייה מיידית של Purchase.
+- `src/lib/meta-pixel.ts` – לוג אבחון.
+- `supabase/functions/meta-product-feed/index.ts` – `item_group_id` = SKU.
+- `src/pages/web/WebProductPage.tsx`, `WebCheckoutPage.tsx` – הוספת `content_group_id` כש־SKU של ההורה זמין.
+
+לא נוגע בלוגיקת תשלום/HYP/DB.

@@ -231,24 +231,40 @@ async function fetchOrderSummary(
 async function firePurchasePixel(orderNumber: string | null, amountStr: string | null): Promise<void> {
   if (!orderNumber) return;
   const amount = amountStr ? parseFloat(amountStr) : NaN;
-  const summary = await fetchOrderSummary(orderNumber);
-  const order = summary?.order;
-  const items = summary?.items || [];
-  const value = isFinite(amount) ? amount : Number(order?.total || 0);
-  const contents = items
-    .filter((it: any) => it && it.sku)
-    .map((it: any) => ({ id: String(it.sku), quantity: Number(it.quantity || 1) }));
-  const content_ids = contents.length
-    ? contents.map((c) => c.id)
-    : [String(orderNumber)];
+
+  // Fire an immediate Purchase event with whatever we already know, so the
+  // event is recorded even if order-summary is slow / missing token / fails.
+  const immediateValue = isFinite(amount) ? amount : 0;
   fbq("Purchase", {
-    content_ids,
-    contents: contents.length ? contents : undefined,
+    content_ids: [String(orderNumber)],
     content_type: "product",
-    num_items: items.reduce((s: number, it: any) => s + Number(it.quantity || 0), 0) || undefined,
-    value,
+    value: immediateValue,
     currency: "ILS",
   });
+
+  // Best-effort enrichment: if we can fetch the order summary in time,
+  // fire a second, richer Purchase with SKUs + line items.
+  try {
+    const summary = await fetchOrderSummary(orderNumber);
+    if (!summary) return;
+    const order = summary.order;
+    const items = summary.items || [];
+    const value = isFinite(amount) ? amount : Number(order?.total || 0);
+    const contents = items
+      .filter((it: any) => it && it.sku)
+      .map((it: any) => ({ id: String(it.sku), quantity: Number(it.quantity || 1) }));
+    if (!contents.length) return;
+    fbq("Purchase", {
+      content_ids: contents.map((c) => c.id),
+      contents,
+      content_type: "product",
+      num_items: items.reduce((s: number, it: any) => s + Number(it.quantity || 0), 0) || undefined,
+      value,
+      currency: "ILS",
+    });
+  } catch (err) {
+    console.error("[meta-pixel] Purchase enrichment failed:", err);
+  }
 }
 
 async function firePurchasePixelForOrder(orderNumber: string | null): Promise<void> {
