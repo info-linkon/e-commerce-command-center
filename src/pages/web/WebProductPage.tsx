@@ -254,7 +254,9 @@ export default function WebProductPage() {
         imageUrl: activeVariation?.image_url || product.image_url,
         shippingPrice: Number((product as any).shipping_price || 0),
         bundleVariationId: activeBundleVariation?.id || undefined,
-        sku: activeVariation?.sku || product.sku || null,
+        // Mirror the AddToCart SKU exactly so InitiateCheckout/Purchase
+        // events send the same content_ids as the feed's g:id.
+        sku: itemSku,
         catalogId: productSku,
       }, 1);
     }
