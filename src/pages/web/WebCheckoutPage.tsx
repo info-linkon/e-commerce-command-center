@@ -139,12 +139,18 @@ export default function WebCheckoutPage() {
   const [couponError, setCouponError] = useState("");
 
   useEffect(() => {
-    // Meta Pixel: InitiateCheckout - send only product SKUs (catalog IDs)
-    const skuIds = items.map((i) => i.catalogId).filter(Boolean) as string[];
-    if (skuIds.length > 0) {
+    // Meta Pixel: InitiateCheckout — send variation-level SKUs so each line
+    // matches a catalog item (`g:id`). Fall back to the parent catalog SKU
+    // (`g:item_group_id`) only if the variation SKU is missing.
+    const contents = items
+      .map((i) => ({ id: (i.sku || i.catalogId || "") as string, quantity: i.quantity }))
+      .filter((c) => !!c.id);
+    if (contents.length > 0) {
       fbq("InitiateCheckout", {
-        content_ids: skuIds,
-        num_items: items.length,
+        content_ids: contents.map((c) => c.id),
+        contents,
+        content_type: "product",
+        num_items: items.reduce((s, i) => s + i.quantity, 0),
         value: totalPrice(),
         currency: "ILS",
       });
