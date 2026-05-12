@@ -316,7 +316,7 @@ export default function WebProductPage() {
           </div>
           {(() => {
             const shortDesc = lang === "he"
-              ? (product.short_description || product.short_description_ar)
+              ? product.short_description
               : (product.short_description_ar || product.short_description);
             return shortDesc ? (
               <div
@@ -411,9 +411,9 @@ export default function WebProductPage() {
           </div>
 
           {lang === "he" ? (
-            (product.description || product.description_ar) && (
+            product.description && (
               <div className="text-muted-foreground leading-relaxed mb-6 prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description || product.description_ar }} />
+                dangerouslySetInnerHTML={{ __html: product.description }} />
             )
           ) : (
             product.description_ar ? (
