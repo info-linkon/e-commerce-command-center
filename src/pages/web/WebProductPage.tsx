@@ -68,13 +68,15 @@ export default function WebProductPage() {
     },
   });
 
-  // Meta Pixel: ViewContent — always use product SKU to match Catalog feed
+  // Meta Pixel: ViewContent — at the product page the visitor hasn't picked
+  // a variation yet, so we send the parent SKU as a `product_group` (this
+  // matches `g:item_group_id` in the Meta product feed).
   useEffect(() => {
     if (product && product.sku) {
       fbq("ViewContent", {
         content_ids: [product.sku],
         content_name: product.name_ar || product.name,
-        content_type: "product",
+        content_type: "product_group",
         value: product.sale_price,
         currency: "ILS",
       });
@@ -233,6 +235,14 @@ export default function WebProductPage() {
     }
 
     const productSku = product.sku || null;
+    // SKU at the catalog item level — matches `g:id` in the Meta feed.
+    // Priority: bundle_variation.sku → product_variation.sku → product.sku.
+    const itemSku =
+      activeBundleVariation?.sku ||
+      (isVariable ? activeVariation?.sku : null) ||
+      (variations?.find((v) => v.name === "ברירת מחדל")?.sku) ||
+      product.sku ||
+      null;
 
     for (let i = 0; i < quantity; i++) {
       addItem({
@@ -248,10 +258,12 @@ export default function WebProductPage() {
         catalogId: productSku,
       }, 1);
     }
-    // Meta Pixel: AddToCart - always send product SKU only
-    if (productSku) {
+    // Meta Pixel: AddToCart — send the variation-level SKU so it matches the
+    // catalog item; `contents` carries quantity for accurate value reporting.
+    if (itemSku) {
       fbq("AddToCart", {
-        content_ids: [productSku],
+        content_ids: [itemSku],
+        contents: [{ id: itemSku, quantity }],
         content_name: displayName,
         content_type: "product",
         value: price * quantity,
