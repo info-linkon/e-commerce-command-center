@@ -151,7 +151,10 @@ Deno.serve(async (req) => {
           const stock = computeBundleStock(components);
           const variantTitle = `${baseTitle} - ${bv.name_he || bv.name}`;
           items.push(renderItem({
-            id: bv.sku || `${p.product_number}-${bv.id.substring(0, 8)}`,
+            // g:id MUST match the SKU sent by the pixel in AddToCart /
+            // InitiateCheckout / Purchase. Pixel sends `bv.sku || p.sku`,
+            // so the feed mirrors that exact fallback.
+            id: bv.sku || p.sku || String(p.product_number),
             title: variantTitle,
             price: Number(bv.price) || Number(p.sale_price),
             stock,
@@ -184,7 +187,8 @@ Deno.serve(async (req) => {
         const isDefault = (v.name || "").toLowerCase() === "default";
         const title = isDefault ? baseTitle : `${baseTitle} - ${vName}`;
         items.push(renderItem({
-          id: v.sku || `${p.product_number}-${v.id.substring(0, 8)}`,
+          // Mirror pixel: AddToCart sends `v.sku || p.sku` as content_ids.
+          id: v.sku || p.sku || String(p.product_number),
           title,
           price: Number(v.price) || Number(p.sale_price),
           stock,
