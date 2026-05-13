@@ -1,0 +1,1 @@
+DELETE FROM public.order_picking_items WHERE order_id = 'e1de977b-2374-43e0-9745-f4cbc30f0502';
