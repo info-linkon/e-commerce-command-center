@@ -1,52 +1,39 @@
-## מטרה
+# הבעיה
 
-1. לוודא שאירוע **Purchase** של Meta Pixel נורה בכל סיום הזמנה (כרגע רק PageView/ViewContent/AddToCart מופיעים).
-2. ב-Product Feed וב-pixel events – ה-`item_group_id` (מזהה הקבוצה במטה) יהיה ה-**SKU של המוצר** במקום `product_number`.
+הזמנת "مسند ازرق" (וריאציית מארז כחולה) מציגה בליקוט את הרכיבים של וריאציה אחרת (צהוב). זה לא קשור לתרגום — זו פשוט הוריאציה הלא נכונה של המארז.
 
----
+## למה זה קורה
 
-## ניתוח (קצר)
+ל-`order_items` יש עמודה `bundle_variation_id` שנשמרת נכון בעת ההזמנה (וידאתי על הזמנות 309-312 ב-DB) — היא מציינת איזו וריאציית מארז (צבע) הלקוח בחר.
 
-**Purchase לא מופיע** – יש כמה כשלים אפשריים שמסבירים את התופעה:
-- אירוע ה-Purchase נורה רק אחרי `await fetchOrderSummary` שדורש `access_token` מ-`sessionStorage`. אם המשתמש חזר מ-HYP בטאב/חלון אחר, או שמסך ה-iframe נשבר ל-top window בנסיבות מסוימות, ה-token חסר → הקריאה ל-`order-summary` נכשלת (401), ועל אף שהקוד עדיין יורה fbq, הוא רץ אחרי המתנה ארוכה ולעיתים אחרי שהמשתמש כבר עזב את הדף.
-- ה-Pixel init רץ ב-`WebLayout` עם retry של עד 10 שניות. בזרימת `status=ok` ה-Purchase יורה לעיתים לפני שה-init הסתיים, ולמרות שהוא נכנס לתור – הוא מאוחר/לא נספר אם הדף נסגר.
-- אין fallback: אם `order-summary` נכשל, אין "Purchase מינימלי" שנורה מיד עם הנתונים שכבר ידועים (orderNumber + amount מה-URL).
+אבל **שני המקומות** שבונים את שורות הליקוט (`order_picking_items`) מתעלמים מהעמודה הזו ובוחרים תמיד את **וריאציית המארז הראשונה** של ה-bundle:
 
-**SKU כ-item_group_id** – כיום ב-feed:
-- `g:item_group_id` = `product_number` (מספרי).
-- ב-pixel events `content_ids` כבר משתמשים ב-SKU (טוב), אבל אין שדה ייעודי לקבוצה.
+1. `src/hooks/usePickingItems.ts` (שורות 70-104) — נתיב ה-rebuild שרץ אוטומטית כשנכנסים לעמוד הזמנה של הזמנת אתר. שולף את כל ה-`bundle_variations` של ה-bundle, לוקח את הראשונה (`firstBvPerBundle`) ומושך ממנה את הרכיבים — תמיד אותם רכיבים, לא משנה איזה צבע הוזמן.
 
----
+2. `src/hooks/useOrders.ts` (שורות 322-337) — נתיב ה-CRM "תהליך הזמנה" שיוצר את שורות הליקוט. שולף `bundle_variations` עם `.limit(1)` ומושך רכיבים מהראשונה.
 
-## תוכנית
+המשמעות: בכל הזמנת variable_bundle, הליקוט יראה את צבע הוריאציה הוותיקה ביותר במארז (לרוב הצהוב), בלי קשר לבחירת הלקוח.
 
-### 1. תיקון אירוע Purchase
+## התיקון
 
-`src/pages/web/WebOrderConfirmation.tsx`:
-- לפני `await fetchOrderSummary`, לירות **Purchase מיידי** עם הנתונים הזמינים (orderNumber + Amount מה-URL כ-`value`, `currency: "ILS"`). זה מבטיח שה-event יירשם תמיד.
-- אחרי שה-summary חוזר עם פירוט פריטים – לא לירות שוב (כפילות). העשרה מלאה (contents/SKUs) תיעשה רק אם ה-summary מצליח, ובמקרה זה ה-Purchase המיידי כבר הספיק.
-- חלופה ניקיה יותר: להמתין ל-summary רק עד 1.5 שניות (Promise.race עם timeout). אם הספיק – לירות עם פירוט; אם לא – לירות מיד עם המינימום.
+לקרוא את `bundle_variation_id` ישירות מ-`order_items` ולהשתמש בו כדי לטעון את ה-`bundle_variation_items` המתאימים. ליפול חזרה ל-`bundle_items` רק כש-`bundle_variation_id` ריק (מארזים פשוטים/legacy).
 
-`src/lib/meta-pixel.ts`:
-- להוסיף לוג מינימלי (`console.debug`) כשאירוע נורה לפני init – יעזור לאבחן בעתיד.
-- לוודא שה-fallback init מסתיים גם בדף /order-confirmation (כבר קיים, רק לוודא שה-`pixel_id` נטען).
+### `src/hooks/usePickingItems.ts` (`rebuildMissingPickingItems`)
 
-### 2. SKU כ-item_group_id
+- הוספת `bundle_variation_id` ל-SELECT של `order_items`.
+- החלפת לוגיקת "first bv per bundle" בטעינת `bundle_variation_items` עבור קבוצת `order_item.bundle_variation_id` שנמצאה בהזמנה הספציפית.
+- מיפוי רכיבים לפי `bundle_variation_id` (ולא לפי `bundle_id`), כך שכל שורת הזמנה מקבלת את הרכיבים של הצבע שלה.
 
-`supabase/functions/meta-product-feed/index.ts`:
-- `groupId = p.sku || String(p.product_number)` (במקום רק `product_number`).
-- כך כל הוריאציות של מוצר יקובצו ב-Catalog לפי ה-SKU של ה-Parent.
+### `src/hooks/useOrders.ts` (mutation שמייצרת picking_items)
 
-`src/pages/web/WebProductPage.tsx` ו-`src/pages/web/WebCheckoutPage.tsx` ו-`WebOrderConfirmation.tsx`:
-- להוסיף לאירועי Pixel את `content_group_id` עם ה-parent SKU (כשרלוונטי), כדי שגם דיווחי הפיקסל יתאימו ל-Catalog.
+- שימוש ב-`item.bundle_variation_id` שכבר זמין על שורת ההזמנה במקום `bundle_variations ... limit(1)`.
+- אותה נפילה חזרה ל-`bundle_items` כשזה null.
 
----
+### בדיקה
 
-## קבצים שישונו
+- הזמנה חדשה של "مسند ازرق" → הליקוט מציג את הרכיבים בצבע כחול.
+- הזמנה חדשה של צבע אחר באותו מארז → הליקוט מציג רכיבים בצבע המתאים.
+- הזמנת מוצר רגיל (לא bundle) — ללא שינוי.
+- מארז simple_bundle (ללא `bundle_variation_id`) — נופל חזרה ל-`bundle_items` כמו היום.
 
-- `src/pages/web/WebOrderConfirmation.tsx` – ירייה מיידית של Purchase.
-- `src/lib/meta-pixel.ts` – לוג אבחון.
-- `supabase/functions/meta-product-feed/index.ts` – `item_group_id` = SKU.
-- `src/pages/web/WebProductPage.tsx`, `WebCheckoutPage.tsx` – הוספת `content_group_id` כש־SKU של ההורה זמין.
-
-לא נוגע בלוגיקת תשלום/HYP/DB.
+הערה: הזמנות קיימות ש-picking_items שלהן כבר נוצרו בצורה שגויה לא יתוקנו אוטומטית. מי שירצה לתקן הזמנה ישנה יוכל למחוק את שורות הליקוט שלה ב-CRM וה-rebuild יבנה אותן מחדש נכון.
