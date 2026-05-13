@@ -319,22 +319,15 @@ export function useAssignWarehouse() {
         if (bundle?.id) {
           let bundleComponents: Array<{ variation_id: string; quantity: number }> = [];
 
-          if (bundle.bundle_type === "variable_bundle") {
-            // For variable bundles, get components from first bundle_variation (or match by name)
-            const { data: bvs } = await supabase
-              .from("bundle_variations")
-              .select("id")
-              .eq("bundle_id", bundle.id)
-              .limit(1);
-
-            if (bvs && bvs.length > 0) {
-              const { data: bvItems, error: bvErr } = await supabase
-                .from("bundle_variation_items")
-                .select("variation_id, quantity")
-                .eq("bundle_variation_id", bvs[0].id);
-              if (bvErr) throw bvErr;
-              bundleComponents = bvItems || [];
-            }
+          if (bundle.bundle_type === "variable_bundle" && item.bundle_variation_id) {
+            // Use the EXACT bundle_variation_id chosen on the order line
+            // (the customer's selected color/option), not "first per bundle".
+            const { data: bvItems, error: bvErr } = await supabase
+              .from("bundle_variation_items")
+              .select("variation_id, quantity")
+              .eq("bundle_variation_id", item.bundle_variation_id);
+            if (bvErr) throw bvErr;
+            bundleComponents = bvItems || [];
           } else {
             const { data: biItems, error: biErr } = await supabase
               .from("bundle_items")
