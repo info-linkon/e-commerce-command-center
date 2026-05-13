@@ -18,7 +18,7 @@ async function fetchPickingItems(orderId: string) {
 async function rebuildMissingPickingItems(orderId: string) {
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .select("id, assigned_warehouse_id, status, picking_status, order_items(id, quantity, variation_id, product_variations(product_id))")
+    .select("id, assigned_warehouse_id, status, picking_status, order_items(id, quantity, variation_id, bundle_variation_id, product_variations(product_id))")
     .eq("id", orderId)
     .single();
 
@@ -49,9 +49,10 @@ async function rebuildMissingPickingItems(orderId: string) {
   }
 
   const bundleIds = Object.values(bundleIdByProductId);
-  const componentsByBundleId: Record<string, any[]> = {};
+  const simpleComponentsByBundleId: Record<string, any[]> = {};
+  const componentsByBundleVariationId: Record<string, any[]> = {};
   if (bundleIds.length > 0) {
-    // Simple bundles: bundle_items
+    // Simple bundles: bundle_items keyed by bundle_id
     const { data: bundleItems, error: bundleItemsError } = await supabase
       .from("bundle_items")
       .select("bundle_id, variation_id, quantity")
@@ -60,47 +61,32 @@ async function rebuildMissingPickingItems(orderId: string) {
     if (bundleItemsError) throw bundleItemsError;
 
     for (const bundleItem of bundleItems || []) {
-      if (!componentsByBundleId[bundleItem.bundle_id]) {
-        componentsByBundleId[bundleItem.bundle_id] = [];
+      if (!simpleComponentsByBundleId[bundleItem.bundle_id]) {
+        simpleComponentsByBundleId[bundleItem.bundle_id] = [];
       }
-      componentsByBundleId[bundleItem.bundle_id].push(bundleItem);
+      simpleComponentsByBundleId[bundleItem.bundle_id].push(bundleItem);
     }
 
-    // Variable bundles: bundle_variation_items (use first variation per bundle)
-    const variableBundleIds = bundleIds.filter((bid) => {
-      const pid = Object.entries(bundleIdByProductId).find(([, v]) => v === bid)?.[0];
-      return pid && bundleTypeByProductId[pid] === "variable_bundle";
-    });
-
-    if (variableBundleIds.length > 0) {
-      const { data: bvs } = await supabase
-        .from("bundle_variations")
-        .select("id, bundle_id")
-        .in("bundle_id", variableBundleIds);
-
-      // Pick first variation per bundle
-      const firstBvPerBundle: Record<string, string> = {};
-      for (const bv of bvs || []) {
-        if (!firstBvPerBundle[bv.bundle_id]) {
-          firstBvPerBundle[bv.bundle_id] = bv.id;
+    // Variable bundles: load components for the EXACT bundle_variation_id
+    // chosen on each order_item (the customer's color), not "first per bundle".
+    const orderBvIds = Array.from(
+      new Set(
+        orderItems
+          .map((it) => it.bundle_variation_id)
+          .filter((x): x is string => Boolean(x)),
+      ),
+    );
+    if (orderBvIds.length > 0) {
+      const { data: bvItems, error: bviErr } = await supabase
+        .from("bundle_variation_items")
+        .select("bundle_variation_id, variation_id, quantity")
+        .in("bundle_variation_id", orderBvIds);
+      if (bviErr) throw bviErr;
+      for (const bvi of bvItems || []) {
+        if (!componentsByBundleVariationId[bvi.bundle_variation_id]) {
+          componentsByBundleVariationId[bvi.bundle_variation_id] = [];
         }
-      }
-
-      const bvIds = Object.values(firstBvPerBundle);
-      if (bvIds.length > 0) {
-        const { data: bvItems } = await supabase
-          .from("bundle_variation_items")
-          .select("bundle_variation_id, variation_id, quantity")
-          .in("bundle_variation_id", bvIds);
-
-        for (const bvi of bvItems || []) {
-          // Find which bundle this belongs to
-          const bundleId = Object.entries(firstBvPerBundle).find(([, v]) => v === bvi.bundle_variation_id)?.[0];
-          if (bundleId) {
-            if (!componentsByBundleId[bundleId]) componentsByBundleId[bundleId] = [];
-            componentsByBundleId[bundleId].push(bvi);
-          }
-        }
+        componentsByBundleVariationId[bvi.bundle_variation_id].push(bvi);
       }
     }
   }
@@ -115,7 +101,14 @@ async function rebuildMissingPickingItems(orderId: string) {
   for (const item of orderItems) {
     const productId = item.product_variations?.product_id;
     const bundleId = productId ? bundleIdByProductId[productId] : undefined;
-    const bundleComponents = bundleId ? componentsByBundleId[bundleId] || [] : [];
+    let bundleComponents: Array<{ variation_id: string; quantity: number }> = [];
+    if (bundleId) {
+      if (item.bundle_variation_id && componentsByBundleVariationId[item.bundle_variation_id]) {
+        bundleComponents = componentsByBundleVariationId[item.bundle_variation_id];
+      } else if (simpleComponentsByBundleId[bundleId]) {
+        bundleComponents = simpleComponentsByBundleId[bundleId];
+      }
+    }
 
     if (bundleComponents.length > 0) {
       for (const component of bundleComponents) {
