@@ -41,6 +41,7 @@ export default function WebOrderSummary() {
   );
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [showOptionalPay, setShowOptionalPay] = useState(false);
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["order-summary", orderNumber, tokenFromUrl, phoneLast4],
