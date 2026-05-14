@@ -41,6 +41,7 @@ export default function WebOrderSummary() {
   );
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [showOptionalPay, setShowOptionalPay] = useState(false);
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["order-summary", orderNumber, tokenFromUrl, phoneLast4],
@@ -270,7 +271,7 @@ export default function WebOrderSummary() {
                   </div>
                 </>
               )}
-              {onlineRemaining > 0 && (
+              {onlineRemaining > 0 && order.payment_method !== "cash" && order.payment_method !== "bit" && (
                 <div className="flex justify-between text-sm mt-2 font-bold">
                   <span className="text-primary">{t("للدفع الآن (بطاقة ائتمان)", "לתשלום עכשיו (אשראי)")}</span>
                   <span className="text-primary">₪{onlineRemaining.toFixed(2)}</span>
@@ -297,6 +298,25 @@ export default function WebOrderSummary() {
         const onlineRemaining = Math.max(0, digitalDue - paid);
         const isPaid = !!order.hyp_transaction_id || onlineRemaining <= 0;
         if (isClosed || isPaid) return null;
+        const isCashLike = order.payment_method === "cash" || order.payment_method === "bit";
+        if (isCashLike) {
+          if (!showOptionalPay) {
+            return (
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowOptionalPay(true)}
+                  className="text-sm text-primary underline-offset-4 hover:underline"
+                >
+                  {t(
+                    "تفضّل الدفع ببطاقة الائتمان بدلًا من النقد؟ اضغط هنا",
+                    "מעדיפים לשלם בכרטיס אשראי במקום מזומן? לחצו כאן"
+                  )}
+                </button>
+              </div>
+            );
+          }
+        }
         return (
           <div className="bg-card border border-primary/30 rounded-xl p-5 mt-4 text-center">
             <p className="font-bold mb-1">{t("ادفع طلبك ببطاقة الائتمان", "תשלום ההזמנה בכרטיס אשראי")}</p>
