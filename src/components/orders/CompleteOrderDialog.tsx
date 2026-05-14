@@ -85,12 +85,21 @@ export default function CompleteOrderDialog({
     try {
       // 1. Record shipping expense if cost > 0
       if (cost > 0 && shippingRegisterId) {
-        await createExpense.mutateAsync({
-          description: `משלוח להזמנה #${orderNumber}${shippingNotes ? ` — ${shippingNotes}` : ""}`,
-          amount: cost,
-          payment_source: "cash_register",
-          cash_register_id: shippingRegisterId,
-        });
+        // Idempotent: skip if a shipping expense for this order already exists,
+        // to avoid duplicates when the user retries after a later step failed.
+        const { data: existing } = await supabase
+          .from("expenses")
+          .select("id")
+          .like("description", `משלוח להזמנה #${orderNumber}%`)
+          .limit(1);
+        if (!existing || existing.length === 0) {
+          await createExpense.mutateAsync({
+            description: `משלוח להזמנה #${orderNumber}${shippingNotes ? ` — ${shippingNotes}` : ""}`,
+            amount: cost,
+            payment_source: "cash_register",
+            cash_register_id: shippingRegisterId,
+          });
+        }
       }
 
       // 2. Mark order completed
