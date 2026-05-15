@@ -135,7 +135,7 @@ export default function WebShopPage() {
               nameAr={product.name_ar}
               price={product.sale_price}
               imageUrl={product.image_url}
-              categoryName={(product as any).categories?.name}
+              categoryName={(product as any).categories?.name} categoryNameHe={(product as any).categories?.name_he}
             />
           ))}
         </div>

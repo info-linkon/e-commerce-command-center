@@ -12,13 +12,15 @@ interface WebProductCardProps {
   originalPrice?: number | null;
   imageUrl?: string | null;
   categoryName?: string | null;
+  categoryNameHe?: string | null;
   outOfStock?: boolean;
 }
 
-export function WebProductCard({ id, productNumber, name, nameAr, price, originalPrice, imageUrl, categoryName, outOfStock }: WebProductCardProps) {
+export function WebProductCard({ id, productNumber, name, nameAr, price, originalPrice, imageUrl, categoryName, categoryNameHe, outOfStock }: WebProductCardProps) {
   const { lang, localizedPath } = useLanguage();
   const displayName = lang === "he" ? (name || nameAr || "") : (nameAr || name);
   const linkId = productNumber || id;
+  const displayCategory = lang === "he" ? (categoryNameHe || categoryName) : (categoryName || categoryNameHe);
 
   const hasDiscount = originalPrice && originalPrice > price;
   const discountPercent = hasDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
@@ -53,8 +55,8 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, origina
       </Link>
 
       <div className="p-3 md:p-4">
-        {categoryName && (
-          <p className="text-xs text-gold font-medium mb-1">{categoryName}</p>
+        {displayCategory && (
+          <p className="text-xs text-gold font-medium mb-1">{displayCategory}</p>
         )}
         <Link to={localizedPath(`/product/${linkId}`)}>
           <h3 className="font-semibold text-xs md:text-sm leading-snug mb-2 line-clamp-2 hover:text-primary transition-colors">

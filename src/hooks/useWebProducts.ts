@@ -7,7 +7,7 @@ export function useWebProducts(categoryId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("products")
-        .select("*, categories!products_category_id_fkey(name, slug)")
+        .select("*, categories!products_category_id_fkey(name, name_he, slug)")
         .eq("is_published", true)
         .order("name");
       if (categoryId) query = query.eq("category_id", categoryId);
@@ -50,7 +50,7 @@ export function useWebProductsByCategoryNumber(categoryNumber: number | undefine
 
       const { data, error } = await supabase
         .from("products")
-        .select("*, categories!products_category_id_fkey(name, slug)")
+        .select("*, categories!products_category_id_fkey(name, name_he, slug)")
         .eq("is_published", true)
         .in("id", ids)
         .order("name");
@@ -69,7 +69,7 @@ export function useWebProduct(productNumber: string | undefined) {
       if (isNaN(num)) return null;
       const { data, error } = await (supabase
         .from("products")
-        .select("*, categories!products_category_id_fkey(name, slug)") as any)
+        .select("*, categories!products_category_id_fkey(name, name_he, slug)") as any)
         .eq("product_number", num)
         .eq("is_published", true)
         .single();
@@ -131,7 +131,7 @@ export function useWebFeaturedProducts() {
     queryFn: async () => {
       const { data, error } = await (supabase
         .from("products")
-        .select("*, categories!products_category_id_fkey(name, slug)") as any)
+        .select("*, categories!products_category_id_fkey(name, name_he, slug)") as any)
         .eq("is_published", true)
         .eq("is_featured", true)
         .order("name")
@@ -162,7 +162,7 @@ export function useWebSearch(query: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*, categories!products_category_id_fkey(name, slug)")
+        .select("*, categories!products_category_id_fkey(name, name_he, slug)")
         .eq("is_published", true)
         .or(`name.ilike.%${query}%,name_ar.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(20);
