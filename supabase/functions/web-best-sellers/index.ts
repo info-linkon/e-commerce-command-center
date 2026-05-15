@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     //    storefront previously got from the direct query).
     const { data: products, error: prodErr } = await supabase
       .from("products")
-      .select("*, categories!products_category_id_fkey(name, slug)")
+      .select("*, categories!products_category_id_fkey(name, name_he, slug)")
       .eq("is_published", true)
       .in("id", topIds);
     if (prodErr) throw prodErr;
