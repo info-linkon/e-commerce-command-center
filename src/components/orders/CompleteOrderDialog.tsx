@@ -249,6 +249,20 @@ export default function CompleteOrderDialog({
             </p>
           </div>
 
+          {requiresZeroConfirm && (
+            <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3">
+              <Checkbox
+                id="confirm-no-shipping"
+                checked={confirmedNoShipping}
+                onCheckedChange={(v) => setConfirmedNoShipping(!!v)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="confirm-no-shipping" className="text-xs leading-relaxed text-amber-900 cursor-pointer">
+                ההזמנה חויבה ב-₪{orderShipping.toFixed(2)} משלוח. אני מאשר שלא שולם למוביל ולא תירשם הוצאה.
+              </Label>
+            </div>
+          )}
+
           {needsRegister && (
             <>
               <div className="space-y-2">
