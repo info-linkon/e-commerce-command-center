@@ -433,7 +433,7 @@ export default function WebProductPage() {
 function ShareProductButton({ productNumber, productName }: { productNumber: number; productName: string }) {
   const [copied, setCopied] = useState(false);
   const { t } = useLanguage();
-  const shareUrl = `https://gboskpvfvwrsiqwzpctk.supabase.co/functions/v1/product-share/${productNumber}`;
+  const shareUrl = `https://elwejha.co.il/product/${productNumber}`;
 
   const handleShare = async () => {
     // Try native share first (mobile)
