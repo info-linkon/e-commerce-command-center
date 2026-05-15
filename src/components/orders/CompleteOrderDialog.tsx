@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -70,11 +71,43 @@ export default function CompleteOrderDialog({
   const [shippingRegisterId, setShippingRegisterId] = useState<string>("");
   const [shippingNotes, setShippingNotes] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmedNoShipping, setConfirmedNoShipping] = useState(false);
+
+  // Pre-fill the actual shipping cost from the order's shipping_cost when
+  // the dialog opens, and try to default the cash register from the assigned
+  // delivery company. Prevents accidentally completing an order with cost=0
+  // and forgetting to record the courier expense.
+  useEffect(() => {
+    if (!open) return;
+    setActualShippingCost(String(shippingCost ?? 0));
+    setConfirmedNoShipping(false);
+    setShippingNotes("");
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("deliveries")
+        .select("delivery_companies(cash_register_id)")
+        .eq("order_id", orderId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const regId = (data as any)?.delivery_companies?.cash_register_id;
+      if (!cancelled && regId) setShippingRegisterId(regId);
+      else if (!cancelled) setShippingRegisterId("");
+    })();
+    return () => { cancelled = true; };
+  }, [open, orderId, shippingCost]);
 
   const cost = Number(actualShippingCost) || 0;
   const activeRegisters = (registers || []).filter((r: any) => r.is_active !== false);
   const needsRegister = cost > 0;
-  const canSubmit = !needsRegister || !!shippingRegisterId;
+  // If the order had a shipping_cost but the user zeroed it out, force an
+  // explicit confirmation so it doesn't slip through silently.
+  const orderShipping = Number(shippingCost) || 0;
+  const requiresZeroConfirm = orderShipping > 0 && cost === 0;
+  const canSubmit =
+    (!needsRegister || !!shippingRegisterId) &&
+    (!requiresZeroConfirm || confirmedNoShipping);
 
   const handleSubmit = async () => {
     if (!canSubmit) {
@@ -182,10 +215,7 @@ export default function CompleteOrderDialog({
       qc.invalidateQueries({ queryKey: ["expenses"] });
       qc.invalidateQueries({ queryKey: ["cash_registers"] });
       onOpenChange(false);
-      // reset
-      setActualShippingCost("0");
-      setShippingRegisterId("");
-      setShippingNotes("");
+      // state resets next time the dialog opens via the useEffect above
     } catch (err: any) {
       toast.error(err?.message || "שגיאה בהשלמת ההזמנה");
     } finally {
@@ -218,6 +248,20 @@ export default function CompleteOrderDialog({
               אם המשלוח לא עלה לכם — השאר 0. אחרת תרשם הוצאה.
             </p>
           </div>
+
+          {requiresZeroConfirm && (
+            <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3">
+              <Checkbox
+                id="confirm-no-shipping"
+                checked={confirmedNoShipping}
+                onCheckedChange={(v) => setConfirmedNoShipping(!!v)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="confirm-no-shipping" className="text-xs leading-relaxed text-amber-900 cursor-pointer">
+                ההזמנה חויבה ב-₪{orderShipping.toFixed(2)} משלוח. אני מאשר שלא שולם למוביל ולא תירשם הוצאה.
+              </Label>
+            </div>
+          )}
 
           {needsRegister && (
             <>
