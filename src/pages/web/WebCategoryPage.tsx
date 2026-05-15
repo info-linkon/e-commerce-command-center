@@ -38,7 +38,7 @@ export default function WebCategoryPage() {
               nameAr={product.name_ar}
               price={product.sale_price}
               imageUrl={product.image_url}
-              categoryName={product.categories?.name}
+              categoryName={product.categories?.name} categoryNameHe={product.categories?.name_he}
             />
           ))}
         </div>
