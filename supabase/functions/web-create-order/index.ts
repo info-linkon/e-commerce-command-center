@@ -51,6 +51,7 @@ interface IncomingPayload {
   notes?: string | null;
   payment_method: "cash" | "credit";
   coupon_code?: string | null;
+  lang?: "ar" | "he" | null;
   items: IncomingItem[];
 }
 
@@ -363,6 +364,7 @@ Deno.serve(async (req) => {
         discount_value: couponRow ? Number(couponRow.value) : 0,
         notes: payload.notes || null,
         total: finalTotal,
+        lang: payload.lang === "he" ? "he" : "ar",
       })
       .select("id, order_number, access_token")
       .single();

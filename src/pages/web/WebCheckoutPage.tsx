@@ -106,7 +106,7 @@ export default function WebCheckoutPage() {
 
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
   const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
-  const { t, localizedPath } = useLanguage();
+  const { t, lang, localizedPath } = useLanguage();
 
   const shippingSettings = (shippingSettingsRow?.content || {}) as any;
   const deliveryEnabled = shippingSettings.delivery_enabled !== false;
@@ -307,6 +307,7 @@ export default function WebCheckoutPage() {
             shipping_cost: shipping,
             payment_method: isCash ? "cash" : "credit",
             coupon_code: appliedCoupon ? appliedCoupon.code : null,
+            lang,
             notes: [
               shippingMethod === "pickup" ? "🏪 איסוף עצמי" : "",
               (form.get("notes") as string) || "",
