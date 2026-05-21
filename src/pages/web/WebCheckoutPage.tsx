@@ -106,7 +106,7 @@ export default function WebCheckoutPage() {
 
   const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
   const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
-  const { t, localizedPath } = useLanguage();
+  const { t, lang, localizedPath } = useLanguage();
 
   const shippingSettings = (shippingSettingsRow?.content || {}) as any;
   const deliveryEnabled = shippingSettings.delivery_enabled !== false;
@@ -307,6 +307,7 @@ export default function WebCheckoutPage() {
             shipping_cost: shipping,
             payment_method: isCash ? "cash" : "credit",
             coupon_code: appliedCoupon ? appliedCoupon.code : null,
+            lang,
             notes: [
               shippingMethod === "pickup" ? "🏪 איסוף עצמי" : "",
               (form.get("notes") as string) || "",
@@ -345,10 +346,8 @@ export default function WebCheckoutPage() {
         // created in the CRM only when the courier/staff actually collects the
         // money at delivery time. Otherwise the order would falsely appear paid.
 
-        // Trigger SMS for new order
-        supabase.functions.invoke("order-sms-trigger", {
-          body: { order_id: order.id, trigger_type: "order_created" },
-        }).catch(console.error);
+        // SMS for new order is fired server-side inside web-create-order
+        // (browser-side fire-and-forget could be lost when the tab closes).
         // Trigger email notification
         supabase.functions.invoke("order-email-notify", {
           body: { order_id: order.id },

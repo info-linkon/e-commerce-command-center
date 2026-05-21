@@ -51,6 +51,7 @@ interface IncomingPayload {
   notes?: string | null;
   payment_method: "cash" | "credit";
   coupon_code?: string | null;
+  lang?: "ar" | "he" | null;
   items: IncomingItem[];
 }
 
@@ -363,6 +364,7 @@ Deno.serve(async (req) => {
         discount_value: couponRow ? Number(couponRow.value) : 0,
         notes: payload.notes || null,
         total: finalTotal,
+        lang: payload.lang === "he" ? "he" : "ar",
       })
       .select("id, order_number, access_token")
       .single();
@@ -401,6 +403,16 @@ Deno.serve(async (req) => {
       } catch (couponErr) {
         console.warn("coupon usage increment failed (non-fatal):", couponErr);
       }
+    }
+
+    // ── Server-side SMS trigger (reliable; browser-side invoke can be lost
+    //    if the user closes the tab before the request completes).
+    try {
+      await supabase.functions.invoke("order-sms-trigger", {
+        body: { order_id: order.id, trigger_type: "order_created" },
+      });
+    } catch (smsErr) {
+      console.warn("order_created SMS trigger failed (non-fatal):", smsErr);
     }
 
     return jsonResponse({

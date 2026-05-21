@@ -38,6 +38,7 @@ const statusLabels: Record<string, string> = {
   processing: "בטיפול",
   picking: "בליקוט",
   shipping: "במשלוח",
+  delivered: "נמסרה",
   completed: "הושלמה",
   cancelled: "בוטלה",
 };
@@ -48,6 +49,7 @@ const statusColors: Record<string, string> = {
   processing: "bg-blue-100 text-blue-800",
   picking: "bg-purple-100 text-purple-800",
   shipping: "bg-orange-100 text-orange-800",
+  delivered: "bg-teal-100 text-teal-800",
   completed: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
 };
@@ -753,18 +755,36 @@ const OrderDetail = () => {
               onClick={() => setCompleteDialogOpen(true)}
             >
               <CheckCircle2 className="h-4 w-4" />
-              סמן כהושלמה
+              סמן כנמסרה
+            </Button>
+          )}
+          {status === "delivered" && (
+            <Button
+              variant="outline"
+              className="gap-2 border-green-600 text-green-700 hover:bg-green-50"
+              onClick={() => {
+                updateStatus.mutate({ id: order.id, status: "completed" as OrderStatus });
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              סגור הזמנה
             </Button>
           )}
 
           {/* Status selector for non-assigned orders or general override */}
           <Select value={status} onValueChange={(v) => {
-            if (v === "completed") {
+            if (v === "delivered") {
               setCompleteDialogOpen(true);
               return;
             }
             updateStatus.mutate({ id: order.id, status: v as OrderStatus });
-            const triggerMap: Record<string, string> = { processing: "order_created", picking: "order_picking", shipping: "order_shipping", completed: "order_completed" };
+            const triggerMap: Record<string, string> = {
+              processing: "order_created",
+              picking: "order_picking",
+              shipping: "order_shipping",
+              delivered: "order_delivered",
+              completed: "order_completed",
+            };
             const smsTrigger = triggerMap[v];
             if (smsTrigger) {
               supabase.functions.invoke("order-sms-trigger", {

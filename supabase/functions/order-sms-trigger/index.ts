@@ -37,15 +37,44 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get active templates for this trigger (there can be multiple — customer + admin)
-    const { data: templates } = await supabase
+    // Get active templates for this trigger (there can be multiple — customer + admin).
+    // Templates may be locale-specific (locale='he'/'ar') or generic (locale IS NULL).
+    const { data: allTemplates } = await supabase
       .from("sms_templates")
       .select("*")
       .eq("trigger", trigger_type)
       .eq("active", true);
 
-    if (!templates || templates.length === 0) {
+    if (!allTemplates || allTemplates.length === 0) {
       return new Response(JSON.stringify({ skipped: true, reason: "No active template" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Resolve which templates to use based on order language.
+    // For each (recipient_type, recipient_phone) pair, prefer an exact locale
+    // match; fall back to a generic (NULL locale) template.
+    const orderLang = ((order as any).lang || "ar") as string;
+    type Tpl = any;
+    const groups = new Map<string, Tpl[]>();
+    for (const tpl of allTemplates as Tpl[]) {
+      const key = `${tpl.recipient_type}|${tpl.recipient_phone || ""}`;
+      const arr = groups.get(key) || [];
+      arr.push(tpl);
+      groups.set(key, arr);
+    }
+    const templates: Tpl[] = [];
+    for (const arr of groups.values()) {
+      // Prefer recipient-type 'customer' to use the order language;
+      // for non-customer (admin) recipients, language still preferred but not critical.
+      const exact = arr.find((t) => t.locale === orderLang);
+      const generic = arr.find((t) => !t.locale);
+      const chosen = exact || generic;
+      if (chosen) templates.push(chosen);
+    }
+
+    if (templates.length === 0) {
+      return new Response(JSON.stringify({ skipped: true, reason: "No matching template for locale" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

@@ -1053,6 +1053,7 @@ export type Database = {
           includes_vat: boolean | null
           invoice_issued_manually: boolean
           invoice_url: string | null
+          lang: string
           notes: string | null
           order_number: number
           payment_link_url: string | null
@@ -1092,6 +1093,7 @@ export type Database = {
           includes_vat?: boolean | null
           invoice_issued_manually?: boolean
           invoice_url?: string | null
+          lang?: string
           notes?: string | null
           order_number?: number
           payment_link_url?: string | null
@@ -1131,6 +1133,7 @@ export type Database = {
           includes_vat?: boolean | null
           invoice_issued_manually?: boolean
           invoice_url?: string | null
+          lang?: string
           notes?: string | null
           order_number?: number
           payment_link_url?: string | null
@@ -1498,6 +1501,7 @@ export type Database = {
           active: boolean
           created_at: string
           id: string
+          locale: string | null
           recipient_phone: string | null
           recipient_type: string
           template_text: string
@@ -1507,6 +1511,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          locale?: string | null
           recipient_phone?: string | null
           recipient_type?: string
           template_text?: string
@@ -1516,6 +1521,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          locale?: string | null
           recipient_phone?: string | null
           recipient_type?: string
           template_text?: string
@@ -1624,6 +1630,7 @@ export type Database = {
         | "pending_payment"
         | "picking"
         | "shipping"
+        | "delivered"
       payment_method: "cash" | "bit" | "credit"
       picking_status: "not_started" | "in_progress" | "completed"
       product_type: "simple" | "variable"
@@ -1634,6 +1641,7 @@ export type Database = {
         | "order_picking"
         | "order_shipping"
         | "invoice_issued"
+        | "order_delivered"
       transfer_status: "pending" | "completed"
     }
     CompositeTypes: {
@@ -1784,6 +1792,7 @@ export const Constants = {
         "pending_payment",
         "picking",
         "shipping",
+        "delivered",
       ],
       payment_method: ["cash", "bit", "credit"],
       picking_status: ["not_started", "in_progress", "completed"],
@@ -1795,6 +1804,7 @@ export const Constants = {
         "order_picking",
         "order_shipping",
         "invoice_issued",
+        "order_delivered",
       ],
       transfer_status: ["pending", "completed"],
     },

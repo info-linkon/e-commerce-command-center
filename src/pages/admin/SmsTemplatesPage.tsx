@@ -20,7 +20,14 @@ const triggerLabels: Record<string, string> = {
   order_completed: "הזמנה הושלמה",
   order_picking: "הזמנה בליקוט",
   order_shipping: "הזמנה במשלוח",
+  order_delivered: "הזמנה נמסרה",
   invoice_issued: "חשבונית/קבלה הונפקה",
+};
+
+const localeLabels: Record<string, string> = {
+  "": "כל השפות (ברירת מחדל)",
+  ar: "ערבית בלבד",
+  he: "עברית בלבד",
 };
 
 const placeholders = [
@@ -41,6 +48,7 @@ export default function SmsTemplatesPage() {
   const [templateText, setTemplateText] = useState("");
   const [recipientType, setRecipientType] = useState("customer");
   const [recipientPhone, setRecipientPhone] = useState("");
+  const [locale, setLocale] = useState<string>("");
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ["sms-templates"],
@@ -55,17 +63,17 @@ export default function SmsTemplatesPage() {
   });
 
   const upsertMutation = useMutation({
-    mutationFn: async (values: { id?: string; trigger: string; template_text: string; recipient_type: string; recipient_phone?: string }) => {
+    mutationFn: async (values: { id?: string; trigger: string; template_text: string; recipient_type: string; recipient_phone?: string; locale?: string | null }) => {
       if (values.id) {
         const { error } = await supabase
           .from("sms_templates")
-          .update({ trigger: values.trigger as any, template_text: values.template_text, recipient_type: values.recipient_type, recipient_phone: values.recipient_phone || null })
+          .update({ trigger: values.trigger as any, template_text: values.template_text, recipient_type: values.recipient_type, recipient_phone: values.recipient_phone || null, locale: values.locale || null } as any)
           .eq("id", values.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("sms_templates")
-          .insert({ trigger: values.trigger as any, template_text: values.template_text, recipient_type: values.recipient_type, recipient_phone: values.recipient_phone || null });
+          .insert({ trigger: values.trigger as any, template_text: values.template_text, recipient_type: values.recipient_type, recipient_phone: values.recipient_phone || null, locale: values.locale || null } as any);
         if (error) throw error;
       }
     },
@@ -103,6 +111,7 @@ export default function SmsTemplatesPage() {
     setTemplateText("");
     setRecipientType("customer");
     setRecipientPhone("");
+    setLocale("");
   };
 
   const handleEdit = (t: any) => {
@@ -111,11 +120,12 @@ export default function SmsTemplatesPage() {
     setTemplateText(t.template_text);
     setRecipientType(t.recipient_type || "customer");
     setRecipientPhone(t.recipient_phone || "");
+    setLocale(t.locale || "");
     setDialogOpen(true);
   };
 
   const handleSave = () => {
-    upsertMutation.mutate({ id: editingId || undefined, trigger, template_text: templateText, recipient_type: recipientType, recipient_phone: recipientType === "custom" ? recipientPhone : undefined });
+    upsertMutation.mutate({ id: editingId || undefined, trigger, template_text: templateText, recipient_type: recipientType, recipient_phone: recipientType === "custom" ? recipientPhone : undefined, locale: locale || null });
   };
 
   return (
@@ -146,6 +156,22 @@ export default function SmsTemplatesPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label>שפת ההזמנה</Label>
+                <Select value={locale || "any"} onValueChange={(v) => setLocale(v === "any" ? "" : v)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">כל השפות (ברירת מחדל)</SelectItem>
+                    <SelectItem value="ar">ערבית בלבד</SelectItem>
+                    <SelectItem value="he">עברית בלבד</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  אם יש תבנית בשפה המדויקת — תישלח. אחרת תישלח התבנית הכללית.
+                </p>
               </div>
               <div>
                 <Label>נמען</Label>
@@ -237,6 +263,9 @@ export default function SmsTemplatesPage() {
                     {!t.active && <Badge variant="outline" className="text-muted-foreground">מושבת</Badge>}
                     <Badge variant="outline" className="text-xs">
                       {t.recipient_type === "custom" ? `📞 ${t.recipient_phone}` : "👤 טלפון הלקוח"}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {t.locale === "he" ? "🇮🇱 עברית" : t.locale === "ar" ? "🇸🇦 ערבית" : "🌐 כל השפות"}
                     </Badge>
                   </div>
                   <p className="text-sm mt-2 whitespace-pre-wrap">{t.template_text}</p>

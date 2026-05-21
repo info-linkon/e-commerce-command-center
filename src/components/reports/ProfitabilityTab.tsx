@@ -10,40 +10,74 @@ interface Props {
   endDate?: string;
 }
 
+const VAT_RATE = 0.17;
+
 export default function ProfitabilityTab({ startDate, endDate }: Props) {
   const { data: profitData } = useQuery({
     queryKey: ["report-profitability", startDate, endDate],
     queryFn: async () => {
       let q = supabase
         .from("order_items")
-        .select("quantity, total_price, product_variations(cost_price, name, products(name)), orders!inner(status, created_at)")
+        .select("quantity, total_price, bundle_variation_id, product_variations(cost_price, name, products(name, name_ar)), orders!inner(status, created_at, includes_vat)")
         .gte("orders.created_at", startDate)
         .eq("orders.status", "completed");
       if (endDate) q = q.lte("orders.created_at", endDate);
       const { data, error } = await q;
       if (error) throw error;
 
-      let totalRevenue = 0, totalCost = 0;
-      const byDate: Record<string, { revenue: number; cost: number }> = {};
+      // Pre-fetch bundle component costs for any bundle_variation_id referenced
+      const bundleVarIds = Array.from(
+        new Set(
+          (data || [])
+            .map((it: any) => it.bundle_variation_id)
+            .filter((x: any): x is string => !!x),
+        ),
+      );
+      const bundleCostMap = new Map<string, number>();
+      if (bundleVarIds.length > 0) {
+        const { data: bvItems } = await supabase
+          .from("bundle_variation_items")
+          .select("bundle_variation_id, quantity, product_variations(cost_price)")
+          .in("bundle_variation_id", bundleVarIds);
+        for (const row of bvItems || []) {
+          const bvId = (row as any).bundle_variation_id as string;
+          const compCost = Number((row as any).product_variations?.cost_price || 0);
+          const qty = Number((row as any).quantity || 0);
+          bundleCostMap.set(bvId, (bundleCostMap.get(bvId) || 0) + compCost * qty);
+        }
+      }
+
+      let totalRevenueGross = 0;
+      let totalCost = 0;
+      const byDate: Record<string, { dateKey: string; dateLabel: string; revenue: number; cost: number }> = {};
       const byProduct: Record<string, { name: string; quantity: number; revenue: number; cost: number }> = {};
 
       for (const item of data || []) {
         const v = item.product_variations as any;
         const order = item.orders as any;
-        const revenue = Number(item.total_price);
-        const cost = Number(v?.cost_price || 0) * item.quantity;
-        totalRevenue += revenue;
+        const grossLine = Number(item.total_price);
+        const includesVat = order?.includes_vat !== false; // default true
+        const revenueNet = includesVat ? grossLine / (1 + VAT_RATE) : grossLine;
+        // Bundle: use component costs. Otherwise: variation cost.
+        const bvId = (item as any).bundle_variation_id as string | null;
+        const perUnitCost = bvId
+          ? (bundleCostMap.get(bvId) || 0)
+          : Number(v?.cost_price || 0);
+        const cost = perUnitCost * item.quantity;
+        totalRevenueGross += grossLine;
         totalCost += cost;
 
-        const date = new Date(order?.created_at).toLocaleDateString("he-IL");
-        if (!byDate[date]) byDate[date] = { revenue: 0, cost: 0 };
-        byDate[date].revenue += revenue;
-        byDate[date].cost += cost;
+        const d = new Date(order?.created_at);
+        const dateKey = d.toISOString().slice(0, 10); // YYYY-MM-DD for sortable
+        const dateLabel = d.toLocaleDateString("he-IL");
+        if (!byDate[dateKey]) byDate[dateKey] = { dateKey, dateLabel, revenue: 0, cost: 0 };
+        byDate[dateKey].revenue += revenueNet;
+        byDate[dateKey].cost += cost;
 
-        const key = v?.products?.name || "לא ידוע";
+        const key = v?.products?.name_ar || v?.products?.name || "לא ידוע";
         if (!byProduct[key]) byProduct[key] = { name: key, quantity: 0, revenue: 0, cost: 0 };
         byProduct[key].quantity += item.quantity;
-        byProduct[key].revenue += revenue;
+        byProduct[key].revenue += revenueNet;
         byProduct[key].cost += cost;
       }
 
@@ -52,12 +86,25 @@ export default function ProfitabilityTab({ startDate, endDate }: Props) {
       const { data: expData } = await expQ;
       const totalExpenses = expData?.reduce((s, e) => s + Number(e.amount), 0) || 0;
 
+      const totalVat = totalRevenueGross - (totalRevenueGross / (1 + VAT_RATE));
+      // Approximation: assume all completed orders include VAT (matches default).
+      // For a more accurate split we'd need per-order revenueNet — already computed above.
+      // Use sum of byProduct revenues which is already net.
+      const totalRevenueNet = Object.values(byProduct).reduce((s, p) => s + p.revenue, 0);
+      const vatAmount = totalRevenueGross - totalRevenueNet;
+
       return {
-        totalRevenue, totalCost, totalExpenses,
-        totalProfit: totalRevenue - totalCost,
-        netProfit: totalRevenue - totalCost - totalExpenses,
-        marginPercent: totalRevenue > 0 ? ((totalRevenue - totalCost) / totalRevenue) * 100 : 0,
-        byDate: Object.entries(byDate).map(([date, d]) => ({ date, ...d, profit: d.revenue - d.cost })),
+        totalRevenueGross,
+        vatAmount,
+        totalRevenueNet,
+        totalCost,
+        totalExpenses,
+        totalProfit: totalRevenueNet - totalCost,
+        netProfit: totalRevenueNet - totalCost - totalExpenses,
+        marginPercent: totalRevenueNet > 0 ? ((totalRevenueNet - totalCost) / totalRevenueNet) * 100 : 0,
+        byDate: Object.values(byDate)
+          .sort((a, b) => a.dateKey.localeCompare(b.dateKey))
+          .map((d) => ({ date: d.dateLabel, revenue: d.revenue, cost: d.cost, profit: d.revenue - d.cost })),
         byProduct: Object.values(byProduct)
           .map((p) => ({ ...p, profit: p.revenue - p.cost, margin: p.revenue > 0 ? ((p.revenue - p.cost) / p.revenue) * 100 : 0 }))
           .sort((a, b) => b.profit - a.profit),
@@ -68,7 +115,9 @@ export default function ProfitabilityTab({ startDate, endDate }: Props) {
   if (!profitData) return <p className="text-center py-8 text-muted-foreground">טוען...</p>;
 
   const cards = [
-    { label: "הכנסות", value: `₪${profitData.totalRevenue.toFixed(0)}` },
+    { label: "הכנסות ברוטו", value: `₪${profitData.totalRevenueGross.toFixed(0)}` },
+    { label: "מע״מ (17%)", value: `₪${profitData.vatAmount.toFixed(0)}` },
+    { label: "הכנסות נטו", value: `₪${profitData.totalRevenueNet.toFixed(0)}` },
     { label: "עלות סחורה", value: `₪${profitData.totalCost.toFixed(0)}` },
     { label: "הוצאות תפעוליות", value: `₪${profitData.totalExpenses.toFixed(0)}` },
     { label: "רווח גולמי", value: `₪${profitData.totalProfit.toFixed(0)}` },

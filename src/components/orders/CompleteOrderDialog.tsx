@@ -135,13 +135,14 @@ export default function CompleteOrderDialog({
         }
       }
 
-      // 2. Mark order completed
-      await updateStatus.mutateAsync({ id: orderId, status: "completed" as OrderStatus });
+      // 2. Mark order as delivered (auto-invoice trigger). Final closure
+      //    happens later via a separate "סגור הזמנה" action.
+      await updateStatus.mutateAsync({ id: orderId, status: "delivered" as OrderStatus });
 
-      // 3. Trigger SMS for completion
+      // 3. Trigger SMS for delivery
       supabase.functions
         .invoke("order-sms-trigger", {
-          body: { order_id: orderId, trigger_type: "order_completed" },
+          body: { order_id: orderId, trigger_type: "order_delivered" },
         })
         .catch(console.error);
 
@@ -206,7 +207,7 @@ export default function CompleteOrderDialog({
           }
         } catch (err: any) {
           console.error("Auto invoice error:", err);
-          toast.warning(`ההזמנה הושלמה אך ההנפקה האוטומטית נכשלה: ${err?.message || "שגיאה"}`);
+          toast.warning(`ההזמנה סומנה כנמסרה אך ההנפקה האוטומטית נכשלה: ${err?.message || "שגיאה"}`);
         }
       }
 
@@ -215,9 +216,10 @@ export default function CompleteOrderDialog({
       qc.invalidateQueries({ queryKey: ["expenses"] });
       qc.invalidateQueries({ queryKey: ["cash_registers"] });
       onOpenChange(false);
+      toast.success("ההזמנה סומנה כנמסרה");
       // state resets next time the dialog opens via the useEffect above
     } catch (err: any) {
-      toast.error(err?.message || "שגיאה בהשלמת ההזמנה");
+      toast.error(err?.message || "שגיאה בעדכון ההזמנה");
     } finally {
       setSubmitting(false);
     }
@@ -227,9 +229,9 @@ export default function CompleteOrderDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="max-w-md">
         <DialogHeader>
-          <DialogTitle>השלמת הזמנה #{orderNumber}</DialogTitle>
+          <DialogTitle>סימון הזמנה #{orderNumber} כנמסרה</DialogTitle>
           <DialogDescription>
-            הזן את עלות המשלוח בפועל. תרשם הוצאה אוטומטית. חשבונית מס/קבלה תונפק רק עבור חלק המזומן/ביט (אשראי כבר הונפק בנפרד).
+            הזן את עלות המשלוח בפועל. תרשם הוצאה אוטומטית והחשבונית תונפק מיד. את ההזמנה ניתן יהיה לסגור סופית מאוחר יותר.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -309,12 +311,12 @@ export default function CompleteOrderDialog({
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                משלים...
+                שומר...
               </>
             ) : (
               <>
                 <CheckCircle2 className="h-4 w-4" />
-                סמן כהושלמה
+                סמן כנמסרה והנפק חשבונית
               </>
             )}
           </Button>
