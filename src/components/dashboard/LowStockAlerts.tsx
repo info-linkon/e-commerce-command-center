@@ -32,8 +32,7 @@ const LowStockAlerts = () => {
       }
       return Array.from(byVar.values())
         .filter((r) => r.qty <= 5)
-        .sort((a, b) => a.qty - b.qty)
-        .slice(0, 5);
+        .sort((a, b) => a.qty - b.qty);
     },
     refetchInterval: 30000,
   });
@@ -48,12 +47,15 @@ const LowStockAlerts = () => {
         {!lowItems?.length ? (
           <p className="text-sm text-muted-foreground text-center py-8">אין התראות מלאי נמוך</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
             {lowItems.map((item, i) => (
               <div key={i} className="flex items-center justify-between text-sm">
                 <span className="font-bold text-destructive">{item.qty}</span>
                 <div className="text-right">
-                  <span className="font-medium">{item.pName} - {item.vName}</span>
+                  <span className="font-medium">
+                    {item.pName}
+                    {item.vName && item.vName !== "ברירת מחדל" && item.vName !== "Default" ? ` - ${item.vName}` : ""}
+                  </span>
                   <span className="text-muted-foreground mr-2">(סה״כ במחסנים)</span>
                 </div>
               </div>
