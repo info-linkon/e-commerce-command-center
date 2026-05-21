@@ -405,6 +405,16 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Server-side SMS trigger (reliable; browser-side invoke can be lost
+    //    if the user closes the tab before the request completes).
+    try {
+      await supabase.functions.invoke("order-sms-trigger", {
+        body: { order_id: order.id, trigger_type: "order_created" },
+      });
+    } catch (smsErr) {
+      console.warn("order_created SMS trigger failed (non-fatal):", smsErr);
+    }
+
     return jsonResponse({
       success: true,
       order_id: order.id,
