@@ -27,7 +27,7 @@ async function syncOrderStatusToWoo(orderId: string) {
   }
 }
 
-export type OrderStatus = "pending" | "processing" | "picking" | "shipping" | "completed" | "cancelled";
+export type OrderStatus = "pending" | "pending_payment" | "processing" | "picking" | "shipping" | "delivered" | "completed" | "cancelled";
 
 export interface OrderItem {
   variation_id?: string; // optional — POS supports custom (general) line items without a product
@@ -538,8 +538,8 @@ export function useUpdateOrderStatus() {
 
       const { data: order } = await supabase.from("orders").select("source, total").eq("id", id).single();
 
-      // Prevent completing an order without full payment
-      if (status === "completed") {
+      // Prevent moving to delivered/completed without full payment
+      if (status === "delivered" || status === "completed") {
         const { data: payments } = await supabase
           .from("payments")
           .select("amount, payment_method, cash_register_id")
@@ -547,14 +547,14 @@ export function useUpdateOrderStatus() {
         const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
         const orderTotal = Number(order?.total || 0);
         if (totalPaid < orderTotal) {
-          throw new Error(`לא ניתן להשלים הזמנה ללא תשלום מלא. שולם ₪${totalPaid.toFixed(2)} מתוך ₪${orderTotal.toFixed(2)}`);
+          throw new Error(`לא ניתן לעדכן סטטוס ללא תשלום מלא. שולם ₪${totalPaid.toFixed(2)} מתוך ₪${orderTotal.toFixed(2)}`);
         }
         // Cash payments must have a cash register assigned
         const cashWithoutRegister = (payments || []).some(
           (p: any) => p.payment_method === "cash" && !p.cash_register_id
         );
         if (cashWithoutRegister) {
-          throw new Error("לא ניתן להשלים הזמנה — תשלום מזומן חייב להיות משויך לקופה");
+          throw new Error("לא ניתן לעדכן סטטוס — תשלום מזומן חייב להיות משויך לקופה");
         }
       }
 
