@@ -1,71 +1,30 @@
-תוכנית לטיפול ב-6 הנושאים שהעלית, מאוחדים לפי הקבצים שמושפעים.
+## הבעיה
 
----
+`DialogContent` ב-`src/components/ui/dialog.tsx` (הבסיס לכל הפופ-אפים ב-CRM) לא מגביל גובה ולא מאפשר גלילה. כשהתוכן ארוך, החלק התחתון (כולל כפתורי השמירה) "נחתך" מחוץ למסך ואין דרך לגלול אליו. כל דיאלוג שמוסיף לעצמו `overflow-y-auto` בנפרד הוא טלאי מקומי — הבעיה חוזרת בכל דיאלוג חדש.
 
-## 1) התראות מלאי נמוך — מצטבר על כל המחסנים
+## הפתרון
 
-**קובץ:** `src/components/dashboard/LowStockAlerts.tsx`
+לתקן פעם אחת ברכיב הבסיס, כדי שכל הפופ-אפים יקבלו התנהגות גלילה תקינה כברירת מחדל.
 
-כיום הקואירי שולף שורות `inventory` בודדות (לפי מחסן). נחליף לגישה שמסכמת לפי variation:
-- שליפת כל ה-`inventory` עם variation+product
-- קיבוץ ב-JS לפי `variation_id` וסיכום הכמויות
-- סינון לכאלה ש-`sum ≤ 5` (סף קבוע כמו היום)
-- מיון עולה, top 5
+### שינויים
 
-יוצג שם המוצר + הוריאציה + סה"כ כמות (בלי שם מחסן, כי זה מצטבר).
+**1) `src/components/ui/dialog.tsx` — `DialogContent`**
+- להוסיף `max-h-[90vh]` ולהפוך אותו ל-`flex flex-col` כדי שה-Header/Footer יישארו דביקים וה-body יגלול.
+- אבל כדי לא לשבור דיאלוגים קיימים שכבר מגדירים מבנה משלהם — נשתמש בגישה פשוטה ובטוחה יותר: `max-h-[90vh] overflow-y-auto` על ה-`Content` עצמו. כל הדיאלוגים הקיימים ימשיכו לעבוד, ופשוט יקבלו פס גלילה כשצריך.
+- שמירת `dir="rtl"` כברירת מחדל (פס הגלילה יופיע בצד שמאל ב-RTL — תקין).
 
----
+**2) `src/components/ui/alert-dialog.tsx` — `AlertDialogContent`**
+- אותו טיפול: `max-h-[90vh] overflow-y-auto`.
 
-## 2) רווחיות — מע"מ ועלות מוצרים
+**3) `src/components/ui/sheet.tsx`**
+- בדיקה מהירה אם יש בעיה דומה (Sheet בדרך כלל כבר מטפל בגלילה, אבל נוודא).
 
-**קובץ:** `src/components/reports/ProfitabilityTab.tsx`
+### הערה על דיאלוגים שכבר מגדירים `max-h` / `overflow` בעצמם
 
-נטפל בכמה דברים יחד:
+כשהדיאלוג מעביר className עם `max-h-*` או `overflow-*`, ה-`cn()` מאחה אוטומטית את ה-Tailwind classes ונותן עדיפות ל-className של הצרכן — אז דיאלוגים כמו `ProductForm`, `BundleForm` וכו' שכבר מטפלים בגלילה משלהם לא יושפעו.
 
-**א. מע"מ מנוכה מהכנסות לפני חישוב הרווח:**
-- כל הזמנה שומרת `includes_vat` (ברירת מחדל true) ושיעור מע"מ קבוע 17%.
-- ההכנסה הנטו לחישוב רווחיות = `total_price / 1.17` כשההזמנה כוללת מע"מ.
-- נשאיר את ה-`cost_price` כפי שהוא (כבר ללא מע"מ לפי [Financial Tracking](mem://features/financial-tracking)).
+## מה לא משתנה
 
-**ב. עמודות חדשות בקלפי הסיכום (6 → 7):**
-- הכנסות ברוטו, מע"מ, הכנסות נטו, עלות סחורה, הוצאות תפעוליות, רווח גולמי, רווח נקי, % רווחיות.
-
-**ג. עלות מארז (קשור גם לסעיף 4):**
-- היום `cost_price` נשלף מ-`product_variations` של ה-variation שנמכר. במארזים יש default variation עם `cost_price=0`, מה שמייצר רווחיות מזויפת.
-- שליפת ה-items תכלול גם `bundle_variation_id` ואת רכיביו (`bundle_variation_items → product_variations.cost_price`).
-- אם `bundle_variation_id` קיים, העלות = sum(quantity × cost_price) של כל הרכיבים, כפול הכמות שנמכרה.
-
-**ד. ציר תאריכים ברווחיות לפי תאריך:**
-- היום הקוד עושה `toLocaleDateString("he-IL")` ובונה אובייקט; הסדר נשבר כי המפתחות הם מחרוזות בעברית.
-- נשמור גם `dateKey` (ISO `YYYY-MM-DD`) למיון, ונציג `dateLabel` בפורמט עברי. נמיין `byDate` לפי `dateKey` עולה לפני העברה ל-Recharts.
-
----
-
-## 3) עלות מארז במקומות נוספים
-
-החישוב המתוקן ב-#2ג ישפיע על דוח הרווחיות. נבדוק מהר גם:
-- `src/components/dashboard/StatsCards.tsx` — אם מציג רווח, להחיל אותה לוגיקה.
-- `src/components/reports/SalesTab.tsx` — אם מציג עלות, להחיל אותה לוגיקה.
-
-(אם השדות לא קיימים שם — לא נוגעים.)
-
----
-
-## 4) סטטוס חדש "נמסר" (delivered) לפני "הושלמה"
-
-זרימה חדשה: `pending → processing → picking → shipping → delivered → completed`.
-
-**מסד נתונים (migration):**
-- `ALTER TYPE order_status ADD VALUE 'delivered' BEFORE 'completed'`.
-- אם נחסם בגלל enum reorder — נוסיף בסוף, ונסתמך על סדר UI.
-
-**טריגר חשבונית אוטומטית:**
-- מעבר ל-`delivered` יבצע את כל מה שהיום קורה ב-`completed`: הנפקת חשבונית (Ezcount), שליחת SMS `invoice_issued`, ועדכון Woo.
-- מעבר ל-`completed` יישאר סגירה פיננסית סופית (קופה דחויה, כו'). 
-- בפועל: ב-`useUpdateOrderStatus` כאשר `status === 'delivered'` נקרא ל-`ezcount-doc` ול-`order-sms-trigger` עם `delivered`.
-- ב-`CompleteOrderDialog` נציע "סמן כנמסר + הנפק חשבונית" במקום ישר ל-completed; השלמה סופית תהפוך לכפתור נפרד.
-
-**SMS template חדש:** `order_delivered` (טריגר חדש ב-enum `sms_templates.trigger`). המשתמש יוכל ליצור בעצמו דרך מסך התבניות.
-
-**שילוב עם אפליקציית שליחים:**
-- כן אפשר. דרך פתוחה: webhook ייעודי `delivery-webhook` שמקבל `tracking_number` או `order_number` + `status=delivered` ומבצע את
+- העיצוב הוויזואלי של הפופ-אפים (מיקום, רקע, צללים, אנימציות).
+- לוגיקה עסקית כלשהי.
+- דיאלוגים שכבר מגדירים `max-h` / `overflow` משלהם — ימשיכו לעבוד כמו קודם.
