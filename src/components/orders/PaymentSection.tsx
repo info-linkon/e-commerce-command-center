@@ -538,6 +538,25 @@ const PaymentSection = ({
           </p>
         )}
       </CardContent>
+
+      {/* Unified completion dialog — opened after a payment is recorded with
+          the "סמן הזמנה כהושלמה" toggle on, so shipping cost / expense /
+          auto-invoice / completed_by all flow through the same path. */}
+      {orderNumber !== undefined && (
+        <CompleteOrderDialog
+          open={showCompleteDialog}
+          onOpenChange={setShowCompleteDialog}
+          orderId={orderId}
+          orderNumber={orderNumber}
+          customerName={customerName}
+          customerEmail={customerEmail}
+          customerPhone={customerPhone}
+          orderItems={orderItems}
+          shippingCost={shippingCost}
+          discountAmount={discountAmount}
+          hasInvoice={hasInvoiceReceipt}
+        />
+      )}
     </Card>
   );
 };
