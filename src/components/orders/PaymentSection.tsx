@@ -456,7 +456,8 @@ const PaymentSection = ({
                 </div>
 
                 {/* Invoice toggle — show only if cash payment and no existing invoice */}
-                {hasCashLine && !hasInvoiceReceipt && customerName && (
+                {/* Hidden when completing order — CompleteOrderDialog issues it automatically */}
+                {hasCashLine && !hasInvoiceReceipt && customerName && !completeOrder && (
                   <div className="flex items-center gap-2 p-2 rounded-lg border bg-blue-50/50 dark:bg-blue-950/20">
                     <Switch checked={issueInvoice} onCheckedChange={setIssueInvoice} />
                     <Label className="text-sm flex items-center gap-1">
