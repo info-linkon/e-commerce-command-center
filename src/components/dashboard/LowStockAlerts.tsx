@@ -47,7 +47,7 @@ const LowStockAlerts = () => {
         {!lowItems?.length ? (
           <p className="text-sm text-muted-foreground text-center py-8">אין התראות מלאי נמוך</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
             {lowItems.map((item, i) => (
               <div key={i} className="flex items-center justify-between text-sm">
                 <span className="font-bold text-destructive">{item.qty}</span>
