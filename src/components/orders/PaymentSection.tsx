@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useOrderPayments, useRecordPayment } from "@/hooks/usePayments";
 import { useCashRegisters } from "@/hooks/useCashRegisters";
 import { useCreateDocument } from "@/hooks/useDocuments";
+import CompleteOrderDialog from "@/components/orders/CompleteOrderDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -72,6 +73,7 @@ const PaymentSection = ({
   const [issueInvoice, setIssueInvoice] = useState(false);
   const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
   const [issuingInvoiceStandalone, setIssuingInvoiceStandalone] = useState(false);
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [lines, setLines] = useState<PaymentLine[]>([
     { amount: String(orderTotal), method: "cash", cash_register_id: "", reference: "" },
   ]);
@@ -189,8 +191,9 @@ const PaymentSection = ({
       { order_id: orderId, payments, completeOrder },
       {
         onSuccess: async () => {
-          // Issue invoice if toggled on
-          if (issueInvoice && customerName && orderItems && orderItems.length > 0) {
+          // Issue invoice if toggled on — only relevant when NOT completing the
+          // order (CompleteOrderDialog auto-issues an invoice on completion).
+          if (!completeOrder && issueInvoice && customerName && orderItems && orderItems.length > 0) {
             try {
               const docPayments = payments.map((p) => ({
                 type: p.payment_method === "cash" ? "cash" : p.payment_method === "bit" ? "bit" : "credit",
@@ -226,6 +229,12 @@ const PaymentSection = ({
             }
           }
           setOpen(false);
+          // If user toggled "complete order", open the unified completion
+          // dialog so shipping cost, expense, auto-invoice and completed_by
+          // are all recorded consistently.
+          if (completeOrder) {
+            setShowCompleteDialog(true);
+          }
         },
       }
     );
@@ -447,7 +456,8 @@ const PaymentSection = ({
                 </div>
 
                 {/* Invoice toggle — show only if cash payment and no existing invoice */}
-                {hasCashLine && !hasInvoiceReceipt && customerName && (
+                {/* Hidden when completing order — CompleteOrderDialog issues it automatically */}
+                {hasCashLine && !hasInvoiceReceipt && customerName && !completeOrder && (
                   <div className="flex items-center gap-2 p-2 rounded-lg border bg-blue-50/50 dark:bg-blue-950/20">
                     <Switch checked={issueInvoice} onCheckedChange={setIssueInvoice} />
                     <Label className="text-sm flex items-center gap-1">
@@ -528,6 +538,25 @@ const PaymentSection = ({
           </p>
         )}
       </CardContent>
+
+      {/* Unified completion dialog — opened after a payment is recorded with
+          the "סמן הזמנה כהושלמה" toggle on, so shipping cost / expense /
+          auto-invoice / completed_by all flow through the same path. */}
+      {orderNumber !== undefined && (
+        <CompleteOrderDialog
+          open={showCompleteDialog}
+          onOpenChange={setShowCompleteDialog}
+          orderId={orderId}
+          orderNumber={orderNumber}
+          customerName={customerName}
+          customerEmail={customerEmail}
+          customerPhone={customerPhone}
+          orderItems={orderItems}
+          shippingCost={shippingCost}
+          discountAmount={discountAmount}
+          hasInvoice={hasInvoiceReceipt}
+        />
+      )}
     </Card>
   );
 };

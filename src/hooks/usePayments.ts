@@ -83,20 +83,16 @@ export function useRecordPayment() {
         }
       }
 
-      // 3. Optionally mark order as completed
-      if (input.completeOrder) {
-        const { error: orderErr } = await supabase
-          .from("orders")
-          .update({ status: "completed" })
-          .eq("id", input.order_id);
-        if (orderErr) throw orderErr;
-      }
+      // NOTE: Completion is intentionally NOT handled here. Callers that want
+      // to complete the order must go through CompleteOrderDialog so the
+      // shipping cost dialog, expense recording, auto-invoice and
+      // completed_by audit all run consistently. See plan: unify completion.
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["payments", vars.order_id] });
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["cash_registers"] });
-      toast.success(vars.completeOrder ? "התשלום נרשם וההזמנה הושלמה" : "התשלום נרשם");
+      toast.success("התשלום נרשם");
     },
     onError: () => toast.error("שגיאה ברישום תשלום"),
   });
