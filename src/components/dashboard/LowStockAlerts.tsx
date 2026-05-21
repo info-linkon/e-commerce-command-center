@@ -7,15 +7,20 @@ const LowStockAlerts = () => {
   const { data: lowItems } = useQuery({
     queryKey: ["dashboard-low-stock"],
     queryFn: async () => {
+      // Exclude bundle products — their inventory is virtual/derived from components
+      const { data: bundleRows } = await supabase.from("bundles").select("product_id");
+      const bundleProductIds = new Set((bundleRows || []).map((b: any) => b.product_id));
+
       const { data, error } = await supabase
         .from("inventory")
-        .select("variation_id, quantity, product_variations(name, products(name, name_ar))");
+        .select("variation_id, quantity, product_variations(name, product_id, products(name, name_ar))");
       if (error) throw error;
       // Aggregate across all warehouses by variation
       const byVar = new Map<string, { qty: number; vName: string; pName: string }>();
       for (const row of data || []) {
         const v: any = row.product_variations;
         if (!v) continue;
+        if (v.product_id && bundleProductIds.has(v.product_id)) continue;
         const id = row.variation_id as string;
         const existing = byVar.get(id);
         const qty = (existing?.qty || 0) + (row.quantity || 0);
@@ -26,7 +31,7 @@ const LowStockAlerts = () => {
         });
       }
       return Array.from(byVar.values())
-        .filter((r) => r.qty <= 5)
+        .filter((r) => r.qty <= 5 && r.qty >= 0)
         .sort((a, b) => a.qty - b.qty)
         .slice(0, 5);
     },
