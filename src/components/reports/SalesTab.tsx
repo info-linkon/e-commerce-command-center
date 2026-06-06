@@ -168,8 +168,8 @@ export default function SalesTab({ startDate, endDate }: Props) {
                 {filteredSorted.map((p, i) => (
                   <TableRow key={i}>
                     <TableCell className="font-medium">
-                      {p.productNumber ? (
-                        <Link to={`/crm/inventory/products/${p.productNumber}`} className="text-primary hover:underline">{p.name}</Link>
+                      {p.id ? (
+                        <Link to={`/crm/inventory/products/${p.id}`} className="text-primary hover:underline">{p.name}</Link>
                       ) : p.name}
                     </TableCell>
                     <TableCell>{p.quantity}</TableCell>
