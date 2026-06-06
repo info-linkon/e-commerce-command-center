@@ -41,6 +41,7 @@ const statusLabels: Record<string, string> = {
   delivered: "נמסרה",
   completed: "הושלמה",
   cancelled: "בוטלה",
+  unfulfilled: "לא מומשה",
 };
 
 const statusColors: Record<string, string> = {
@@ -52,6 +53,7 @@ const statusColors: Record<string, string> = {
   delivered: "bg-teal-100 text-teal-800",
   completed: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
+  unfulfilled: "bg-gray-200 text-gray-800",
 };
 
 const pickingLabels: Record<string, string> = {

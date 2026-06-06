@@ -65,16 +65,18 @@ Deno.serve(async (req) => {
     }
     const templates: Tpl[] = [];
     for (const arr of groups.values()) {
-      // Prefer recipient-type 'customer' to use the order language;
-      // for non-customer (admin) recipients, language still preferred but not critical.
+      // Prefer order-language match; fall back to generic (NULL locale);
+      // finally fall back to ANY template in the group so SMS still goes out
+      // when the admin only defined templates in a single locale.
       const exact = arr.find((t) => t.locale === orderLang);
       const generic = arr.find((t) => !t.locale);
-      const chosen = exact || generic;
+      const chosen = exact || generic || arr[0];
       if (chosen) templates.push(chosen);
     }
 
     if (templates.length === 0) {
-      return new Response(JSON.stringify({ skipped: true, reason: "No matching template for locale" }), {
+      console.warn("order-sms-trigger: no templates resolved", { trigger_type, order_id });
+      return new Response(JSON.stringify({ skipped: true, reason: "No matching template" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

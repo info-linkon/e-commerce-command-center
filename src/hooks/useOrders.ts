@@ -27,7 +27,16 @@ async function syncOrderStatusToWoo(orderId: string) {
   }
 }
 
-export type OrderStatus = "pending" | "pending_payment" | "processing" | "picking" | "shipping" | "delivered" | "completed" | "cancelled";
+export type OrderStatus =
+  | "pending"
+  | "pending_payment"
+  | "processing"
+  | "picking"
+  | "shipping"
+  | "delivered"
+  | "completed"
+  | "cancelled"
+  | "unfulfilled";
 
 export interface OrderItem {
   variation_id?: string; // optional — POS supports custom (general) line items without a product
@@ -538,7 +547,9 @@ export function useUpdateOrderStatus() {
 
       const { data: order } = await supabase.from("orders").select("source, total").eq("id", id).single();
 
-      // Prevent moving to delivered/completed without full payment
+      // Prevent moving to delivered/completed without full payment.
+      // 'unfulfilled' (לא מומש) does NOT require payment — by definition the
+      // order didn't generate income, only inventory movement.
       if (status === "delivered" || status === "completed") {
         const { data: payments } = await supabase
           .from("payments")

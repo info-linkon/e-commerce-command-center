@@ -53,10 +53,13 @@ export default function CashflowTab({ startDate, endDate }: Props) {
     },
   });
 
-  // Cash payments are only counted when their order is completed
-  const visiblePayments = (payments || []).filter(
-    (p: any) => p.payment_method !== "cash" || p.orders?.status === "completed",
-  );
+  // Cash payments are only counted when their order is completed.
+  // Orders marked "לא מומש" (unfulfilled) are excluded entirely — by
+  // definition the money never came in even if a payment row exists.
+  const visiblePayments = (payments || []).filter((p: any) => {
+    if (p.orders?.status === "unfulfilled") return false;
+    return p.payment_method !== "cash" || p.orders?.status === "completed";
+  });
 
   const filteredPayments = useMemo(() => {
     if (registerFilter === "all") return visiblePayments;

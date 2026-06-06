@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { Separator } from "@/components/ui/separator";
@@ -19,6 +19,16 @@ interface RichTextEditorProps {
 export function RichTextEditor({ value, onChange, rows = 6, dir = "rtl", placeholder }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<"visual" | "html">("visual");
+
+  // Sync external value -> DOM only when it actually differs from what's
+  // currently in the editor. Without this guard, every keystroke re-writes
+  // innerHTML and the caret jumps to the start.
+  useEffect(() => {
+    if (!editorRef.current) return;
+    if (editorRef.current.innerHTML !== (value || "")) {
+      editorRef.current.innerHTML = value || "";
+    }
+  }, [value, mode]);
 
   const execCommand = useCallback((command: string, value?: string) => {
     document.execCommand(command, false, value);
@@ -137,8 +147,8 @@ export function RichTextEditor({ value, onChange, rows = 6, dir = "rtl", placeho
             style={{ minHeight }}
             onInput={handleInput}
             onPaste={handlePaste}
-            dangerouslySetInnerHTML={{ __html: value }}
             data-placeholder={placeholder}
+            suppressContentEditableWarning
           />
         </TabsContent>
 

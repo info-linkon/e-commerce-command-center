@@ -54,7 +54,7 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
           .select("total")
           .gte("created_at", startDate)
           .lte("created_at", endDate)
-          .neq("status", "cancelled"),
+          .not("status", "in", "(cancelled,unfulfilled)"),
         supabase
           .from("payments")
           .select(
@@ -72,7 +72,7 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
 
       const paymentsList = payments.data || [];
       const includedPayments = paymentsList.filter((p: any) => {
-        if (p.orders?.status === "cancelled") return false;
+        if (p.orders?.status === "cancelled" || p.orders?.status === "unfulfilled") return false;
         if (p.payment_method === "cash" && p.orders?.status !== "completed")
           return false;
         return ["cash", "credit", "bit"].includes(p.payment_method);

@@ -39,6 +39,7 @@ export default function WebCategoryPage() {
               price={product.sale_price}
               imageUrl={product.image_url}
               categoryName={product.categories?.name} categoryNameHe={product.categories?.name_he}
+              outOfStock={product.outOfStock}
             />
           ))}
         </div>
