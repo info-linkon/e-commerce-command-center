@@ -1,6 +1,38 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+// Annotate a list of products with `outOfStock` based on the sum of
+// inventory.quantity across all their variations. Bundles are evaluated by
+// summing the inventory of their default variation (the auto-created
+// "ברירת מחדל"); this matches what AddToCart actually decrements.
+async function annotateOutOfStock<T extends { id: string }>(products: T[]): Promise<(T & { outOfStock: boolean })[]> {
+  if (!products || products.length === 0) return [] as any;
+  const productIds = products.map((p) => p.id);
+  const { data: variations } = await supabase
+    .from("product_variations")
+    .select("id, product_id")
+    .in("product_id", productIds);
+  const variationIds = (variations || []).map((v: any) => v.id);
+  const stockByVariation = new Map<string, number>();
+  if (variationIds.length > 0) {
+    const { data: inv } = await supabase
+      .from("inventory")
+      .select("variation_id, quantity")
+      .in("variation_id", variationIds);
+    for (const row of inv || []) {
+      const k = (row as any).variation_id as string;
+      stockByVariation.set(k, (stockByVariation.get(k) || 0) + Number((row as any).quantity || 0));
+    }
+  }
+  const stockByProduct = new Map<string, number>();
+  for (const v of variations || []) {
+    const pid = (v as any).product_id as string;
+    const qty = stockByVariation.get((v as any).id) || 0;
+    stockByProduct.set(pid, (stockByProduct.get(pid) || 0) + qty);
+  }
+  return products.map((p) => ({ ...p, outOfStock: (stockByProduct.get(p.id) || 0) <= 0 }));
+}
+
 export function useWebProducts(categoryId?: string) {
   return useQuery({
     queryKey: ["web-products", categoryId],
@@ -13,7 +45,7 @@ export function useWebProducts(categoryId?: string) {
       if (categoryId) query = query.eq("category_id", categoryId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return await annotateOutOfStock(data as any[]);
     },
   });
 }
@@ -55,7 +87,7 @@ export function useWebProductsByCategoryNumber(categoryNumber: number | undefine
         .in("id", ids)
         .order("name");
       if (error) throw error;
-      return { products: data || [], category: cat };
+      return { products: await annotateOutOfStock((data || []) as any[]), category: cat };
     },
   });
 }
@@ -137,7 +169,7 @@ export function useWebFeaturedProducts() {
         .order("name")
         .limit(12);
       if (error) throw error;
-      return data;
+      return await annotateOutOfStock((data || []) as any[]);
     },
   });
 }
@@ -167,7 +199,7 @@ export function useWebSearch(query: string) {
         .or(`name.ilike.%${query}%,name_ar.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(20);
       if (error) throw error;
-      return data;
+      return await annotateOutOfStock((data || []) as any[]);
     },
   });
 }

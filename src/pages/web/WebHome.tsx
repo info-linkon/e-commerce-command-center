@@ -246,6 +246,7 @@ export default function WebHome() {
                 price={product.sale_price}
                 imageUrl={product.image_url}
                 categoryName={(product as any).categories?.name} categoryNameHe={(product as any).categories?.name_he}
+                outOfStock={(product as any).outOfStock}
               />
             ))}
           </div>
@@ -278,6 +279,7 @@ export default function WebHome() {
                 price={product.sale_price}
                 imageUrl={product.image_url}
                 categoryName={(product as any).categories?.name} categoryNameHe={(product as any).categories?.name_he}
+                outOfStock={(product as any).outOfStock}
               />
             ))}
           </div>
