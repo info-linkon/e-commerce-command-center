@@ -1,36 +1,149 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Annotate a list of products with `outOfStock` based on the sum of
-// inventory.quantity across all their variations. Bundles are evaluated by
-// summing the inventory of their default variation (the auto-created
-// "ברירת מחדל"); this matches what AddToCart actually decrements.
+// Annotate a list of products with `outOfStock`.
+// IMPORTANT: bundles have a virtual "ברירת מחדל" variation whose
+// inventory.quantity is always 0 — the real availability is derived from the
+// component variations (bundle_items / bundle_variation_items). Summing
+// inventory directly would mark every bundle as out-of-stock.
+// We therefore split products into (a) regular products, summed via inventory,
+// and (b) bundles, computed from component stock like useBundlesStockBatch.
 async function annotateOutOfStock<T extends { id: string }>(products: T[]): Promise<(T & { outOfStock: boolean })[]> {
   if (!products || products.length === 0) return [] as any;
   const productIds = products.map((p) => p.id);
-  const { data: variations } = await supabase
-    .from("product_variations")
-    .select("id, product_id")
+
+  // 1. Identify which products are bundles.
+  const { data: bundleRows } = await supabase
+    .from("bundles")
+    .select("id, product_id, bundle_type")
     .in("product_id", productIds);
-  const variationIds = (variations || []).map((v: any) => v.id);
-  const stockByVariation = new Map<string, number>();
-  if (variationIds.length > 0) {
-    const { data: inv } = await supabase
-      .from("inventory")
-      .select("variation_id, quantity")
-      .in("variation_id", variationIds);
-    for (const row of inv || []) {
-      const k = (row as any).variation_id as string;
-      stockByVariation.set(k, (stockByVariation.get(k) || 0) + Number((row as any).quantity || 0));
+  const bundleByProduct = new Map<string, { id: string; bundle_type: string }>();
+  for (const b of bundleRows || []) {
+    bundleByProduct.set((b as any).product_id, { id: (b as any).id, bundle_type: (b as any).bundle_type });
+  }
+
+  const regularProductIds = productIds.filter((pid) => !bundleByProduct.has(pid));
+
+  // 2. Regular products: sum inventory across their variations.
+  const stockByProduct = new Map<string, number>();
+  if (regularProductIds.length > 0) {
+    const { data: variations } = await supabase
+      .from("product_variations")
+      .select("id, product_id")
+      .in("product_id", regularProductIds);
+    const variationIds = (variations || []).map((v: any) => v.id);
+    const stockByVariation = new Map<string, number>();
+    if (variationIds.length > 0) {
+      const { data: inv } = await supabase
+        .from("inventory")
+        .select("variation_id, quantity")
+        .in("variation_id", variationIds);
+      for (const row of inv || []) {
+        const k = (row as any).variation_id as string;
+        stockByVariation.set(k, (stockByVariation.get(k) || 0) + Number((row as any).quantity || 0));
+      }
+    }
+    for (const v of variations || []) {
+      const pid = (v as any).product_id as string;
+      const qty = stockByVariation.get((v as any).id) || 0;
+      stockByProduct.set(pid, (stockByProduct.get(pid) || 0) + qty);
     }
   }
-  const stockByProduct = new Map<string, number>();
-  for (const v of variations || []) {
-    const pid = (v as any).product_id as string;
-    const qty = stockByVariation.get((v as any).id) || 0;
-    stockByProduct.set(pid, (stockByProduct.get(pid) || 0) + qty);
+
+  // 3. Bundles: compute availability from component stock.
+  const bundleOutOfStock = new Map<string, boolean>();
+  if (bundleByProduct.size > 0) {
+    const simpleBundleIds: string[] = [];
+    const variableBundleIds: string[] = [];
+    const productByBundleId = new Map<string, string>();
+    for (const [pid, b] of bundleByProduct.entries()) {
+      productByBundleId.set(b.id, pid);
+      if (b.bundle_type === "variable_bundle") variableBundleIds.push(b.id);
+      else simpleBundleIds.push(b.id);
+    }
+
+    // Load components in parallel.
+    const [simpleItemsRes, bvListRes] = await Promise.all([
+      simpleBundleIds.length
+        ? supabase.from("bundle_items").select("bundle_id, variation_id, quantity").in("bundle_id", simpleBundleIds)
+        : Promise.resolve({ data: [] as any[] } as any),
+      variableBundleIds.length
+        ? supabase.from("bundle_variations").select("id, bundle_id").in("bundle_id", variableBundleIds)
+        : Promise.resolve({ data: [] as any[] } as any),
+    ]);
+    const simpleItems = (simpleItemsRes.data || []) as any[];
+    const bvList = (bvListRes.data || []) as any[];
+
+    let bvItems: any[] = [];
+    if (bvList.length > 0) {
+      const { data } = await supabase
+        .from("bundle_variation_items")
+        .select("bundle_variation_id, variation_id, quantity")
+        .in("bundle_variation_id", bvList.map((bv) => bv.id));
+      bvItems = data || [];
+    }
+
+    // Collect all component variation ids and fetch their inventory in one query.
+    const componentVarIds = new Set<string>();
+    simpleItems.forEach((i) => componentVarIds.add(i.variation_id));
+    bvItems.forEach((i) => componentVarIds.add(i.variation_id));
+    const componentStock = new Map<string, number>();
+    if (componentVarIds.size > 0) {
+      const { data: inv } = await supabase
+        .from("inventory")
+        .select("variation_id, quantity")
+        .in("variation_id", [...componentVarIds]);
+      for (const row of inv || []) {
+        const k = (row as any).variation_id as string;
+        componentStock.set(k, (componentStock.get(k) || 0) + Number((row as any).quantity || 0));
+      }
+    }
+
+    // Simple bundles: maxQty = min(floor(stock(component) / qty)).
+    for (const bid of simpleBundleIds) {
+      const components = simpleItems.filter((i) => i.bundle_id === bid);
+      const pid = productByBundleId.get(bid)!;
+      if (components.length === 0) {
+        bundleOutOfStock.set(pid, true);
+        continue;
+      }
+      const maxQty = Math.min(
+        ...components.map((c) => Math.floor((componentStock.get(c.variation_id) || 0) / (c.quantity || 1))),
+      );
+      bundleOutOfStock.set(pid, maxQty <= 0);
+    }
+
+    // Variable bundles: in stock if at least one variation is in stock.
+    for (const bid of variableBundleIds) {
+      const pid = productByBundleId.get(bid)!;
+      const bvs = bvList.filter((bv) => bv.bundle_id === bid);
+      if (bvs.length === 0) {
+        bundleOutOfStock.set(pid, true);
+        continue;
+      }
+      let anyAvailable = false;
+      for (const bv of bvs) {
+        const components = bvItems.filter((i) => i.bundle_variation_id === bv.id);
+        if (components.length === 0) continue;
+        const maxQty = Math.min(
+          ...components.map((c) => Math.floor((componentStock.get(c.variation_id) || 0) / (c.quantity || 1))),
+        );
+        if (maxQty > 0) {
+          anyAvailable = true;
+          break;
+        }
+      }
+      bundleOutOfStock.set(pid, !anyAvailable);
+    }
   }
-  return products.map((p) => ({ ...p, outOfStock: (stockByProduct.get(p.id) || 0) <= 0 }));
+
+  return products.map((p) => {
+    const isBundle = bundleByProduct.has(p.id);
+    const outOfStock = isBundle
+      ? bundleOutOfStock.get(p.id) ?? true
+      : (stockByProduct.get(p.id) || 0) <= 0;
+    return { ...p, outOfStock };
+  });
 }
 
 export function useWebProducts(categoryId?: string) {
