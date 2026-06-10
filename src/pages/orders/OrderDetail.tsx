@@ -42,6 +42,7 @@ const statusLabels: Record<string, string> = {
   completed: "הושלמה",
   cancelled: "בוטלה",
   unfulfilled: "לא מומשה",
+  external_unfulfilled: "לא מומש (חיצוני)",
 };
 
 const statusColors: Record<string, string> = {
@@ -54,6 +55,7 @@ const statusColors: Record<string, string> = {
   completed: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
   unfulfilled: "bg-gray-200 text-gray-800",
+  external_unfulfilled: "bg-slate-200 text-slate-700",
 };
 
 const pickingLabels: Record<string, string> = {

@@ -36,7 +36,8 @@ export type OrderStatus =
   | "delivered"
   | "completed"
   | "cancelled"
-  | "unfulfilled";
+  | "unfulfilled"
+  | "external_unfulfilled";
 
 export interface OrderItem {
   variation_id?: string; // optional — POS supports custom (general) line items without a product

@@ -57,7 +57,7 @@ export default function CashflowTab({ startDate, endDate }: Props) {
   // Orders marked "לא מומש" (unfulfilled) are excluded entirely — by
   // definition the money never came in even if a payment row exists.
   const visiblePayments = (payments || []).filter((p: any) => {
-    if (p.orders?.status === "unfulfilled") return false;
+    if (p.orders?.status === "unfulfilled" || p.orders?.status === "external_unfulfilled") return false;
     return p.payment_method !== "cash" || p.orders?.status === "completed";
   });
 
