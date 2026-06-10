@@ -74,6 +74,21 @@ Deno.serve(async (req) => {
     if (!payload.customer_name?.trim() || !payload.customer_phone?.trim()) {
       return jsonResponse({ error: "بيانات الزبون ناقصة" }, 400);
     }
+    // Normalize + validate phone. An invalid phone here means the order
+    // SMS will never be deliverable (LINKON rejects with "No valid
+    // recipients") — reject up-front so the customer gets a clear error
+    // instead of a silent failure later.
+    const rawPhone = payload.customer_phone.replace(/[\s\-()\u200E\u200F]/g, "");
+    const digitsOnly = rawPhone.replace(/\D/g, "");
+    // Israeli mobile: 05XXXXXXXX (10 digits) or 9725XXXXXXXX (12 digits)
+    const isValidIL =
+      (/^0\d{9}$/.test(digitsOnly)) ||
+      (/^972\d{9}$/.test(digitsOnly));
+    if (!isValidIL) {
+      return jsonResponse({ error: "رقم الهاتف غير صالح" }, 400);
+    }
+    payload.customer_phone = digitsOnly;
+
     if (payload.payment_method !== "cash" && payload.payment_method !== "credit") {
       return jsonResponse({ error: "طريقة دفع غير صالحة" }, 400);
     }
@@ -407,12 +422,36 @@ Deno.serve(async (req) => {
 
     // ── Server-side SMS trigger (reliable; browser-side invoke can be lost
     //    if the user closes the tab before the request completes).
+    // IMPORTANT: use raw fetch (not supabase.functions.invoke). Edge-to-edge
+    // invokes via supabase-js v2 don't throw on HTTP errors — they return
+    // {data:null, error} which a try/catch silently misses, and the SMS
+    // disappears with no trace. Bug history: all website orders between
+    // late-May and early-June 2026 lost their order_created SMS because of
+    // exactly that swallow. fetch + explicit status check fixes it.
     try {
-      await supabase.functions.invoke("order-sms-trigger", {
-        body: { order_id: order.id, trigger_type: "order_created" },
+      const smsRes = await fetch(`${supabaseUrl}/functions/v1/order-sms-trigger`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${serviceKey}`,
+          "apikey": serviceKey,
+        },
+        body: JSON.stringify({ order_id: order.id, trigger_type: "order_created" }),
       });
+      const smsText = await smsRes.text();
+      if (!smsRes.ok) {
+        console.error("order_created SMS trigger HTTP error", smsRes.status, smsText, {
+          order_id: order.id,
+          order_number: order.order_number,
+        });
+      } else {
+        console.log("order_created SMS trigger ok", smsText);
+      }
     } catch (smsErr) {
-      console.warn("order_created SMS trigger failed (non-fatal):", smsErr);
+      console.error("order_created SMS trigger threw (non-fatal):", smsErr, {
+        order_id: order.id,
+        order_number: order.order_number,
+      });
     }
 
     return jsonResponse({
