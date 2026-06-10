@@ -567,32 +567,6 @@ const OrderDetail = () => {
                     סמן כחשבונית הופקה ידנית
                   </Button>
                 )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs"
-                  onClick={async () => {
-                    const url = window.prompt("הדבק את קישור החשבונית (URL):", "");
-                    if (!url) return;
-                    const trimmed = url.trim();
-                    if (!/^https?:\/\//i.test(trimmed)) {
-                      toast.error("כתובת לא תקינה — חייבת להתחיל ב-http(s)://");
-                      return;
-                    }
-                    const { error } = await supabase
-                      .from("orders")
-                      .update({ invoice_url: trimmed, invoice_issued_manually: true } as any)
-                      .eq("id", order.id);
-                    if (error) toast.error("שגיאה בשמירה");
-                    else {
-                      toast.success("הקישור לחשבונית נשמר");
-                      qc.invalidateQueries({ queryKey: ["orders"] });
-                    }
-                  }}
-                >
-                  <ExternalLink className="h-3 w-3 ml-1" />
-                  הדבק קישור חשבונית
-                </Button>
               </div>
             )}
           </CardContent>
