@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,25 +15,63 @@ interface Props {
 
 export default function OverviewTab({ startDate, endDate }: Props) {
   const { data: registers } = useCashRegisters();
+  const [categoryId, setCategoryId] = useState<string>("all");
+
+  const { data: categories } = useQuery({
+    queryKey: ["report-overview-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name, name_he")
+        .order("display_order");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: salesData } = useQuery({
-    queryKey: ["report-overview-sales", startDate, endDate],
+    queryKey: ["report-overview-sales", startDate, endDate, categoryId],
     queryFn: async () => {
+      // When a category is selected we have to derive sales from order_items
+      // (so we can keep only lines whose product is in that category).
+      // Otherwise sum order totals directly — much cheaper.
+      if (categoryId === "all") {
+        let q = supabase
+          .from("orders")
+          .select("total, created_at")
+          .gte("created_at", startDate)
+          .not("status", "in", "(cancelled,unfulfilled)")
+          .order("created_at");
+        if (endDate) q = q.lte("created_at", endDate);
+        const { data, error } = await q;
+        if (error) throw error;
+        const byDate: Record<string, number> = {};
+        for (const o of data || []) {
+          const date = new Date(o.created_at).toLocaleDateString("he-IL");
+          byDate[date] = (byDate[date] || 0) + Number(o.total);
+        }
+        return { total: data?.reduce((s, o) => s + Number(o.total), 0) || 0, byDate: Object.entries(byDate).map(([date, total]) => ({ date, total })) };
+      }
       let q = supabase
-        .from("orders")
-        .select("total, created_at")
-        .gte("created_at", startDate)
-        .not("status", "in", "(cancelled,unfulfilled)")
-        .order("created_at");
-      if (endDate) q = q.lte("created_at", endDate);
+        .from("order_items")
+        .select("total_price, product_variations!inner(products!inner(category_id)), orders!inner(created_at, status)")
+        .gte("orders.created_at", startDate)
+        .not("orders.status", "in", "(cancelled,unfulfilled)")
+        .eq("product_variations.products.category_id", categoryId);
+      if (endDate) q = q.lte("orders.created_at", endDate);
       const { data, error } = await q;
       if (error) throw error;
       const byDate: Record<string, number> = {};
-      for (const o of data || []) {
+      let total = 0;
+      for (const it of data || []) {
+        const o = (it as any).orders;
+        if (!(it as any).product_variations?.products) continue;
         const date = new Date(o.created_at).toLocaleDateString("he-IL");
-        byDate[date] = (byDate[date] || 0) + Number(o.total);
+        const amt = Number((it as any).total_price);
+        byDate[date] = (byDate[date] || 0) + amt;
+        total += amt;
       }
-      return { total: data?.reduce((s, o) => s + Number(o.total), 0) || 0, byDate: Object.entries(byDate).map(([date, total]) => ({ date, total })) };
+      return { total, byDate: Object.entries(byDate).map(([date, total]) => ({ date, total })) };
     },
   });
 
@@ -51,18 +90,20 @@ export default function OverviewTab({ startDate, endDate }: Props) {
   });
 
   const { data: profitByDate } = useQuery({
-    queryKey: ["report-overview-profit", startDate, endDate],
+    queryKey: ["report-overview-profit", startDate, endDate, categoryId],
     queryFn: async () => {
       let q = supabase
         .from("order_items")
-        .select("quantity, total_price, product_variations(cost_price), orders!inner(status, created_at)")
+        .select("quantity, total_price, product_variations!inner(cost_price, products!inner(category_id)), orders!inner(status, created_at)")
         .gte("orders.created_at", startDate)
         .not("orders.status", "in", "(cancelled,unfulfilled)");
       if (endDate) q = q.lte("orders.created_at", endDate);
+      if (categoryId !== "all") q = q.eq("product_variations.products.category_id", categoryId);
       const { data, error } = await q;
       if (error) throw error;
       const byDate: Record<string, { revenue: number; cost: number }> = {};
       for (const item of data || []) {
+        if (categoryId !== "all" && !((item as any).product_variations?.products)) continue;
         const order = item.orders as any;
         const revenue = Number(item.total_price);
         const cost = Number((item.product_variations as any)?.cost_price || 0) * item.quantity;
@@ -89,6 +130,20 @@ export default function OverviewTab({ startDate, endDate }: Props) {
 
   return (
     <div className="space-y-6" dir="rtl">
+      <Card>
+        <CardContent className="p-4 flex flex-wrap items-center gap-3">
+          <Select value={categoryId} onValueChange={setCategoryId}>
+            <SelectTrigger className="w-56"><SelectValue placeholder="קטגוריה" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">כל הקטגוריות</SelectItem>
+              {(categories || []).map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>{c.name_he || c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((s) => (
           <Card key={s.label}>
