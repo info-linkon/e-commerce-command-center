@@ -412,19 +412,13 @@ export async function runHypVerify(
   // operator issues it manually from PaymentSection in the CRM.
 
   // ── SMS ──
-  try {
-    const smsRes = await fetch(`${supabaseUrl}/functions/v1/order-sms-trigger`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({ order_id: resolvedOrderId, trigger_type: "order_completed" }),
-    });
-    await logEvent(supabase, resolvedOrderId, "order_sms", smsRes.ok, smsRes.ok ? "sent" : `status=${smsRes.status}`);
-  } catch (smsErr) {
-    await logEvent(supabase, resolvedOrderId, "order_sms", false, String(smsErr));
-  }
+  // Intentionally NOT firing `order_completed` here. A successful HYP payment
+  // only moves the order to `processing` (not `completed`), so sending the
+  // "your order has been completed" SMS at this point is misleading to the
+  // customer. The `order_created` SMS was already sent when the order was
+  // placed (web-create-order). The `order_completed` SMS will fire later from
+  // the CRM when the admin actually marks the order as completed
+  // (see src/pages/orders/OrderDetail.tsx).
 
   // ── Email ──
   try {
