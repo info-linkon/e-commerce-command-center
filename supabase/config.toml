@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.auto-cancel-pending]
 verify_jwt = false
+
+[functions.inv-redirect]
+verify_jwt = false
