@@ -74,6 +74,21 @@ Deno.serve(async (req) => {
     if (!payload.customer_name?.trim() || !payload.customer_phone?.trim()) {
       return jsonResponse({ error: "بيانات الزبون ناقصة" }, 400);
     }
+    // Normalize + validate phone. An invalid phone here means the order
+    // SMS will never be deliverable (LINKON rejects with "No valid
+    // recipients") — reject up-front so the customer gets a clear error
+    // instead of a silent failure later.
+    const rawPhone = payload.customer_phone.replace(/[\s\-()\u200E\u200F]/g, "");
+    const digitsOnly = rawPhone.replace(/\D/g, "");
+    // Israeli mobile: 05XXXXXXXX (10 digits) or 9725XXXXXXXX (12 digits)
+    const isValidIL =
+      (/^0\d{9}$/.test(digitsOnly)) ||
+      (/^972\d{9}$/.test(digitsOnly));
+    if (!isValidIL) {
+      return jsonResponse({ error: "رقم الهاتف غير صالح" }, 400);
+    }
+    payload.customer_phone = digitsOnly;
+
     if (payload.payment_method !== "cash" && payload.payment_method !== "credit") {
       return jsonResponse({ error: "طريقة دفع غير صالحة" }, 400);
     }
