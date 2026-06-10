@@ -40,7 +40,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
           .from("orders")
           .select("total, created_at")
           .gte("created_at", startDate)
-          .not("status", "in", "(cancelled,unfulfilled)")
+          .not("status", "in", "(cancelled,unfulfilled,external_unfulfilled)")
           .order("created_at");
         if (endDate) q = q.lte("created_at", endDate);
         const { data, error } = await q;
@@ -56,7 +56,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
         .from("order_items")
         .select("total_price, product_variations!inner(products!inner(category_id)), orders!inner(created_at, status)")
         .gte("orders.created_at", startDate)
-        .not("orders.status", "in", "(cancelled,unfulfilled)")
+        .not("orders.status", "in", "(cancelled,unfulfilled,external_unfulfilled)")
         .eq("product_variations.products.category_id", categoryId);
       if (endDate) q = q.lte("orders.created_at", endDate);
       const { data, error } = await q;
@@ -96,7 +96,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
         .from("order_items")
         .select("quantity, total_price, product_variations!inner(cost_price, products!inner(category_id)), orders!inner(status, created_at)")
         .gte("orders.created_at", startDate)
-        .not("orders.status", "in", "(cancelled,unfulfilled)");
+        .not("orders.status", "in", "(cancelled,unfulfilled,external_unfulfilled)");
       if (endDate) q = q.lte("orders.created_at", endDate);
       if (categoryId !== "all") q = q.eq("product_variations.products.category_id", categoryId);
       const { data, error } = await q;

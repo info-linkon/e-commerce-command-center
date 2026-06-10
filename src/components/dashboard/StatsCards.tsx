@@ -54,7 +54,7 @@ const StatsCards = ({ startDate, endDate }: StatsCardsProps) => {
           .select("total")
           .gte("created_at", startDate)
           .lte("created_at", endDate)
-          .not("status", "in", "(cancelled,unfulfilled)"),
+          .not("status", "in", "(cancelled,unfulfilled,external_unfulfilled)"),
         supabase
           .from("payments")
           .select(
