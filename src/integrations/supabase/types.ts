@@ -1632,6 +1632,7 @@ export type Database = {
         | "shipping"
         | "delivered"
         | "unfulfilled"
+        | "external_unfulfilled"
       payment_method: "cash" | "bit" | "credit"
       picking_status: "not_started" | "in_progress" | "completed"
       product_type: "simple" | "variable"
@@ -1795,6 +1796,7 @@ export const Constants = {
         "shipping",
         "delivered",
         "unfulfilled",
+        "external_unfulfilled",
       ],
       payment_method: ["cash", "bit", "credit"],
       picking_status: ["not_started", "in_progress", "completed"],
