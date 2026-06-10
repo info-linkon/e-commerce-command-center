@@ -169,7 +169,7 @@ export default function SalesTab({ startDate, endDate }: Props) {
                   <TableRow key={i}>
                     <TableCell className="font-medium">
                       {p.id ? (
-                        <Link to={`/crm/inventory/products/${p.id}`} className="text-primary hover:underline">{p.name}</Link>
+                        <Link to={`/crm/inventory/products/${p.id}/performance`} className="text-primary hover:underline">{p.name}</Link>
                       ) : p.name}
                     </TableCell>
                     <TableCell>{p.quantity}</TableCell>
