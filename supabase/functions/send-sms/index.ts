@@ -45,12 +45,39 @@ Deno.serve(async (req) => {
     }
 
     // Format phone for Israel
-    let formattedPhone = phone.replace(/[\s\-()]/g, "");
+    let formattedPhone = String(phone).replace(/[\s\-()\u200E\u200F]/g, "");
+    formattedPhone = formattedPhone.replace(/\D/g, "");
     if (formattedPhone.startsWith("0")) {
       formattedPhone = "972" + formattedPhone.substring(1);
     }
     if (!formattedPhone.startsWith("972")) {
       formattedPhone = "972" + formattedPhone;
+    }
+
+    // Guardrail: a well-formed Israeli mobile is 972 + 9 digits = 12 chars.
+    // Anything shorter (e.g. "972111" from a malformed customer_phone) will
+    // be rejected by LINKON as "No valid recipients" — don't waste the API
+    // call and don't pretend we tried. Log to notification_log with a clear
+    // error so the admin sees it in the SMS log page.
+    if (!/^972\d{9}$/.test(formattedPhone)) {
+      console.warn("send-sms: invalid phone, skipping", { phone, formattedPhone });
+      try {
+        await supabase.from("notification_log").insert({
+          channel: "sms",
+          event_key: event_key || "manual_sms",
+          recipient: formattedPhone,
+          body: message,
+          status: "failed",
+          error: "Invalid phone format",
+          context: { ...(context || {}), sender, original_phone: phone },
+        });
+      } catch (logErr) {
+        console.error("Failed to log invalid-phone SMS:", logErr);
+      }
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid phone format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     console.log("Sending SMS to:", formattedPhone, "from:", sender);
