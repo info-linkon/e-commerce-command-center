@@ -19,15 +19,22 @@ interface RichTextEditorProps {
 export function RichTextEditor({ value, onChange, rows = 6, dir = "rtl", placeholder }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<"visual" | "html">("visual");
+  // Track the last HTML we emitted to the parent. When the parent passes that
+  // exact string back as `value`, we skip the DOM sync to avoid clobbering the
+  // caret while the user is typing.
+  const lastEmittedRef = useRef<string>("");
 
-  // Sync external value -> DOM only when it actually differs from what's
-  // currently in the editor. Without this guard, every keystroke re-writes
-  // innerHTML and the caret jumps to the start.
+  // Sync external value -> DOM. We need this for the initial mount, for
+  // programmatic resets, and when switching back from HTML mode. We skip it
+  // when the new `value` is exactly what we just emitted from a keystroke —
+  // otherwise re-assigning innerHTML on every input would collapse the caret
+  // to the start of the field and the user couldn't type.
   useEffect(() => {
     if (!editorRef.current) return;
-    if (editorRef.current.innerHTML !== (value || "")) {
-      editorRef.current.innerHTML = value || "";
-    }
+    const incoming = value || "";
+    if (incoming === lastEmittedRef.current) return;
+    if (editorRef.current.innerHTML === incoming) return;
+    editorRef.current.innerHTML = incoming;
   }, [value, mode]);
 
   const execCommand = useCallback((command: string, value?: string) => {
@@ -35,17 +42,22 @@ export function RichTextEditor({ value, onChange, rows = 6, dir = "rtl", placeho
     editorRef.current?.focus();
     // Sync content
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+      const html = editorRef.current.innerHTML;
+      lastEmittedRef.current = html;
+      onChange(html);
     }
   }, [onChange]);
 
   const handleInput = useCallback(() => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+      const html = editorRef.current.innerHTML;
+      lastEmittedRef.current = html;
+      onChange(html);
     }
   }, [onChange]);
 
   const handleHtmlChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    lastEmittedRef.current = e.target.value;
     onChange(e.target.value);
   }, [onChange]);
 
