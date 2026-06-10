@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowRight, RefreshCw, Upload, Package } from "lucide-react";
+import { ArrowRight, RefreshCw, Upload, Package, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -194,10 +194,16 @@ const ProductForm = () => {
           )}
         </div>
         {isEditing && id && (
-          <Button variant="outline" size="sm" onClick={() => navigate(`/crm/inventory/bundles/new?fromProduct=${id}`)}>
-            <Package className="h-4 w-4 ml-1" />
-            העבר למארז
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(`/crm/inventory/products/${id}/performance`)}>
+              <BarChart3 className="h-4 w-4 ml-1" />
+              ביצועים
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(`/crm/inventory/bundles/new?fromProduct=${id}`)}>
+              <Package className="h-4 w-4 ml-1" />
+              העבר למארז
+            </Button>
+          </div>
         )}
       </div>
 
