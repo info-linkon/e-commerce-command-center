@@ -232,28 +232,31 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
   if (!orderNumber) return;
   const amount = amountStr ? parseFloat(amountStr) : NaN;
 
-  // Fire an immediate Purchase event with whatever we already know, so the
-  // event is recorded even if order-summary is slow / missing token / fails.
-  const immediateValue = isFinite(amount) ? amount : 0;
-  fbq("Purchase", {
-    content_ids: [String(orderNumber)],
-    content_type: "product",
-    value: immediateValue,
-    currency: "ILS",
-  });
-
-  // Best-effort enrichment: if we can fetch the order summary in time,
-  // fire a second, richer Purchase with SKUs + line items.
+  // Fetch order summary so the Purchase event carries product SKUs as
+  // content_ids (matching the Meta catalog feed's g:id). We deliberately
+  // do NOT fire an immediate fallback with the order number, because Meta
+  // would treat that as an unknown product ID.
   try {
     const summary = await fetchOrderSummary(orderNumber);
-    if (!summary) return;
+    if (!summary) {
+      // Last-resort: fire Purchase without content_ids so the conversion
+      // is still recorded, even if catalog matching is unavailable.
+      fbq("Purchase", {
+        value: isFinite(amount) ? amount : 0,
+        currency: "ILS",
+      });
+      return;
+    }
     const order = summary.order;
     const items = summary.items || [];
     const value = isFinite(amount) ? amount : Number(order?.total || 0);
     const contents = items
       .filter((it: any) => it && it.sku)
       .map((it: any) => ({ id: String(it.sku), quantity: Number(it.quantity || 1) }));
-    if (!contents.length) return;
+    if (!contents.length) {
+      fbq("Purchase", { value, currency: "ILS" });
+      return;
+    }
     fbq("Purchase", {
       content_ids: contents.map((c) => c.id),
       contents,
@@ -264,6 +267,10 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     });
   } catch (err) {
     console.error("[meta-pixel] Purchase enrichment failed:", err);
+    fbq("Purchase", {
+      value: isFinite(amount) ? amount : 0,
+      currency: "ILS",
+    });
   }
 }
 
