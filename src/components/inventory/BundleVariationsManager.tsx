@@ -34,18 +34,24 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
   const deleteVariation = useDeleteBundleVariation();
   const { data: products } = useProducts();
 
-  const handleDuplicate = (bv: any) => {
-    createVariation.mutate({
-      bundleId,
-      name: `${bv.name} (עותק)`,
-      name_he: (bv as any).name_he ? `${(bv as any).name_he} (עותק)` : "",
-      sku: "",
-      price: Number(bv.price),
-      items: (bv.bundle_variation_items || []).map((bvi: any) => ({
+  const openDuplicate = (bv: any) => {
+    setEditingId(null);
+    setName(bv.name ? `${bv.name} (עותק)` : "");
+    setNameHe((bv as any).name_he ? `${(bv as any).name_he} (עותק)` : "");
+    setSku("");
+    setPrice(Number(bv.price) || 0);
+    const mappedItems = (bv.bundle_variation_items || []).map((bvi: any) => {
+      const pv = bvi.product_variations;
+      const productName = (pv?.products as any)?.name || "";
+      return {
         variation_id: bvi.variation_id,
         quantity: bvi.quantity,
-      })),
+        label: productName ? `${productName} — ${pv?.name}` : pv?.name || "",
+      };
     });
+    setItems(mappedItems);
+    setSelectedProduct("");
+    setDialogOpen(true);
   };
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -183,7 +189,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
                   <Button variant="ghost" size="icon" onClick={() => openEdit(bv)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" title="שכפל וריאציה" onClick={() => handleDuplicate(bv)}>
+                  <Button variant="ghost" size="icon" title="שכפל וריאציה" onClick={() => openDuplicate(bv)}>
                     <Copy className="h-4 w-4" />
                   </Button>
                   <Button
