@@ -1,22 +1,19 @@
-## 1. סינון בדוחות לפי קטגוריה
-בלשונית "מכירות ומוצרים" כבר קיים פילטר קטגוריה. אוסיף אותו גם ב:
-- **רווחיות** — פילטר קטגוריה שמשפיע גם על הכרטיסים (הכנסות/רווח/מע״מ), גם על גרף לפי תאריך וגם על טבלת המוצרים.
-- **סקירה כללית** — פילטר קטגוריה שמסנן את מספרי המכירות והגרפים שמבוססים על `order_items`.
+## הוספת שכפול וריאציה במארזים
 
-## 2. ביצועים של כל מוצר בנפרד
-אוסיף **דף "ביצועי מוצר"** ב‑`/crm/inventory/products/:id/performance` (וקישור מהשם של כל מוצר בטבלאות בדוחות + מטופס המוצר):
-- כרטיסים: כמות שנמכרה, הכנסות, עלות סחורה, רווח, אחוז רווחיות, מספר הזמנות שהמוצר הופיע בהן.
-- גרף מכירות לפי חודש/שבוע.
-- פירוט לפי וריאציה (כמה נמכר מכל וריאציה).
-- רשימת הזמנות אחרונות שכוללות את המוצר (קישור לכל הזמנה).
-- בקרת תקופה (היום / שבוע / חודש / שנה / טווח מותאם) באותו סגנון של מסך הדוחות.
+כיום במסך עריכת מארז משתנה (`BundleVariationsManager`) ניתן ליצור, לערוך ולמחוק וריאציות, אך לא לשכפל. נוסיף כפתור "שכפל" לכל שורת וריאציה.
 
-## 3. תיקון תיבת התיאור של המוצר
-הבאג: בעורך העשיר של תיאורי המוצר אי אפשר להקליד ישירות — צריך להעתיק ולהדביק. הסיבה היא ב‑`src/components/ui/rich-text-editor.tsx`: ה‑`useEffect` שמסנכרן `value → innerHTML` רץ על כל הקלדה ולפעמים דורס את ה‑caret/הטקסט בגלל נורמליזציה של הדפדפן (`<br>`, `<div>`, רווחים). אתקן ע״י:
-- שימוש ב‑ref דגל (`isInternalChange`) כדי לדלג על סנכרון אחרי הקלדה מקומית.
-- אתחול חד‑פעמי של `innerHTML` רק כשהעורך נטען/כשמחליפים מצב Visual↔HTML.
-- ולידציה שה‑placeholder לא חוסם מיקוד ב‑contenteditable ריק (CSS `:empty::before`).
+### השינוי
+קובץ: `src/components/inventory/BundleVariationsManager.tsx`
 
-## טכני
-- **קבצים שיתעדכנו:** `src/components/reports/ProfitabilityTab.tsx`, `src/components/reports/OverviewTab.tsx`, `src/components/reports/SalesTab.tsx` (קישור למסך ביצועים), `src/components/ui/rich-text-editor.tsx`, `src/App.tsx` (route חדש), `src/pages/inventory/ProductPerformancePage.tsx` (חדש), `src/pages/inventory/ProductForm.tsx` (כפתור "ראה ביצועים").
-- **אין שינויי DB** — הכל מבוסס על `order_items` + `products.category_id` הקיימים.
+- נוסיף ליד כפתורי העריכה/מחיקה של כל וריאציה כפתור עם אייקון `Copy` (lucide-react).
+- בלחיצה: שימוש ב-`useCreateBundleVariation` כדי ליצור וריאציה חדשה עם:
+  - `name` = `${bv.name} (עותק)`
+  - `name_he` = `${bv.name_he} (עותק)` אם קיים
+  - `sku` = ריק (כדי למנוע התנגשות SKU)
+  - `price` זהה למקור
+  - `items` משוכפלים מ-`bundle_variation_items` (variation_id + quantity)
+- toast הצלחה: "הוריאציה שוכפלה". toast שגיאה במקרה כשל.
+
+### הערות טכניות
+- ה-hook הקיים `useCreateBundleVariation` כבר מטפל בהכנסה ל-`bundle_variations` + `bundle_variation_items`, אז אין צורך בשינויי DB או hooks נוספים.
+- אין שינוי לסכמה, אין מיגרציה.

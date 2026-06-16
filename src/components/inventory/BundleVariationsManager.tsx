@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,20 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
   const updateVariation = useUpdateBundleVariation();
   const deleteVariation = useDeleteBundleVariation();
   const { data: products } = useProducts();
+
+  const handleDuplicate = (bv: any) => {
+    createVariation.mutate({
+      bundleId,
+      name: `${bv.name} (עותק)`,
+      name_he: (bv as any).name_he ? `${(bv as any).name_he} (עותק)` : "",
+      sku: "",
+      price: Number(bv.price),
+      items: (bv.bundle_variation_items || []).map((bvi: any) => ({
+        variation_id: bvi.variation_id,
+        quantity: bvi.quantity,
+      })),
+    });
+  };
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -168,6 +182,9 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
                 <div className="flex gap-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(bv)}>
                     <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" title="שכפל וריאציה" onClick={() => handleDuplicate(bv)}>
+                    <Copy className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
