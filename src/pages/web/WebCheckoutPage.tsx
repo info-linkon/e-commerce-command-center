@@ -155,6 +155,23 @@ export default function WebCheckoutPage() {
         currency: "ILS",
       });
     }
+    // GA4: begin_checkout
+    const gaItems = items
+      .map((i) => {
+        const sku = (i.sku || i.catalogId || "") as string;
+        if (!sku) return null;
+        return {
+          item_id: sku,
+          item_name: i.productName,
+          item_variant: i.variationName || undefined,
+          price: i.price,
+          quantity: i.quantity,
+        };
+      })
+      .filter(Boolean) as any[];
+    if (gaItems.length > 0) {
+      gaBeginCheckout(totalPrice(), gaItems);
+    }
   }, []);
 
   // Listen for postMessage from HYP iframe (success/error redirect)
