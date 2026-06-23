@@ -2,6 +2,8 @@ import { useParams } from "react-router-dom";
 import { useWebProductsByCategoryNumber } from "@/hooks/useWebProducts";
 import { WebProductCard } from "@/components/web/WebProductCard";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useEffect } from "react";
+import { gaViewItemList } from "@/lib/gtag";
 
 export default function WebCategoryPage() {
   const { lang, t } = useLanguage();
@@ -14,6 +16,17 @@ export default function WebCategoryPage() {
   const categoryName = category
     ? (lang === "he" ? (category.name_he || category.name) : category.name)
     : t("المنتجات", "מוצרים");
+
+  // GA4: view_item_list per category
+  useEffect(() => {
+    if (!products || products.length === 0) return;
+    gaViewItemList(`category_${category?.name || categoryNumber}`, products.slice(0, 20).map((p: any) => ({
+      item_id: p.sku || String(p.product_number || p.id),
+      item_name: p.name_ar || p.name,
+      item_category: category?.name,
+      price: p.sale_price,
+    })));
+  }, [products, category?.name, categoryNumber]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">

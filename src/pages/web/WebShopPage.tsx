@@ -11,7 +11,8 @@ import catTents from "@/assets/cat-tents.jpg";
 import catPackages from "@/assets/cat-packages.jpg";
 import catStoves from "@/assets/cat-stoves.jpg";
 import catCampingGear from "@/assets/cat-camping-gear.jpg";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { gaViewItemList } from "@/lib/gtag";
 
 const categoryImageMap: Record<string, string> = {
   "1e7e7bc7-16e4-40b4-a8be-679c5831f8aa": catTeaCoffee,
@@ -29,6 +30,17 @@ export default function WebShopPage() {
   const { data: categories } = useWebCategories();
   const [showAll, setShowAll] = useState(false);
   const { lang, t, localizedPath } = useLanguage();
+
+  // GA4: view_item_list when viewing the "all products" grid
+  useEffect(() => {
+    if (!showAll || !products || products.length === 0) return;
+    gaViewItemList("shop_all", products.slice(0, 20).map((p: any) => ({
+      item_id: p.sku || String(p.product_number || p.id),
+      item_name: p.name_ar || p.name,
+      item_category: p.categories?.name,
+      price: p.sale_price,
+    })));
+  }, [showAll, products]);
 
   // Default: show categories grid. "الكل" shows all products.
   if (!showAll) {
