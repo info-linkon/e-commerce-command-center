@@ -2,6 +2,7 @@ import { useParams, Link, useSearchParams } from "react-router-dom";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { fbq } from "@/lib/meta-pixel";
+import { gaPurchase } from "@/lib/gtag";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/web-cart-store";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -245,6 +246,7 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
         value: isFinite(amount) ? amount : 0,
         currency: "ILS",
       });
+      gaPurchase(String(orderNumber), isFinite(amount) ? amount : 0, []);
       return;
     }
     const order = summary.order;
@@ -253,6 +255,20 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     const contents = items
       .filter((it: any) => it && it.sku)
       .map((it: any) => ({ id: String(it.sku), quantity: Number(it.quantity || 1) }));
+    const gaItems = items
+      .filter((it: any) => it && it.sku)
+      .map((it: any) => ({
+        item_id: String(it.sku),
+        item_name: it.product_name || it.name || undefined,
+        item_variant: it.variation_name || undefined,
+        price: Number(it.price || 0),
+        quantity: Number(it.quantity || 1),
+      }));
+    gaPurchase(String(orderNumber), value, gaItems, {
+      shipping: Number(order?.shipping_total || 0) || undefined,
+      tax: Number(order?.tax_total || 0) || undefined,
+      coupon: order?.coupon_code || undefined,
+    });
     if (!contents.length) {
       fbq("Purchase", { value, currency: "ILS" });
       return;
@@ -271,6 +287,7 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
       value: isFinite(amount) ? amount : 0,
       currency: "ILS",
     });
+    gaPurchase(String(orderNumber), isFinite(amount) ? amount : 0, []);
   }
 }
 

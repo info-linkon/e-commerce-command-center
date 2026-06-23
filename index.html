@@ -28,6 +28,17 @@
     </script>
     <!-- End Meta Pixel Code -->
 
+    <!-- Google tag (gtag.js) — GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M0ST7YDS0C"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      // send_page_view:false — SPA page_view sent manually from WebLayout on every route change
+      gtag('config', 'G-M0ST7YDS0C', { send_page_view: false });
+    </script>
+    <!-- End Google tag -->
+
     <meta property="og:url" content="https://elwejha.co.il" />
     <link rel="alternate" hreflang="ar" href="https://elwejha.co.il/" />
     <link rel="alternate" hreflang="he" href="https://elwejha.co.il/he" />

@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBundleStock } from "@/hooks/useBundleStock";
 import { fbq } from "@/lib/meta-pixel";
+import { gaViewItem, gaAddToCart } from "@/lib/gtag";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export default function WebProductPage() {
@@ -80,6 +81,13 @@ export default function WebProductPage() {
         value: product.sale_price,
         currency: "ILS",
       });
+      // GA4: view_item
+      gaViewItem(product.sale_price, [{
+        item_id: product.sku,
+        item_name: product.name_ar || product.name,
+        price: product.sale_price,
+        quantity: 1,
+      }]);
     }
   }, [product?.id]);
 
@@ -271,6 +279,14 @@ export default function WebProductPage() {
         value: price * quantity,
         currency: "ILS",
       });
+      // GA4: add_to_cart
+      gaAddToCart(price * quantity, [{
+        item_id: itemSku,
+        item_name: displayName,
+        item_variant: variationName || undefined,
+        price,
+        quantity,
+      }]);
     }
     toast.success(t("تمت الإضافة إلى السلة", "נוסף לסל"));
   };

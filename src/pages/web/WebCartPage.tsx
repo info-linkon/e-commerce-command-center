@@ -3,10 +3,28 @@ import { Link } from "react-router-dom";
 import { Trash2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
+import { gaRemoveFromCart } from "@/lib/gtag";
 
 export default function WebCartPage() {
   const { items, removeItem, updateQuantity, clearCart, totalPrice, shippingCost } = useCartStore();
   const { t, localizedPath } = useLanguage();
+
+  const handleRemove = (variationId: string) => {
+    const it = items.find((i) => i.variationId === variationId);
+    if (it) {
+      const sku = (it as any).sku || (it as any).catalogId;
+      if (sku) {
+        gaRemoveFromCart(it.price * it.quantity, [{
+          item_id: String(sku),
+          item_name: it.productName,
+          item_variant: it.variationName || undefined,
+          price: it.price,
+          quantity: it.quantity,
+        }]);
+      }
+    }
+    removeItem(variationId);
+  };
 
   if (items.length === 0) {
     return (
@@ -76,7 +94,7 @@ export default function WebCartPage() {
                 </div>
               </div>
               <div className="flex flex-col items-end justify-between">
-                <button onClick={() => removeItem(item.variationId)} className="text-muted-foreground hover:text-destructive transition-colors">
+                <button onClick={() => handleRemove(item.variationId)} className="text-muted-foreground hover:text-destructive transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <span className="font-bold text-sm">₪{(item.price * item.quantity).toFixed(2)}</span>

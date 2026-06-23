@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useWebSearch } from "@/hooks/useWebProducts";
 import { WebProductCard } from "@/components/web/WebProductCard";
 import { Search } from "lucide-react";
+import { gaSearch } from "@/lib/gtag";
 
 export default function WebSearchPage() {
   const [query, setQuery] = useState("");
   const { data: results, isLoading } = useWebSearch(query);
+
+  // GA4: search — debounced fire when the user pauses for 600ms with a query >= 2 chars
+  useEffect(() => {
+    if (query.trim().length < 2) return;
+    const t = setTimeout(() => gaSearch(query.trim()), 600);
+    return () => clearTimeout(t);
+  }, [query]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">

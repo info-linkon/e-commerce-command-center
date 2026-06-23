@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateCoupon, calcDiscount, Coupon } from "@/hooks/useCoupons";
 import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home, MessageSquare, ShieldCheck, Lock, ChevronLeft, ShoppingBag, Package, Truck } from "lucide-react";
 import { fbq } from "@/lib/meta-pixel";
+import { gaBeginCheckout } from "@/lib/gtag";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -154,6 +155,23 @@ export default function WebCheckoutPage() {
         value: totalPrice(),
         currency: "ILS",
       });
+    }
+    // GA4: begin_checkout
+    const gaItems = items
+      .map((i) => {
+        const sku = (i.sku || i.catalogId || "") as string;
+        if (!sku) return null;
+        return {
+          item_id: sku,
+          item_name: i.productName,
+          item_variant: i.variationName || undefined,
+          price: i.price,
+          quantity: i.quantity,
+        };
+      })
+      .filter(Boolean) as any[];
+    if (gaItems.length > 0) {
+      gaBeginCheckout(totalPrice(), gaItems);
     }
   }, []);
 

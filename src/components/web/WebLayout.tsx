@@ -6,6 +6,7 @@ import { MessageCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { fbqPageView } from "@/lib/meta-pixel";
+import { gaPageView } from "@/lib/gtag";
 import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
 
@@ -48,6 +49,11 @@ function WebLayoutInner() {
     if (pixelInitialized.current) {
       fbqPageView();
     }
+  }, [pathname]);
+
+  // GA4 page_view on every SPA route change (gtag loaded in index.html with send_page_view:false)
+  useEffect(() => {
+    gaPageView(pathname + window.location.search);
   }, [pathname]);
 
   // Render noscript pixel fallback
