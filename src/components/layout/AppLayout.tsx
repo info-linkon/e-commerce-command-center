@@ -3,9 +3,18 @@ import { AppSidebar } from "./AppSidebar";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
 import { useAuth } from "@/hooks/useAuth";
 import { User } from "lucide-react";
+import { useEffect } from "react";
+import { GA_MEASUREMENT_ID } from "@/lib/gtag";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   useVersionCheck();
+  // Disable GA4 collection inside the CRM so it doesn't pollute storefront analytics
+  useEffect(() => {
+    (window as any)[`ga-disable-${GA_MEASUREMENT_ID}`] = true;
+    return () => {
+      (window as any)[`ga-disable-${GA_MEASUREMENT_ID}`] = false;
+    };
+  }, []);
   const { user } = useAuth();
   const email = user?.email || "";
   const username = email.includes("@") ? email.split("@")[0] : email;
