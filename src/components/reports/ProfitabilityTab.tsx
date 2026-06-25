@@ -136,7 +136,7 @@ export default function ProfitabilityTab({ startDate, endDate }: Props) {
 
   const cards = [
     { label: "הכנסות ברוטו", value: `₪${profitData.totalRevenueGross.toFixed(0)}` },
-    { label: "מע״מ (17%)", value: `₪${profitData.vatAmount.toFixed(0)}` },
+    { label: "מע״מ (18%)", value: `₪${profitData.vatAmount.toFixed(0)}` },
     { label: "הכנסות נטו", value: `₪${profitData.totalRevenueNet.toFixed(0)}` },
     { label: "עלות סחורה", value: `₪${profitData.totalCost.toFixed(0)}` },
     { label: "הוצאות תפעוליות", value: `₪${profitData.totalExpenses.toFixed(0)}` },
