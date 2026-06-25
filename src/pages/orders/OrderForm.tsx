@@ -112,7 +112,7 @@ const OrderForm = () => {
       } catch { /* ignore */ }
     }
 
-    await createOrder.mutateAsync({
+    const newOrder = await createOrder.mutateAsync({
       customer_name: customerName || undefined,
       customer_phone: customerPhone || undefined,
       customer_email: customerEmail || undefined,
@@ -132,6 +132,14 @@ const OrderForm = () => {
       created_by: user?.id || undefined,
       customer_id: finalCustomerId || undefined,
     } as any);
+    // Trigger order_created SMS for manual CRM orders too
+    if (newOrder?.id) {
+      supabase.functions
+        .invoke("order-sms-trigger", {
+          body: { order_id: newOrder.id, trigger_type: "order_created" },
+        })
+        .catch(console.error);
+    }
     navigate("/crm/orders");
   };
 
