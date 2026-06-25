@@ -1,40 +1,27 @@
-## סטטוס יישום ההערות
+## הבעיה
 
-| # | הערה | סטטוס |
-|---|------|--------|
-| 1 | התראות "אזל מהמלאי" בדשבורד לפי מלאי מצטבר (סכום כל המחסנים) | ✅ יושם — `LowStockAlerts.tsx` כבר מסכם `quantity` לפי `variation_id` על פני כל המחסנים ומסנן `qty ≤ 5` |
-| 2 | רווחיות לפי עלות מוצרים + מע״מ | ⚠️ יושם חלקית — מחושב הכנסה נטו (ניכוי מע״מ) ועלות סחורה, אך **שיעור המע״מ בקוד הוא 17%** בעוד שבישראל היום 18% |
-| 3 | ציר התאריך ברווחיות בסדר מוזר | ✅ יושם — מיון לפי `dateKey` בפורמט `YYYY-MM-DD` ואז תצוגה `he-IL` |
-| 4 | עלות המארז מחושבת מעלות הפריטים שבו | ✅ יושם — `bundle_variation_items` מצטבר ל-`bundleCostMap` ומשמש כ-`perUnitCost` כשיש `bundle_variation_id` |
-| 5 | סטטוס "נמסר" כטריגר לחשבונית מזומן + אינטגרציה לאפליקציית משלוחים | ❌ לא יושם — אין סטטוס `delivered` נפרד, ההנפקה האוטומטית עדיין על `completed`, אין חיבור לאפליקציית שליחים |
-| 6 | כל ההזמנות מקבלות SMS (כולל 331) + תבנית לפי שפת ההזמנה | ⚠️ הלוגיקה של בחירת תבנית לפי שפה כבר קיימת ב-`order-sms-trigger` (fallback לפי `order.language`), אבל יש מקרים שלא נשלחת הודעה — צריך לאמת מול לוגים ולוודא שכל המסלולים (web/POS/CRM) קוראים ל-`order-sms-trigger` |
+בפופאפ עריכת באנר (וברוב הפופאפים) כפתור "שמור" נחתך בתחתית ואי-אפשר לגלול אליו. הסיבה: `DialogContent` משתמש ב-`grid gap-4` עם `overflow-y-auto` באותו אלמנט, וב-`DialogHeader`/`DialogFooter` יש `sticky` עם margins שליליים. השילוב הזה לא יציב — חלק מהטפסים (כמו `WebBannersPage`) בכלל לא משתמשים ב-`DialogFooter` אלא שמים את כפתור השמירה כילד רגיל, כך שהוא נדחף מתחת לגובה הנגלל הזמין.
 
-## מה מוצע להשלים (לפי סדר עדיפויות)
+## הפתרון
 
-### A. תיקון מע״מ ל-18% (הערה 2)
-- עדכון `VAT_RATE` ב-`src/components/reports/ProfitabilityTab.tsx` מ-`0.17` ל-`0.18`.
-- בדיקה אם יש קבועי VAT נוספים בקוד (חיפוש `0.17` / `VAT`).
+לשנות את `DialogContent` למבנה Flex עם גוף נגלל פנימי קבוע, כך שיעבוד נכון לכל קריאה קיימת בלי לשנות את ה-call-sites.
 
-### B. סטטוס "נמסר" + טריגר חשבונית (הערה 5)
-1. הוספת ערך `delivered` ל-enum `order_status` במיגרציה.
-2. עדכון `OrderDetail` / `DeliveriesPage` להציג כפתור "סמן כנמסר".
-3. הזזת קריאת `ezcount-doc` (Type 320 לאשראי HYP) מהמעבר ל-`completed` למעבר ל-`delivered`.
-4. ודוא ש-`completed` ממשיך לטפל בתשלום מזומן/ביט ידני כמו היום.
-5. עדכון `sync_deferred_register_on_order_status` כך שגם `delivered` יעדכן את הקופה הנדחית (אם זה המצב הרצוי).
+### שינויים ב-`src/components/ui/dialog.tsx`
 
-> אינטגרציה לאפליקציית משלוחים חיצונית: דורש פרטים — איזו אפליקציה? יש להם Webhook? נטפל בצעד נפרד אחרי שתאשר את הסטטוס.
+1. **`DialogContent`** הופך ל-`flex flex-col` עם `overflow-hidden` (במקום `grid` + `overflow-y-auto`).
+2. נוסיף עיבוד פנימי של `children`:
+   - ילדים שהם `DialogHeader` → נשארים בראש כ-shrink-0 (ללא sticky/negative margin).
+   - ילדים שהם `DialogFooter` → נשארים בתחתית כ-shrink-0.
+   - שאר הילדים נעטפים אוטומטית ב-`<div class="flex-1 overflow-y-auto -mx-4 px-4 sm:-mx-6 sm:px-6">` כך שהם מקבלים גלילה משלהם, גם כשאין `DialogFooter`.
+3. **`DialogHeader`/`DialogFooter`**: להסיר את `sticky`, `backdrop-blur` והמרג'ינים השליליים — לא נחוצים יותר כי הם יושבים מחוץ לאזור הגלילה. נשמור על ה-`border-b`/`border-t` לחזות הקיימת.
+4. נשמור על אנימציית bottom-sheet במובייל ועל max-h של `92vh`/`90vh`.
 
-### C. SMS לכל הזמנה + שפה (הערה 6)
-1. בדיקת לוגי `order-sms-trigger` להזמנה 331 כדי לאתר את כשל השליחה (אין טריגר? חסרה תבנית פעילה? נכשלה ב-InfoRu?).
-2. ודוא שכל נקודות יצירת ההזמנה (`web-create-order`, יצירה ידנית ב-CRM, `PosPage`) קוראות ל-`order-sms-trigger` עם `trigger_type: 'order_created'`.
-3. וידוא ש-`order.language` נשמר נכון בהזמנות web (לפי `useLanguage` של הקונה) ובהזמנות CRM (ברירת מחדל `he`, עם אפשרות בחירה).
-4. וידוא שב-`sms_templates` קיימות תבניות פעילות עם `language='ar'` ו-`language='he'` לכל `trigger_type` רלוונטי.
+### אותו תיקון ל-`src/components/ui/alert-dialog.tsx`
 
-## פרטים טכניים
+לעקביות — אותו עיבוד children (header/footer קבועים, גוף נגלל).
 
-- VAT: קבוע יחיד ב-`ProfitabilityTab.tsx` שורה 16.
-- enum: `alter type order_status add value 'delivered' before 'completed';` ואז עדכון `useOrders.ts` ותרגומי הסטטוסים.
-- הנפקת חשבונית: כיום ב-`useOrders.ts` בתוך `updateStatus` כשמעבירים ל-`completed` — להעביר ל-`delivered`.
-- שפת SMS: לוודא שב-`order-sms-trigger/index.ts` הסדר הוא — תבנית בשפת ההזמנה → תבנית ברירת מחדל. (לוודא בקוד הקיים.)
+## תוצאה
 
-אישור התוכנית יפעיל את הצעדים A → B → C, ואחזור לבירור פרטי אפליקציית המשלוחים בצעד נפרד.
+- בכל פופאפ קיים, גם בלי לשנות את הקוד שלו, יהיה אזור גוף נגלל פנימית; הכפתורים בתחתית (גם אם הם רק `<Button>` רגיל בתוך הגוף) יישארו נגישים על-ידי גלילה.
+- `DialogHeader`/`DialogFooter` (כשמשמשים) מוצמדים יציב לראש/תחתית בלי באגי sticky.
+- אותה התנהגות בדסקטופ ובמובייל.
