@@ -1,79 +1,40 @@
+## סטטוס יישום ההערות
 
-# הטמעת Google Analytics 4 (GA4) באתר ELWEJHA
+| # | הערה | סטטוס |
+|---|------|--------|
+| 1 | התראות "אזל מהמלאי" בדשבורד לפי מלאי מצטבר (סכום כל המחסנים) | ✅ יושם — `LowStockAlerts.tsx` כבר מסכם `quantity` לפי `variation_id` על פני כל המחסנים ומסנן `qty ≤ 5` |
+| 2 | רווחיות לפי עלות מוצרים + מע״מ | ⚠️ יושם חלקית — מחושב הכנסה נטו (ניכוי מע״מ) ועלות סחורה, אך **שיעור המע״מ בקוד הוא 17%** בעוד שבישראל היום 18% |
+| 3 | ציר התאריך ברווחיות בסדר מוזר | ✅ יושם — מיון לפי `dateKey` בפורמט `YYYY-MM-DD` ואז תצוגה `he-IL` |
+| 4 | עלות המארז מחושבת מעלות הפריטים שבו | ✅ יושם — `bundle_variation_items` מצטבר ל-`bundleCostMap` ומשמש כ-`perUnitCost` כשיש `bundle_variation_id` |
+| 5 | סטטוס "נמסר" כטריגר לחשבונית מזומן + אינטגרציה לאפליקציית משלוחים | ❌ לא יושם — אין סטטוס `delivered` נפרד, ההנפקה האוטומטית עדיין על `completed`, אין חיבור לאפליקציית שליחים |
+| 6 | כל ההזמנות מקבלות SMS (כולל 331) + תבנית לפי שפת ההזמנה | ⚠️ הלוגיקה של בחירת תבנית לפי שפה כבר קיימת ב-`order-sms-trigger` (fallback לפי `order.language`), אבל יש מקרים שלא נשלחת הודעה — צריך לאמת מול לוגים ולוודא שכל המסלולים (web/POS/CRM) קוראים ל-`order-sms-trigger` |
 
-מזהה מדידה: `G-M0ST7YDS0C`
+## מה מוצע להשלים (לפי סדר עדיפויות)
 
-## מטרה
-הטמעה מלאה של GA4 הכוללת:
-1. טעינת תגית הבסיס בכל האתר הציבורי (ולא ב-CRM).
-2. מעקב Page Views אוטומטי בכל ניווט (SPA).
-3. מעקב אירועי E-commerce סטנדרטיים של GA4 במקביל ל-Meta Pixel הקיים.
+### A. תיקון מע״מ ל-18% (הערה 2)
+- עדכון `VAT_RATE` ב-`src/components/reports/ProfitabilityTab.tsx` מ-`0.17` ל-`0.18`.
+- בדיקה אם יש קבועי VAT נוספים בקוד (חיפוש `0.17` / `VAT`).
 
----
+### B. סטטוס "נמסר" + טריגר חשבונית (הערה 5)
+1. הוספת ערך `delivered` ל-enum `order_status` במיגרציה.
+2. עדכון `OrderDetail` / `DeliveriesPage` להציג כפתור "סמן כנמסר".
+3. הזזת קריאת `ezcount-doc` (Type 320 לאשראי HYP) מהמעבר ל-`completed` למעבר ל-`delivered`.
+4. ודוא ש-`completed` ממשיך לטפל בתשלום מזומן/ביט ידני כמו היום.
+5. עדכון `sync_deferred_register_on_order_status` כך שגם `delivered` יעדכן את הקופה הנדחית (אם זה המצב הרצוי).
 
-## שלב 1 — טעינת תגית הבסיס
+> אינטגרציה לאפליקציית משלוחים חיצונית: דורש פרטים — איזו אפליקציה? יש להם Webhook? נטפל בצעד נפרד אחרי שתאשר את הסטטוס.
 
-קובץ: `index.html`
-- הוספת שני ה-`<script>` של gtag לתוך ה-`<head>` (ליד Meta Pixel הקיים).
-- הסקריפט נטען עם `async`, ה-`config` הראשוני עם `send_page_view: false` כדי שנשלוט ידנית ב-page views (SPA — אחרת רק העמוד הראשון נספר).
+### C. SMS לכל הזמנה + שפה (הערה 6)
+1. בדיקת לוגי `order-sms-trigger` להזמנה 331 כדי לאתר את כשל השליחה (אין טריגר? חסרה תבנית פעילה? נכשלה ב-InfoRu?).
+2. ודוא שכל נקודות יצירת ההזמנה (`web-create-order`, יצירה ידנית ב-CRM, `PosPage`) קוראות ל-`order-sms-trigger` עם `trigger_type: 'order_created'`.
+3. וידוא ש-`order.language` נשמר נכון בהזמנות web (לפי `useLanguage` של הקונה) ובהזמנות CRM (ברירת מחדל `he`, עם אפשרות בחירה).
+4. וידוא שב-`sms_templates` קיימות תבניות פעילות עם `language='ar'` ו-`language='he'` לכל `trigger_type` רלוונטי.
 
-## שלב 2 — Helper מרכזי
+## פרטים טכניים
 
-קובץ חדש: `src/lib/gtag.ts`
-- ייצוא:
-  - `GA_MEASUREMENT_ID = 'G-M0ST7YDS0C'`
-  - `gtag(...args)` — wrapper בטוח (בודק `window.gtag`).
-  - `gaPageView(path: string)` — שולח `page_view` עם `page_path` ו-`page_location`.
-  - `gaEvent(name, params)` — wrapper כללי.
-  - פונקציות ייעודיות ל-E-commerce: `gaViewItem`, `gaAddToCart`, `gaRemoveFromCart`, `gaBeginCheckout`, `gaPurchase`, `gaViewItemList`, `gaSearch`.
-- כולן בנויות לפי סכמת GA4 הסטנדרטית (`items[]` עם `item_id` = מק"ט מוצר, `item_name`, `price`, `quantity`, `currency: 'ILS'`).
+- VAT: קבוע יחיד ב-`ProfitabilityTab.tsx` שורה 16.
+- enum: `alter type order_status add value 'delivered' before 'completed';` ואז עדכון `useOrders.ts` ותרגומי הסטטוסים.
+- הנפקת חשבונית: כיום ב-`useOrders.ts` בתוך `updateStatus` כשמעבירים ל-`completed` — להעביר ל-`delivered`.
+- שפת SMS: לוודא שב-`order-sms-trigger/index.ts` הסדר הוא — תבנית בשפת ההזמנה → תבנית ברירת מחדל. (לוודא בקוד הקיים.)
 
-## שלב 3 — מעקב Page Views ב-SPA
-
-קובץ: `src/components/web/WebLayout.tsx`
-- בתוך `WebLayoutInner` להוסיף `useEffect` נוסף (מקביל לקיים של `fbqPageView`) שמפעיל `gaPageView(location.pathname + location.search)` בכל שינוי `pathname`.
-- כך כל ניווט פנימי באתר הציבורי נספר ב-GA4. ה-CRM (`/crm/*`) לא נוגע בזה כי הוא לא עטוף ב-WebLayout.
-
-## שלב 4 — אירועי E-commerce
-
-חיבור האירועים לקוד הקיים, תוך שימוש ב-`product_number` / SKU כ-`item_id` (תואם לבחירה הקודמת ב-Meta Pixel):
-
-| אירוע GA4         | מיקום                                                       |
-|-------------------|-------------------------------------------------------------|
-| `view_item`       | `src/pages/web/WebProductPage.tsx` בכניסה לעמוד מוצר        |
-| `view_item_list`  | `src/pages/web/WebShopPage.tsx` + `WebCategoryPage.tsx`     |
-| `search`          | `src/pages/web/WebSearchPage.tsx`                            |
-| `add_to_cart`     | פעולת הוספה לסל ב-`WebProductPage.tsx` (ובמקומות נוספים אם יש) |
-| `remove_from_cart`| הסרת פריט ב-`src/pages/web/WebCartPage.tsx`                  |
-| `begin_checkout`  | מעבר ל-`src/pages/web/WebCheckoutPage.tsx`                   |
-| `purchase`        | `src/pages/web/WebOrderConfirmation.tsx` (בדומה ל-Pixel `Purchase` הקיים, עם `transaction_id` = `order_number`) |
-
-הקריאות נעשות לצד הקריאות הקיימות ל-Meta Pixel (לא במקומן).
-
-## שלב 5 — בידוד מה-CRM
-
-- אין טעינת gtag ב-CRM: התגית ב-`index.html` תיטען בכל מקרה, אבל `page_view`/אירועי מסחר נשלחים רק מקוד שעטוף ב-`WebLayout`. כך CRM לא מזהם דוחות תנועה.
-- אופציונלי (מומלץ): ב-`AppLayout` של ה-CRM להגדיר `window['ga-disable-G-M0ST7YDS0C'] = true` כדי למנוע איסוף מ-CRM לחלוטין.
-
-## שלב 6 — בדיקה
-- בנייה ידנית של האתר, פתיחת DevTools → Network → סינון `collect?v=2` לוודא שליחה.
-- ב-GA4 → Realtime לראות כניסות ואירועי `view_item` / `add_to_cart` / `purchase`.
-
----
-
-## הערות
-- אין שימוש ב-Consent Mode בשלב זה (לא קיים באתר Cookie Banner). אם תרצה — נוסיף בשלב נפרד.
-- מזהה המדידה `G-M0ST7YDS0C` הוא ציבורי ולכן נשאר hardcoded בקוד (אין צורך ב-secret).
-- אין שינויי DB / Edge Functions.
-
-## קבצים שישתנו/ייווצרו
-- `index.html` — הוספת gtag.
-- `src/lib/gtag.ts` — חדש.
-- `src/components/web/WebLayout.tsx` — page views.
-- `src/pages/web/WebProductPage.tsx` — `view_item` + `add_to_cart`.
-- `src/pages/web/WebShopPage.tsx`, `WebCategoryPage.tsx` — `view_item_list`.
-- `src/pages/web/WebSearchPage.tsx` — `search`.
-- `src/pages/web/WebCartPage.tsx` — `remove_from_cart`.
-- `src/pages/web/WebCheckoutPage.tsx` — `begin_checkout`.
-- `src/pages/web/WebOrderConfirmation.tsx` — `purchase`.
-- (אופציונלי) `src/components/layout/AppLayout.tsx` — disable flag ל-CRM.
+אישור התוכנית יפעיל את הצעדים A → B → C, ואחזור לבירור פרטי אפליקציית המשלוחים בצעד נפרד.
