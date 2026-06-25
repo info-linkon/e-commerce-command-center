@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { cn } from "@/lib/utils";
 
-const VAT_RATE = 0.17;
+const VAT_RATE = 0.18;
 
 const ProductPerformancePage = () => {
   const { id } = useParams<{ id: string }>();
