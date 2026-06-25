@@ -13,7 +13,7 @@ interface Props {
   endDate?: string;
 }
 
-const VAT_RATE = 0.17;
+const VAT_RATE = 0.18;
 
 export default function ProfitabilityTab({ startDate, endDate }: Props) {
   const [categoryId, setCategoryId] = useState<string>("all");
