@@ -56,6 +56,12 @@ const settingsSections = [
     url: "/crm/admin/meta-pixel",
   },
   {
+    title: "TikTok Pixel",
+    description: "הגדרת Pixel ID של TikTok למעקב המרות",
+    icon: BarChart3,
+    url: "/crm/admin/tiktok-pixel",
+  },
+  {
     title: "הגדרות סליקה",
     description: "הגדרת חשבון HYP CreditGuard לתשלומי אשראי",
     icon: CreditCard,
