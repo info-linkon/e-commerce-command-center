@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBundleStock } from "@/hooks/useBundleStock";
 import { fbq } from "@/lib/meta-pixel";
+import { ttq } from "@/lib/tiktok-pixel";
 import { gaViewItem, gaAddToCart } from "@/lib/gtag";
 import { useLanguage } from "@/hooks/useLanguage";
 
