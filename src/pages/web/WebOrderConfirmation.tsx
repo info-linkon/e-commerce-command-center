@@ -2,6 +2,7 @@ import { useParams, Link, useSearchParams } from "react-router-dom";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { fbq } from "@/lib/meta-pixel";
+import { ttq } from "@/lib/tiktok-pixel";
 import { gaPurchase } from "@/lib/gtag";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/web-cart-store";
