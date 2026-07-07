@@ -1,0 +1,1 @@
+UPDATE public.site_content SET content = jsonb_set(content, '{pixel_id}', '"D95OKQJC77UCQSPIQSFG"'), updated_at = now() WHERE page='settings' AND section='tiktok_pixel';
