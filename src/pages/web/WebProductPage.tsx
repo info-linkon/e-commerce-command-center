@@ -82,6 +82,18 @@ export default function WebProductPage() {
         value: product.sale_price,
         currency: "ILS",
       });
+      // TikTok Pixel: ViewContent
+      ttq("ViewContent", {
+        contents: [{
+          content_id: product.sku,
+          content_type: "product_group",
+          content_name: product.name_ar || product.name,
+          price: product.sale_price,
+          quantity: 1,
+        }],
+        value: product.sale_price,
+        currency: "ILS",
+      });
       // GA4: view_item
       gaViewItem(product.sale_price, [{
         item_id: product.sku,
