@@ -292,6 +292,18 @@ export default function WebProductPage() {
         value: price * quantity,
         currency: "ILS",
       });
+      // TikTok Pixel: AddToCart
+      ttq("AddToCart", {
+        contents: [{
+          content_id: itemSku,
+          content_type: "product",
+          content_name: displayName,
+          price,
+          quantity,
+        }],
+        value: price * quantity,
+        currency: "ILS",
+      });
       // GA4: add_to_cart
       gaAddToCart(price * quantity, [{
         item_id: itemSku,
