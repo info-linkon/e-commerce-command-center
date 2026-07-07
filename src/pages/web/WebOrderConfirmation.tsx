@@ -2,6 +2,7 @@ import { useParams, Link, useSearchParams } from "react-router-dom";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { fbq } from "@/lib/meta-pixel";
+import { ttq } from "@/lib/tiktok-pixel";
 import { gaPurchase } from "@/lib/gtag";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/web-cart-store";
@@ -246,6 +247,10 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
         value: isFinite(amount) ? amount : 0,
         currency: "ILS",
       });
+      ttq("CompletePayment", {
+        value: isFinite(amount) ? amount : 0,
+        currency: "ILS",
+      });
       gaPurchase(String(orderNumber), isFinite(amount) ? amount : 0, []);
       return;
     }
@@ -271,6 +276,7 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     });
     if (!contents.length) {
       fbq("Purchase", { value, currency: "ILS" });
+      ttq("CompletePayment", { value, currency: "ILS" });
       return;
     }
     fbq("Purchase", {
@@ -281,9 +287,23 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
       value,
       currency: "ILS",
     });
+    // TikTok Pixel: CompletePayment
+    ttq("CompletePayment", {
+      contents: contents.map((c) => ({
+        content_id: c.id,
+        content_type: "product",
+        quantity: c.quantity,
+      })),
+      value,
+      currency: "ILS",
+    });
   } catch (err) {
     console.error("[meta-pixel] Purchase enrichment failed:", err);
     fbq("Purchase", {
+      value: isFinite(amount) ? amount : 0,
+      currency: "ILS",
+    });
+    ttq("CompletePayment", {
       value: isFinite(amount) ? amount : 0,
       currency: "ILS",
     });

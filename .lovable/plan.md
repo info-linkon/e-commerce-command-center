@@ -1,27 +1,49 @@
-## הבעיה
+## מטרה
+להוסיף TikTok Pixel לאתר הציבורי במקביל ל-Meta Pixel, כולל מעקב אירועים סטנדרטי (PageView, ViewContent, AddToCart, InitiateCheckout, Purchase) ודף הגדרות בממשק הניהול.
 
-בפופאפ עריכת באנר (וברוב הפופאפים) כפתור "שמור" נחתך בתחתית ואי-אפשר לגלול אליו. הסיבה: `DialogContent` משתמש ב-`grid gap-4` עם `overflow-y-auto` באותו אלמנט, וב-`DialogHeader`/`DialogFooter` יש `sticky` עם margins שליליים. השילוב הזה לא יציב — חלק מהטפסים (כמו `WebBannersPage`) בכלל לא משתמשים ב-`DialogFooter` אלא שמים את כפתור השמירה כילד רגיל, כך שהוא נדחף מתחת לגובה הנגלל הזמין.
+## מה ייבנה
 
-## הפתרון
+### 1. הזרקת סקריפט הבסיס
+`index.html` — הוספת bootstrap של TikTok Pixel (`ttq`) בתוך `<head>`, ללא `sdkid` קשיח. ה-ID יטען דינמית מ-`site_content` (בדיוק כמו Meta Pixel), כדי שניתן יהיה להחליף בלי דיפלוי.
 
-לשנות את `DialogContent` למבנה Flex עם גוף נגלל פנימי קבוע, כך שיעבוד נכון לכל קריאה קיימת בלי לשנות את ה-call-sites.
+### 2. Helper library
+`src/lib/tiktok-pixel.ts` חדש — מקביל ל-`meta-pixel.ts`:
+- `ttq(event, data?)` — עטיפה בטוחה
+- `ttqPageView()`
+- מיפוי אירועים סטנדרטיים של TikTok: `ViewContent`, `AddToCart`, `InitiateCheckout`, `CompletePayment` (זה השם ב-TikTok, מקביל ל-Purchase של Meta)
 
-### שינויים ב-`src/components/ui/dialog.tsx`
+### 3. אתחול ומעקב ב-WebLayout
+`src/components/web/WebLayout.tsx`:
+- לקרוא `useSiteSection("settings", "tiktok_pixel")` במקביל ל-Meta
+- לאתחל `ttq.load(pixelId)` כשה-ID מגיע (retry pattern זהה ל-Meta)
+- לשלוח `ttqPageView()` בכל שינוי route (במקביל ל-`fbqPageView` ו-`gaPageView`)
+- להוסיף `<noscript>` fallback ל-TikTok
 
-1. **`DialogContent`** הופך ל-`flex flex-col` עם `overflow-hidden` (במקום `grid` + `overflow-y-auto`).
-2. נוסיף עיבוד פנימי של `children`:
-   - ילדים שהם `DialogHeader` → נשארים בראש כ-shrink-0 (ללא sticky/negative margin).
-   - ילדים שהם `DialogFooter` → נשארים בתחתית כ-shrink-0.
-   - שאר הילדים נעטפים אוטומטית ב-`<div class="flex-1 overflow-y-auto -mx-4 px-4 sm:-mx-6 sm:px-6">` כך שהם מקבלים גלילה משלהם, גם כשאין `DialogFooter`.
-3. **`DialogHeader`/`DialogFooter`**: להסיר את `sticky`, `backdrop-blur` והמרג'ינים השליליים — לא נחוצים יותר כי הם יושבים מחוץ לאזור הגלילה. נשמור על ה-`border-b`/`border-t` לחזות הקיימת.
-4. נשמור על אנימציית bottom-sheet במובייל ועל max-h של `92vh`/`90vh`.
+### 4. ירי אירועי מסחר
+בכל מקום שכבר יורה `fbq(...)` יתווסף `ttq(...)` מקביל:
+- `WebProductPage` — `ViewContent`
+- `web-cart-store` / רכיב "הוסף לסל" — `AddToCart`
+- `WebCheckoutPage` — `InitiateCheckout`
+- `WebOrderConfirmation` — `CompletePayment` (עם value + currency=ILS + contents)
 
-### אותו תיקון ל-`src/components/ui/alert-dialog.tsx`
+(נאתר בפועל את כל הקריאות ל-`fbq(` ונשקף את כולן.)
 
-לעקביות — אותו עיבוד children (header/footer קבועים, גוף נגלל).
+### 5. דף הגדרות בממשק הניהול
+`src/pages/admin/TikTokPixelSettingsPage.tsx` חדש — מקביל ל-`MetaPixelSettingsPage`:
+- שדה `Pixel ID` (LTR, monospace)
+- שמירה ל-`site_content` תחת `page="settings"`, `section="tiktok_pixel"`
+- תיבת הסבר של אילו אירועים נשלחים
 
-## תוצאה
+הוספת route חדש `/crm/admin/tiktok-pixel` ב-`App.tsx`, וכרטיס חדש ב-`SettingsPage.tsx` ליד Meta Pixel.
 
-- בכל פופאפ קיים, גם בלי לשנות את הקוד שלו, יהיה אזור גוף נגלל פנימית; הכפתורים בתחתית (גם אם הם רק `<Button>` רגיל בתוך הגוף) יישארו נגישים על-ידי גלילה.
-- `DialogHeader`/`DialogFooter` (כשמשמשים) מוצמדים יציב לראש/תחתית בלי באגי sticky.
-- אותה התנהגות בדסקטופ ובמובייל.
+## פרטים טכניים
+
+- אין צורך במפתח סודי או Edge Function — פיקסל של TikTok הוא client-side בלבד (בדומה ל-Meta Pixel), כך שה-ID נשמר ב-`site_content` הפומבי (אותה גישה כמו Meta).
+- לא נוגעים באירועי GA4/Meta הקיימים, רק מוסיפים במקביל.
+- אין שינוי ב-DB / migrations — משתמשים בטבלת `site_content` הקיימת עם `section` חדש.
+- ה-Pixel ID `D95OKQJC77UCQSPIQSFG` מהדוגמה יוזן ידנית ע"י המשתמש בדף ההגדרות אחרי הפריסה (או ניתן לשמור אותו כברירת מחדל ראשונית — אשאל בהמשך אם רלוונטי).
+- Advanced Matching / Events API (server-side) — לא נכלל בשלב זה; אפשר להוסיף בהמשך כ-Edge Function אם תרצה מעקב מדויק יותר עם iOS14+.
+
+## מה לא בתוכנית
+- Events API של TikTok (server-side deduplication) — דורש Access Token ו-Edge Function; מציע כשלב הבא.
+- Catalog / Product Feed ל-TikTok — לא ביקשת, אפשר להוסיף בנפרד.

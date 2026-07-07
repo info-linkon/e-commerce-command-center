@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBundleStock } from "@/hooks/useBundleStock";
 import { fbq } from "@/lib/meta-pixel";
+import { ttq } from "@/lib/tiktok-pixel";
 import { gaViewItem, gaAddToCart } from "@/lib/gtag";
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -78,6 +79,18 @@ export default function WebProductPage() {
         content_ids: [product.sku],
         content_name: product.name_ar || product.name,
         content_type: "product_group",
+        value: product.sale_price,
+        currency: "ILS",
+      });
+      // TikTok Pixel: ViewContent
+      ttq("ViewContent", {
+        contents: [{
+          content_id: product.sku,
+          content_type: "product_group",
+          content_name: product.name_ar || product.name,
+          price: product.sale_price,
+          quantity: 1,
+        }],
         value: product.sale_price,
         currency: "ILS",
       });
@@ -276,6 +289,18 @@ export default function WebProductPage() {
         contents: [{ id: itemSku, quantity }],
         content_name: displayName,
         content_type: "product",
+        value: price * quantity,
+        currency: "ILS",
+      });
+      // TikTok Pixel: AddToCart
+      ttq("AddToCart", {
+        contents: [{
+          content_id: itemSku,
+          content_type: "product",
+          content_name: displayName,
+          price,
+          quantity,
+        }],
         value: price * quantity,
         currency: "ILS",
       });

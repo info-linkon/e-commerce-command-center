@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateCoupon, calcDiscount, Coupon } from "@/hooks/useCoupons";
 import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home, MessageSquare, ShieldCheck, Lock, ChevronLeft, ShoppingBag, Package, Truck } from "lucide-react";
 import { fbq } from "@/lib/meta-pixel";
+import { ttq } from "@/lib/tiktok-pixel";
 import { gaBeginCheckout } from "@/lib/gtag";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -152,6 +153,16 @@ export default function WebCheckoutPage() {
         contents,
         content_type: "product",
         num_items: items.reduce((s, i) => s + i.quantity, 0),
+        value: totalPrice(),
+        currency: "ILS",
+      });
+      // TikTok Pixel: InitiateCheckout
+      ttq("InitiateCheckout", {
+        contents: contents.map((c) => ({
+          content_id: c.id,
+          content_type: "product",
+          quantity: c.quantity,
+        })),
         value: totalPrice(),
         currency: "ILS",
       });

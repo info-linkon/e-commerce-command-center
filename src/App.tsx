@@ -57,6 +57,7 @@ import WebBannersPage from "./pages/admin/WebBannersPage";
 import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
 import SmsTemplatesPage from "./pages/admin/SmsTemplatesPage";
 import MetaPixelSettingsPage from "./pages/admin/MetaPixelSettingsPage";
+import TikTokPixelSettingsPage from "./pages/admin/TikTokPixelSettingsPage";
 import HypSettingsPage from "./pages/admin/HypSettingsPage";
 import PaymentMethodsSettingsPage from "./pages/admin/PaymentMethodsSettingsPage";
 import InforuSettingsPage from "./pages/admin/InforuSettingsPage";
@@ -157,6 +158,7 @@ const App = () => (
             <Route path="/crm/admin/sms-templates" element={<Protected><SmsTemplatesPage /></Protected>} />
             <Route path="/crm/admin/sms-log" element={<Protected><SmsLogPage /></Protected>} />
             <Route path="/crm/admin/meta-pixel" element={<Protected><MetaPixelSettingsPage /></Protected>} />
+            <Route path="/crm/admin/tiktok-pixel" element={<Protected><TikTokPixelSettingsPage /></Protected>} />
             <Route path="/crm/admin/hyp-settings" element={<Protected><HypSettingsPage /></Protected>} />
             <Route path="/crm/admin/payment-methods" element={<Protected><PaymentMethodsSettingsPage /></Protected>} />
             <Route path="/crm/admin/inforu-settings" element={<Protected><InforuSettingsPage /></Protected>} />

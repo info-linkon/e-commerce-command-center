@@ -6,6 +6,7 @@ import { MessageCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { fbqPageView } from "@/lib/meta-pixel";
+import { ttqPageView } from "@/lib/tiktok-pixel";
 import { gaPageView } from "@/lib/gtag";
 import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
@@ -18,10 +19,12 @@ function ScrollToTop() {
 
 function WebLayoutInner() {
   const { data: pixelSettings } = useSiteSection("settings", "meta_pixel");
+  const { data: tiktokSettings } = useSiteSection("settings", "tiktok_pixel");
   const { data: settingsData } = useSiteSection("settings", "general");
   const { lang } = useLanguage();
   const { pathname } = useLocation();
   const pixelInitialized = useRef(false);
+  const tiktokInitialized = useRef(false);
   useVersionCheck();
 
   const settings = (settingsData?.content || {}) as any;
@@ -44,10 +47,30 @@ function WebLayoutInner() {
     tryInit();
   }, [pixelSettings]);
 
+  // Initialize TikTok Pixel with retry
+  useEffect(() => {
+    const tiktokPixelId = (tiktokSettings?.content as any)?.pixel_id;
+    if (!tiktokPixelId || tiktokInitialized.current) return;
+
+    const tryInit = (attempts = 0) => {
+      if (typeof window !== "undefined" && (window as any).ttq && typeof (window as any).ttq.load === "function") {
+        (window as any).ttq.load(tiktokPixelId);
+        (window as any).ttq.page();
+        tiktokInitialized.current = true;
+      } else if (attempts < 20) {
+        setTimeout(() => tryInit(attempts + 1), 500);
+      }
+    };
+    tryInit();
+  }, [tiktokSettings]);
+
   // Track page views on route change
   useEffect(() => {
     if (pixelInitialized.current) {
       fbqPageView();
+    }
+    if (tiktokInitialized.current) {
+      ttqPageView();
     }
   }, [pathname]);
 
@@ -58,6 +81,7 @@ function WebLayoutInner() {
 
   // Render noscript pixel fallback
   const pixelId = (pixelSettings?.content as any)?.pixel_id;
+  const tiktokPixelId = (tiktokSettings?.content as any)?.pixel_id;
 
   return (
     <div className="min-h-screen flex flex-col bg-sand" dir="rtl">
@@ -77,6 +101,19 @@ function WebLayoutInner() {
             width="1"
             style={{ display: "none" }}
             src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
+            alt=""
+          />
+        </noscript>
+      )}
+
+      {/* TikTok noscript pixel fallback */}
+      {tiktokPixelId && (
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src={`https://analytics.tiktok.com/api/v2/pixel?sdkid=${tiktokPixelId}&event=Pageview`}
             alt=""
           />
         </noscript>
