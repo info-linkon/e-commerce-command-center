@@ -156,6 +156,16 @@ export default function WebCheckoutPage() {
         value: totalPrice(),
         currency: "ILS",
       });
+      // TikTok Pixel: InitiateCheckout
+      ttq("InitiateCheckout", {
+        contents: contents.map((c) => ({
+          content_id: c.id,
+          content_type: "product",
+          quantity: c.quantity,
+        })),
+        value: totalPrice(),
+        currency: "ILS",
+      });
     }
     // GA4: begin_checkout
     const gaItems = items
