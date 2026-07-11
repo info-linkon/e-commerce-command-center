@@ -3,6 +3,7 @@ import { WebProductCard } from "@/components/web/WebProductCard";
 import { useWebProducts, useWebCategories, useWebFeaturedProducts, useWebBestSellers } from "@/hooks/useWebProducts";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { useBannersPublic } from "@/hooks/useBannersPublic";
+import { ExclusiveDealsSlider } from "@/components/web/ExclusiveDealsSlider";
 import { defaultContent } from "@/lib/web-default-content";
 import { Truck, Shield, ShoppingBag, RefreshCw, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -252,6 +253,9 @@ export default function WebHome() {
           </div>
         </div>
       </section>
+
+      {/* Best Sellers */}
+      <ExclusiveDealsSlider />
 
       {/* Best Sellers */}
       {bestSellers && bestSellers.length > 0 && (

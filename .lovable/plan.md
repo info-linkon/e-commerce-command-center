@@ -1,49 +1,55 @@
-## מטרה
-להוסיף TikTok Pixel לאתר הציבורי במקביל ל-Meta Pixel, כולל מעקב אירועים סטנדרטי (PageView, ViewContent, AddToCart, InitiateCheckout, Purchase) ודף הגדרות בממשק הניהול.
+## قسم "صفقات حصرية / מבצעים מיוחדים"
 
-## מה ייבנה
+### מיקום
+בעמוד הבית (`WebHome.tsx`), **מעל** קטע "الأكثر مبيعاً" ומתחת ל"منتجات مميزة".
 
-### 1. הזרקת סקריפט הבסיס
-`index.html` — הוספת bootstrap של TikTok Pixel (`ttq`) בתוך `<head>`, ללא `sdkid` קשיח. ה-ID יטען דינמית מ-`site_content` (בדיוק כמו Meta Pixel), כדי שניתן יהיה להחליף בלי דיפלוי.
+### תצוגה (סליידר מוצרים)
+- דסקטופ: 4 מוצרים גלויים
+- טאבלט: 3
+- מובייל: 1.5–2 מוצרים (peek) עם החלקה חופשית
+- מבוסס על רכיב `Carousel` (embla) הקיים בפרויקט – אותו סגנון של הבאנרים
+- חצי ניווט בדסקטופ, גרירה במובייל
+- כותרת דו־לשונית: صفقات حصرية / מבצעים מיוחדים + באדג' זהב "🔥"
+- כרטיס מוצר: `WebProductCard` הקיים (בלי לשנות עיצוב הכרטיס עצמו)
+- אם אין מוצרים מוגדרים – הקטע לא נטען כלל
 
-### 2. Helper library
-`src/lib/tiktok-pixel.ts` חדש — מקביל ל-`meta-pixel.ts`:
-- `ttq(event, data?)` — עטיפה בטוחה
-- `ttqPageView()`
-- מיפוי אירועים סטנדרטיים של TikTok: `ViewContent`, `AddToCart`, `InitiateCheckout`, `CompletePayment` (זה השם ב-TikTok, מקביל ל-Purchase של Meta)
+### ניהול מהאדמין
+דף חדש ב־CRM: **`/crm/admin/exclusive-deals`**
+- קישור מ־Sidebar תחת "אדמין / הגדרות אתר"
+- טבלה של מוצרים שסומנו כ"מבצע חצרי"
+- כפתור "הוסף מוצר" → דיאלוג חיפוש מוצרים (לפי שם/SKU) → בחירה
+- אפשרות סידור בגרירה (sort_order)
+- כפתור הסרה מהקטע
+- טוגל active לכל שורה (הצג/הסתר בלי למחוק)
 
-### 3. אתחול ומעקב ב-WebLayout
-`src/components/web/WebLayout.tsx`:
-- לקרוא `useSiteSection("settings", "tiktok_pixel")` במקביל ל-Meta
-- לאתחל `ttq.load(pixelId)` כשה-ID מגיע (retry pattern זהה ל-Meta)
-- לשלוח `ttqPageView()` בכל שינוי route (במקביל ל-`fbqPageView` ו-`gaPageView`)
-- להוסיף `<noscript>` fallback ל-TikTok
+### מבנה נתונים
+טבלה חדשה **`exclusive_deals`**:
+```
+id            uuid PK
+product_id    uuid → products(id) ON DELETE CASCADE (unique)
+sort_order    int  default 0
+active        bool default true
+created_at    timestamptz
+created_by    uuid
+```
+- GRANT SELECT ל־anon+authenticated, ALL ל־service_role
+- RLS: קריאה פומבית לכולם; כתיבה רק ל־authenticated (בהתאמה לדפוסים הקיימים במיזם, ראה `banners`).
 
-### 4. ירי אירועי מסחר
-בכל מקום שכבר יורה `fbq(...)` יתווסף `ttq(...)` מקביל:
-- `WebProductPage` — `ViewContent`
-- `web-cart-store` / רכיב "הוסף לסל" — `AddToCart`
-- `WebCheckoutPage` — `InitiateCheckout`
-- `WebOrderConfirmation` — `CompletePayment` (עם value + currency=ILS + contents)
+### קבצים חדשים
+1. `src/hooks/useExclusiveDeals.ts` – `useExclusiveDealsPublic()`, `useExclusiveDealsAdmin()`, `useAddExclusiveDeal()`, `useRemoveExclusiveDeal()`, `useReorderExclusiveDeals()`, `useToggleExclusiveDeal()`
+2. `src/components/web/ExclusiveDealsSlider.tsx` – הסליידר בעמוד הבית
+3. `src/pages/admin/ExclusiveDealsPage.tsx` – ניהול
 
-(נאתר בפועל את כל הקריאות ל-`fbq(` ונשקף את כולן.)
+### קבצים לעריכה
+- `src/pages/web/WebHome.tsx` – הוספת `<ExclusiveDealsSlider />` מעל "الأكثر مبيعاً"
+- `src/App.tsx` – route ל־`/crm/admin/exclusive-deals`
+- `src/components/layout/AppSidebar.tsx` – פריט תפריט חדש
+- `supabase/migrations/*` – יצירת הטבלה + GRANTs + RLS
 
-### 5. דף הגדרות בממשק הניהול
-`src/pages/admin/TikTokPixelSettingsPage.tsx` חדש — מקביל ל-`MetaPixelSettingsPage`:
-- שדה `Pixel ID` (LTR, monospace)
-- שמירה ל-`site_content` תחת `page="settings"`, `section="tiktok_pixel"`
-- תיבת הסבר של אילו אירועים נשלחים
+### שאילתת המוצרים
+דומה ל־`useWebBestSellers`/`useWebProducts`: JOIN עם `products` + `categories!products_category_id_fkey(name, name_he)` + חישוב `outOfStock`. סינון: `active=true` + מוצר `active=true` + לא מוסתר.
 
-הוספת route חדש `/crm/admin/tiktok-pixel` ב-`App.tsx`, וכרטיס חדש ב-`SettingsPage.tsx` ליד Meta Pixel.
-
-## פרטים טכניים
-
-- אין צורך במפתח סודי או Edge Function — פיקסל של TikTok הוא client-side בלבד (בדומה ל-Meta Pixel), כך שה-ID נשמר ב-`site_content` הפומבי (אותה גישה כמו Meta).
-- לא נוגעים באירועי GA4/Meta הקיימים, רק מוסיפים במקביל.
-- אין שינוי ב-DB / migrations — משתמשים בטבלת `site_content` הקיימת עם `section` חדש.
-- ה-Pixel ID `D95OKQJC77UCQSPIQSFG` מהדוגמה יוזן ידנית ע"י המשתמש בדף ההגדרות אחרי הפריסה (או ניתן לשמור אותו כברירת מחדל ראשונית — אשאל בהמשך אם רלוונטי).
-- Advanced Matching / Events API (server-side) — לא נכלל בשלב זה; אפשר להוסיף בהמשך כ-Edge Function אם תרצה מעקב מדויק יותר עם iOS14+.
-
-## מה לא בתוכנית
-- Events API של TikTok (server-side deduplication) — דורש Access Token ו-Edge Function; מציע כשלב הבא.
-- Catalog / Product Feed ל-TikTok — לא ביקשת, אפשר להוסיף בנפרד.
+### הבהרות שאני מניח (אשנה אם תרצה אחרת):
+- אין מחיר "לפני מבצע" נפרד – משתמשים ב־`sale_price` הקיים של המוצר כמו בכל שאר הקטעים (אין שדה חדש של אחוז הנחה).
+- אין תאריך תפוגה אוטומטי – הכל ידני דרך active/הסרה.
+- הקטע מוצג רק אם יש לפחות מוצר אחד פעיל.
