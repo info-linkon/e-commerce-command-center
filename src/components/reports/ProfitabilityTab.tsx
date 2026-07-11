@@ -55,11 +55,14 @@ export default function ProfitabilityTab({ startDate, endDate }: Props) {
       if (bundleVarIds.length > 0) {
         const { data: bvItems } = await supabase
           .from("bundle_variation_items")
-          .select("bundle_variation_id, quantity, product_variations(cost_price)")
+          .select("bundle_variation_id, quantity, product_variations(cost_price, products(cost_price))")
           .in("bundle_variation_id", bundleVarIds);
         for (const row of bvItems || []) {
           const bvId = (row as any).bundle_variation_id as string;
-          const compCost = Number((row as any).product_variations?.cost_price || 0);
+          const pv = (row as any).product_variations;
+          const vCost = Number(pv?.cost_price || 0);
+          const pCost = Number(pv?.products?.cost_price || 0);
+          const compCost = vCost > 0 ? vCost : pCost;
           const qty = Number((row as any).quantity || 0);
           bundleCostMap.set(bvId, (bundleCostMap.get(bvId) || 0) + compCost * qty);
         }
