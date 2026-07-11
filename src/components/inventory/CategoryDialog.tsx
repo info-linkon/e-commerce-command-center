@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,15 +25,16 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
   const [imageUrl, setImageUrl] = useState<string | null>(category?.image_url ?? null);
   const [uploading, setUploading] = useState(false);
 
-  const handleOpen = (isOpen: boolean) => {
-    if (isOpen) {
+  // Sync form state whenever the dialog is opened OR the target category changes
+  // (e.g. user clicks "edit" on a different row while the dialog is already open).
+  useEffect(() => {
+    if (open) {
       setName(category?.name ?? "");
       setNameHe((category as any)?.name_he ?? "");
       setDisplayOrder(category?.display_order ?? 0);
       setImageUrl(category?.image_url ?? null);
     }
-    onOpenChange(isOpen);
-  };
+  }, [open, category?.id]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,7 +55,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle>{category ? "עריכת קטגוריה" : "הוספת קטגוריה"}</DialogTitle>
