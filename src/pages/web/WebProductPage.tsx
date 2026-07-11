@@ -486,9 +486,7 @@ export default function WebProductPage() {
         </div>
       </div>
 
-      <div className="container">
-        <RelatedProductsSection productId={product.id} />
-      </div>
+      <RelatedProductsSection productId={product.id} />
     </div>
   );
 }
