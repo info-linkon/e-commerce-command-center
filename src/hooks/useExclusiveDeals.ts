@@ -60,7 +60,7 @@ export function useExclusiveDealsPublic() {
       if (error) throw error;
       const products = (data || [])
         .map((row: any) => row.products)
-        .filter((p: any) => p && p.is_published);
+        .filter((p: any) => p);
       return await annotateOutOfStock(products);
     },
   });
