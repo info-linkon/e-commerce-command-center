@@ -60,6 +60,7 @@ export function ExclusiveDealsSlider() {
                   name={product.name}
                   nameAr={product.name_ar}
                   price={product.sale_price}
+                  originalPrice={product.compare_at_price}
                   imageUrl={product.image_url}
                   categoryName={product.categories?.name}
                   categoryNameHe={product.categories?.name_he}
