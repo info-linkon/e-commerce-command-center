@@ -41,6 +41,7 @@ const ProductForm = () => {
     short_description_ar: "",
     sale_price: 0,
     cost_price: 0,
+    compare_at_price: 0,
     shipping_price: 0,
     category_id: "" as string | null,
     product_type: "simple" as "simple" | "variable",
@@ -64,6 +65,7 @@ const ProductForm = () => {
         short_description_ar: (product as any).short_description_ar || "",
         sale_price: Number(product.sale_price),
         cost_price: Number(product.cost_price),
+        compare_at_price: Number((product as any).compare_at_price || 0),
         shipping_price: Number((product as any).shipping_price || 0),
         category_id: product.category_id,
         product_type: product.product_type,
@@ -135,6 +137,7 @@ const ProductForm = () => {
 
     const data = {
       ...form,
+      compare_at_price: form.compare_at_price > 0 ? form.compare_at_price : null,
       category_id: primaryCategoryId,
       gallery_images: galleryImages,
     };
@@ -342,6 +345,11 @@ const ProductForm = () => {
               <div className="space-y-2">
                 <Label>מחיר מכירה</Label>
                 <Input type="number" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-2">
+                <Label>מחיר לפני מבצע (אופציונלי)</Label>
+                <Input type="number" value={form.compare_at_price} onChange={(e) => setForm({ ...form, compare_at_price: Number(e.target.value) })} placeholder="0 = בלי מבצע" />
+                <p className="text-xs text-muted-foreground">כאשר גבוה ממחיר המכירה, יוצג באתר כמחיר לפני הנחה (עם קו חוצה) ותג הנחה באחוזים.</p>
               </div>
               <div className="space-y-2">
                 <Label>מחיר עלות (ללא מע״מ)</Label>
