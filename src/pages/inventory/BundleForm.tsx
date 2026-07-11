@@ -14,6 +14,7 @@ import { useProducts, useProductVariations } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { useProductCategories, useSetProductCategories } from "@/hooks/useProductCategories";
 import { BundleVariationsManager } from "@/components/inventory/BundleVariationsManager";
+import { RelatedProductsManager } from "@/components/inventory/RelatedProductsManager";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -491,6 +492,15 @@ const BundleForm = () => {
             <Card>
               <CardContent className="pt-4">
                 <p className="text-xs text-muted-foreground text-center py-3">שמור תחילה כדי להוסיף וריאציות</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {isEditing && bundle && (
+            <Card>
+              <CardContent className="pt-4">
+                <Label className="text-sm font-semibold mb-3 block">מוצרים קשורים</Label>
+                <RelatedProductsManager productId={bundle.product_id} />
               </CardContent>
             </Card>
           )}
