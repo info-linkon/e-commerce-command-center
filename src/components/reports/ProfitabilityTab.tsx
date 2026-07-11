@@ -35,7 +35,7 @@ export default function ProfitabilityTab({ startDate, endDate }: Props) {
     queryFn: async () => {
       let q = supabase
         .from("order_items")
-        .select("quantity, total_price, bundle_variation_id, product_variations(cost_price, name, products!inner(id, name, name_ar, category_id)), orders!inner(status, created_at, includes_vat)")
+        .select("quantity, total_price, bundle_variation_id, product_variations(cost_price, name, products!inner(id, name, name_ar, category_id, cost_price)), orders!inner(status, created_at, includes_vat)")
         .gte("orders.created_at", startDate)
         .eq("orders.status", "completed");
       if (endDate) q = q.lte("orders.created_at", endDate);
@@ -80,9 +80,14 @@ export default function ProfitabilityTab({ startDate, endDate }: Props) {
         const revenueNet = includesVat ? grossLine / (1 + VAT_RATE) : grossLine;
         // Bundle: use component costs. Otherwise: variation cost.
         const bvId = (item as any).bundle_variation_id as string | null;
+        // For non-bundle items: prefer variation.cost_price; when it's missing or 0,
+        // fall back to the parent product's cost_price so items where only the product-
+        // level cost was updated still show accurate profitability.
+        const variationCost = Number(v?.cost_price || 0);
+        const productCost = Number((p as any)?.cost_price || 0);
         const perUnitCost = bvId
           ? (bundleCostMap.get(bvId) || 0)
-          : Number(v?.cost_price || 0);
+          : (variationCost > 0 ? variationCost : productCost);
         const cost = perUnitCost * item.quantity;
         totalRevenueGross += grossLine;
         totalCost += cost;
