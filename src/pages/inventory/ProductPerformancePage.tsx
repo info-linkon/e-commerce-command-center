@@ -54,7 +54,7 @@ const ProductPerformancePage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, name_ar, sku, product_number, image_url, category_id, categories!products_category_id_fkey(name, name_he)")
+        .select("id, name, name_ar, sku, product_number, image_url, category_id, cost_price, categories!products_category_id_fkey(name, name_he)")
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
@@ -64,7 +64,7 @@ const ProductPerformancePage = () => {
 
   const { data: perf } = useQuery({
     queryKey: ["product-perf", id, startDate, endDate],
-    enabled: !!id,
+    enabled: !!id && !!product,
     queryFn: async () => {
       let q = supabase
         .from("order_items")
@@ -75,6 +75,47 @@ const ProductPerformancePage = () => {
       if (endDate) q = q.lte("orders.created_at", endDate);
       const { data, error } = await q;
       if (error) throw error;
+
+      // Also count sales where this product appears as a component inside bundles.
+      // We first find all bundle_variation_items whose variation belongs to this product,
+      // then load order_items whose bundle_variation_id matches — multiplying quantities
+      // by the per-bundle component quantity.
+      const productCostFallback = Number((product as any)?.cost_price || 0);
+      // Load product variations to identify component memberships
+      const { data: myVars } = await supabase
+        .from("product_variations")
+        .select("id")
+        .eq("product_id", id!);
+      const myVarIds = (myVars || []).map((v: any) => v.id);
+      let bundleLines: any[] = [];
+      const bundleQtyByBv = new Map<string, { compQty: number; varId: string; varCost: number; varName: string }>();
+      if (myVarIds.length > 0) {
+        const { data: bvis } = await supabase
+          .from("bundle_variation_items")
+          .select("bundle_variation_id, variation_id, quantity, product_variations!inner(id, name, cost_price, product_id)")
+          .in("variation_id", myVarIds);
+        for (const bvi of bvis || []) {
+          const pv = (bvi as any).product_variations;
+          bundleQtyByBv.set((bvi as any).bundle_variation_id, {
+            compQty: Number((bvi as any).quantity || 0),
+            varId: pv?.id,
+            varCost: Number(pv?.cost_price || 0),
+            varName: pv?.name || "ברירת מחדל",
+          });
+        }
+        const bvIds = [...bundleQtyByBv.keys()];
+        if (bvIds.length > 0) {
+          let bq = supabase
+            .from("order_items")
+            .select("quantity, total_price, bundle_variation_id, orders!inner(id, order_number, status, created_at, customer_name, includes_vat)")
+            .in("bundle_variation_id", bvIds)
+            .gte("orders.created_at", startDate)
+            .eq("orders.status", "completed");
+          if (endDate) bq = bq.lte("orders.created_at", endDate);
+          const { data: br } = await bq;
+          bundleLines = br || [];
+        }
+      }
 
       let quantity = 0;
       let revenueGross = 0;
@@ -92,7 +133,8 @@ const ProductPerformancePage = () => {
         const gross = Number(it.total_price);
         const includesVat = o?.includes_vat !== false;
         const net = includesVat ? gross / (1 + VAT_RATE) : gross;
-        const lineCost = Number(v?.cost_price || 0) * qty;
+        const perUnitCost = Number(v?.cost_price || 0) > 0 ? Number(v?.cost_price || 0) : productCostFallback;
+        const lineCost = perUnitCost * qty;
 
         quantity += qty;
         revenueGross += gross;
@@ -119,10 +161,47 @@ const ProductPerformancePage = () => {
         });
       }
 
+      // Merge in bundle-line contributions. The product's component qty per order
+      // = order_item.quantity * component quantity inside the bundle variation.
+      // Revenue is intentionally set to 0 here — the bundle's revenue is booked
+      // against the parent bundle product; we only count units and cost so the
+      // component's true throughput is visible.
+      let bundleUnits = 0;
+      let bundleCost = 0;
+      for (const bl of bundleLines) {
+        const bvId = (bl as any).bundle_variation_id as string;
+        const info = bundleQtyByBv.get(bvId);
+        if (!info) continue;
+        const o = (bl as any).orders;
+        const rawQty = Number((bl as any).quantity || 0);
+        const compUnits = rawQty * info.compQty;
+        const perUnitCost = info.varCost > 0 ? info.varCost : productCostFallback;
+        const lineCost = perUnitCost * compUnits;
+
+        bundleUnits += compUnits;
+        bundleCost += lineCost;
+        orderIds.add(o.id);
+
+        const vKey = info.varId || "default";
+        if (!byVariation[vKey]) byVariation[vKey] = { name: `${info.varName} (במארז)`, quantity: 0, revenue: 0, cost: 0 };
+        else byVariation[vKey].name = `${info.varName} (כולל מארזים)`;
+        byVariation[vKey].quantity += compUnits;
+        byVariation[vKey].cost += lineCost;
+
+        const d = new Date(o.created_at);
+        const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (!byMonth[mKey]) byMonth[mKey] = { month: mKey, quantity: 0, revenue: 0, profit: 0 };
+        byMonth[mKey].quantity += compUnits;
+        byMonth[mKey].profit -= lineCost;
+      }
+      quantity += bundleUnits;
+      cost += bundleCost;
+
       orders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       return {
         quantity,
+        bundleUnits,
         revenueGross,
         revenueNet,
         cost,
@@ -157,7 +236,7 @@ const ProductPerformancePage = () => {
   const catName = (product as any)?.categories?.name_he || (product as any)?.categories?.name;
 
   const cards = perf ? [
-    { label: "כמות שנמכרה", value: perf.quantity.toString() },
+    { label: "כמות שנמכרה", value: `${perf.quantity}${perf.bundleUnits ? ` (כולל ${perf.bundleUnits} במארזים)` : ""}` },
     { label: "הזמנות", value: perf.orderCount.toString() },
     { label: "הכנסות ברוטו", value: `₪${perf.revenueGross.toFixed(0)}` },
     { label: "הכנסות נטו", value: `₪${perf.revenueNet.toFixed(0)}` },
