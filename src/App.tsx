@@ -14,6 +14,7 @@ import ProductForm from "./pages/inventory/ProductForm";
 import ProductPerformancePage from "./pages/inventory/ProductPerformancePage";
 import BundlesPage from "./pages/inventory/BundlesPage";
 import BundleForm from "./pages/inventory/BundleForm";
+import BundlePerformancePage from "./pages/inventory/BundlePerformancePage";
 import IntakePage from "./pages/inventory/IntakePage";
 import TransfersPage from "./pages/inventory/TransfersPage";
 import InventoryWriteOffPage from "./pages/inventory/InventoryWriteOffPage";
@@ -131,6 +132,7 @@ const App = () => (
             <Route path="/crm/inventory/bundles" element={<Protected><BundlesPage /></Protected>} />
             <Route path="/crm/inventory/bundles/new" element={<Protected><BundleForm /></Protected>} />
             <Route path="/crm/inventory/bundles/:id" element={<Protected><BundleForm /></Protected>} />
+            <Route path="/crm/inventory/bundles/:id/performance" element={<Protected><BundlePerformancePage /></Protected>} />
             <Route path="/crm/inventory/intake" element={<Protected><IntakePage /></Protected>} />
             <Route path="/crm/inventory/transfers" element={<Protected><TransfersPage /></Protected>} />
             <Route path="/crm/inventory/write-off" element={<Protected><InventoryWriteOffPage /></Protected>} />
