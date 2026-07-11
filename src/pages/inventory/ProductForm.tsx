@@ -14,6 +14,7 @@ import { useProduct, useCreateProduct, useUpdateProduct } from "@/hooks/useProdu
 import { useCategories } from "@/hooks/useCategories";
 import { useProductCategories, useSetProductCategories } from "@/hooks/useProductCategories";
 import { VariationsManager } from "@/components/inventory/VariationsManager";
+import { RelatedProductsManager } from "@/components/inventory/RelatedProductsManager";
 import { syncProductToWoo } from "@/lib/wooProductSync";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -292,6 +293,15 @@ const ProductForm = () => {
             <Card>
               <CardContent className="pt-6">
                 <VariationsManager productId={id!} />
+              </CardContent>
+            </Card>
+          )}
+
+          {isEditing && id && (
+            <Card>
+              <CardHeader><CardTitle>מוצרים קשורים</CardTitle></CardHeader>
+              <CardContent>
+                <RelatedProductsManager productId={id!} />
               </CardContent>
             </Card>
           )}
