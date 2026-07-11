@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, X, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Copy, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import {
 import { useProducts, useProductVariations } from "@/hooks/useProducts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface BundleVariationsManagerProps {
   bundleId: string;
@@ -40,6 +41,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     setNameHe((bv as any).name_he ? `${(bv as any).name_he} (עותק)` : "");
     setSku("");
     setPrice(Number(bv.price) || 0);
+    setImageUrl((bv as any).image_url || null);
     const mappedItems = (bv.bundle_variation_items || []).map((bvi: any) => {
       const pv = bvi.product_variations;
       const productName = (pv?.products as any)?.name || "";
@@ -60,6 +62,8 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
   const [nameHe, setNameHe] = useState("");
   const [sku, setSku] = useState("");
   const [price, setPrice] = useState(0);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [items, setItems] = useState<VariationItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
 
@@ -89,6 +93,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     setNameHe("");
     setSku("");
     setPrice(0);
+    setImageUrl(null);
     setItems([]);
     setSelectedProduct("");
     setDialogOpen(true);
@@ -100,6 +105,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     setNameHe((bv as any).name_he || "");
     setSku((bv as any).sku || "");
     setPrice(Number(bv.price));
+    setImageUrl((bv as any).image_url || null);
     const mappedItems = (bv.bundle_variation_items || []).map((bvi: any) => {
       const pv = bvi.product_variations;
       const productName = (pv?.products as any)?.name || "";
@@ -136,6 +142,25 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     setItems(items.map((i) => (i.variation_id === variationId ? { ...i, quantity: qty } : i)));
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("product-images").upload(path, file);
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(path);
+      setImageUrl(publicUrl);
+      toast.success("התמונה הועלתה");
+    } catch {
+      toast.error("שגיאה בהעלאת תמונה");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = () => {
     const payload = {
       bundleId,
@@ -143,6 +168,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
       name_he: nameHe,
       sku,
       price,
+      image_url: imageUrl,
       items: items.map(({ variation_id, quantity }) => ({ variation_id, quantity })),
     };
 
@@ -175,15 +201,22 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
           {bundleVariations.map((bv) => (
             <Card key={bv.id}>
               <CardContent className="p-4 flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  {(bv as any).image_url ? (
+                    <img src={(bv as any).image_url} alt={bv.name} className="w-12 h-12 object-cover rounded border" />
+                  ) : (
+                    <div className="w-12 h-12 rounded border bg-muted flex items-center justify-center text-xs text-muted-foreground">—</div>
+                  )}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
                      <span className="font-medium">{(bv as any).name_he || bv.name}</span>
-                    <Badge variant="secondary">₪{Number(bv.price).toFixed(2)}</Badge>
-                    {(bv as any).sku && <Badge variant="outline">{(bv as any).sku}</Badge>}
+                      <Badge variant="secondary">₪{Number(bv.price).toFixed(2)}</Badge>
+                      {(bv as any).sku && <Badge variant="outline">{(bv as any).sku}</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {(bv as any).bundle_variation_items?.length || 0} פריטים
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {(bv as any).bundle_variation_items?.length || 0} פריטים
-                  </p>
                 </div>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(bv)}>
@@ -218,6 +251,28 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
           </DialogHeader>
 
           <div className="space-y-4 min-h-0 overflow-y-auto pe-1">
+            <div className="space-y-2">
+              <Label>תמונה</Label>
+              <div className="flex items-center gap-3">
+                {imageUrl ? (
+                  <div className="relative group">
+                    <img src={imageUrl} alt="תמונת וריאציה" className="w-16 h-16 object-cover rounded-lg border" />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl(null)}
+                      className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : null}
+                <Label htmlFor="bv-img" className="flex items-center gap-1 cursor-pointer text-xs text-primary hover:underline">
+                  <Upload className="h-3 w-3" />
+                  {uploading ? "מעלה..." : "העלה תמונה"}
+                </Label>
+                <input id="bv-img" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>שם הוריאציה (ערבית)</Label>
