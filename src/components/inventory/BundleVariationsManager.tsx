@@ -80,7 +80,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_variations")
-        .select("*, products(name)")
+        .select("*, products(name, cost_price)")
         .order("name");
       if (error) throw error;
       return data;
@@ -287,6 +287,20 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
               <Label>מחיר</Label>
               <Input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
             </div>
+            {(() => {
+              const computed = items.reduce((sum, it) => {
+                const v = allVariations?.find((av: any) => av.id === it.variation_id);
+                const vc = Number((v as any)?.cost_price || 0);
+                const pc = Number((v as any)?.products?.cost_price || 0);
+                const unit = vc > 0 ? vc : pc;
+                return sum + unit * Number(it.quantity || 0);
+              }, 0);
+              return items.length > 0 ? (
+                <div className="text-xs text-muted-foreground bg-muted/60 rounded-md p-2">
+                  עלות מחושבת מהרכיבים: <span className="font-semibold text-foreground">₪{computed.toFixed(2)}</span>
+                </div>
+              ) : null;
+            })()}
             <div className="space-y-2">
               <Label>מק"ט (SKU)</Label>
               <Input value={sku} onChange={(e) => setSku(e.target.value)} placeholder="למשל: BV-001" dir="ltr" />
