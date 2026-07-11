@@ -141,7 +141,6 @@ export default function WebProductPage() {
     ...(product.image_url ? [product.image_url] : []),
     ...gallery.map((g) => g.src),
   ];
-  const displayImage = mainImage || allImages[0] || null;
 
   // Determine product display type.
   // Rule: if product is registered as a bundle, rely EXCLUSIVELY on bundle tables
@@ -165,6 +164,14 @@ export default function WebProductPage() {
     : activeVariation
       ? activeVariation.price
       : product.sale_price;
+
+  // When a variation (product or bundle) has its own image, prefer it for the main
+  // image slot unless the user already picked a specific thumbnail (`mainImage`).
+  const variationImage: string | null =
+    (activeBundleVariation as any)?.image_url ||
+    (activeVariation as any)?.image_url ||
+    null;
+  const displayImage = mainImage || variationImage || allImages[0] || null;
 
   const comparePrice: number | null = (() => {
     const raw = activeVariation
