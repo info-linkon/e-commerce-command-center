@@ -12,6 +12,7 @@ import { fbq } from "@/lib/meta-pixel";
 import { ttq } from "@/lib/tiktok-pixel";
 import { gaViewItem, gaAddToCart } from "@/lib/gtag";
 import { useLanguage } from "@/hooks/useLanguage";
+import { RelatedProductsSection } from "@/components/web/RelatedProductsSection";
 
 export default function WebProductPage() {
   const { lang, t } = useLanguage();
@@ -483,6 +484,10 @@ export default function WebProductPage() {
             ) : null
           )}
         </div>
+      </div>
+
+      <div className="container">
+        <RelatedProductsSection productId={product.id} />
       </div>
     </div>
   );
