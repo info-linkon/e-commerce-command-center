@@ -56,6 +56,7 @@ const ordersSubItems = [
 const webManagementSubItems = [
   { title: "תוכן ודפים", url: "/crm/admin/web-content" },
   { title: "באנרים", url: "/crm/admin/web-banners" },
+  { title: "מבצעים מיוחדים", url: "/crm/admin/exclusive-deals" },
   { title: "קופונים", url: "/crm/admin/coupons" },
 ];
 
