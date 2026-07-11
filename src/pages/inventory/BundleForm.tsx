@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowRight, Upload, Plus, X } from "lucide-react";
+import { ArrowRight, Upload, Plus, X, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -341,9 +341,17 @@ const BundleForm = () => {
           </Button>
           <h1 className="text-xl font-bold">{isEditing ? "עריכת מארז" : "מארז חדש"}</h1>
         </div>
-        <Button onClick={handleSave} disabled={!form.name || isPending} size="sm">
-          {isPending ? "שומר..." : "שמור"}
-        </Button>
+        <div className="flex gap-2">
+          {isEditing && id && (
+            <Button variant="outline" size="sm" onClick={() => navigate(`/crm/inventory/bundles/${id}/performance`)}>
+              <BarChart3 className="h-4 w-4 ml-1" />
+              ביצועים
+            </Button>
+          )}
+          <Button onClick={handleSave} disabled={!form.name || isPending} size="sm">
+            {isPending ? "שומר..." : "שמור"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
