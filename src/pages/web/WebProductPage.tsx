@@ -165,6 +165,15 @@ export default function WebProductPage() {
       ? activeVariation.price
       : product.sale_price;
 
+  const comparePrice: number | null = (() => {
+    const raw = activeVariation
+      ? (activeVariation as any).compare_at_price
+      : (product as any).compare_at_price;
+    const n = Number(raw);
+    return raw && n > price ? n : null;
+  })();
+  const discountPercent = comparePrice ? Math.round(((comparePrice - price) / comparePrice) * 100) : 0;
+
   const displayName = lang === "he" ? (product.name || product.name_ar) : (product.name_ar || product.name);
 
   // Bundle stock check
@@ -367,8 +376,16 @@ export default function WebProductPage() {
             ) : null;
           })()}
 
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-6 flex-wrap">
             <span className="text-3xl font-black text-primary">₪{price.toFixed(2)}</span>
+            {comparePrice && (
+              <>
+                <span className="text-lg text-muted-foreground line-through">₪{comparePrice.toFixed(2)}</span>
+                <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                  -{discountPercent}%
+                </span>
+              </>
+            )}
           </div>
 
           {/* Regular product variations */}
