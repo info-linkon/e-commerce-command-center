@@ -575,6 +575,35 @@ const BundleForm = () => {
                     <Input type="number" value={form.shipping_price} onChange={(e) => setForm({ ...form, shipping_price: Number(e.target.value) })} className="h-8 text-xs" />
                   </div>
                 </div>
+                {form.bundle_type === "simple_bundle" && (() => {
+                  // Compute the sum of component costs (variation.cost_price × qty).
+                  // Falls back to the parent product's cost_price when the variation cost is 0.
+                  const computed = items.reduce((sum, it) => {
+                    const v = allVariations?.find((av: any) => av.id === it.variation_id);
+                    const vc = Number((v as any)?.cost_price || 0);
+                    const pc = Number((v as any)?.products?.cost_price || 0);
+                    const unit = vc > 0 ? vc : pc;
+                    return sum + unit * Number(it.quantity || 0);
+                  }, 0);
+                  return (
+                    <div className="flex items-center justify-between text-xs bg-muted/60 rounded-md p-2">
+                      <div>
+                        <span className="text-muted-foreground">עלות מחושבת מהרכיבים: </span>
+                        <span className="font-semibold">₪{computed.toFixed(2)}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs"
+                        disabled={computed <= 0}
+                        onClick={() => setForm({ ...form, cost_price: Number(computed.toFixed(2)) })}
+                      >
+                        עדכן
+                      </Button>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Settings */}
