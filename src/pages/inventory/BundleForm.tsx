@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowRight, Upload, Plus, X } from "lucide-react";
+import { ArrowRight, Upload, Plus, X, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { useProducts, useProductVariations } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { useProductCategories, useSetProductCategories } from "@/hooks/useProductCategories";
 import { BundleVariationsManager } from "@/components/inventory/BundleVariationsManager";
+import { RelatedProductsManager } from "@/components/inventory/RelatedProductsManager";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -84,7 +85,7 @@ const BundleForm = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_variations")
-        .select("*, products(name)")
+        .select("*, products(name, cost_price)")
         .order("name");
       if (error) throw error;
       return data;
@@ -340,9 +341,17 @@ const BundleForm = () => {
           </Button>
           <h1 className="text-xl font-bold">{isEditing ? "עריכת מארז" : "מארז חדש"}</h1>
         </div>
-        <Button onClick={handleSave} disabled={!form.name || isPending} size="sm">
-          {isPending ? "שומר..." : "שמור"}
-        </Button>
+        <div className="flex gap-2">
+          {isEditing && id && (
+            <Button variant="outline" size="sm" onClick={() => navigate(`/crm/inventory/bundles/${id}/performance`)}>
+              <BarChart3 className="h-4 w-4 ml-1" />
+              ביצועים
+            </Button>
+          )}
+          <Button onClick={handleSave} disabled={!form.name || isPending} size="sm">
+            {isPending ? "שומר..." : "שמור"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -494,6 +503,15 @@ const BundleForm = () => {
               </CardContent>
             </Card>
           )}
+
+          {isEditing && bundle && (
+            <Card>
+              <CardContent className="pt-4">
+                <Label className="text-sm font-semibold mb-3 block">מוצרים קשורים</Label>
+                <RelatedProductsManager productId={bundle.product_id} />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -557,6 +575,35 @@ const BundleForm = () => {
                     <Input type="number" value={form.shipping_price} onChange={(e) => setForm({ ...form, shipping_price: Number(e.target.value) })} className="h-8 text-xs" />
                   </div>
                 </div>
+                {form.bundle_type === "simple_bundle" && (() => {
+                  // Compute the sum of component costs (variation.cost_price × qty).
+                  // Falls back to the parent product's cost_price when the variation cost is 0.
+                  const computed = items.reduce((sum, it) => {
+                    const v = allVariations?.find((av: any) => av.id === it.variation_id);
+                    const vc = Number((v as any)?.cost_price || 0);
+                    const pc = Number((v as any)?.products?.cost_price || 0);
+                    const unit = vc > 0 ? vc : pc;
+                    return sum + unit * Number(it.quantity || 0);
+                  }, 0);
+                  return (
+                    <div className="flex items-center justify-between text-xs bg-muted/60 rounded-md p-2">
+                      <div>
+                        <span className="text-muted-foreground">עלות מחושבת מהרכיבים: </span>
+                        <span className="font-semibold">₪{computed.toFixed(2)}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs"
+                        disabled={computed <= 0}
+                        onClick={() => setForm({ ...form, cost_price: Number(computed.toFixed(2)) })}
+                      >
+                        עדכן
+                      </Button>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Settings */}

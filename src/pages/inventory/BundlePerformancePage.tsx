@@ -16,7 +16,13 @@ import { cn } from "@/lib/utils";
 
 const VAT_RATE = 0.18;
 
-const ProductPerformancePage = () => {
+/**
+ * Bundle performance page — mirrors ProductPerformancePage but scopes the
+ * data to a specific bundle. Uses `order_items.bundle_variation_id` (variable
+ * bundle) and, for simple bundles, the default variation of the bundle's
+ * product to detect sales.
+ */
+const BundlePerformancePage = () => {
   const { id } = useParams<{ id: string }>();
   const [period, setPeriod] = useState("365");
   const [fromDate, setFromDate] = useState<Date | undefined>();
@@ -41,20 +47,19 @@ const ProductPerformancePage = () => {
 
   const endDate = useMemo(() => {
     if (period === "custom" && toDate) {
-      const end = new Date(toDate);
-      end.setHours(23, 59, 59, 999);
+      const end = new Date(toDate); end.setHours(23, 59, 59, 999);
       return end.toISOString();
     }
     return undefined;
   }, [period, toDate]);
 
-  const { data: product } = useQuery({
-    queryKey: ["product-perf-meta", id],
+  const { data: bundle } = useQuery({
+    queryKey: ["bundle-perf-meta", id],
     enabled: !!id,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("products")
-        .select("id, name, name_ar, sku, product_number, image_url, category_id, cost_price, categories!products_category_id_fkey(name, name_he)")
+        .from("bundles")
+        .select("id, bundle_type, product_id, products(id, name, name_ar, sku, product_number, image_url, cost_price, sale_price)")
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
@@ -62,59 +67,104 @@ const ProductPerformancePage = () => {
     },
   });
 
-  const { data: perf } = useQuery({
-    queryKey: ["product-perf", id, startDate, endDate],
-    enabled: !!id && !!product,
-    queryFn: async () => {
-      let q = supabase
-        .from("order_items")
-        .select("quantity, total_price, variation_id, product_variations!inner(id, name, cost_price, product_id), orders!inner(id, order_number, status, created_at, customer_name, includes_vat)")
-        .eq("product_variations.product_id", id!)
-        .gte("orders.created_at", startDate)
-        .eq("orders.status", "completed");
-      if (endDate) q = q.lte("orders.created_at", endDate);
-      const { data, error } = await q;
-      if (error) throw error;
+  const productId = (bundle as any)?.products?.id;
 
-      // Also count sales where this product appears as a component inside bundles.
-      // We first find all bundle_variation_items whose variation belongs to this product,
-      // then load order_items whose bundle_variation_id matches — multiplying quantities
-      // by the per-bundle component quantity.
-      const productCostFallback = Number((product as any)?.cost_price || 0);
-      // Load product variations to identify component memberships
-      const { data: myVars } = await supabase
+  const { data: perf } = useQuery({
+    queryKey: ["bundle-perf", id, productId, startDate, endDate],
+    enabled: !!id && !!productId && !!bundle,
+    queryFn: async () => {
+      // 1) Variable bundle → order_items.bundle_variation_id IN bundle_variations of this bundle
+      const { data: bvs } = await supabase
+        .from("bundle_variations")
+        .select("id, name, name_he, price")
+        .eq("bundle_id", id!);
+      const bvIds = (bvs || []).map((b: any) => b.id);
+
+      const varLabel = new Map<string, string>();
+      for (const bv of bvs || []) varLabel.set((bv as any).id, (bv as any).name_he || (bv as any).name);
+
+      // Simple bundle sales come through the product's default variation
+      // (no bundle_variation_id on the line). Query separately.
+      // We include BOTH variable + simple lines in the same aggregation, tagging
+      // simple ones as "מארז פשוט".
+      const isSimple = (bundle as any)?.bundle_type === "simple_bundle";
+
+      // Fetch the product's variation ids so we can query order_items by variation
+      // for simple bundles.
+      const { data: pvs } = await supabase
         .from("product_variations")
-        .select("id")
-        .eq("product_id", id!);
-      const myVarIds = (myVars || []).map((v: any) => v.id);
-      let bundleLines: any[] = [];
-      const bundleQtyByBv = new Map<string, { compQty: number; varId: string; varCost: number; varName: string }>();
-      if (myVarIds.length > 0) {
-        const { data: bvis } = await supabase
+        .select("id, name")
+        .eq("product_id", productId!);
+      const pvIds = (pvs || []).map((v: any) => v.id);
+
+      const rows: any[] = [];
+
+      if (bvIds.length > 0) {
+        let q = supabase
+          .from("order_items")
+          .select("quantity, total_price, bundle_variation_id, orders!inner(id, order_number, status, created_at, customer_name, includes_vat)")
+          .in("bundle_variation_id", bvIds)
+          .gte("orders.created_at", startDate)
+          .eq("orders.status", "completed");
+        if (endDate) q = q.lte("orders.created_at", endDate);
+        const { data } = await q;
+        for (const r of data || []) rows.push({ ...r, kind: "variable" });
+      }
+
+      if (isSimple && pvIds.length > 0) {
+        let q = supabase
+          .from("order_items")
+          .select("quantity, total_price, variation_id, bundle_variation_id, orders!inner(id, order_number, status, created_at, customer_name, includes_vat)")
+          .in("variation_id", pvIds)
+          .is("bundle_variation_id", null)
+          .gte("orders.created_at", startDate)
+          .eq("orders.status", "completed");
+        if (endDate) q = q.lte("orders.created_at", endDate);
+        const { data } = await q;
+        for (const r of data || []) rows.push({ ...r, kind: "simple" });
+      }
+
+      // Compute unit cost from bundle components (variation → components; simple → bundle_items).
+      // We use the bundle's cost_price on the products table as a fallback.
+      const fallbackUnitCost = Number((bundle as any)?.products?.cost_price || 0);
+
+      // Load component cost per bundle_variation_id and for simple bundle
+      const unitCostByBv = new Map<string, number>();
+      if (bvIds.length > 0) {
+        const { data: bvItems } = await supabase
           .from("bundle_variation_items")
-          .select("bundle_variation_id, variation_id, quantity, product_variations!inner(id, name, cost_price, product_id)")
-          .in("variation_id", myVarIds);
-        for (const bvi of bvis || []) {
-          const pv = (bvi as any).product_variations;
-          bundleQtyByBv.set((bvi as any).bundle_variation_id, {
-            compQty: Number((bvi as any).quantity || 0),
-            varId: pv?.id,
-            varCost: Number(pv?.cost_price || 0),
-            varName: pv?.name || "ברירת מחדל",
-          });
+          .select("bundle_variation_id, quantity, product_variations(cost_price, products(cost_price))")
+          .in("bundle_variation_id", bvIds);
+        for (const row of bvItems || []) {
+          const bvId = (row as any).bundle_variation_id as string;
+          const pv = (row as any).product_variations;
+          const c = Number(pv?.cost_price || 0);
+          const pc = Number(pv?.products?.cost_price || 0);
+          const compCost = c > 0 ? c : pc;
+          const qty = Number((row as any).quantity || 0);
+          unitCostByBv.set(bvId, (unitCostByBv.get(bvId) || 0) + compCost * qty);
         }
-        const bvIds = [...bundleQtyByBv.keys()];
-        if (bvIds.length > 0) {
-          let bq = supabase
-            .from("order_items")
-            .select("quantity, total_price, bundle_variation_id, orders!inner(id, order_number, status, created_at, customer_name, includes_vat)")
-            .in("bundle_variation_id", bvIds)
-            .gte("orders.created_at", startDate)
-            .eq("orders.status", "completed");
-          if (endDate) bq = bq.lte("orders.created_at", endDate);
-          const { data: br } = await bq;
-          bundleLines = br || [];
+        // If computed cost is 0 use fallback
+        for (const bvId of bvIds) {
+          if (!unitCostByBv.get(bvId)) unitCostByBv.set(bvId, fallbackUnitCost);
         }
+      }
+
+      let unitCostSimple = 0;
+      if (isSimple) {
+        const { data: bItems } = await supabase
+          .from("bundle_items")
+          .select("quantity, product_variations(cost_price, products(cost_price))")
+          .eq("bundle_id", id!);
+        for (const row of bItems || []) {
+          const pv = (row as any).product_variations;
+          const c = Number(pv?.cost_price || 0);
+          const pc = Number(pv?.products?.cost_price || 0);
+          const compCost = c > 0 ? c : pc;
+          const qty = Number((row as any).quantity || 0);
+          unitCostSimple += compCost * qty;
+        }
+        if (unitCostSimple <= 0) unitCostSimple = fallbackUnitCost;
       }
 
       let quantity = 0;
@@ -126,15 +176,15 @@ const ProductPerformancePage = () => {
       const byMonth: Record<string, { month: string; quantity: number; revenue: number; profit: number }> = {};
       const orders: { id: string; order_number: number; created_at: string; customer_name: string | null; quantity: number; revenue: number }[] = [];
 
-      for (const it of data || []) {
-        const v = (it as any).product_variations;
+      for (const it of rows) {
         const o = (it as any).orders;
         const qty = Number(it.quantity);
         const gross = Number(it.total_price);
         const includesVat = o?.includes_vat !== false;
         const net = includesVat ? gross / (1 + VAT_RATE) : gross;
-        const perUnitCost = Number(v?.cost_price || 0) > 0 ? Number(v?.cost_price || 0) : productCostFallback;
-        const lineCost = perUnitCost * qty;
+        const bvId = (it as any).bundle_variation_id as string | null;
+        const perUnit = bvId ? (unitCostByBv.get(bvId) || fallbackUnitCost) : unitCostSimple;
+        const lineCost = perUnit * qty;
 
         quantity += qty;
         revenueGross += gross;
@@ -142,8 +192,9 @@ const ProductPerformancePage = () => {
         cost += lineCost;
         orderIds.add(o.id);
 
-        const vKey = v?.id || "default";
-        if (!byVariation[vKey]) byVariation[vKey] = { name: v?.name || "ברירת מחדל", quantity: 0, revenue: 0, cost: 0 };
+        const vKey = bvId || "simple";
+        const vName = bvId ? (varLabel.get(bvId) || "וריאציה") : "מארז פשוט";
+        if (!byVariation[vKey]) byVariation[vKey] = { name: vName, quantity: 0, revenue: 0, cost: 0 };
         byVariation[vKey].quantity += qty;
         byVariation[vKey].revenue += net;
         byVariation[vKey].cost += lineCost;
@@ -155,53 +206,12 @@ const ProductPerformancePage = () => {
         byMonth[mKey].revenue += net;
         byMonth[mKey].profit += net - lineCost;
 
-        orders.push({
-          id: o.id, order_number: o.order_number, created_at: o.created_at,
-          customer_name: o.customer_name, quantity: qty, revenue: gross,
-        });
+        orders.push({ id: o.id, order_number: o.order_number, created_at: o.created_at, customer_name: o.customer_name, quantity: qty, revenue: gross });
       }
-
-      // Merge in bundle-line contributions. The product's component qty per order
-      // = order_item.quantity * component quantity inside the bundle variation.
-      // Revenue is intentionally set to 0 here — the bundle's revenue is booked
-      // against the parent bundle product; we only count units and cost so the
-      // component's true throughput is visible.
-      let bundleUnits = 0;
-      let bundleCost = 0;
-      for (const bl of bundleLines) {
-        const bvId = (bl as any).bundle_variation_id as string;
-        const info = bundleQtyByBv.get(bvId);
-        if (!info) continue;
-        const o = (bl as any).orders;
-        const rawQty = Number((bl as any).quantity || 0);
-        const compUnits = rawQty * info.compQty;
-        const perUnitCost = info.varCost > 0 ? info.varCost : productCostFallback;
-        const lineCost = perUnitCost * compUnits;
-
-        bundleUnits += compUnits;
-        bundleCost += lineCost;
-        orderIds.add(o.id);
-
-        const vKey = info.varId || "default";
-        if (!byVariation[vKey]) byVariation[vKey] = { name: `${info.varName} (במארז)`, quantity: 0, revenue: 0, cost: 0 };
-        else byVariation[vKey].name = `${info.varName} (כולל מארזים)`;
-        byVariation[vKey].quantity += compUnits;
-        byVariation[vKey].cost += lineCost;
-
-        const d = new Date(o.created_at);
-        const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        if (!byMonth[mKey]) byMonth[mKey] = { month: mKey, quantity: 0, revenue: 0, profit: 0 };
-        byMonth[mKey].quantity += compUnits;
-        byMonth[mKey].profit -= lineCost;
-      }
-      quantity += bundleUnits;
-      cost += bundleCost;
-
       orders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       return {
         quantity,
-        bundleUnits,
         revenueGross,
         revenueNet,
         cost,
@@ -227,16 +237,16 @@ const ProductPerformancePage = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `product-${product?.product_number || id}-performance.csv`;
+    a.download = `bundle-${(bundle as any)?.products?.product_number || id}-performance.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  const displayName = product?.name_ar || product?.name || "מוצר";
-  const catName = (product as any)?.categories?.name_he || (product as any)?.categories?.name;
+  const p = (bundle as any)?.products;
+  const displayName = p?.name_ar || p?.name || "מארז";
 
   const cards = perf ? [
-    { label: "כמות שנמכרה", value: `${perf.quantity}${perf.bundleUnits ? ` (כולל ${perf.bundleUnits} במארזים)` : ""}` },
+    { label: "כמות שנמכרה", value: perf.quantity.toString() },
     { label: "הזמנות", value: perf.orderCount.toString() },
     { label: "הכנסות ברוטו", value: `₪${perf.revenueGross.toFixed(0)}` },
     { label: "הכנסות נטו", value: `₪${perf.revenueNet.toFixed(0)}` },
@@ -249,23 +259,23 @@ const ProductPerformancePage = () => {
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          {product?.image_url && (
-            <img src={product.image_url} alt={displayName} className="h-14 w-14 object-cover rounded-md border" />
+          {p?.image_url && (
+            <img src={p.image_url} alt={displayName} className="h-14 w-14 object-cover rounded-md border" />
           )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Package className="h-5 w-5 text-muted-foreground" /> {displayName}
             </h1>
             <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-              {product?.product_number && <span>#{product.product_number}</span>}
-              {product?.sku && <Badge variant="outline">SKU: {product.sku}</Badge>}
-              {catName && <Badge variant="secondary">{catName}</Badge>}
+              {p?.product_number && <span>#{p.product_number}</span>}
+              {p?.sku && <Badge variant="outline">SKU: {p.sku}</Badge>}
+              <Badge variant="secondary">{(bundle as any)?.bundle_type === "simple_bundle" ? "מארז פשוט" : "מארז משתנה"}</Badge>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link to={`/crm/inventory/products/${id}`}><ArrowRight className="ml-1 h-4 w-4" /> חזרה למוצר</Link>
+            <Link to={`/crm/inventory/bundles/${id}`}><ArrowRight className="ml-1 h-4 w-4" /> חזרה למארז</Link>
           </Button>
           <Button variant="outline" size="sm" onClick={exportCsv} disabled={!perf}>
             <Download className="ml-1 h-4 w-4" /> ייצוא CSV
@@ -396,7 +406,7 @@ const ProductPerformancePage = () => {
           )}
 
           <Card>
-            <CardHeader><CardTitle>הזמנות שכוללות מוצר זה ({perf.orders.length})</CardTitle></CardHeader>
+            <CardHeader><CardTitle>הזמנות שכוללות מארז זה ({perf.orders.length})</CardTitle></CardHeader>
             <CardContent className="max-h-[500px] overflow-y-auto">
               <Table>
                 <TableHeader>
@@ -432,4 +442,4 @@ const ProductPerformancePage = () => {
   );
 };
 
-export default ProductPerformancePage;
+export default BundlePerformancePage;

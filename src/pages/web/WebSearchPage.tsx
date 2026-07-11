@@ -47,6 +47,7 @@ export default function WebSearchPage() {
                 name={product.name}
                 nameAr={product.name_ar}
                 price={product.sale_price}
+                  originalPrice={product.compare_at_price}
                 imageUrl={product.image_url}
                 categoryName={(product as any).categories?.name} categoryNameHe={(product as any).categories?.name_he}
                 outOfStock={(product as any).outOfStock}

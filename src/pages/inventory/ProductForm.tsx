@@ -14,6 +14,7 @@ import { useProduct, useCreateProduct, useUpdateProduct } from "@/hooks/useProdu
 import { useCategories } from "@/hooks/useCategories";
 import { useProductCategories, useSetProductCategories } from "@/hooks/useProductCategories";
 import { VariationsManager } from "@/components/inventory/VariationsManager";
+import { RelatedProductsManager } from "@/components/inventory/RelatedProductsManager";
 import { syncProductToWoo } from "@/lib/wooProductSync";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -41,6 +42,7 @@ const ProductForm = () => {
     short_description_ar: "",
     sale_price: 0,
     cost_price: 0,
+    compare_at_price: 0,
     shipping_price: 0,
     category_id: "" as string | null,
     product_type: "simple" as "simple" | "variable",
@@ -64,6 +66,7 @@ const ProductForm = () => {
         short_description_ar: (product as any).short_description_ar || "",
         sale_price: Number(product.sale_price),
         cost_price: Number(product.cost_price),
+        compare_at_price: Number((product as any).compare_at_price || 0),
         shipping_price: Number((product as any).shipping_price || 0),
         category_id: product.category_id,
         product_type: product.product_type,
@@ -135,6 +138,7 @@ const ProductForm = () => {
 
     const data = {
       ...form,
+      compare_at_price: form.compare_at_price > 0 ? form.compare_at_price : null,
       category_id: primaryCategoryId,
       gallery_images: galleryImages,
     };
@@ -292,6 +296,15 @@ const ProductForm = () => {
               </CardContent>
             </Card>
           )}
+
+          {isEditing && id && (
+            <Card>
+              <CardHeader><CardTitle>מוצרים קשורים</CardTitle></CardHeader>
+              <CardContent>
+                <RelatedProductsManager productId={id!} />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -342,6 +355,11 @@ const ProductForm = () => {
               <div className="space-y-2">
                 <Label>מחיר מכירה</Label>
                 <Input type="number" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-2">
+                <Label>מחיר לפני מבצע (אופציונלי)</Label>
+                <Input type="number" value={form.compare_at_price} onChange={(e) => setForm({ ...form, compare_at_price: Number(e.target.value) })} placeholder="0 = בלי מבצע" />
+                <p className="text-xs text-muted-foreground">כאשר גבוה ממחיר המכירה, יוצג באתר כמחיר לפני הנחה (עם קו חוצה) ותג הנחה באחוזים.</p>
               </div>
               <div className="space-y-2">
                 <Label>מחיר עלות (ללא מע״מ)</Label>

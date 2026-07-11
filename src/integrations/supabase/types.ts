@@ -142,6 +142,7 @@ export type Database = {
           bundle_id: string
           created_at: string
           id: string
+          image_url: string | null
           name: string
           name_he: string | null
           price: number
@@ -152,6 +153,7 @@ export type Database = {
           bundle_id: string
           created_at?: string
           id?: string
+          image_url?: string | null
           name: string
           name_he?: string | null
           price?: number
@@ -162,6 +164,7 @@ export type Database = {
           bundle_id?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           name?: string
           name_he?: string | null
           price?: number
@@ -1355,6 +1358,7 @@ export type Database = {
       }
       product_variations: {
         Row: {
+          compare_at_price: number | null
           cost_price: number
           created_at: string
           id: string
@@ -1368,6 +1372,7 @@ export type Database = {
           woo_id: number | null
         }
         Insert: {
+          compare_at_price?: number | null
           cost_price?: number
           created_at?: string
           id?: string
@@ -1381,6 +1386,7 @@ export type Database = {
           woo_id?: number | null
         }
         Update: {
+          compare_at_price?: number | null
           cost_price?: number
           created_at?: string
           id?: string
@@ -1406,6 +1412,7 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
+          compare_at_price: number | null
           cost_price: number
           created_at: string
           description: string | null
@@ -1429,6 +1436,7 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          compare_at_price?: number | null
           cost_price?: number
           created_at?: string
           description?: string | null
@@ -1452,6 +1460,7 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          compare_at_price?: number | null
           cost_price?: number
           created_at?: string
           description?: string | null
@@ -1509,6 +1518,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      related_products: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string
+          related_product_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id: string
+          related_product_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string
+          related_product_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "related_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "related_products_related_product_id_fkey"
+            columns: ["related_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_content: {
         Row: {

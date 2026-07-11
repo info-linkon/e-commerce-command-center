@@ -12,6 +12,7 @@ import { fbq } from "@/lib/meta-pixel";
 import { ttq } from "@/lib/tiktok-pixel";
 import { gaViewItem, gaAddToCart } from "@/lib/gtag";
 import { useLanguage } from "@/hooks/useLanguage";
+import { RelatedProductsSection } from "@/components/web/RelatedProductsSection";
 
 export default function WebProductPage() {
   const { lang, t } = useLanguage();
@@ -140,7 +141,6 @@ export default function WebProductPage() {
     ...(product.image_url ? [product.image_url] : []),
     ...gallery.map((g) => g.src),
   ];
-  const displayImage = mainImage || allImages[0] || null;
 
   // Determine product display type.
   // Rule: if product is registered as a bundle, rely EXCLUSIVELY on bundle tables
@@ -164,6 +164,23 @@ export default function WebProductPage() {
     : activeVariation
       ? activeVariation.price
       : product.sale_price;
+
+  // When a variation (product or bundle) has its own image, prefer it for the main
+  // image slot unless the user already picked a specific thumbnail (`mainImage`).
+  const variationImage: string | null =
+    (activeBundleVariation as any)?.image_url ||
+    (activeVariation as any)?.image_url ||
+    null;
+  const displayImage = mainImage || variationImage || allImages[0] || null;
+
+  const comparePrice: number | null = (() => {
+    const raw = activeVariation
+      ? (activeVariation as any).compare_at_price
+      : (product as any).compare_at_price;
+    const n = Number(raw);
+    return raw && n > price ? n : null;
+  })();
+  const discountPercent = comparePrice ? Math.round(((comparePrice - price) / comparePrice) * 100) : 0;
 
   const displayName = lang === "he" ? (product.name || product.name_ar) : (product.name_ar || product.name);
 
@@ -367,8 +384,16 @@ export default function WebProductPage() {
             ) : null;
           })()}
 
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-6 flex-wrap">
             <span className="text-3xl font-black text-primary">₪{price.toFixed(2)}</span>
+            {comparePrice && (
+              <>
+                <span className="text-lg text-muted-foreground line-through">₪{comparePrice.toFixed(2)}</span>
+                <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                  -{discountPercent}%
+                </span>
+              </>
+            )}
           </div>
 
           {/* Regular product variations */}
@@ -467,6 +492,8 @@ export default function WebProductPage() {
           )}
         </div>
       </div>
+
+      <RelatedProductsSection productId={product.id} />
     </div>
   );
 }

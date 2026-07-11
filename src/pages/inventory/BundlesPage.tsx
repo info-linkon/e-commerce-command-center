@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Copy, Globe, Star } from "lucide-react";
+import { Plus, Trash2, Copy, Globe, Star, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
@@ -127,6 +127,9 @@ const BundlesPage = () => {
         }}
         actions={(b) => (
           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" title="ביצועים" onClick={() => navigate(`/crm/inventory/bundles/${b.id}/performance`)}>
+              <BarChart3 className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="icon" title={(b as any).products?.is_published ? "הסר מהאתר" : "פרסם באתר"} onClick={() => togglePublish(b.product_id, (b as any).products?.is_published)}>
               <Globe className={`h-4 w-4 ${(b as any).products?.is_published ? "text-green-600" : "text-muted-foreground"}`} />
             </Button>
