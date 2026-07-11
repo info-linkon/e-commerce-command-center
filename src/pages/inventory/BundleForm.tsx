@@ -85,7 +85,7 @@ const BundleForm = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_variations")
-        .select("*, products(name)")
+        .select("*, products(name, cost_price)")
         .order("name");
       if (error) throw error;
       return data;
