@@ -1,38 +1,27 @@
-## תיקון: SMS "הזמנה נוצרה" בהזמנות אשראי + תרגום עברית לאמצעי תשלום
+## שיפור תצוגת ביצועי מוצרים + אימות ביצועי מארזים
 
-### 1. SMS ייצא רק אחרי אישור תשלום (הזמנות אשראי)
+### 1. פירוט ברור של מכירות לבד/במארז/סה"כ (ProductPerformancePage)
 
-**בעיה:** `web-create-order` שולח `order_created` SMS מיד עם יצירת ההזמנה — גם למי שבחר אשראי ולא סיים לשלם ב-HYP.
+כרגע הדף מציג בקוביית "כמות שנמכרה" את הסה"כ עם הערה בסוגריים (למשל: "45 (כולל 12 במארזים)"). זה לא מספיק ברור.
 
-**פתרון:**
-- `supabase/functions/web-create-order/index.ts`: לדלג על טריגר ה-SMS כש-`payment_method === "credit"`. הזמנות מזומן ממשיכות לשלוח מיד כרגיל.
-- `supabase/functions/_shared/hyp-verify.ts`: אחרי אימות תשלום מוצלח (בסוף `recordSuccessfulPayment` לפני החזרת התוצאה), לירות `order_created` דרך `order-sms-trigger` — אבל **רק** אם עדיין לא נשלח (בדיקה ב-`notification_log` על `order_id` + `trigger_type='order_created'` עם `success=true`). כך:
-  - הזמנת אשראי שהושלמה → SMS יוצא פעם אחת מ-hyp-verify.
-  - הזמנת מזומן שאדמין הופך אותה לאשראי או תרחישים נדירים → הבדיקה מונעת כפילות.
-- הזמנות שנתקעו ב-`pending_payment` (המשתמש נטש) לא יקבלו SMS — בדיוק הרצוי. הן ייסגרו אוטומטית ע"י `auto-cancel-pending`.
-- להעדכן את ההערה הישנה ב-hyp-verify.ts שאומרת "The order_created SMS was already sent" — כבר לא נכון להזמנות אשראי.
+**שינוי:** להחליף בקוביה אחת לשלוש קוביות נפרדות:
+- **נמכר לבד** — יחידות שנמכרו כמוצר עצמאי (`quantity - bundleUnits`)
+- **נמכר במארז** — יחידות שנמכרו כרכיב במארז (`bundleUnits`)
+- **סה"כ יחידות** — הסכום (מודגש)
 
-### 2. תרגום עברית לאמצעי התשלום
+הלוגיקה של איסוף הנתונים כבר תקינה (מבוססת על `bundle_variation_items` × `order_items.bundle_variation_id`) — רק התצוגה משתנה.
 
-**בעיה:** בעמוד הצ'קאאוט (`WebCheckoutPage.tsx`) והסיכום, ה-labels של אמצעי תשלום (`"الدفع عند الاستلام"`, `"بطاقة ائتمان"`) באים מ-`site_content` כטקסט ערבי בלבד — לא מתורגמים לעברית.
+בנוסף:
+- בטבלת "פירוט לפי וריאציה", להוסיף עמודה שמראה מכמה המכירות של הוריאציה באו ממארזים.
+- הכותרת "כולל מארזים" ליד שם הוריאציה כבר קיימת.
 
-**פתרון:**
-הוספת mapping לתרגום ידוע במקום התצוגה. במקום `{paymentSettings.cash.label}` להשתמש בפונקציה קטנה:
-```ts
-const translatePaymentLabel = (key: 'cash' | 'credit', arLabel: string) => {
-  if (language === 'he') {
-    if (key === 'cash') return 'תשלום במזומן במסירה';
-    if (key === 'credit') return 'כרטיס אשראי';
-  }
-  return arLabel;
-};
-```
-- מיושם ב-`WebCheckoutPage.tsx` (שורות 701, 715) וכל מקום אחר שמציג את ה-label (למשל `WebOrderSummary.tsx` אם רלוונטי — ייבדק).
+### 2. אימות ביצועי מארזים
+
+עמוד `BundlePerformancePage` **כבר קיים** ומקושר מכפתור "ביצועים" בעמוד המארזים (`/crm/inventory/bundles`). אם לא רואים אותו — כנראה הכפתור מוסתר או לא ברור. אבדוק ואוודא שהוא נגיש.
 
 ### קבצים שישתנו
-- `supabase/functions/web-create-order/index.ts` — דילוג SMS על credit
-- `supabase/functions/_shared/hyp-verify.ts` — טריגר SMS אחרי אישור, עם הגנת ידמפוטנטיות
-- `src/pages/web/WebCheckoutPage.tsx` — תרגום ה-labels
+- `src/pages/inventory/ProductPerformancePage.tsx` — פיצול קוביית הכמות + עמודת "במארזים" בטבלת וריאציות
+- `src/pages/inventory/BundlesPage.tsx` — לוודא שהכפתור "ביצועים" מוצג בבירור (אם צריך: להוסיף גם ל-MobileCardList)
 
-### לא נכלל
-- שינוי מבנה DB או הוספת שדות `label_he` ל-payment settings (החלטה: תרגום קשיח בקוד כי יש רק 2 ערכים ידועים; אם בעתיד ירצו להוסיף אמצעי תשלום דינמיים, נוסיף אז).
+### לא כלול
+- שינוי לוגיקת חישוב עלות/רווח — כבר עודכן בגרסה קודמת (משתמש ב-cost_price של הוריאציה עם fallback ל-product.cost_price).
