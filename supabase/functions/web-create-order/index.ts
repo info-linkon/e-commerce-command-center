@@ -422,13 +422,17 @@ Deno.serve(async (req) => {
 
     // ── Server-side SMS trigger (reliable; browser-side invoke can be lost
     //    if the user closes the tab before the request completes).
+    // For CREDIT orders we intentionally skip this — the "order created" SMS
+    // must only go out after HYP confirms payment (fired from hyp-verify.ts).
+    // Otherwise every visitor who clicks "pay now" but abandons the HYP form
+    // gets a thank-you SMS for an order they never paid for.
     // IMPORTANT: use raw fetch (not supabase.functions.invoke). Edge-to-edge
     // invokes via supabase-js v2 don't throw on HTTP errors — they return
     // {data:null, error} which a try/catch silently misses, and the SMS
     // disappears with no trace. Bug history: all website orders between
     // late-May and early-June 2026 lost their order_created SMS because of
     // exactly that swallow. fetch + explicit status check fixes it.
-    try {
+    if (isCash) try {
       const smsRes = await fetch(`${supabaseUrl}/functions/v1/order-sms-trigger`, {
         method: "POST",
         headers: {
