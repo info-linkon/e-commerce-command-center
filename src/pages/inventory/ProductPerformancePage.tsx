@@ -236,8 +236,8 @@ const ProductPerformancePage = () => {
 
   const cards = perf ? [
     { label: "נמכר לבד", value: `${perf.quantity - perf.bundleUnits}` },
-    { label: "נמכר במארזים", value: `${perf.bundleUnits}`, highlight: perf.bundleUnits > 0 },
-    { label: "סה\"כ יחידות", value: `${perf.quantity}`, bold: true },
+    { label: "נמכר במארזים", value: `${perf.bundleUnits}` },
+    { label: "סה\"כ יחידות", value: `${perf.quantity}` },
     { label: "הזמנות", value: perf.orderCount.toString() },
     { label: "הכנסות ברוטו", value: `₪${perf.revenueGross.toFixed(0)}` },
     { label: "הכנסות נטו", value: `₪${perf.revenueNet.toFixed(0)}` },
