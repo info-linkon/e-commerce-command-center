@@ -372,7 +372,9 @@ const ProductPerformancePage = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-right">וריאציה</TableHead>
-                      <TableHead className="text-right">כמות</TableHead>
+                      <TableHead className="text-right">לבד</TableHead>
+                      <TableHead className="text-right">במארז</TableHead>
+                      <TableHead className="text-right">סה"כ</TableHead>
                       <TableHead className="text-right">הכנסות (נטו)</TableHead>
                       <TableHead className="text-right">עלות</TableHead>
                       <TableHead className="text-right">רווח</TableHead>
@@ -383,6 +385,8 @@ const ProductPerformancePage = () => {
                       <TableRow key={i}>
                         <TableCell className="font-medium">{v.name}</TableCell>
                         <TableCell>{v.quantity}</TableCell>
+                        <TableCell className={v.bundleQuantity > 0 ? "text-primary" : "text-muted-foreground"}>{v.bundleQuantity}</TableCell>
+                        <TableCell className="font-semibold">{v.quantity + v.bundleQuantity}</TableCell>
                         <TableCell>₪{v.revenue.toFixed(0)}</TableCell>
                         <TableCell>₪{v.cost.toFixed(0)}</TableCell>
                         <TableCell className={v.revenue - v.cost >= 0 ? "text-green-600" : "text-red-500"}>
