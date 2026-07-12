@@ -122,7 +122,7 @@ const ProductPerformancePage = () => {
       let revenueNet = 0;
       let cost = 0;
       const orderIds = new Set<string>();
-      const byVariation: Record<string, { name: string; quantity: number; revenue: number; cost: number }> = {};
+      const byVariation: Record<string, { name: string; quantity: number; bundleQuantity: number; revenue: number; cost: number }> = {};
       const byMonth: Record<string, { month: string; quantity: number; revenue: number; profit: number }> = {};
       const orders: { id: string; order_number: number; created_at: string; customer_name: string | null; quantity: number; revenue: number }[] = [];
 
@@ -143,7 +143,7 @@ const ProductPerformancePage = () => {
         orderIds.add(o.id);
 
         const vKey = v?.id || "default";
-        if (!byVariation[vKey]) byVariation[vKey] = { name: v?.name || "ברירת מחדל", quantity: 0, revenue: 0, cost: 0 };
+        if (!byVariation[vKey]) byVariation[vKey] = { name: v?.name || "ברירת מחדל", quantity: 0, bundleQuantity: 0, revenue: 0, cost: 0 };
         byVariation[vKey].quantity += qty;
         byVariation[vKey].revenue += net;
         byVariation[vKey].cost += lineCost;
@@ -183,9 +183,8 @@ const ProductPerformancePage = () => {
         orderIds.add(o.id);
 
         const vKey = info.varId || "default";
-        if (!byVariation[vKey]) byVariation[vKey] = { name: `${info.varName} (במארז)`, quantity: 0, revenue: 0, cost: 0 };
-        else byVariation[vKey].name = `${info.varName} (כולל מארזים)`;
-        byVariation[vKey].quantity += compUnits;
+        if (!byVariation[vKey]) byVariation[vKey] = { name: info.varName, quantity: 0, bundleQuantity: 0, revenue: 0, cost: 0 };
+        byVariation[vKey].bundleQuantity += compUnits;
         byVariation[vKey].cost += lineCost;
 
         const d = new Date(o.created_at);
@@ -236,7 +235,9 @@ const ProductPerformancePage = () => {
   const catName = (product as any)?.categories?.name_he || (product as any)?.categories?.name;
 
   const cards = perf ? [
-    { label: "כמות שנמכרה", value: `${perf.quantity}${perf.bundleUnits ? ` (כולל ${perf.bundleUnits} במארזים)` : ""}` },
+    { label: "נמכר לבד", value: `${perf.quantity - perf.bundleUnits}` },
+    { label: "נמכר במארזים", value: `${perf.bundleUnits}`, highlight: perf.bundleUnits > 0 },
+    { label: "סה\"כ יחידות", value: `${perf.quantity}`, bold: true },
     { label: "הזמנות", value: perf.orderCount.toString() },
     { label: "הכנסות ברוטו", value: `₪${perf.revenueGross.toFixed(0)}` },
     { label: "הכנסות נטו", value: `₪${perf.revenueNet.toFixed(0)}` },
