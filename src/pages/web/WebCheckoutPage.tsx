@@ -698,7 +698,7 @@ export default function WebCheckoutPage() {
                       >
                         <RadioGroupItem value="cash" id="pm-cash" className="sr-only" />
                         <Banknote className={`w-8 h-8 ${selectedPayment === "cash" ? "text-primary" : "text-muted-foreground"}`} />
-                        <span className="font-semibold text-sm">{paymentSettings.cash.label}</span>
+                        <span className="font-semibold text-sm">{t(paymentSettings.cash.label, "תשלום במזומן במסירה")}</span>
                       </label>
                     )}
                     {paymentSettings.credit.enabled && (
@@ -712,7 +712,7 @@ export default function WebCheckoutPage() {
                       >
                         <RadioGroupItem value="credit" id="pm-credit" className="sr-only" />
                         <CreditCard className={`w-8 h-8 ${selectedPayment === "credit" ? "text-primary" : "text-muted-foreground"}`} />
-                        <span className="font-semibold text-sm">{paymentSettings.credit.label}</span>
+                        <span className="font-semibold text-sm">{t(paymentSettings.credit.label, "כרטיס אשראי")}</span>
                       </label>
                     )}
                   </RadioGroup>
