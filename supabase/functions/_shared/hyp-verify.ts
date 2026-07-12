@@ -415,10 +415,43 @@ export async function runHypVerify(
   // Intentionally NOT firing `order_completed` here. A successful HYP payment
   // only moves the order to `processing` (not `completed`), so sending the
   // "your order has been completed" SMS at this point is misleading to the
-  // customer. The `order_created` SMS was already sent when the order was
-  // placed (web-create-order). The `order_completed` SMS will fire later from
-  // the CRM when the admin actually marks the order as completed
-  // (see src/pages/orders/OrderDetail.tsx).
+  // customer. It fires later from the CRM when the admin marks the order as
+  // completed (see src/pages/orders/OrderDetail.tsx).
+  //
+  // For CREDIT orders, `order_created` was deliberately NOT sent at checkout
+  // (web-create-order skips it) so that abandoned "pay now" clicks don't get
+  // a thank-you SMS. Fire it here — but only once, guarded against duplicates
+  // via notification_log (this function can be re-entered from hyp-callback,
+  // hyp-notify, and hyp-verify-payment on the same order).
+  try {
+    const { data: existing } = await supabase
+      .from("notification_log")
+      .select("id")
+      .eq("order_id", resolvedOrderId)
+      .eq("trigger_type", "order_created")
+      .eq("success", true)
+      .limit(1)
+      .maybeSingle();
+    if (!existing) {
+      const smsRes = await fetch(`${supabaseUrl}/functions/v1/order-sms-trigger`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseKey}`,
+          apikey: supabaseKey,
+        },
+        body: JSON.stringify({ order_id: resolvedOrderId, trigger_type: "order_created" }),
+      });
+      const smsText = await smsRes.text();
+      if (!smsRes.ok) {
+        await logEvent(supabase, resolvedOrderId, "order_created_sms", false, `status=${smsRes.status} ${smsText}`);
+      } else {
+        await logEvent(supabase, resolvedOrderId, "order_created_sms", true, "sent_after_payment");
+      }
+    }
+  } catch (smsErr) {
+    await logEvent(supabase, resolvedOrderId, "order_created_sms", false, String(smsErr));
+  }
 
   // ── Email ──
   try {
