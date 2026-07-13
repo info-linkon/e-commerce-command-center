@@ -167,13 +167,15 @@ export default function AddOrderItemDialog({ orderId, assignedWarehouseId, onAdd
         }
         syncMultipleStockToWoo(components.map((c) => c.variation_id));
 
-        // Create picking items
-        const pickingRows = components.map((c) => ({
-          order_id: orderId,
-          order_item_id: newItem.id,
-          variation_id: c.variation_id,
-          quantity: c.quantity,
-        }));
+        // Create picking items — one row per unit
+        const pickingRows = components.flatMap((c) =>
+          Array.from({ length: c.quantity }, () => ({
+            order_id: orderId,
+            order_item_id: newItem.id,
+            variation_id: c.variation_id,
+            quantity: 1,
+          }))
+        );
         if (pickingRows.length > 0) {
           await supabase.from("order_picking_items").insert(pickingRows as any);
         }
