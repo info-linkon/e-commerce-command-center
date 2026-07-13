@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
-import { format } from "date-fns";
+import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { format, parse } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,9 +18,27 @@ import ProfitabilityTab from "@/components/reports/ProfitabilityTab";
 import ActivityLogTab from "@/components/reports/ActivityLogTab";
 
 const ReportsPage = () => {
-  const [period, setPeriod] = useState("today");
-  const [fromDate, setFromDate] = useState<Date | undefined>();
-  const [toDate, setToDate] = useState<Date | undefined>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const period = searchParams.get("period") ?? "today";
+  const tab = searchParams.get("tab") ?? "overview";
+  const parseDate = (s: string | null): Date | undefined => {
+    if (!s) return undefined;
+    const d = parse(s, "yyyy-MM-dd", new Date());
+    return isNaN(d.getTime()) ? undefined : d;
+  };
+  const fromDate = parseDate(searchParams.get("from"));
+  const toDate = parseDate(searchParams.get("to"));
+
+  const updateParam = (key: string, value: string | undefined, defaultValue?: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (!value || value === defaultValue) next.delete(key);
+    else next.set(key, value);
+    setSearchParams(next, { replace: true });
+  };
+  const setPeriod = (v: string) => updateParam("period", v, "today");
+  const setTab = (v: string) => updateParam("tab", v, "overview");
+  const setFromDate = (d: Date | undefined) => updateParam("from", d ? format(d, "yyyy-MM-dd") : undefined);
+  const setToDate = (d: Date | undefined) => updateParam("to", d ? format(d, "yyyy-MM-dd") : undefined);
 
   const startDate = useMemo(() => {
     if (period === "custom") {
@@ -104,7 +123,7 @@ const ReportsPage = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsList className="w-full flex flex-wrap h-auto gap-1 justify-start" dir="rtl">
           <TabsTrigger value="overview">סקירה כללית</TabsTrigger>
           <TabsTrigger value="sales">מכירות ומוצרים</TabsTrigger>
