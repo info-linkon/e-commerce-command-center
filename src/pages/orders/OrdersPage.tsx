@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Plus, Search, Trash2, Eye, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,10 +53,23 @@ const paymentLabels: Record<string, string> = {
 };
 
 const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
-  const [statusFilter, setStatusFilter] = useState<string>(defaultStatus || "all");
-  const [search, setSearch] = useState("");
-  const [registerFilter, setRegisterFilter] = useState<string>("all");
-  const [invoiceFilter, setInvoiceFilter] = useState<string>("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") ?? defaultStatus ?? "all";
+  const search = searchParams.get("q") ?? "";
+  const registerFilter = searchParams.get("register") ?? "all";
+  const invoiceFilter = searchParams.get("invoice") ?? "all";
+
+  const updateParam = (key: string, value: string, defaultValue: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (!value || value === defaultValue) next.delete(key);
+    else next.set(key, value);
+    setSearchParams(next, { replace: true });
+  };
+  const setStatusFilter = (v: string) => updateParam("status", v, defaultStatus ?? "all");
+  const setSearch = (v: string) => updateParam("q", v, "");
+  const setRegisterFilter = (v: string) => updateParam("register", v, "all");
+  const setInvoiceFilter = (v: string) => updateParam("invoice", v, "all");
+
   const { data: orders, isLoading } = useOrders(statusFilter === "all" ? undefined : statusFilter as OrderStatus);
   const { data: registers } = useCashRegisters();
   const { nameOf } = useUserNames();
