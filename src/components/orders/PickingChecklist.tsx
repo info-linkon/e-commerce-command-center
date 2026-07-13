@@ -202,8 +202,6 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
                           )}
                         </div>
 
-                        <div className="text-sm font-medium">×{item.quantity || 0}</div>
-
                         {item.picked ? (
                           <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                         ) : (

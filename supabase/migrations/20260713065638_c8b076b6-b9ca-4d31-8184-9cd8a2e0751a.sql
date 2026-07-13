@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.order_picking_items_order_item_variation_unique;

@@ -112,22 +112,27 @@ async function rebuildMissingPickingItems(orderId: string) {
 
     if (bundleComponents.length > 0) {
       for (const component of bundleComponents) {
-        pickingItems.push({
-          order_id: orderId,
-          order_item_id: item.id,
-          variation_id: component.variation_id,
-          quantity: component.quantity * item.quantity,
-        });
+        const totalUnits = component.quantity * item.quantity;
+        for (let i = 0; i < totalUnits; i++) {
+          pickingItems.push({
+            order_id: orderId,
+            order_item_id: item.id,
+            variation_id: component.variation_id,
+            quantity: 1,
+          });
+        }
       }
       continue;
     }
 
-    pickingItems.push({
-      order_id: orderId,
-      order_item_id: item.id,
-      variation_id: item.variation_id,
-      quantity: item.quantity,
-    });
+    for (let i = 0; i < item.quantity; i++) {
+      pickingItems.push({
+        order_id: orderId,
+        order_item_id: item.id,
+        variation_id: item.variation_id,
+        quantity: 1,
+      });
+    }
   }
 
   if (pickingItems.length === 0) return false;
