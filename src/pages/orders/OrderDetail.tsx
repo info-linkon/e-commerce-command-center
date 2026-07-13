@@ -268,12 +268,38 @@ const OrderDetail = () => {
       await adjustInventoryForItem(item, delta, `עדכון כמות בהזמנה #${order.order_number}`);
       const { data: pi } = await supabase
         .from("order_picking_items")
-        .select("id, quantity")
+        .select("id, variation_id, picked, quantity")
         .eq("order_item_id", itemId);
+      // Group by variation; add/remove per-unit rows (quantity=1 each) to match new qty
+      const byVar: Record<string, { picked: any[]; unpicked: any[] }> = {};
       for (const p of pi || []) {
-        const perUnit = p.quantity / oldQty;
-        const newPickQty = Math.max(1, Math.round(perUnit * newQty));
-        await supabase.from("order_picking_items").update({ quantity: newPickQty }).eq("id", p.id);
+        if (!byVar[p.variation_id]) byVar[p.variation_id] = { picked: [], unpicked: [] };
+        (p.picked ? byVar[p.variation_id].picked : byVar[p.variation_id].unpicked).push(p);
+      }
+      for (const [variationId, groups] of Object.entries(byVar)) {
+        const rows = [...groups.picked, ...groups.unpicked];
+        const currentCount = rows.length;
+        // Estimate units-per-order-unit from legacy data (quantity may be >1 on old rows)
+        const legacyTotal = rows.reduce((s, r) => s + (r.quantity || 1), 0);
+        const perUnit = Math.max(1, Math.round(legacyTotal / oldQty));
+        const targetCount = perUnit * newQty;
+        if (targetCount > currentCount) {
+          const toInsert = Array.from({ length: targetCount - currentCount }, () => ({
+            order_id: order.id,
+            order_item_id: itemId,
+            variation_id: variationId,
+            quantity: 1,
+          }));
+          await supabase.from("order_picking_items").insert(toInsert as any);
+        } else if (targetCount < currentCount) {
+          const toRemove = currentCount - targetCount;
+          const removeIds = [...groups.unpicked, ...groups.picked]
+            .slice(0, toRemove)
+            .map((r) => r.id);
+          if (removeIds.length) {
+            await supabase.from("order_picking_items").delete().in("id", removeIds);
+          }
+        }
       }
     }
 
