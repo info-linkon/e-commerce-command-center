@@ -1,0 +1,1 @@
+ALTER TABLE public.bundle_variations ADD COLUMN IF NOT EXISTS compare_at_price NUMERIC;

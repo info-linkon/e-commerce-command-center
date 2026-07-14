@@ -41,6 +41,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     setNameHe((bv as any).name_he ? `${(bv as any).name_he} (עותק)` : "");
     setSku("");
     setPrice(Number(bv.price) || 0);
+    setCompareAtPrice(Number((bv as any).compare_at_price) || 0);
     setImageUrl((bv as any).image_url || null);
     const mappedItems = (bv.bundle_variation_items || []).map((bvi: any) => {
       const pv = bvi.product_variations;
@@ -62,6 +63,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
   const [nameHe, setNameHe] = useState("");
   const [sku, setSku] = useState("");
   const [price, setPrice] = useState(0);
+  const [compareAtPrice, setCompareAtPrice] = useState(0);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [items, setItems] = useState<VariationItem[]>([]);
@@ -93,6 +95,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     setNameHe("");
     setSku("");
     setPrice(0);
+    setCompareAtPrice(0);
     setImageUrl(null);
     setItems([]);
     setSelectedProduct("");
@@ -105,6 +108,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
     setNameHe((bv as any).name_he || "");
     setSku((bv as any).sku || "");
     setPrice(Number(bv.price));
+    setCompareAtPrice(Number((bv as any).compare_at_price) || 0);
     setImageUrl((bv as any).image_url || null);
     const mappedItems = (bv.bundle_variation_items || []).map((bvi: any) => {
       const pv = bvi.product_variations;
@@ -168,6 +172,7 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
       name_he: nameHe,
       sku,
       price,
+      compare_at_price: compareAtPrice > 0 ? compareAtPrice : null,
       image_url: imageUrl,
       items: items.map(({ variation_id, quantity }) => ({ variation_id, quantity })),
     };
@@ -211,6 +216,9 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
                     <div className="flex items-center gap-2">
                      <span className="font-medium">{(bv as any).name_he || bv.name}</span>
                       <Badge variant="secondary">₪{Number(bv.price).toFixed(2)}</Badge>
+                      {(bv as any).compare_at_price && Number((bv as any).compare_at_price) > Number(bv.price) ? (
+                        <Badge variant="outline" className="line-through text-muted-foreground">₪{Number((bv as any).compare_at_price).toFixed(2)}</Badge>
+                      ) : null}
                       {(bv as any).sku && <Badge variant="outline">{(bv as any).sku}</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -286,6 +294,10 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
             <div className="space-y-2">
               <Label>מחיר</Label>
               <Input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
+            </div>
+            <div className="space-y-2">
+              <Label>מחיר מבצע (מחיר ישן מחוק)</Label>
+              <Input type="number" value={compareAtPrice} onChange={(e) => setCompareAtPrice(Number(e.target.value))} placeholder="0 = ללא מבצע" />
             </div>
             {(() => {
               const computed = items.reduce((sum, it) => {

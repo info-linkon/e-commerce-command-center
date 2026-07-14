@@ -140,6 +140,7 @@ export type Database = {
       bundle_variations: {
         Row: {
           bundle_id: string
+          compare_at_price: number | null
           created_at: string
           id: string
           image_url: string | null
@@ -151,6 +152,7 @@ export type Database = {
         }
         Insert: {
           bundle_id: string
+          compare_at_price?: number | null
           created_at?: string
           id?: string
           image_url?: string | null
@@ -162,6 +164,7 @@ export type Database = {
         }
         Update: {
           bundle_id?: string
+          compare_at_price?: number | null
           created_at?: string
           id?: string
           image_url?: string | null
