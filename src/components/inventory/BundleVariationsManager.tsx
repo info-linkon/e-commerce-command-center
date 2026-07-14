@@ -292,11 +292,11 @@ export function BundleVariationsManager({ bundleId }: BundleVariationsManagerPro
               </div>
             </div>
             <div className="space-y-2">
-              <Label>מחיר</Label>
+              <Label>מחיר רגיל</Label>
               <Input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
             </div>
             <div className="space-y-2">
-              <Label>מחיר מבצע (מחיר ישן מחוק)</Label>
+              <Label>מחיר מבצע (מה שהלקוח משלם — 0 = ללא מבצע)</Label>
               <Input type="number" value={compareAtPrice} onChange={(e) => setCompareAtPrice(Number(e.target.value))} placeholder="0 = ללא מבצע" />
             </div>
             {(() => {
