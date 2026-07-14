@@ -567,11 +567,11 @@ const BundleForm = () => {
                 <Label className="text-xs font-semibold">מחירים</Label>
                 <div className="grid grid-cols-4 gap-2">
                   <div className="space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">מכירה</Label>
+                    <Label className="text-[10px] text-muted-foreground">מחיר רגיל</Label>
                     <Input type="number" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: Number(e.target.value) })} className="h-8 text-xs" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">מחיר מבצע</Label>
+                    <Label className="text-[10px] text-muted-foreground">מחיר מבצע (מה שהלקוח משלם)</Label>
                     <Input type="number" value={form.compare_at_price} onChange={(e) => setForm({ ...form, compare_at_price: Number(e.target.value) })} placeholder="0 = ללא" className="h-8 text-xs" />
                   </div>
                   <div className="space-y-1">
