@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TablesInsert } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { syncProductToWoo } from "@/lib/wooProductSync";
 
 export function useBundles() {
   return useQuery({
@@ -115,6 +116,11 @@ export function useUpdateBundle() {
           .insert(items.map((item) => ({ ...item, bundle_id: bundleId })));
         if (iErr) throw iErr;
       }
+
+      // Sync bundle product (price/description/status) to WooCommerce so
+      // the public site reflects the update. Fire-and-forget — Woo failures
+      // shouldn't block the CRM save.
+      syncProductToWoo(productId);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["bundles"] });
