@@ -183,9 +183,11 @@ export default function WebProductPage() {
   const displayImage = mainImage || variationImage || allImages[0] || null;
 
   const comparePrice: number | null = (() => {
-    const raw = activeVariation
-      ? (activeVariation as any).compare_at_price
-      : (product as any).compare_at_price;
+    const raw = activeBundleVariation
+      ? (activeBundleVariation as any).compare_at_price
+      : activeVariation
+        ? (activeVariation as any).compare_at_price
+        : (product as any).compare_at_price;
     const n = Number(raw);
     return raw && n > price ? n : null;
   })();
