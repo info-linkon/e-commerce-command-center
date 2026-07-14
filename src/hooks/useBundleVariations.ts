@@ -27,6 +27,7 @@ export function useCreateBundleVariation() {
       name_he,
       sku,
       price,
+      compare_at_price,
       image_url,
       items,
     }: {
@@ -35,12 +36,13 @@ export function useCreateBundleVariation() {
       name_he?: string;
       sku?: string;
       price: number;
+      compare_at_price?: number | null;
       image_url?: string | null;
       items: { variation_id: string; quantity: number }[];
     }) => {
       const { data: variation, error: vErr } = await supabase
         .from("bundle_variations")
-        .insert({ bundle_id: bundleId, name, name_he: name_he || null, sku: sku || null, price, image_url: image_url ?? null } as any)
+        .insert({ bundle_id: bundleId, name, name_he: name_he || null, sku: sku || null, price, compare_at_price: compare_at_price && compare_at_price > 0 ? compare_at_price : null, image_url: image_url ?? null } as any)
         .select()
         .single();
       if (vErr) throw vErr;
@@ -71,6 +73,7 @@ export function useUpdateBundleVariation() {
       name_he,
       sku,
       price,
+      compare_at_price,
       image_url,
       items,
     }: {
@@ -80,12 +83,13 @@ export function useUpdateBundleVariation() {
       name_he?: string;
       sku?: string;
       price: number;
+      compare_at_price?: number | null;
       image_url?: string | null;
       items: { variation_id: string; quantity: number }[];
     }) => {
       const { error: vErr } = await supabase
         .from("bundle_variations")
-        .update({ name, name_he: name_he || null, sku: sku || null, price, image_url: image_url ?? null } as any)
+        .update({ name, name_he: name_he || null, sku: sku || null, price, compare_at_price: compare_at_price && compare_at_price > 0 ? compare_at_price : null, image_url: image_url ?? null } as any)
         .eq("id", variationId);
       if (vErr) throw vErr;
 
