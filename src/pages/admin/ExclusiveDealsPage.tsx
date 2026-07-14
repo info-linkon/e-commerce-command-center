@@ -28,6 +28,7 @@ export default function ExclusiveDealsPage() {
   const qc = useQueryClient();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
   const { data: searchResults } = useQuery({
     queryKey: ["deals-product-search", search],
@@ -43,7 +44,22 @@ export default function ExclusiveDealsPage() {
     },
   });
 
-  const existingIds = new Set((deals || []).map((d: any) => d.product_id));
+  const existingKeys = new Set(
+    (deals || []).map((d: any) => `${d.product_id}::${d.variation_id ?? ""}`),
+  );
+
+  const { data: productVariations } = useQuery({
+    queryKey: ["deals-product-variations", selectedProduct?.id],
+    enabled: !!selectedProduct?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("product_variations")
+        .select("id, name, name_ar, price, image_url")
+        .eq("product_id", selectedProduct.id)
+        .order("name");
+      return (data || []).filter((v: any) => v.name !== "ברירת מחדל");
+    },
+  });
 
   const move = async (index: number, dir: -1 | 1) => {
     if (!deals) return;
@@ -119,8 +135,17 @@ export default function ExclusiveDealsPage() {
                   <div className="w-14 h-14 rounded bg-muted" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{displayName}</p>
-                  <p className="text-sm text-muted-foreground">₪{Number(p.sale_price).toFixed(2)}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-medium text-foreground truncate">{displayName}</p>
+                    {deal.product_variations && (
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        {deal.product_variations.name_ar || deal.product_variations.name}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    ₪{Number(deal.product_variations?.price ?? p.sale_price).toFixed(2)}
+                  </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0" style={{ direction: "ltr" }}>
                   <Switch
@@ -142,11 +167,65 @@ export default function ExclusiveDealsPage() {
         </div>
       )}
 
-      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+      <Dialog open={pickerOpen} onOpenChange={(o) => { setPickerOpen(o); if (!o) setSelectedProduct(null); }}>
         <DialogContent dir="rtl">
           <DialogHeader>
-            <DialogTitle>בחר מוצר</DialogTitle>
+            <DialogTitle>{selectedProduct ? "בחר וריאציה" : "בחר מוצר"}</DialogTitle>
           </DialogHeader>
+          {selectedProduct ? (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">{selectedProduct.name_ar || selectedProduct.name}</p>
+              <div className="max-h-[400px] overflow-y-auto space-y-2">
+                <button
+                  disabled={existingKeys.has(`${selectedProduct.id}::`) || addDeal.isPending}
+                  onClick={async () => {
+                    await addDeal.mutateAsync({ productId: selectedProduct.id, variationId: null });
+                    setPickerOpen(false);
+                    setSelectedProduct(null);
+                  }}
+                  className="w-full flex items-center gap-3 p-2 rounded-lg border border-border hover:bg-accent text-right disabled:opacity-50"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium">המוצר כולו (בלי וריאציה)</p>
+                    <p className="text-xs text-muted-foreground">₪{Number(selectedProduct.sale_price).toFixed(2)}</p>
+                  </div>
+                  {existingKeys.has(`${selectedProduct.id}::`) && <span className="text-xs text-muted-foreground">כבר קיים</span>}
+                </button>
+                {(productVariations || []).map((v: any) => {
+                  const already = existingKeys.has(`${selectedProduct.id}::${v.id}`);
+                  return (
+                    <button
+                      key={v.id}
+                      disabled={already || addDeal.isPending}
+                      onClick={async () => {
+                        await addDeal.mutateAsync({ productId: selectedProduct.id, variationId: v.id });
+                        setPickerOpen(false);
+                        setSelectedProduct(null);
+                      }}
+                      className="w-full flex items-center gap-3 p-2 rounded-lg border border-border hover:bg-accent text-right disabled:opacity-50"
+                    >
+                      {v.image_url ? (
+                        <img src={v.image_url} alt="" className="w-12 h-12 object-cover rounded" />
+                      ) : (
+                        <div className="w-12 h-12 rounded bg-muted" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{v.name_ar || v.name}</p>
+                        <p className="text-xs text-muted-foreground">₪{Number(v.price).toFixed(2)}</p>
+                      </div>
+                      {already && <span className="text-xs text-muted-foreground">כבר קיים</span>}
+                    </button>
+                  );
+                })}
+                {(productVariations || []).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">אין וריאציות למוצר זה</p>
+                )}
+              </div>
+              <Button variant="ghost" onClick={() => setSelectedProduct(null)} className="w-full">
+                חזרה לחיפוש
+              </Button>
+            </div>
+          ) : (
           <div className="space-y-3">
             <div className="relative">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -160,16 +239,11 @@ export default function ExclusiveDealsPage() {
             </div>
             <div className="max-h-[400px] overflow-y-auto space-y-2">
               {(searchResults || []).map((p: any) => {
-                const already = existingIds.has(p.id);
                 return (
                   <button
                     key={p.id}
-                    disabled={already || addDeal.isPending}
-                    onClick={async () => {
-                      await addDeal.mutateAsync(p.id);
-                      setPickerOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 p-2 rounded-lg border border-border hover:bg-accent transition-colors text-right disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setSelectedProduct(p)}
+                    className="w-full flex items-center gap-3 p-2 rounded-lg border border-border hover:bg-accent transition-colors text-right"
                   >
                     {p.image_url ? (
                       <img src={p.image_url} alt="" className="w-12 h-12 object-cover rounded" />
@@ -180,7 +254,6 @@ export default function ExclusiveDealsPage() {
                       <p className="font-medium truncate">{p.name_ar || p.name}</p>
                       <p className="text-xs text-muted-foreground">₪{Number(p.sale_price).toFixed(2)}</p>
                     </div>
-                    {already && <span className="text-xs text-muted-foreground">כבר קיים</span>}
                   </button>
                 );
               })}
@@ -189,6 +262,7 @@ export default function ExclusiveDealsPage() {
               )}
             </div>
           </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
