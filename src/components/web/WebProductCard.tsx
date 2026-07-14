@@ -14,13 +14,18 @@ interface WebProductCardProps {
   categoryName?: string | null;
   categoryNameHe?: string | null;
   outOfStock?: boolean;
+  variationId?: string | null;
+  variationName?: string | null;
+  variationNameHe?: string | null;
 }
 
-export function WebProductCard({ id, productNumber, name, nameAr, price, originalPrice, imageUrl, categoryName, categoryNameHe, outOfStock }: WebProductCardProps) {
+export function WebProductCard({ id, productNumber, name, nameAr, price, originalPrice, imageUrl, categoryName, categoryNameHe, outOfStock, variationId, variationName, variationNameHe }: WebProductCardProps) {
   const { lang, localizedPath } = useLanguage();
   const displayName = lang === "he" ? (name || nameAr || "") : (nameAr || name);
   const linkId = productNumber || id;
   const displayCategory = lang === "he" ? (categoryNameHe || categoryName) : (categoryName || categoryNameHe);
+  const displayVariation = lang === "he" ? (variationNameHe || variationName) : (variationName || variationNameHe);
+  const productHref = localizedPath(`/product/${linkId}${variationId ? `?v=${variationId}` : ""}`);
 
   const hasDiscount = originalPrice && originalPrice > price;
   const discountPercent = hasDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
@@ -37,7 +42,7 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, origina
           -{discountPercent}%
         </div>
       )}
-      <Link to={localizedPath(`/product/${linkId}`)} className="block relative overflow-hidden">
+      <Link to={productHref} className="block relative overflow-hidden">
         <div className="aspect-square bg-muted flex items-center justify-center">
           {imageUrl ? (
             <img
@@ -58,9 +63,12 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, origina
         {displayCategory && (
           <p className="text-xs text-gold font-medium mb-1">{displayCategory}</p>
         )}
-        <Link to={localizedPath(`/product/${linkId}`)}>
+        <Link to={productHref}>
           <h3 className="font-semibold text-xs md:text-sm leading-snug mb-2 line-clamp-2 hover:text-primary transition-colors">
             {displayName}
+            {displayVariation && (
+              <span className="mr-1 text-xs font-normal text-primary">— {displayVariation}</span>
+            )}
           </h3>
         </Link>
         <div className="flex items-center justify-between mt-3">
@@ -76,7 +84,7 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, origina
             className="h-9 w-9 bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary"
             asChild
           >
-            <Link to={localizedPath(`/product/${linkId}`)}>
+            <Link to={productHref}>
               <ShoppingCart className="w-4 h-4" />
             </Link>
           </Button>

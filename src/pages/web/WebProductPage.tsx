@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useWebProduct, useWebProductVariations, useWebBundleVariations } from "@/hooks/useWebProducts";
 import { useCartStore } from "@/lib/web-cart-store";
 import { useState, useEffect } from "react";
@@ -17,12 +17,21 @@ import { RelatedProductsSection } from "@/components/web/RelatedProductsSection"
 export default function WebProductPage() {
   const { lang, t } = useLanguage();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const preselectVariationId = searchParams.get("v");
   const { data: product, isLoading } = useWebProduct(id);
   const productId = product?.id;
   const { data: variations } = useWebProductVariations(productId);
   const addItem = useCartStore((s) => s.addItem);
 
   const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
+
+  // Preselect variation from URL (?v=...) once variations are loaded
+  useEffect(() => {
+    if (!preselectVariationId || !variations) return;
+    const match = variations.find((v) => v.id === preselectVariationId);
+    if (match) setSelectedVariation(match.id);
+  }, [preselectVariationId, variations]);
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState<string | null>(null);
 

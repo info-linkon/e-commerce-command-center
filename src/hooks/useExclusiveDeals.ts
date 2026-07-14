@@ -54,14 +54,30 @@ export function useExclusiveDealsPublic() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("exclusive_deals")
-        .select("id, product_id, sort_order, products!inner(*, categories!products_category_id_fkey(name, name_he, slug))")
+        .select("id, product_id, variation_id, sort_order, products!inner(*, categories!products_category_id_fkey(name, name_he, slug)), product_variations(id, name, name_ar, price, compare_at_price, image_url, sku)")
         .eq("active", true)
         .order("sort_order");
       if (error) throw error;
       const products = (data || [])
         .map((row: any) => row.products)
         .filter((p: any) => p);
-      return await annotateOutOfStock(products);
+      const annotated = await annotateOutOfStock(products);
+      // Merge variation overrides back onto each row (keyed by product id + row index).
+      return (data || []).map((row: any, i: number) => {
+        const p = annotated[i] || row.products;
+        const v = row.product_variations;
+        if (!v) return { ...p, variationId: null };
+        return {
+          ...p,
+          variationId: v.id,
+          variationName: v.name_ar || v.name,
+          variationNameHe: v.name || v.name_ar,
+          sale_price: v.price ?? p.sale_price,
+          compare_at_price: v.compare_at_price ?? p.compare_at_price,
+          image_url: v.image_url || p.image_url,
+          sku: v.sku || p.sku,
+        };
+      });
     },
   });
 }
@@ -72,7 +88,7 @@ export function useExclusiveDealsAdmin() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("exclusive_deals")
-        .select("id, product_id, sort_order, active, products!inner(id, name, name_ar, sale_price, image_url, product_number)")
+        .select("id, product_id, variation_id, sort_order, active, products!inner(id, name, name_ar, sale_price, image_url, product_number), product_variations(id, name, name_ar, price, image_url)")
         .order("sort_order");
       if (error) throw error;
       return data || [];
@@ -83,7 +99,9 @@ export function useExclusiveDealsAdmin() {
 export function useAddExclusiveDeal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (product_id: string) => {
+    mutationFn: async (input: string | { productId: string; variationId?: string | null }) => {
+      const productId = typeof input === "string" ? input : input.productId;
+      const variationId = typeof input === "string" ? null : input.variationId ?? null;
       const { data: max } = await supabase
         .from("exclusive_deals")
         .select("sort_order")
@@ -92,7 +110,8 @@ export function useAddExclusiveDeal() {
       const nextOrder = ((max as any)?.[0]?.sort_order ?? -1) + 1;
       const { data: user } = await supabase.auth.getUser();
       const { error } = await supabase.from("exclusive_deals").insert({
-        product_id,
+        product_id: productId,
+        variation_id: variationId,
         sort_order: nextOrder,
         created_by: user.user?.id,
       });
