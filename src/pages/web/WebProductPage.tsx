@@ -168,17 +168,24 @@ export default function WebProductPage() {
     ? bundleVariations!.find((v) => v.id === selectedVariation) || bundleVariations![0]
     : null;
 
+  // For variable bundles/products, the variation can override the bundle/product
+  // level price. If the variation's field is empty (0 / null), fall back to the
+  // parent product's value so admins can edit at either level.
+  const bvPrice = activeBundleVariation ? Number(activeBundleVariation.price) || 0 : 0;
+  const vPrice = activeVariation ? Number(activeVariation.price) || 0 : 0;
   const rawPrice = activeBundleVariation
-    ? activeBundleVariation.price
+    ? (bvPrice > 0 ? bvPrice : Number(product.sale_price) || 0)
     : activeVariation
-      ? activeVariation.price
-      : product.sale_price;
-  const rawCompareRaw = activeBundleVariation
-    ? (activeBundleVariation as any).compare_at_price
+      ? (vPrice > 0 ? vPrice : Number(product.sale_price) || 0)
+      : Number(product.sale_price) || 0;
+  const bvCompare = activeBundleVariation ? Number((activeBundleVariation as any).compare_at_price) || 0 : 0;
+  const vCompare = activeVariation ? Number((activeVariation as any).compare_at_price) || 0 : 0;
+  const productCompare = Number((product as any).compare_at_price) || 0;
+  const rawCompare = activeBundleVariation
+    ? (bvCompare > 0 ? bvCompare : productCompare)
     : activeVariation
-      ? (activeVariation as any).compare_at_price
-      : (product as any).compare_at_price;
-  const rawCompare = Number(rawCompareRaw) || 0;
+      ? (vCompare > 0 ? vCompare : productCompare)
+      : productCompare;
   // Auto-swap: whichever value is lower is the "final" price the customer
   // pays; the higher one is the crossed-out regular price. This makes the
   // display forgiving regardless of which field the admin entered where.
