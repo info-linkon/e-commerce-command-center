@@ -66,6 +66,7 @@ const BundleForm = () => {
     short_description: "",
     short_description_ar: "",
     sale_price: 0,
+    compare_at_price: 0,
     cost_price: 0,
     shipping_price: 0,
     category_id: "" as string | null,
@@ -113,6 +114,7 @@ const BundleForm = () => {
         short_description: product?.short_description || "",
         short_description_ar: product?.short_description_ar || "",
         sale_price: Number(product?.sale_price || 0),
+        compare_at_price: Number((product as any)?.compare_at_price || 0),
         cost_price: Number(product?.cost_price || 0),
         shipping_price: Number(product?.shipping_price || 0),
         category_id: product?.category_id || null,
@@ -148,6 +150,7 @@ const BundleForm = () => {
         short_description: sourceProduct.short_description || "",
         short_description_ar: sourceProduct.short_description_ar || "",
         sale_price: Number(sourceProduct.sale_price || 0),
+        compare_at_price: Number((sourceProduct as any).compare_at_price || 0),
         cost_price: Number(sourceProduct.cost_price || 0),
         shipping_price: Number(sourceProduct.shipping_price || 0),
         category_id: sourceProduct.category_id || null,
@@ -233,6 +236,7 @@ const BundleForm = () => {
       short_description: form.short_description || null,
       short_description_ar: form.short_description_ar || null,
       sale_price: form.sale_price,
+      compare_at_price: form.compare_at_price > 0 ? form.compare_at_price : null,
       cost_price: form.cost_price,
       shipping_price: form.shipping_price,
       category_id: form.category_id || null,
@@ -561,10 +565,14 @@ const BundleForm = () => {
 
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">מחירים</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   <div className="space-y-1">
                     <Label className="text-[10px] text-muted-foreground">מכירה</Label>
                     <Input type="number" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: Number(e.target.value) })} className="h-8 text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">מחיר מבצע</Label>
+                    <Input type="number" value={form.compare_at_price} onChange={(e) => setForm({ ...form, compare_at_price: Number(e.target.value) })} placeholder="0 = ללא" className="h-8 text-xs" />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[10px] text-muted-foreground">עלות</Label>
