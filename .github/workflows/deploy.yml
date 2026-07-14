@@ -31,6 +31,23 @@ jobs:
       - name: Build project
         run: npm run build      # Vite => dist
 
+      - name: Ensure .htaccess (SPA routing) exists in dist
+        run: |
+          cat > dist/.htaccess <<'EOF'
+          <IfModule mod_rewrite.c>
+            RewriteEngine On
+            RewriteBase /
+
+            # If the request is for an existing file or directory, serve it
+            RewriteCond %{REQUEST_FILENAME} !-f
+            RewriteCond %{REQUEST_FILENAME} !-d
+
+            # Otherwise, redirect all requests to index.html
+            RewriteRule ^ index.html [QSA,L]
+          </IfModule>
+          EOF
+          ls -la dist/.htaccess
+
       - name: Prepare FTP target
         run: |
           SERVER="${{ secrets.FTP_SERVER }}"
