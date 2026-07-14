@@ -31,6 +31,20 @@ jobs:
       - name: Build project
         run: npm run build      # Vite => dist
 
+      - name: Prepare FTP target
+        run: |
+          SERVER="${{ secrets.FTP_SERVER }}"
+          SERVER="${SERVER#ftp://}"
+          SERVER="${SERVER#ftps://}"
+          SERVER="${SERVER%%/*}"
+
+          if getent hosts "$SERVER" >/dev/null 2>&1; then
+            echo "FTP_SERVER_TARGET=$SERVER" >> "$GITHUB_ENV"
+          else
+            # Public cPanel IP for elwejha.co.il. This bypasses intermittent GitHub DNS failures (EAI_AGAIN).
+            echo "FTP_SERVER_TARGET=91.204.209.55" >> "$GITHUB_ENV"
+          fi
+
       - name: Deploy via FTP to cPanel (with retry)
         uses: Wandalen/wretry.action@v3
         with:
@@ -38,7 +52,7 @@ jobs:
           attempt_limit: 5
           attempt_delay: 30000
           with: |
-            server: ${{ secrets.FTP_SERVER }}
+            server: ${{ env.FTP_SERVER_TARGET }}
             username: ${{ secrets.FTP_USERNAME }}
             password: ${{ secrets.FTP_PASSWORD }}
             port: 21
