@@ -31,14 +31,18 @@ jobs:
       - name: Build project
         run: npm run build      # Vite => dist
 
-      - name: Deploy via FTP to cPanel
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+      - name: Deploy via FTP to cPanel (with retry)
+        uses: Wandalen/wretry.action@v3
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: 21
-          protocol: ftp
-          local-dir: dist/       # תיקיית ה-build של Vite
-          server-dir: /   # כאן צריך לשים את הנתיב המדויק על השרת
-          dangerous-clean-slate: true
+          action: SamKirkland/FTP-Deploy-Action@v4.3.6
+          attempt_limit: 5
+          attempt_delay: 30000
+          with: |
+            server: ${{ secrets.FTP_SERVER }}
+            username: ${{ secrets.FTP_USERNAME }}
+            password: ${{ secrets.FTP_PASSWORD }}
+            port: 21
+            protocol: ftp
+            local-dir: dist/
+            server-dir: /
+            dangerous-clean-slate: true
