@@ -61,10 +61,23 @@ serve(async (req) => {
 
     // 2. Build WooCommerce product data
     const category = product.categories as any;
+    // Price mapping to WooCommerce:
+    //  - Our `compare_at_price` (original, crossed-out) → Woo `regular_price`
+    //  - Our `sale_price` (current selling price)       → Woo `sale_price`
+    // When there's no compare price, fall back to sending `sale_price` as
+    // the regular price and clearing any sale.
+    const salePrice = Number(product.sale_price || 0);
+    const compareAt = Number((product as any).compare_at_price || 0);
+    const hasDiscount = compareAt > 0 && compareAt > salePrice;
     const wooData: any = {
       name: product.name,
       type: product.product_type === "variable" ? "variable" : "simple",
-      regular_price: product.product_type === "simple" ? String(product.sale_price) : undefined,
+      regular_price: product.product_type === "simple"
+        ? String(hasDiscount ? compareAt : salePrice)
+        : undefined,
+      sale_price: product.product_type === "simple"
+        ? (hasDiscount ? String(salePrice) : "")
+        : undefined,
       sku: product.sku || undefined,
       description: product.description || "",
       short_description: product.short_description || "",
