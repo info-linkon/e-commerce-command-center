@@ -168,11 +168,23 @@ export default function WebProductPage() {
     ? bundleVariations!.find((v) => v.id === selectedVariation) || bundleVariations![0]
     : null;
 
-  const price = activeBundleVariation
+  const rawPrice = activeBundleVariation
     ? activeBundleVariation.price
     : activeVariation
       ? activeVariation.price
       : product.sale_price;
+  const rawCompareRaw = activeBundleVariation
+    ? (activeBundleVariation as any).compare_at_price
+    : activeVariation
+      ? (activeVariation as any).compare_at_price
+      : (product as any).compare_at_price;
+  const rawCompare = Number(rawCompareRaw) || 0;
+  // Auto-swap: whichever value is lower is the "final" price the customer
+  // pays; the higher one is the crossed-out regular price. This makes the
+  // display forgiving regardless of which field the admin entered where.
+  const price = rawCompare > 0 && rawCompare < Number(rawPrice)
+    ? Number(rawCompare)
+    : Number(rawPrice);
 
   // When a variation (product or bundle) has its own image, prefer it for the main
   // image slot unless the user already picked a specific thumbnail (`mainImage`).
@@ -183,13 +195,9 @@ export default function WebProductPage() {
   const displayImage = mainImage || variationImage || allImages[0] || null;
 
   const comparePrice: number | null = (() => {
-    const raw = activeBundleVariation
-      ? (activeBundleVariation as any).compare_at_price
-      : activeVariation
-        ? (activeVariation as any).compare_at_price
-        : (product as any).compare_at_price;
-    const n = Number(raw);
-    return raw && n > price ? n : null;
+    if (!rawCompare) return null;
+    const higher = Math.max(Number(rawPrice), rawCompare);
+    return higher > price ? higher : null;
   })();
   const discountPercent = comparePrice ? Math.round(((comparePrice - price) / comparePrice) * 100) : 0;
 
