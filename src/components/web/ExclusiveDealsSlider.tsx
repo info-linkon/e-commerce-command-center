@@ -65,6 +65,9 @@ export function ExclusiveDealsSlider() {
                   categoryName={product.categories?.name}
                   categoryNameHe={product.categories?.name_he}
                   outOfStock={product.outOfStock}
+                  variationId={product.variationId}
+                  variationName={product.variationName}
+                  variationNameHe={product.variationNameHe}
                 />
               </CarouselItem>
             ))}
