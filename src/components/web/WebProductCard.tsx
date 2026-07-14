@@ -19,7 +19,7 @@ interface WebProductCardProps {
   variationNameHe?: string | null;
 }
 
-export function WebProductCard({ id, productNumber, name, nameAr, price, originalPrice, imageUrl, categoryName, categoryNameHe, outOfStock, variationId, variationName, variationNameHe }: WebProductCardProps) {
+export function WebProductCard({ id, productNumber, name, nameAr, price: rawPrice, originalPrice: rawOriginal, imageUrl, categoryName, categoryNameHe, outOfStock, variationId, variationName, variationNameHe }: WebProductCardProps) {
   const { lang, localizedPath } = useLanguage();
   const displayName = lang === "he" ? (name || nameAr || "") : (nameAr || name);
   const linkId = productNumber || id;
@@ -27,8 +27,12 @@ export function WebProductCard({ id, productNumber, name, nameAr, price, origina
   const displayVariation = lang === "he" ? (variationNameHe || variationName) : (variationName || variationNameHe);
   const productHref = localizedPath(`/product/${linkId}${variationId ? `?v=${variationId}` : ""}`);
 
-  const hasDiscount = originalPrice && originalPrice > price;
-  const discountPercent = hasDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+  // Auto-swap: whichever is lower is the final price; higher becomes crossed-out.
+  const compare = Number(rawOriginal) || 0;
+  const price = compare > 0 && compare < Number(rawPrice) ? compare : Number(rawPrice);
+  const originalPrice = compare > 0 ? Math.max(Number(rawPrice), compare) : null;
+  const hasDiscount = originalPrice !== null && originalPrice > price;
+  const discountPercent = hasDiscount ? Math.round(((originalPrice! - price) / originalPrice!) * 100) : 0;
 
   return (
     <div className={`group relative bg-card rounded-xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${outOfStock ? "opacity-60" : ""}`}>
