@@ -24,7 +24,7 @@ export function useBundle(id: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bundles")
-        .select("*, products(name, name_ar, image_url, sale_price, cost_price, shipping_price, category_id, sku, description, description_ar, short_description, short_description_ar, is_published, product_type, gallery_images, categories!products_category_id_fkey(name)), bundle_items(*, product_variations(name, sku, price))")
+        .select("*, products(name, name_ar, image_url, sale_price, compare_at_price, cost_price, shipping_price, category_id, sku, description, description_ar, short_description, short_description_ar, is_published, product_type, gallery_images, categories!products_category_id_fkey(name)), bundle_items(*, product_variations(name, sku, price))")
         .eq("id", id!)
         .single();
       if (error) throw error;
