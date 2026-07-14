@@ -550,6 +550,7 @@ export type Database = {
           product_id: string
           sort_order: number
           updated_at: string
+          variation_id: string | null
         }
         Insert: {
           active?: boolean
@@ -559,6 +560,7 @@ export type Database = {
           product_id: string
           sort_order?: number
           updated_at?: string
+          variation_id?: string | null
         }
         Update: {
           active?: boolean
@@ -568,13 +570,21 @@ export type Database = {
           product_id?: string
           sort_order?: number
           updated_at?: string
+          variation_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "exclusive_deals_product_id_fkey"
             columns: ["product_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exclusive_deals_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "product_variations"
             referencedColumns: ["id"]
           },
         ]
