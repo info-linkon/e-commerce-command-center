@@ -348,12 +348,15 @@ export function useAssignWarehouse() {
           }
 
           for (const component of bundleComponents || []) {
-            pickingItems.push({
-              order_id: orderId,
-              order_item_id: item.id,
-              variation_id: component.variation_id,
-              quantity: component.quantity * item.quantity,
-            });
+            const totalUnits = component.quantity * item.quantity;
+            for (let i = 0; i < totalUnits; i++) {
+              pickingItems.push({
+                order_id: orderId,
+                order_item_id: item.id,
+                variation_id: component.variation_id,
+                quantity: 1,
+              });
+            }
           }
         } else {
           pickingItems.push({
