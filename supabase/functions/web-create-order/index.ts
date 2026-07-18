@@ -105,6 +105,18 @@ Deno.serve(async (req) => {
     const allProductIds = Array.from(new Set(payload.items.map((i) => i.product_id))).filter(Boolean);
     const bundleProductIds = new Set<string>();
     const simpleBundlePriceByProduct = new Map<string, number>();
+    // Product-level pricing for non-bundle items. Mirrors the storefront
+    // (WebProductPage): for simple products the price comes from
+    // products.sale_price (the hidden "ברירת מחדל" product_variation.price
+    // may be stale — e.g. 25₪ while the admin later dropped sale_price to
+    // 19₪). For variable products we fall back to sale_price only when the
+    // chosen variation's price is 0/null. In both cases we honor
+    // compare_at_price via auto-swap so whichever value is lower wins.
+    const productPricingById = new Map<string, {
+      product_type: string;
+      sale_price: number;
+      compare_at_price: number;
+    }>();
     if (allProductIds.length > 0) {
       const { data: bundleRows } = await supabase
         .from("bundles")
@@ -124,6 +136,22 @@ Deno.serve(async (req) => {
           .in("id", simpleBundleProductIds);
         for (const p of prodRows || []) {
           simpleBundlePriceByProduct.set(p.id, Number((p as any).sale_price) || 0);
+        }
+      }
+
+      // Load product-level pricing for every non-bundle product in the cart.
+      const nonBundleProductIds = allProductIds.filter((pid) => !bundleProductIds.has(pid));
+      if (nonBundleProductIds.length > 0) {
+        const { data: prodRows } = await supabase
+          .from("products")
+          .select("id, product_type, sale_price, compare_at_price")
+          .in("id", nonBundleProductIds);
+        for (const p of prodRows || []) {
+          productPricingById.set((p as any).id, {
+            product_type: String((p as any).product_type || "simple"),
+            sale_price: Number((p as any).sale_price) || 0,
+            compare_at_price: Number((p as any).compare_at_price) || 0,
+          });
         }
       }
     }
@@ -184,12 +212,19 @@ Deno.serve(async (req) => {
     // ── Fetch authoritative variation prices ───────────────────────────
     const { data: variations, error: varErr } = await supabase
       .from("product_variations")
-      .select("id, price, product_id")
+      .select("id, price, compare_at_price, product_id")
       .in("id", variationIds);
     if (varErr) throw varErr;
 
-    const variationMap = new Map<string, { id: string; price: number; product_id: string }>();
-    for (const v of variations || []) variationMap.set(v.id, v as any);
+    const variationMap = new Map<string, { id: string; price: number; compare_at_price: number; product_id: string }>();
+    for (const v of variations || []) {
+      variationMap.set(v.id, {
+        id: (v as any).id,
+        price: Number((v as any).price) || 0,
+        compare_at_price: Number((v as any).compare_at_price) || 0,
+        product_id: (v as any).product_id,
+      });
+    }
 
     for (const item of payload.items) {
       if (!variationMap.has(item.variation_id)) {
@@ -204,14 +239,20 @@ Deno.serve(async (req) => {
     const bundleVariationIds = Array.from(
       new Set(payload.items.map((i) => i.bundle_variation_id).filter((x): x is string => Boolean(x))),
     );
-    const bundleVariationMap = new Map<string, { id: string; price: number }>();
+    const bundleVariationMap = new Map<string, { id: string; price: number; compare_at_price: number }>();
     if (bundleVariationIds.length > 0) {
       const { data: bvs, error: bvErr } = await supabase
         .from("bundle_variations")
-        .select("id, price")
+        .select("id, price, compare_at_price")
         .in("id", bundleVariationIds);
       if (bvErr) throw bvErr;
-      for (const bv of bvs || []) bundleVariationMap.set(bv.id, bv as any);
+      for (const bv of bvs || []) {
+        bundleVariationMap.set((bv as any).id, {
+          id: (bv as any).id,
+          price: Number((bv as any).price) || 0,
+          compare_at_price: Number((bv as any).compare_at_price) || 0,
+        });
+      }
     }
 
     // ── Stock check (sum across warehouses) ────────────────────────────
@@ -271,20 +312,49 @@ Deno.serve(async (req) => {
     }> = [];
 
     for (const item of payload.items) {
-      let unitPrice: number | undefined;
+      // Compute rawPrice + rawCompare exactly like the storefront
+      // (WebProductPage / WebProductCard) so what the customer sees is what
+      // we charge — otherwise HYP callbacks land on a different total and
+      // the order is auto-cancelled as amount_mismatch.
+      let rawPrice: number | undefined;
+      let rawCompare = 0;
       if (item.bundle_variation_id) {
-        unitPrice = bundleVariationMap.get(item.bundle_variation_id)?.price;
+        const bv = bundleVariationMap.get(item.bundle_variation_id);
+        const bp = productPricingById.get(item.product_id);
+        const bvPrice = bv ? Number(bv.price) : 0;
+        const bvCompare = bv ? Number(bv.compare_at_price) : 0;
+        rawPrice = bvPrice > 0 ? bvPrice : (bp?.sale_price ?? undefined);
+        rawCompare = bvCompare > 0 ? bvCompare : (bp?.compare_at_price ?? 0);
       } else if (bundleProductIds.has(item.product_id)) {
-        // simple_bundle — price comes from products.sale_price, not the
-        // (often 0) default variation row.
-        unitPrice = simpleBundlePriceByProduct.get(item.product_id);
+        // simple_bundle — price from products.sale_price.
+        rawPrice = simpleBundlePriceByProduct.get(item.product_id);
       } else {
-        unitPrice = variationMap.get(item.variation_id)?.price;
+        const p = productPricingById.get(item.product_id);
+        const v = variationMap.get(item.variation_id);
+        if (p?.product_type === "variable") {
+          // Variable product: prefer variation, fall back to product-level.
+          const vPrice = v ? Number(v.price) : 0;
+          const vCompare = v ? Number(v.compare_at_price) : 0;
+          rawPrice = vPrice > 0 ? vPrice : p.sale_price;
+          rawCompare = vCompare > 0 ? vCompare : p.compare_at_price;
+        } else {
+          // Simple product: the hidden "ברירת מחדל" variation is only an
+          // inventory placeholder — trust products.sale_price like the site.
+          rawPrice = p ? p.sale_price : (v ? Number(v.price) : undefined);
+          rawCompare = p ? p.compare_at_price : 0;
+        }
       }
 
-      if (unitPrice === undefined || unitPrice === null) {
+      if (rawPrice === undefined || rawPrice === null) {
         return jsonResponse({ error: "سعر منتج غير صالح" }, 400);
       }
+
+      // Auto-swap: whichever of {rawPrice, rawCompare} is lower is what the
+      // customer pays; higher becomes the crossed-out reference. Matches
+      // WebProductCard/WebProductPage exactly.
+      const unitPrice = rawCompare > 0 && rawCompare < Number(rawPrice)
+        ? Number(rawCompare)
+        : Number(rawPrice);
 
       const lineTotal = Number(unitPrice) * item.quantity;
       subtotal += lineTotal;
