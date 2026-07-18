@@ -728,8 +728,62 @@ const OrderDetail = () => {
                       item.quantity
                     )}
                   </TableCell>
-                  <TableCell>₪{Number(item.unit_price).toFixed(2)}</TableCell>
-                  <TableCell className="font-medium">₪{(editingItems ? Number(item.unit_price) * item.quantity : Number(item.total_price)).toFixed(2)}</TableCell>
+                  <TableCell>
+                    {(() => {
+                      const unit = Number(item.unit_price);
+                      const bv = item.bundle_variations;
+                      const pv = item.product_variations;
+                      const prod = pv?.products;
+                      const candidates = [
+                        Number(bv?.compare_at_price) || 0,
+                        Number(pv?.compare_at_price) || 0,
+                        Number(prod?.compare_at_price) || 0,
+                        Number(bv?.price) || 0,
+                        Number(pv?.price) || 0,
+                        Number(prod?.sale_price) || 0,
+                      ];
+                      const original = Math.max(...candidates);
+                      const onSale = original > unit + 0.001;
+                      return onSale ? (
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-xs text-muted-foreground line-through">₪{original.toFixed(2)}</span>
+                          <span className="text-destructive font-medium">₪{unit.toFixed(2)}</span>
+                        </div>
+                      ) : (
+                        <span>₪{unit.toFixed(2)}</span>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {(() => {
+                      const unit = Number(item.unit_price);
+                      const qty = item.quantity;
+                      const lineTotal = editingItems ? unit * qty : Number(item.total_price);
+                      const bv = item.bundle_variations;
+                      const pv = item.product_variations;
+                      const prod = pv?.products;
+                      const original = Math.max(
+                        Number(bv?.compare_at_price) || 0,
+                        Number(pv?.compare_at_price) || 0,
+                        Number(prod?.compare_at_price) || 0,
+                        Number(bv?.price) || 0,
+                        Number(pv?.price) || 0,
+                        Number(prod?.sale_price) || 0,
+                      );
+                      const onSale = original > unit + 0.001;
+                      const originalTotal = original * qty;
+                      const saved = originalTotal - lineTotal;
+                      return onSale ? (
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-xs text-muted-foreground line-through font-normal">₪{originalTotal.toFixed(2)}</span>
+                          <span>₪{lineTotal.toFixed(2)}</span>
+                          <span className="text-[10px] text-emerald-600">חסכון ₪{saved.toFixed(2)}</span>
+                        </div>
+                      ) : (
+                        <span>₪{lineTotal.toFixed(2)}</span>
+                      );
+                    })()}
+                  </TableCell>
                   {editingItems && (
                     <TableCell>
                       <Button
