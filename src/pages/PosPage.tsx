@@ -84,7 +84,7 @@ const PosPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_variations")
-        .select("*, products(name, name_ar, image_url, category_id, is_published)")
+        .select("*, products(name, name_ar, image_url, category_id, is_published, sale_price, compare_at_price)")
         .order("name");
       if (error) throw error;
       return data;
@@ -96,14 +96,14 @@ const PosPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bundles")
-        .select("id, bundle_type, product_id, products(name, name_ar, image_url, category_id, sale_price, is_published)");
+        .select("id, bundle_type, product_id, products(name, name_ar, image_url, category_id, sale_price, compare_at_price, is_published)");
       if (error) throw error;
       const variableBundleIds = (data || []).filter(b => b.bundle_type === "variable_bundle").map(b => b.id);
       let bundleVars: any[] = [];
       if (variableBundleIds.length > 0) {
         const { data: bv } = await supabase
           .from("bundle_variations")
-          .select("id, name, price, bundle_id")
+          .select("id, name, price, compare_at_price, bundle_id")
           .in("bundle_id", variableBundleIds)
           .order("name");
         bundleVars = bv || [];
@@ -114,7 +114,7 @@ const PosPage = () => {
       if (productIds.length > 0) {
         const { data: pvs } = await supabase
           .from("product_variations")
-          .select("id, product_id, name, price")
+          .select("id, product_id, name, price, compare_at_price")
           .in("product_id", productIds)
           .order("name");
         bundleProductVariations = pvs || [];
@@ -128,6 +128,16 @@ const PosPage = () => {
 
   const groupedProducts = useMemo(() => {
     const map = new Map<string, GroupedProduct>();
+    // Apply the same "effective sale price" rule as the storefront:
+    // - variation price falls back to product.sale_price when 0/missing
+    // - auto-swap with compare_at_price when the compare value is actually lower
+    const effectivePrice = (rawPrice: number, rawCompare: number) => {
+      const p = Number(rawPrice) || 0;
+      const c = Number(rawCompare) || 0;
+      if (c > 0 && p > 0 && c < p) return c;
+      if (c > 0 && p <= 0) return c;
+      return p;
+    };
     if (variations) {
       for (const v of variations) {
         const product = v.products as any;
@@ -138,7 +148,9 @@ const PosPage = () => {
         if (!map.has(pid)) {
           map.set(pid, { product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id, variations: [] });
         }
-        map.get(pid)!.variations.push({ id: v.id, name: v.name, price: Number(v.price) });
+        const vPrice = Number(v.price) > 0 ? Number(v.price) : Number(product.sale_price) || 0;
+        const vCompare = Number((v as any).compare_at_price) || Number(product.compare_at_price) || 0;
+        map.get(pid)!.variations.push({ id: v.id, name: v.name, price: effectivePrice(vPrice, vCompare) });
       }
     }
     if (allBundles) {
@@ -149,20 +161,23 @@ const PosPage = () => {
         const pid = bundle.product_id;
         // Get the product_variations for this bundle's product
         const productVars = bpvs.filter((pv: any) => pv.product_id === pid);
+        const prodPrice = Number(product.sale_price) || 0;
+        const prodCompare = Number(product.compare_at_price) || 0;
+        const bundleBasePrice = effectivePrice(prodPrice, prodCompare);
         if (bundle.bundle_type === "simple_bundle") {
           // Use the first product_variation if available, otherwise skip (can't create order without one)
           const firstVar = productVars[0];
           if (productVars.length <= 1) {
             map.set(pid, {
               product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
-              variations: [{ id: firstVar?.id || bundle.id, name: product.name_ar || product.name, price: Number(product.sale_price) }],
+              variations: [{ id: firstVar?.id || bundle.id, name: product.name_ar || product.name, price: bundleBasePrice }],
               isBundle: true,
             });
           } else {
             // Multiple variations on a simple bundle product — show them all
             map.set(pid, {
               product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
-              variations: productVars.map((pv: any) => ({ id: pv.id, name: pv.name, price: Number(product.sale_price) })),
+              variations: productVars.map((pv: any) => ({ id: pv.id, name: pv.name, price: bundleBasePrice })),
               isBundle: true,
             });
           }
@@ -173,7 +188,11 @@ const PosPage = () => {
           if (bvs.length > 0 && defaultProductVar) {
             map.set(pid, {
               product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id,
-              variations: bvs.map(bv => ({ id: defaultProductVar.id, name: bv.name, price: Number(bv.price), bundle_variation_id: bv.id })),
+              variations: bvs.map(bv => {
+                const bvPrice = Number(bv.price) > 0 ? Number(bv.price) : prodPrice;
+                const bvCompare = Number((bv as any).compare_at_price) || prodCompare;
+                return { id: defaultProductVar.id, name: bv.name, price: effectivePrice(bvPrice, bvCompare), bundle_variation_id: bv.id };
+              }),
               isBundle: true,
             });
           }
