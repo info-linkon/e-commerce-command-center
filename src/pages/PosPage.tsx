@@ -148,7 +148,13 @@ const PosPage = () => {
         if (!map.has(pid)) {
           map.set(pid, { product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id, variations: [] });
         }
-        const vPrice = Number(v.price) > 0 ? Number(v.price) : Number(product.sale_price) || 0;
+        // Match storefront + web-create-order: treat product.sale_price as an
+        // equal candidate to variation.price, pick the lower when both are set.
+        const rawVarPrice = Number(v.price) || 0;
+        const prodSale = Number(product.sale_price) || 0;
+        let vPrice: number;
+        if (rawVarPrice > 0 && prodSale > 0) vPrice = Math.min(rawVarPrice, prodSale);
+        else vPrice = rawVarPrice > 0 ? rawVarPrice : prodSale;
         const vCompare = Number((v as any).compare_at_price) || Number(product.compare_at_price) || 0;
         map.get(pid)!.variations.push({ id: v.id, name: v.name, price: effectivePrice(vPrice, vCompare) });
       }
