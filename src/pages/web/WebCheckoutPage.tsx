@@ -125,15 +125,8 @@ export default function WebCheckoutPage() {
   if (paymentSettings.cash.enabled) enabledMethods.push("cash");
   if (paymentSettings.credit.enabled) enabledMethods.push("credit");
 
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType>("credit");
-  const defaultShipping = deliveryEnabled ? "delivery" : "pickup";
-  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>(defaultShipping);
-
-  useEffect(() => {
-    if (enabledMethods.length > 0 && !enabledMethods.includes(selectedPayment)) {
-      setSelectedPayment(enabledMethods[0]);
-    }
-  }, [paymentSettingsRow]);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType | null>(null);
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod | null>(null);
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
@@ -199,7 +192,7 @@ export default function WebCheckoutPage() {
   }, []);
 
   const subtotal = totalPrice();
-  const shipping = shippingMethod === "pickup" ? 0 : shippingCost();
+  const shipping = shippingMethod === "pickup" ? 0 : shippingMethod === "delivery" ? shippingCost() : 0;
   const discount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
   const finalTotal = subtotal - discount + shipping;
 
@@ -229,6 +222,14 @@ export default function WebCheckoutPage() {
     // key presses and the mobile sticky button can still race the first click).
     if (loading || submittedRef.current) return;
     if (items.length === 0) { toast.error("السلة فارغة"); return; }
+    if (!shippingMethod) {
+      toast.error(t("يرجى اختيار طريقة التوصيل", "יש לבחור שיטת משלוח"));
+      return;
+    }
+    if (!selectedPayment) {
+      toast.error(t("يرجى اختيار طريقة الدفع", "יש לבחור אמצעי תשלום"));
+      return;
+    }
     if (!otpVerified) {
       toast.error(t("يرجى التحقق من رقم الهاتف أولاً", "יש לאמת את מספר הטלפון קודם"));
       return;
