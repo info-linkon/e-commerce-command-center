@@ -543,7 +543,7 @@ export default function WebCheckoutPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup value={shippingMethod} onValueChange={(v) => setShippingMethod(v as ShippingMethod)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <RadioGroup value={shippingMethod ?? ""} onValueChange={(v) => setShippingMethod(v as ShippingMethod)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {deliveryEnabled && (
                       <label
                         htmlFor="sm-delivery"
@@ -687,7 +687,7 @@ export default function WebCheckoutPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup value={selectedPayment} onValueChange={(v) => setSelectedPayment(v as PaymentMethodType)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <RadioGroup value={selectedPayment ?? ""} onValueChange={(v) => setSelectedPayment(v as PaymentMethodType)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {paymentSettings.cash.enabled && (
                       <label
                         htmlFor="pm-cash"
@@ -820,7 +820,11 @@ export default function WebCheckoutPage() {
                           {shippingMethod === "pickup" ? t("استلام ذاتي", "איסוף עצמי") : t("تكلفة التوصيل", "עלות משלוח")}
                         </span>
                         <span className={`font-medium ${shippingMethod === "pickup" ? "text-primary" : ""}`}>
-                          {shippingMethod === "pickup" ? t("مجاناً", "חינם") : `₪${shipping.toFixed(2)}`}
+                          {shippingMethod === null
+                            ? t("يُحدَّد حسب الاختيار", "ייקבע לפי הבחירה")
+                            : shippingMethod === "pickup"
+                              ? t("مجاناً", "חינם")
+                              : `₪${shipping.toFixed(2)}`}
                         </span>
                       </div>
                       <div className="flex justify-between text-lg font-black pt-3 border-t border-border">
