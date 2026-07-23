@@ -110,17 +110,14 @@ export default function WebCartPage() {
               <span className="text-muted-foreground">{t("المجموع الفرعي", "סכום ביניים")}</span>
               <span className="font-medium">₪{subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("تكلفة التوصيل", "עלות משלוח")}</span>
-              <span className={`font-medium ${shipping === 0 ? "text-primary" : ""}`}>
-                {shipping === 0 ? t("مجاناً", "חינם") : `₪${shipping.toFixed(2)}`}
-              </span>
-            </div>
             <div className="border-t border-border pt-3 flex justify-between">
               <span className="font-bold">{t("المجموع", "סה״כ")}</span>
-              <span className="font-black text-lg text-primary">₪{total.toFixed(2)}</span>
+              <span className="font-black text-lg text-primary">₪{subtotal.toFixed(2)}</span>
             </div>
             <p className="text-xs text-muted-foreground text-center mt-1">{t("شامل ض.ق.م", "כולל מע״מ")}</p>
+            <p className="text-xs text-muted-foreground text-center mt-1">
+              {t("تُحسب تكلفة التوصيل في الصفحة التالية", "עלות המשלוח תחושב בעמוד הבא")}
+            </p>
           </div>
           <Button asChild size="lg" className="w-full mt-6 bg-gold text-gold-foreground hover:bg-gold/90 font-bold">
             <Link to={localizedPath("/checkout")}>{t("إتمام الطلب", "לסיום הזמנה")}</Link>

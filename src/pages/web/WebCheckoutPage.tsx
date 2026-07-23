@@ -125,15 +125,8 @@ export default function WebCheckoutPage() {
   if (paymentSettings.cash.enabled) enabledMethods.push("cash");
   if (paymentSettings.credit.enabled) enabledMethods.push("credit");
 
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType>("credit");
-  const defaultShipping = deliveryEnabled ? "delivery" : "pickup";
-  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>(defaultShipping);
-
-  useEffect(() => {
-    if (enabledMethods.length > 0 && !enabledMethods.includes(selectedPayment)) {
-      setSelectedPayment(enabledMethods[0]);
-    }
-  }, [paymentSettingsRow]);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType | null>(null);
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod | null>(null);
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
@@ -199,7 +192,7 @@ export default function WebCheckoutPage() {
   }, []);
 
   const subtotal = totalPrice();
-  const shipping = shippingMethod === "pickup" ? 0 : shippingCost();
+  const shipping = shippingMethod === "pickup" ? 0 : shippingMethod === "delivery" ? shippingCost() : 0;
   const discount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
   const finalTotal = subtotal - discount + shipping;
 
@@ -229,6 +222,14 @@ export default function WebCheckoutPage() {
     // key presses and the mobile sticky button can still race the first click).
     if (loading || submittedRef.current) return;
     if (items.length === 0) { toast.error("السلة فارغة"); return; }
+    if (!shippingMethod) {
+      toast.error(t("يرجى اختيار طريقة التوصيل", "יש לבחור שיטת משלוח"));
+      return;
+    }
+    if (!selectedPayment) {
+      toast.error(t("يرجى اختيار طريقة الدفع", "יש לבחור אמצעי תשלום"));
+      return;
+    }
     if (!otpVerified) {
       toast.error(t("يرجى التحقق من رقم الهاتف أولاً", "יש לאמת את מספר הטלפון קודם"));
       return;
@@ -542,7 +543,7 @@ export default function WebCheckoutPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup value={shippingMethod} onValueChange={(v) => setShippingMethod(v as ShippingMethod)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <RadioGroup value={shippingMethod ?? ""} onValueChange={(v) => setShippingMethod(v as ShippingMethod)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {deliveryEnabled && (
                       <label
                         htmlFor="sm-delivery"
@@ -686,7 +687,7 @@ export default function WebCheckoutPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup value={selectedPayment} onValueChange={(v) => setSelectedPayment(v as PaymentMethodType)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <RadioGroup value={selectedPayment ?? ""} onValueChange={(v) => setSelectedPayment(v as PaymentMethodType)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {paymentSettings.cash.enabled && (
                       <label
                         htmlFor="pm-cash"
@@ -819,7 +820,11 @@ export default function WebCheckoutPage() {
                           {shippingMethod === "pickup" ? t("استلام ذاتي", "איסוף עצמי") : t("تكلفة التوصيل", "עלות משלוח")}
                         </span>
                         <span className={`font-medium ${shippingMethod === "pickup" ? "text-primary" : ""}`}>
-                          {shippingMethod === "pickup" ? t("مجاناً", "חינם") : `₪${shipping.toFixed(2)}`}
+                          {shippingMethod === null
+                            ? t("يُحدَّد حسب الاختيار", "ייקבע לפי הבחירה")
+                            : shippingMethod === "pickup"
+                              ? t("مجاناً", "חינם")
+                              : `₪${shipping.toFixed(2)}`}
                         </span>
                       </div>
                       <div className="flex justify-between text-lg font-black pt-3 border-t border-border">
