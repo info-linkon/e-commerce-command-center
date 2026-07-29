@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
 
   const { data: products, error } = await supabase
     .from("products")
-    .select("id, product_number, name, name_ar, description, description_ar, short_description, short_description_ar, sale_price, image_url, sku, is_published, category_id, categories!products_category_id_fkey(name), shipping_price")
+    .select("id, product_number, name, name_ar, description, description_ar, short_description, short_description_ar, sale_price, compare_at_price, image_url, sku, is_published, category_id, categories!products_category_id_fkey(name), shipping_price")
     .eq("is_published", true);
 
   if (error) {
@@ -33,10 +33,10 @@ Deno.serve(async (req) => {
   // Load all relevant lookup tables in parallel
   const [invRes, varRes, bundlesRes, biRes, bvRes, bviRes] = await Promise.all([
     supabase.from("inventory").select("variation_id, quantity"),
-    supabase.from("product_variations").select("id, product_id, name, name_ar, sku, price, image_url"),
+    supabase.from("product_variations").select("id, product_id, name, name_ar, sku, price, compare_at_price, image_url"),
     supabase.from("bundles").select("id, product_id, bundle_type"),
     supabase.from("bundle_items").select("bundle_id, variation_id, quantity"),
-    supabase.from("bundle_variations").select("id, bundle_id, name, name_he, sku, price"),
+    supabase.from("bundle_variations").select("id, bundle_id, name, name_he, sku, price, compare_at_price"),
     supabase.from("bundle_variation_items").select("bundle_variation_id, variation_id, quantity"),
   ]);
 
