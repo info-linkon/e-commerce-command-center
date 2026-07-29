@@ -96,8 +96,8 @@ export const defaultContent: Record<string, Record<string, Record<string, any>>>
       pickup_enabled: true,
       pickup_label: "استلام ذاتي",
       pickup_label_he: "איסוף עצמי",
-      pickup_note: "نعمل أونلاين — يرجى التنسيق معنا مسبقاً لموعد الاستلام",
-      pickup_note_he: "אנו פועלים אונליין — יש לתאם איתנו מראש לביקור",
+      pickup_note: "بتنسيق مسبق من مخازننا في زيمر",
+      pickup_note_he: "בתיאום מראש ממחסננו בזמר",
     },
   },
 };
