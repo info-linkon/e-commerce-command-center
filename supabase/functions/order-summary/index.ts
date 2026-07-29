@@ -114,11 +114,12 @@ Deno.serve(async (req) => {
       let name = "";
       let variationName = "";
       let imageUrl = "";
+      let compareAt: number | null = null;
 
       if (item.variation_id) {
         const { data: variation } = await supabase
           .from("product_variations")
-          .select("name, name_ar, image_url, product_id, sku")
+          .select("name, name_ar, image_url, product_id, sku, compare_at_price")
           .eq("id", item.variation_id)
           .single();
 
@@ -126,15 +127,17 @@ Deno.serve(async (req) => {
           variationName = variation.name_ar || variation.name;
           // capture sku for downstream pixel use
           (item as any)._sku = variation.sku || null;
+          compareAt = variation.compare_at_price != null ? Number(variation.compare_at_price) : null;
           const { data: product } = await supabase
             .from("products")
-            .select("name, name_ar, image_url, sku")
+            .select("name, name_ar, image_url, sku, compare_at_price")
             .eq("id", variation.product_id)
             .single();
           if (product) {
             name = product.name_ar || product.name;
             imageUrl = variation.image_url || product.image_url || "";
             if (!(item as any)._sku) (item as any)._sku = product.sku || null;
+            if (!compareAt && product.compare_at_price != null) compareAt = Number(product.compare_at_price);
           }
         }
       }
@@ -142,14 +145,20 @@ Deno.serve(async (req) => {
       if (item.bundle_variation_id) {
         const { data: bv } = await supabase
           .from("bundle_variations")
-          .select("name, name_he, bundle_id, sku")
+          .select("name, name_he, bundle_id, sku, compare_at_price")
           .eq("id", item.bundle_variation_id)
           .single();
         if (bv) {
           variationName = bv.name;
           (item as any)._sku = bv.sku || null;
+          if (bv.compare_at_price != null) compareAt = Number(bv.compare_at_price);
         }
       }
+
+      // Only expose the "original" price when it is genuinely higher than what
+      // the customer actually paid — otherwise there's no discount to show.
+      const unit = Number(item.unit_price || 0);
+      const compareAtPrice = compareAt && compareAt > unit ? compareAt : null;
 
       items.push({
         name,
@@ -159,6 +168,7 @@ Deno.serve(async (req) => {
         quantity: item.quantity,
         unitPrice: item.unit_price,
         totalPrice: item.total_price,
+        compareAtPrice,
       });
     }
 
