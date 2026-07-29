@@ -115,6 +115,17 @@ Deno.serve(async (req) => {
     const bundle = bundleByProduct.get(p.id);
     const productVars = varsByProduct.get(p.id) || [];
 
+    // Canonical effective-price rule, identical to the storefront and to
+    // web-create-order: whichever of {price, compare_at_price} is lower is
+    // what the customer actually pays, so that's what the feed must advertise.
+    const effectivePrice = (rawPrice: number, rawCompare: number) => {
+      const price = Number(rawPrice) || 0;
+      const compare = Number(rawCompare) || 0;
+      if (compare > 0 && price > 0 && compare < price) return compare;
+      if (compare > 0 && price <= 0) return compare;
+      return price;
+    };
+
     const renderItem = (opts: {
       id: string;
       title: string;
@@ -156,7 +167,10 @@ Deno.serve(async (req) => {
             // so the feed mirrors that exact fallback.
             id: bv.sku || p.sku || String(p.product_number),
             title: variantTitle,
-            price: Number(bv.price) || Number(p.sale_price),
+            price: effectivePrice(
+              Number(bv.price) || Number(p.sale_price),
+              Number((bv as any).compare_at_price) || Number((p as any).compare_at_price) || 0,
+            ),
             stock,
             image: imageUrl,
             sku: bv.sku,
@@ -169,7 +183,7 @@ Deno.serve(async (req) => {
         items.push(renderItem({
           id: p.sku || String(p.product_number),
           title: baseTitle,
-          price: Number(p.sale_price),
+          price: effectivePrice(Number(p.sale_price), Number((p as any).compare_at_price) || 0),
           stock,
           image: imageUrl,
           sku: p.sku,
@@ -190,7 +204,10 @@ Deno.serve(async (req) => {
           // Mirror pixel: AddToCart sends `v.sku || p.sku` as content_ids.
           id: v.sku || p.sku || String(p.product_number),
           title,
-          price: Number(v.price) || Number(p.sale_price),
+          price: effectivePrice(
+            Number(v.price) || Number(p.sale_price),
+            Number((v as any).compare_at_price) || Number((p as any).compare_at_price) || 0,
+          ),
           stock,
           image: v.image_url || imageUrl,
           sku: v.sku,
@@ -206,7 +223,7 @@ Deno.serve(async (req) => {
     items.push(renderItem({
       id: p.sku || String(p.product_number),
       title: baseTitle,
-      price: Number(p.sale_price),
+      price: effectivePrice(Number(p.sale_price), Number((p as any).compare_at_price) || 0),
       stock,
       image: imageUrl,
       sku: p.sku,
