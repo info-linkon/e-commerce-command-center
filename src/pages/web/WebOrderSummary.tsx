@@ -213,7 +213,7 @@ export default function WebOrderSummary() {
                 {pickupLabel}
               </p>
               {pickupNote && (
-                <p className="text-xs text-muted-foreground mt-1 ps-5.5">{pickupNote}</p>
+                <p className="text-xs text-muted-foreground mt-1 ps-6">{pickupNote}</p>
               )}
             </div>
           ) : (order.shipping_address || order.shipping_city) && (
