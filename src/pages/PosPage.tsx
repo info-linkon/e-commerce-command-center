@@ -84,7 +84,7 @@ const PosPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_variations")
-        .select("*, products(name, name_ar, image_url, category_id, is_published, sale_price, compare_at_price)")
+        .select("*, products(name, name_ar, image_url, category_id, is_published, product_type, sale_price, compare_at_price)")
         .order("name");
       if (error) throw error;
       return data;
