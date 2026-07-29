@@ -2,6 +2,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useSiteSection } from "@/hooks/useSiteContent";
 import { Package, MapPin, Calendar, CreditCard, Loader2, AlertCircle, CheckCircle, Clock, Truck, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ export default function WebOrderSummary() {
   const { orderNumber } = useParams();
   const [searchParams] = useSearchParams();
   const { t, lang } = useLanguage();
+  const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
 
   const tokenFromUrl = searchParams.get("t") || "";
   const sessionKey = `order_phone_${orderNumber}`;
@@ -146,6 +148,24 @@ export default function WebOrderSummary() {
   const StatusIcon = statusInfo.icon;
   const createdDate = new Date(order.created_at);
 
+  // Self-pickup detection (same rule as the CRM order detail page).
+  const shippingSettings = (shippingSettingsRow?.content || {}) as any;
+  const pickupLabel = t(shippingSettings.pickup_label || "استلام ذاتي", shippingSettings.pickup_label_he || "איסוף עצמי");
+  const pickupNote = t(
+    shippingSettings.pickup_note || "بتنسيق مسبق من مخازننا في زيمر",
+    shippingSettings.pickup_note_he || "בתיאום מראש ממחסננו בזמר",
+  );
+  const isPickup =
+    order.shipping_city === "איסוף עצמי" ||
+    (order.notes || "").startsWith("🏪 איסוף עצמי") ||
+    (!order.shipping_address && Number(order.shipping_cost || 0) === 0);
+
+  const totalSavings = (items || []).reduce(
+    (sum: number, it: any) =>
+      it.compareAtPrice ? sum + (Number(it.compareAtPrice) - Number(it.unitPrice)) * Number(it.quantity || 1) : sum,
+    0,
+  );
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 animate-fade-in" dir="rtl">
       {/* Header */}
@@ -185,7 +205,18 @@ export default function WebOrderSummary() {
               </p>
             </div>
           )}
-          {(order.shipping_address || order.shipping_city) && (
+          {isPickup ? (
+            <div className="sm:col-span-2">
+              <p className="text-xs text-muted-foreground mb-0.5">{t("طريقة الاستلام", "אופן קבלה")}</p>
+              <p className="font-medium flex items-start gap-1.5">
+                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                {pickupLabel}
+              </p>
+              {pickupNote && (
+                <p className="text-xs text-muted-foreground mt-1 ps-5.5">{pickupNote}</p>
+              )}
+            </div>
+          ) : (order.shipping_address || order.shipping_city) && (
             <div className="sm:col-span-2">
               <p className="text-xs text-muted-foreground mb-0.5">{t("عنوان التوصيل", "כתובת משלוח")}</p>
               <p className="font-medium flex items-start gap-1.5">
@@ -220,8 +251,19 @@ export default function WebOrderSummary() {
                 {item.variationName && item.variationName !== "ברירת מחדל" && item.variationName !== "Default" && (
                   <p className="text-xs text-muted-foreground">{item.variationName}</p>
                 )}
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {item.quantity} × ₪{Number(item.unitPrice).toFixed(2)}
+                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 flex-wrap">
+                  <span>
+                    {item.quantity} × ₪{Number(item.unitPrice).toFixed(2)}
+                  </span>
+                  {item.compareAtPrice && (
+                    <>
+                      <span className="line-through opacity-70">₪{Number(item.compareAtPrice).toFixed(2)}</span>
+                      <span className="text-[10px] font-bold text-green-700 bg-green-100 rounded px-1.5 py-0.5">
+                        {t("خصم", "הנחה")} ₪
+                        {((Number(item.compareAtPrice) - Number(item.unitPrice)) * Number(item.quantity || 1)).toFixed(0)}
+                      </span>
+                    </>
+                  )}
                 </p>
               </div>
               <span className="font-bold text-sm shrink-0">₪{Number(item.totalPrice).toFixed(2)}</span>
@@ -248,8 +290,16 @@ export default function WebOrderSummary() {
                 <span className="text-muted-foreground">{t("المجموع الفرعي", "סכום ביניים")}</span>
                 <span>₪{subtotal.toFixed(2)}</span>
               </div>
+              {totalSavings > 0 && (
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">{t("وفّرت", "חסכת")}</span>
+                  <span className="text-green-600 font-medium">-₪{totalSavings.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">{t("الشحن", "משלוח")}</span>
+                <span className="text-muted-foreground">
+                  {isPickup ? pickupLabel : t("الشحن", "משלוח")}
+                </span>
                 <span>{shipping > 0 ? `₪${shipping.toFixed(2)}` : t("مجاني", "חינם")}</span>
               </div>
               {discount > 0 && (
