@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     //      enforces this, and the CRM picking flow re-validates).
     const allProductIds = Array.from(new Set(payload.items.map((i) => i.product_id))).filter(Boolean);
     const bundleProductIds = new Set<string>();
-    const simpleBundlePriceByProduct = new Map<string, number>();
+    const simpleBundlePriceByProduct = new Map<string, { sale_price: number; compare_at_price: number }>();
     // Product-level pricing for non-bundle items. Mirrors the storefront
     // (WebProductPage): for simple products the price comes from
     // products.sale_price (the hidden "ברירת מחדל" product_variation.price
@@ -132,10 +132,13 @@ Deno.serve(async (req) => {
       if (simpleBundleProductIds.length > 0) {
         const { data: prodRows } = await supabase
           .from("products")
-          .select("id, sale_price")
+          .select("id, sale_price, compare_at_price")
           .in("id", simpleBundleProductIds);
         for (const p of prodRows || []) {
-          simpleBundlePriceByProduct.set(p.id, Number((p as any).sale_price) || 0);
+          simpleBundlePriceByProduct.set(p.id, {
+            sale_price: Number((p as any).sale_price) || 0,
+            compare_at_price: Number((p as any).compare_at_price) || 0,
+          });
         }
       }
 
@@ -326,8 +329,11 @@ Deno.serve(async (req) => {
         rawPrice = bvPrice > 0 ? bvPrice : (bp?.sale_price ?? undefined);
         rawCompare = bvCompare > 0 ? bvCompare : (bp?.compare_at_price ?? 0);
       } else if (bundleProductIds.has(item.product_id)) {
-        // simple_bundle — price from products.sale_price.
-        rawPrice = simpleBundlePriceByProduct.get(item.product_id);
+        // simple_bundle — price from products.sale_price, with the same
+        // compare_at_price auto-swap the storefront applies.
+        const sb = simpleBundlePriceByProduct.get(item.product_id);
+        rawPrice = sb?.sale_price;
+        rawCompare = sb?.compare_at_price ?? 0;
       } else {
         const p = productPricingById.get(item.product_id);
         const v = variationMap.get(item.variation_id);
