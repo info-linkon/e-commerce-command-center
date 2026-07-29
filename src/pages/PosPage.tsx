@@ -148,14 +148,20 @@ const PosPage = () => {
         if (!map.has(pid)) {
           map.set(pid, { product_id: pid, product_name: product.name_ar || product.name, image_url: product.image_url, category_id: product.category_id, variations: [] });
         }
-        // Match storefront + web-create-order: treat product.sale_price as an
-        // equal candidate to variation.price, pick the lower when both are set.
+        // Canonical rule (same as WebProductPage + web-create-order):
+        //  - simple product: the hidden "ברירת מחדל" variation price is only an
+        //    inventory placeholder -> trust products.sale_price.
+        //  - variable product: variation price wins when > 0, else product.sale_price.
+        //  - then auto-swap with compare_at_price when compare is lower.
         const rawVarPrice = Number(v.price) || 0;
         const prodSale = Number(product.sale_price) || 0;
+        const isVariable = String(product.product_type || "simple") === "variable";
         let vPrice: number;
-        if (rawVarPrice > 0 && prodSale > 0) vPrice = Math.min(rawVarPrice, prodSale);
-        else vPrice = rawVarPrice > 0 ? rawVarPrice : prodSale;
-        const vCompare = Number((v as any).compare_at_price) || Number(product.compare_at_price) || 0;
+        if (isVariable) vPrice = rawVarPrice > 0 ? rawVarPrice : prodSale;
+        else vPrice = prodSale > 0 ? prodSale : rawVarPrice;
+        const vCompare = isVariable
+          ? (Number((v as any).compare_at_price) || Number(product.compare_at_price) || 0)
+          : (Number(product.compare_at_price) || Number((v as any).compare_at_price) || 0);
         map.get(pid)!.variations.push({ id: v.id, name: v.name, price: effectivePrice(vPrice, vCompare) });
       }
     }
