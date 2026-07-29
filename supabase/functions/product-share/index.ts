@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     const { data: product, error } = await supabase
       .from("products")
-      .select("name, name_ar, image_url, short_description, short_description_ar, sale_price, product_number")
+      .select("name, name_ar, image_url, short_description, short_description_ar, sale_price, compare_at_price, product_number")
       .eq("product_number", productNumber)
       .eq("is_published", true)
       .single();
@@ -39,11 +39,17 @@ Deno.serve(async (req) => {
     }
 
     const siteUrl = "https://elwejha.co.il";
+    // Same auto-swap rule as the storefront: the lower of sale/compare is
+    // the price the customer actually pays.
+    const salePrice = Number((product as any).sale_price) || 0;
+    const comparePrice = Number((product as any).compare_at_price) || 0;
+    const effectivePrice =
+      comparePrice > 0 && (salePrice <= 0 || comparePrice < salePrice) ? comparePrice : salePrice;
     const productUrl = `${siteUrl}/product/${product.product_number}`;
     const title = product.name_ar
       ? `${product.name_ar} | ${product.name}`
       : product.name;
-    const description = product.short_description_ar || product.short_description || `${title} - ₪${product.sale_price}`;
+    const description = product.short_description_ar || product.short_description || `${title} - ₪${effectivePrice}`;
     const imageUrl = product.image_url || `${siteUrl}/og-image.png`;
 
     const html = `<!DOCTYPE html>
@@ -61,7 +67,7 @@ Deno.serve(async (req) => {
   <meta property="og:image" content="${escapeHtml(imageUrl)}" />
   <meta property="og:url" content="${escapeHtml(productUrl)}" />
   <meta property="og:site_name" content="ELWEJHA - الوجهة" />
-  <meta property="product:price:amount" content="${product.sale_price}" />
+  <meta property="product:price:amount" content="${effectivePrice}" />
   <meta property="product:price:currency" content="ILS" />
 
   <!-- Twitter -->

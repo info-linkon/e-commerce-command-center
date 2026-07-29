@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
 
   const { data: products, error } = await supabase
     .from("products")
-    .select("id, product_number, name, name_ar, description, description_ar, short_description, short_description_ar, sale_price, image_url, sku, is_published, category_id, categories!products_category_id_fkey(name), shipping_price")
+    .select("id, product_number, name, name_ar, description, description_ar, short_description, short_description_ar, sale_price, compare_at_price, image_url, sku, is_published, category_id, categories!products_category_id_fkey(name), shipping_price")
     .eq("is_published", true);
 
   if (error) {
@@ -33,10 +33,10 @@ Deno.serve(async (req) => {
   // Load all relevant lookup tables in parallel
   const [invRes, varRes, bundlesRes, biRes, bvRes, bviRes] = await Promise.all([
     supabase.from("inventory").select("variation_id, quantity"),
-    supabase.from("product_variations").select("id, product_id, name, name_ar, sku, price, image_url"),
+    supabase.from("product_variations").select("id, product_id, name, name_ar, sku, price, compare_at_price, image_url"),
     supabase.from("bundles").select("id, product_id, bundle_type"),
     supabase.from("bundle_items").select("bundle_id, variation_id, quantity"),
-    supabase.from("bundle_variations").select("id, bundle_id, name, name_he, sku, price"),
+    supabase.from("bundle_variations").select("id, bundle_id, name, name_he, sku, price, compare_at_price"),
     supabase.from("bundle_variation_items").select("bundle_variation_id, variation_id, quantity"),
   ]);
 
@@ -115,6 +115,17 @@ Deno.serve(async (req) => {
     const bundle = bundleByProduct.get(p.id);
     const productVars = varsByProduct.get(p.id) || [];
 
+    // Canonical effective-price rule, identical to the storefront and to
+    // web-create-order: whichever of {price, compare_at_price} is lower is
+    // what the customer actually pays, so that's what the feed must advertise.
+    const effectivePrice = (rawPrice: number, rawCompare: number) => {
+      const price = Number(rawPrice) || 0;
+      const compare = Number(rawCompare) || 0;
+      if (compare > 0 && price > 0 && compare < price) return compare;
+      if (compare > 0 && price <= 0) return compare;
+      return price;
+    };
+
     const renderItem = (opts: {
       id: string;
       title: string;
@@ -156,7 +167,10 @@ Deno.serve(async (req) => {
             // so the feed mirrors that exact fallback.
             id: bv.sku || p.sku || String(p.product_number),
             title: variantTitle,
-            price: Number(bv.price) || Number(p.sale_price),
+            price: effectivePrice(
+              Number(bv.price) || Number(p.sale_price),
+              Number((bv as any).compare_at_price) || Number((p as any).compare_at_price) || 0,
+            ),
             stock,
             image: imageUrl,
             sku: bv.sku,
@@ -169,7 +183,7 @@ Deno.serve(async (req) => {
         items.push(renderItem({
           id: p.sku || String(p.product_number),
           title: baseTitle,
-          price: Number(p.sale_price),
+          price: effectivePrice(Number(p.sale_price), Number((p as any).compare_at_price) || 0),
           stock,
           image: imageUrl,
           sku: p.sku,
@@ -190,7 +204,10 @@ Deno.serve(async (req) => {
           // Mirror pixel: AddToCart sends `v.sku || p.sku` as content_ids.
           id: v.sku || p.sku || String(p.product_number),
           title,
-          price: Number(v.price) || Number(p.sale_price),
+          price: effectivePrice(
+            Number(v.price) || Number(p.sale_price),
+            Number((v as any).compare_at_price) || Number((p as any).compare_at_price) || 0,
+          ),
           stock,
           image: v.image_url || imageUrl,
           sku: v.sku,
@@ -206,7 +223,7 @@ Deno.serve(async (req) => {
     items.push(renderItem({
       id: p.sku || String(p.product_number),
       title: baseTitle,
-      price: Number(p.sale_price),
+      price: effectivePrice(Number(p.sale_price), Number((p as any).compare_at_price) || 0),
       stock,
       image: imageUrl,
       sku: p.sku,
