@@ -38,6 +38,12 @@ const settingsSections = [
     url: "/crm/admin/sms-templates",
   },
   {
+    title: "שליחת SMS ללקוחות",
+    description: "דיוור ידני ללקוח בודד או לקבוצת לקוחות",
+    icon: Send,
+    url: "/crm/admin/sms-campaign",
+  },
+  {
     title: "יומן הודעות SMS",
     description: "צפייה בכל ההודעות שנשלחו (כולל שגיאות ו-OTP)",
     icon: History,
