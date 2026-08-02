@@ -451,6 +451,14 @@ const OrderDetail = () => {
             <div><span className="text-muted-foreground">שם:</span> {order.customer_name || "—"}</div>
             <div><span className="text-muted-foreground">טלפון:</span> {order.customer_phone || "—"}</div>
             <div><span className="text-muted-foreground">אימייל:</span> {order.customer_email || "—"}</div>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!order.customer_phone}
+              onClick={() => setSmsOpen(true)}
+            >
+              שלח SMS
+            </Button>
             {((order as any).shipping_address || (order as any).shipping_city) && (
               <div className="pt-2 border-t border-border">
                 <span className="text-muted-foreground font-medium">כתובת משלוח:</span>
