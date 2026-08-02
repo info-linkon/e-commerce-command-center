@@ -1,4 +1,4 @@
-import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText, History, Trash2, RefreshCw } from "lucide-react";
+import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText, History, Trash2, RefreshCw, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
