@@ -58,6 +58,7 @@ import WebBannersPage from "./pages/admin/WebBannersPage";
 import ExclusiveDealsPage from "./pages/admin/ExclusiveDealsPage";
 import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
 import SmsTemplatesPage from "./pages/admin/SmsTemplatesPage";
+import SmsCampaignPage from "./pages/admin/SmsCampaignPage";
 import MetaPixelSettingsPage from "./pages/admin/MetaPixelSettingsPage";
 import TikTokPixelSettingsPage from "./pages/admin/TikTokPixelSettingsPage";
 import HypSettingsPage from "./pages/admin/HypSettingsPage";
@@ -161,6 +162,7 @@ const App = () => (
             <Route path="/crm/admin/coupons" element={<Protected><AdminCouponsPage /></Protected>} />
             <Route path="/crm/admin/sms-templates" element={<Protected><SmsTemplatesPage /></Protected>} />
             <Route path="/crm/admin/sms-log" element={<Protected><SmsLogPage /></Protected>} />
+            <Route path="/crm/admin/sms-campaign" element={<Protected><SmsCampaignPage /></Protected>} />
             <Route path="/crm/admin/meta-pixel" element={<Protected><MetaPixelSettingsPage /></Protected>} />
             <Route path="/crm/admin/tiktok-pixel" element={<Protected><TikTokPixelSettingsPage /></Protected>} />
             <Route path="/crm/admin/hyp-settings" element={<Protected><HypSettingsPage /></Protected>} />
