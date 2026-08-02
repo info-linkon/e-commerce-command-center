@@ -1,4 +1,4 @@
-import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText, History, Trash2, RefreshCw } from "lucide-react";
+import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText, History, Trash2, RefreshCw, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -36,6 +36,12 @@ const settingsSections = [
     description: "ניהול הודעות SMS אוטומטיות ללקוחות",
     icon: MessageSquare,
     url: "/crm/admin/sms-templates",
+  },
+  {
+    title: "שליחת SMS ללקוחות",
+    description: "דיוור ידני ללקוח בודד או לקבוצת לקוחות",
+    icon: Send,
+    url: "/crm/admin/sms-campaign",
   },
   {
     title: "יומן הודעות SMS",

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Eye, Users } from "lucide-react";
+import { Search, Plus, Eye, Users, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
 import { useCustomers, useCreateCustomer, useCustomer, useCustomerOrders } from "@/hooks/useCustomers";
+import SendSmsDialog from "@/components/sms/SendSmsDialog";
 
 const CustomersPage = () => {
   const [search, setSearch] = useState("");
@@ -16,6 +17,7 @@ const CustomersPage = () => {
   const createCustomer = useCreateCustomer();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [smsTarget, setSmsTarget] = useState<{ id: string; name: string; phone: string | null } | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", email: "", city: "", notes: "" });
 
   const { data: selectedCustomer } = useCustomer(detailId || undefined);
@@ -77,10 +79,29 @@ const CustomersPage = () => {
           </div>
         )}
         actions={(c) => (
-          <Button variant="ghost" size="icon" onClick={() => setDetailId(c.id)}>
-            <Eye className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="שלח SMS"
+              disabled={!c.phone}
+              onClick={(e) => { e.stopPropagation(); setSmsTarget({ id: c.id, name: c.name, phone: c.phone }); }}
+            >
+              <MessageSquare className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setDetailId(c.id)}>
+              <Eye className="h-4 w-4" />
+            </Button>
+          </div>
         )}
+      />
+
+      <SendSmsDialog
+        open={!!smsTarget}
+        onOpenChange={(open) => !open && setSmsTarget(null)}
+        phone={smsTarget?.phone}
+        customerName={smsTarget?.name}
+        customerId={smsTarget?.id}
       />
 
       {/* New Customer Dialog */}
@@ -113,6 +134,15 @@ const CustomersPage = () => {
                 <div><span className="text-muted-foreground">אימייל:</span> {selectedCustomer.email || "—"}</div>
                 <div><span className="text-muted-foreground">עיר:</span> {selectedCustomer.city || "—"}</div>
               </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!selectedCustomer.phone}
+                onClick={() => setSmsTarget({ id: selectedCustomer.id, name: selectedCustomer.name, phone: selectedCustomer.phone })}
+              >
+                <MessageSquare className="ml-2 h-4 w-4" />שלח SMS
+              </Button>
 
               {stats && (
                 <div className="grid grid-cols-3 gap-3">

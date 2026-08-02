@@ -890,6 +890,36 @@ export type Database = {
           },
         ]
       }
+      marketing_sms_templates: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          locale: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          locale?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          locale?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_log: {
         Row: {
           body: string | null
