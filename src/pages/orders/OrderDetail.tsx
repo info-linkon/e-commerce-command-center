@@ -31,6 +31,7 @@ import { useWarehouses } from "@/hooks/useWarehouses";
 import PickingChecklist from "@/components/orders/PickingChecklist";
 import AddOrderItemDialog from "@/components/orders/AddOrderItemDialog";
 import CompleteOrderDialog from "@/components/orders/CompleteOrderDialog";
+import SendSmsDialog from "@/components/sms/SendSmsDialog";
 
 const statusLabels: Record<string, string> = {
   pending: "ממתינה",
@@ -136,6 +137,7 @@ const OrderDetail = () => {
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>("");
   const [editingItems, setEditingItems] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [smsOpen, setSmsOpen] = useState(false);
 
   if (isLoading) return <div className="py-12 text-center text-muted-foreground">טוען...</div>;
   if (!order) return <div className="py-12 text-center text-muted-foreground">הזמנה לא נמצאה</div>;
