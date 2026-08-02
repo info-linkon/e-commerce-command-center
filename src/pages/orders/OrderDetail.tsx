@@ -461,6 +461,14 @@ const OrderDetail = () => {
             >
               שלח SMS
             </Button>
+            <SendSmsDialog
+              open={smsOpen}
+              onOpenChange={setSmsOpen}
+              phone={order.customer_phone}
+              customerName={order.customer_name}
+              customerId={(order as any).customer_id}
+              orderNumber={order.order_number}
+            />
             {((order as any).shipping_address || (order as any).shipping_city) && (
               <div className="pt-2 border-t border-border">
                 <span className="text-muted-foreground font-medium">כתובת משלוח:</span>
