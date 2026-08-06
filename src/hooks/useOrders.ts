@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
 import { syncMultipleStockToWoo } from "@/lib/wooStockSync";
 import { expandToInventoryRows } from "@/lib/order-inventory";
+import { buildPickingRows } from "@/lib/order-picking";
 
 async function syncOrderStatusToWoo(orderId: string) {
   try {
