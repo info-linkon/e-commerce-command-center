@@ -182,7 +182,14 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
                         )}
 
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm">{productName}</div>
+                          <div className="font-medium text-sm flex items-center gap-2">
+                            <span>{productName}</span>
+                            {Number(item.quantity) > 1 && (
+                              <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
+                                ×{item.quantity}
+                              </Badge>
+                            )}
+                          </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             {variationName && !["ברירת מחדל", "default"].includes(variationName.toLowerCase()) && (
                               <span>{variationName}</span>

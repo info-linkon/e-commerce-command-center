@@ -359,12 +359,16 @@ export function useAssignWarehouse() {
             }
           }
         } else {
-          pickingItems.push({
-            order_id: orderId,
-            order_item_id: item.id,
-            variation_id: item.variation_id,
-            quantity: item.quantity,
-          });
+          // Regular (non-bundle) line — one picking row per physical unit
+          const units = Math.max(1, Number(item.quantity) || 1);
+          for (let i = 0; i < units; i++) {
+            pickingItems.push({
+              order_id: orderId,
+              order_item_id: item.id,
+              variation_id: item.variation_id,
+              quantity: 1,
+            });
+          }
         }
       }
 
