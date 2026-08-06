@@ -349,26 +349,25 @@ export function useAssignWarehouse() {
 
           for (const component of bundleComponents || []) {
             const totalUnits = component.quantity * item.quantity;
-            for (let i = 0; i < totalUnits; i++) {
-              pickingItems.push({
-                order_id: orderId,
-                order_item_id: item.id,
-                variation_id: component.variation_id,
-                quantity: 1,
-              });
-            }
+            pickingItems.push(
+              ...buildPickingRows({
+                orderId,
+                orderItemId: item.id,
+                variationId: component.variation_id,
+                units: totalUnits,
+              })
+            );
           }
         } else {
           // Regular (non-bundle) line — one picking row per physical unit
-          const units = Math.max(1, Number(item.quantity) || 1);
-          for (let i = 0; i < units; i++) {
-            pickingItems.push({
-              order_id: orderId,
-              order_item_id: item.id,
-              variation_id: item.variation_id,
-              quantity: 1,
-            });
-          }
+          pickingItems.push(
+            ...buildPickingRows({
+              orderId,
+              orderItemId: item.id,
+              variationId: item.variation_id,
+              units: Math.max(1, Number(item.quantity) || 1),
+            })
+          );
         }
       }
 
