@@ -47,6 +47,7 @@ const SmsCampaignPage = () => {
   const [message, setMessage] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [result, setResult] = useState<BulkSmsResult | null>(null);
+  const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const [csvRecipients, setCsvRecipients] = useState<Recipient[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
