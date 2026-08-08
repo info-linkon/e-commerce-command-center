@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { MessageSquare, Send, Plus, Trash2, Pencil } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { MessageSquare, Send, Plus, Trash2, Pencil, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,8 @@ const SmsCampaignPage = () => {
   const [message, setMessage] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [result, setResult] = useState<BulkSmsResult | null>(null);
+  const [csvRecipients, setCsvRecipients] = useState<Recipient[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const [tplDialog, setTplDialog] = useState(false);
   const [tplForm, setTplForm] = useState<{ id?: string; name: string; body: string; locale: string }>({
@@ -135,8 +137,45 @@ const SmsCampaignPage = () => {
       const phones = new Set((orders || []).map((o: any) => normPhone(o.customer_phone)).filter(Boolean));
       list = list.filter((c) => ids.has(c.id) || (c.phone && phones.has(normPhone(c.phone))));
     }
+    if (csvRecipients.length) {
+      const existing = new Set(list.map((c) => normPhone(c.phone)).filter(Boolean));
+      list = [...csvRecipients.filter((c) => !existing.has(normPhone(c.phone))), ...list];
+    }
     return list;
-  }, [customers, city, orderFilterActive, orders]);
+  }, [customers, city, orderFilterActive, orders, csvRecipients]);
+
+  const handleCsv = async (file: File) => {
+    const text = await file.text();
+    const rows = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const parsed: Recipient[] = [];
+    const seen = new Set<string>();
+    for (const [i, row] of rows.entries()) {
+      const cells = row.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, ""));
+      const name = cells[0] || "";
+      const phoneRaw = cells[1] || "";
+      const phone = normPhone(phoneRaw);
+      if (!phone || phone.length < 9) continue; // skip header / invalid
+      if (i === 0 && /phone|טלפון|هاتف/i.test(row)) continue;
+      if (seen.has(phone)) continue;
+      seen.add(phone);
+      parsed.push({ id: `csv:${phone}`, name: name || phoneRaw, phone: phoneRaw, city: null });
+    }
+    if (!parsed.length) {
+      toast.error("לא נמצאו נמענים תקינים בקובץ");
+      return;
+    }
+    setCsvRecipients((prev) => {
+      const map = new Map(prev.map((p) => [normPhone(p.phone), p]));
+      parsed.forEach((p) => map.set(normPhone(p.phone), p));
+      return Array.from(map.values());
+    });
+    setSelected((prev) => {
+      const next = new Set(prev);
+      parsed.forEach((p) => next.add(p.id));
+      return next;
+    });
+    toast.success(`נוספו ${parsed.length} נמענים מהקובץ`);
+  };
 
   const withPhone = filtered.filter((c) => !!c.phone);
   const selectedRecipients = filtered.filter((c) => selected.has(c.id) && c.phone);
@@ -169,7 +208,7 @@ const SmsCampaignPage = () => {
       recipients: selectedRecipients.map((c) => ({
         phone: c.phone!,
         name: c.name,
-        customer_id: c.id.startsWith("order:") ? undefined : c.id,
+        customer_id: c.id.startsWith("order:") || c.id.startsWith("csv:") ? undefined : c.id,
       })),
     });
     setResult(res);
@@ -232,12 +271,48 @@ const SmsCampaignPage = () => {
             <CardTitle className="text-base">נמענים</CardTitle>
             <CardDescription>
               {filtered.length} לקוחות · {withPhone.length} עם טלפון · נבחרו {selectedRecipients.length}
+              {csvRecipients.length ? ` · ${csvRecipients.length} מקובץ CSV` : ""}
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={toggleAll} disabled={!withPhone.length}>
-            {allSelected ? "נקה בחירה" : "בחר הכל"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleCsv(f);
+                e.target.value = "";
+              }}
+            />
+            <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="gap-1">
+              <Upload className="h-4 w-4" />ייבוא CSV
+            </Button>
+            {!!csvRecipients.length && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelected((prev) => {
+                    const next = new Set(prev);
+                    csvRecipients.forEach((c) => next.delete(c.id));
+                    return next;
+                  });
+                  setCsvRecipients([]);
+                }}
+              >
+                נקה CSV
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={toggleAll} disabled={!withPhone.length}>
+              {allSelected ? "נקה בחירה" : "בחר הכל"}
+            </Button>
+          </div>
         </CardHeader>
+        <CardDescription className="px-6 -mt-2 text-xs">
+          מבנה הקובץ: עמודה ראשונה שם, עמודה שנייה טלפון
+        </CardDescription>
         <CardContent>
           <div className="border rounded-lg max-h-80 overflow-auto divide-y">
             {isLoading ? (
@@ -249,6 +324,7 @@ const SmsCampaignPage = () => {
                 <label key={c.id} className="flex items-center gap-3 p-2 cursor-pointer hover:bg-muted/50">
                   <Checkbox checked={selected.has(c.id)} disabled={!c.phone} onCheckedChange={() => toggleOne(c.id)} />
                   <span className="flex-1 text-sm font-medium">{c.name}</span>
+                  {c.id.startsWith("csv:") && <Badge variant="secondary" className="text-[10px]">CSV</Badge>}
                   <span className="text-xs text-muted-foreground">{c.city || ""}</span>
                   <span className="text-xs" dir="ltr">{c.phone || "ללא טלפון"}</span>
                 </label>
