@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { MessageSquare, Send, Plus, Trash2, Pencil, Upload } from "lucide-react";
+import { MessageSquare, Send, Plus, Trash2, Pencil, Upload, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
