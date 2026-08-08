@@ -142,8 +142,23 @@ const SmsCampaignPage = () => {
       const existing = new Set(list.map((c) => normPhone(c.phone)).filter(Boolean));
       list = [...csvRecipients.filter((c) => !existing.has(normPhone(c.phone))), ...list];
     }
+    if (excluded.size) list = list.filter((c) => !excluded.has(c.id) && !excluded.has(normPhone(c.phone)));
     return list;
-  }, [customers, city, orderFilterActive, orders, csvRecipients]);
+  }, [customers, city, orderFilterActive, orders, csvRecipients, excluded]);
+
+  const removeRecipient = (r: Recipient) => {
+    setExcluded((prev) => {
+      const next = new Set(prev);
+      next.add(r.id);
+      next.add(normPhone(r.phone));
+      return next;
+    });
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(r.id);
+      return next;
+    });
+  };
 
   const handleCsv = async (file: File) => {
     const text = await file.text();
