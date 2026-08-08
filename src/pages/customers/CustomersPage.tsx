@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Search, Plus, Eye, Users, MessageSquare } from "lucide-react";
+import { useRef, useState } from "react";
+import { Search, Plus, Eye, Users, MessageSquare, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,13 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
-import { useCustomers, useCreateCustomer, useCustomer, useCustomerOrders } from "@/hooks/useCustomers";
+import { useCustomers, useCreateCustomer, useCustomer, useCustomerOrders, useImportCustomers, normalizeCustomerPhone } from "@/hooks/useCustomers";
 import SendSmsDialog from "@/components/sms/SendSmsDialog";
 
 const CustomersPage = () => {
   const [search, setSearch] = useState("");
   const { data: customers, isLoading } = useCustomers(search || undefined);
   const createCustomer = useCreateCustomer();
+  const importCustomers = useImportCustomers();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [smsTarget, setSmsTarget] = useState<{ id: string; name: string; phone: string | null } | null>(null);
@@ -38,6 +41,26 @@ const CustomersPage = () => {
 
   const data = customers || [];
 
+  const handleCsv = async (file: File) => {
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const rows: { name: string; phone: string }[] = [];
+    for (const [i, line] of lines.entries()) {
+      const cells = line.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, ""));
+      const name = cells[0] || "";
+      const phoneRaw = cells[1] || "";
+      if (i === 0 && /phone|טלפון|هاتف/i.test(line)) continue;
+      const phone = normalizeCustomerPhone(phoneRaw);
+      if (!phone || phone.length < 9) continue;
+      rows.push({ name, phone: phoneRaw });
+    }
+    if (!rows.length) {
+      toast.error("לא נמצאו רשומות תקינות בקובץ");
+      return;
+    }
+    importCustomers.mutate(rows);
+  };
+
   const columns: ColumnDef<any>[] = [
     { label: "שם", render: (c) => <span className="font-medium">{c.name}</span> },
     { label: "טלפון", render: (c) => <span dir="ltr" className="text-right">{c.phone || "—"}</span> },
@@ -52,9 +75,29 @@ const CustomersPage = () => {
           <Users className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">לקוחות</h1>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="ml-2 h-4 w-4" />לקוח חדש
-        </Button>
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (f) handleCsv(f);
+            }}
+          />
+          <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={importCustomers.isPending}>
+            <Upload className="ml-2 h-4 w-4" />{importCustomers.isPending ? "מייבא..." : "ייבוא CSV"}
+          </Button>
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="ml-2 h-4 w-4" />לקוח חדש
+          </Button>
+        </div>
+      </div>
+
+      <div className="text-xs text-muted-foreground -mt-4">
+        קובץ CSV: עמודה ראשונה שם, עמודה שנייה טלפון. מספרים קיימים ידולגו אוטומטית.
       </div>
 
       <div className="relative">

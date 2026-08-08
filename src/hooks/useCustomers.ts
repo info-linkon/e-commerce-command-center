@@ -102,3 +102,48 @@ export function useUpdateCustomer() {
     onError: () => toast.error("שגיאה בעדכון לקוח"),
   });
 }
+
+export function normalizeCustomerPhone(raw?: string | null): string {
+  return String(raw || "").replace(/\D/g, "").replace(/^972/, "0");
+}
+
+export function useImportCustomers() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rows: { name: string; phone: string }[]) => {
+      const { data: existing, error: exErr } = await supabase
+        .from("customers")
+        .select("phone")
+        .limit(10000);
+      if (exErr) throw exErr;
+      const existingSet = new Set(
+        (existing || []).map((c) => normalizeCustomerPhone(c.phone)).filter(Boolean),
+      );
+
+      const toInsert: { name: string; phone: string }[] = [];
+      const seen = new Set<string>();
+      let skipped = 0;
+      for (const r of rows) {
+        const norm = normalizeCustomerPhone(r.phone);
+        if (!norm || norm.length < 9) { skipped++; continue; }
+        if (existingSet.has(norm) || seen.has(norm)) { skipped++; continue; }
+        seen.add(norm);
+        toInsert.push({ name: r.name?.trim() || norm, phone: norm });
+      }
+
+      let inserted = 0;
+      for (let i = 0; i < toInsert.length; i += 200) {
+        const chunk = toInsert.slice(i, i + 200);
+        const { error } = await supabase.from("customers").insert(chunk);
+        if (error) throw error;
+        inserted += chunk.length;
+      }
+      return { inserted, skipped };
+    },
+    onSuccess: ({ inserted, skipped }) => {
+      qc.invalidateQueries({ queryKey: ["customers"] });
+      toast.success(`יובאו ${inserted} לקוחות${skipped ? ` · ${skipped} דולגו (כפולים/לא תקינים)` : ""}`);
+    },
+    onError: () => toast.error("שגיאה בייבוא לקוחות"),
+  });
+}
