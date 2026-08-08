@@ -343,6 +343,14 @@ const SmsCampaignPage = () => {
                   {c.id.startsWith("csv:") && <Badge variant="secondary" className="text-[10px]">CSV</Badge>}
                   <span className="text-xs text-muted-foreground">{c.city || ""}</span>
                   <span className="text-xs" dir="ltr">{c.phone || "ללא טלפון"}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => { e.preventDefault(); removeRecipient(c); }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
                 </label>
               ))
             )}
