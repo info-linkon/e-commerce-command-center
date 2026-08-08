@@ -58,25 +58,29 @@ const SmsCampaignPage = () => {
   const deleteTpl = useDeleteMarketingSmsTemplate();
   const bulkSend = useSendBulkSms();
 
-  const { data: customers, isLoading } = useQuery({
+  const { data: customersRaw, isLoading } = useQuery({
     queryKey: ["campaign-customers"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("customers")
         .select("id, name, phone, city")
-        .order("name");
+        .order("name")
+        .limit(5000);
       if (error) throw error;
       return (data || []) as Recipient[];
     },
   });
 
-  // Orders used only when order-based filters are active
+  // Orders always loaded so every customer who ever purchased is included,
+  // including POS / website orders with no customers row.
   const orderFilterActive = status !== "all" || !!fromDate || !!toDate;
   const { data: orders } = useQuery({
     queryKey: ["campaign-orders", status, fromDate, toDate],
-    enabled: orderFilterActive,
     queryFn: async () => {
-      let q = supabase.from("orders").select("customer_id, customer_phone, status, created_at");
+      let q = supabase
+        .from("orders")
+        .select("customer_id, customer_name, customer_phone, shipping_city, status, created_at")
+        .order("created_at", { ascending: false });
       if (status !== "all") q = q.eq("status", status as any);
       if (fromDate) q = q.gte("created_at", new Date(fromDate).toISOString());
       if (toDate) {
@@ -84,11 +88,39 @@ const SmsCampaignPage = () => {
         end.setHours(23, 59, 59, 999);
         q = q.lte("created_at", end.toISOString());
       }
-      const { data, error } = await q.limit(5000);
+      const { data, error } = await q.limit(10000);
       if (error) throw error;
       return data || [];
     },
   });
+
+  const normPhone = (p?: string | null) => (p || "").replace(/\D/g, "");
+
+  // Unified recipient list: customers table + anyone who ever placed an order
+  const customers = useMemo(() => {
+    const list: Recipient[] = [];
+    const seen = new Set<string>();
+
+    for (const c of customersRaw || []) {
+      const key = normPhone(c.phone);
+      if (key) seen.add(key);
+      list.push(c);
+    }
+
+    for (const o of (orders || []) as any[]) {
+      const key = normPhone(o.customer_phone);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      list.push({
+        id: `order:${key}`,
+        name: o.customer_name || o.customer_phone,
+        phone: o.customer_phone,
+        city: o.shipping_city || null,
+      });
+    }
+
+    return list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "he"));
+  }, [customersRaw, orders]);
 
   const cities = useMemo(
     () => Array.from(new Set((customers || []).map((c) => c.city).filter(Boolean))) as string[],
@@ -100,8 +132,8 @@ const SmsCampaignPage = () => {
     if (city !== "all") list = list.filter((c) => c.city === city);
     if (orderFilterActive) {
       const ids = new Set((orders || []).map((o: any) => o.customer_id).filter(Boolean));
-      const phones = new Set((orders || []).map((o: any) => (o.customer_phone || "").replace(/\D/g, "")).filter(Boolean));
-      list = list.filter((c) => ids.has(c.id) || (c.phone && phones.has(c.phone.replace(/\D/g, ""))));
+      const phones = new Set((orders || []).map((o: any) => normPhone(o.customer_phone)).filter(Boolean));
+      list = list.filter((c) => ids.has(c.id) || (c.phone && phones.has(normPhone(c.phone))));
     }
     return list;
   }, [customers, city, orderFilterActive, orders]);
@@ -134,7 +166,11 @@ const SmsCampaignPage = () => {
     setConfirmOpen(false);
     const res = await bulkSend.mutateAsync({
       message,
-      recipients: selectedRecipients.map((c) => ({ phone: c.phone!, name: c.name, customer_id: c.id })),
+      recipients: selectedRecipients.map((c) => ({
+        phone: c.phone!,
+        name: c.name,
+        customer_id: c.id.startsWith("order:") ? undefined : c.id,
+      })),
     });
     setResult(res);
     toast.success(`נשלחו ${res.sent} הודעות · נכשלו ${res.failed} · דולגו ${res.skipped}`);
