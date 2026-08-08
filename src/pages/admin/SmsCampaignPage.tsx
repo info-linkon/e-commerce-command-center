@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { MessageSquare, Send, Plus, Trash2, Pencil, Upload } from "lucide-react";
+import { MessageSquare, Send, Plus, Trash2, Pencil, Upload, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,7 @@ const SmsCampaignPage = () => {
   const [message, setMessage] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [result, setResult] = useState<BulkSmsResult | null>(null);
+  const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const [csvRecipients, setCsvRecipients] = useState<Recipient[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -141,8 +142,23 @@ const SmsCampaignPage = () => {
       const existing = new Set(list.map((c) => normPhone(c.phone)).filter(Boolean));
       list = [...csvRecipients.filter((c) => !existing.has(normPhone(c.phone))), ...list];
     }
+    if (excluded.size) list = list.filter((c) => !excluded.has(c.id) && !excluded.has(normPhone(c.phone)));
     return list;
-  }, [customers, city, orderFilterActive, orders, csvRecipients]);
+  }, [customers, city, orderFilterActive, orders, csvRecipients, excluded]);
+
+  const removeRecipient = (r: Recipient) => {
+    setExcluded((prev) => {
+      const next = new Set(prev);
+      next.add(r.id);
+      next.add(normPhone(r.phone));
+      return next;
+    });
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(r.id);
+      return next;
+    });
+  };
 
   const handleCsv = async (file: File) => {
     const text = await file.text();
@@ -327,6 +343,14 @@ const SmsCampaignPage = () => {
                   {c.id.startsWith("csv:") && <Badge variant="secondary" className="text-[10px]">CSV</Badge>}
                   <span className="text-xs text-muted-foreground">{c.city || ""}</span>
                   <span className="text-xs" dir="ltr">{c.phone || "ללא טלפון"}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => { e.preventDefault(); removeRecipient(c); }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
                 </label>
               ))
             )}
