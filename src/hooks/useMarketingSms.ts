@@ -1,6 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+/** Extract the real error message returned by an edge function */
+async function readFnError(error: unknown): Promise<string> {
+  if (error instanceof FunctionsHttpError) {
+    try {
+      const text = await error.context.text();
+      try {
+        const json = JSON.parse(text);
+        return json?.error || json?.message || text;
+      } catch {
+        return text || error.message;
+      }
+    } catch {
+      return error.message;
+    }
+  }
+  return error instanceof Error ? error.message : "שגיאה לא ידועה";
+}
 
 export interface MarketingSmsTemplate {
   id: string;
@@ -81,7 +100,7 @@ export const useSendSingleSms = () =>
           context: payload.context || {},
         },
       });
-      if (error) throw error;
+      if (error) throw new Error(await readFnError(error));
       if (!data?.success) throw new Error(data?.error || "שליחה נכשלה");
       return data;
     },
@@ -104,9 +123,9 @@ export const useSendBulkSms = () =>
       recipients: { phone: string; name?: string | null; customer_id?: string | null }[];
     }) => {
       const { data, error } = await supabase.functions.invoke("send-bulk-sms", { body: payload });
-      if (error) throw error;
+      if (error) throw new Error(await readFnError(error));
       if (data?.error) throw new Error(data.error);
       return data as BulkSmsResult;
     },
-    onError: (e: any) => toast.error(e.message || "שגיאה בשליחת הדיוור"),
+    onError: (e: any) => toast.error(e.message || "שגיאה בשליחת הדיוור", { duration: 10000 }),
   });
