@@ -216,9 +216,7 @@ Deno.serve(async (req) => {
           body: "InforuXML=" + encodeURIComponent(xml),
         });
         const raw = await res.text();
-        ok = res.ok && !/<Status>-?\d+<\/Status>/.test(raw)
-          ? res.ok
-          : res.ok && /<Status>1<\/Status>/.test(raw);
+        ok = res.ok && /<Status>\s*1\s*<\/Status>/.test(raw);
         if (!ok) errMsg = (raw.match(/<Description>([^<]*)<\/Description>/)?.[1] || raw).slice(0, 300);
       } catch (e) {
         ok = false;
