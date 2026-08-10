@@ -6,6 +6,8 @@ const corsHeaders = {
 };
 
 const MAX_CHARS = 260;
+/** InfoRu accepts an array of recipients per call; keep chunks conservative. */
+const CHUNK = 100;
 
 function countChars(text: string): number {
   try {
@@ -23,6 +25,9 @@ function normalizePhone(raw: string): string | null {
   if (!p.startsWith("972")) p = "972" + p;
   return /^972\d{9}$/.test(p) ? p : null;
 }
+
+interface Recipient { phone: string; name?: string | null; customer_id?: string | null }
+interface Detail { phone: string; name?: string | null; status: string; error?: string }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -54,8 +59,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const message: string = typeof body?.message === "string" ? body.message.trim() : "";
-    const recipients: { phone?: string; name?: string | null; customer_id?: string | null }[] =
-      Array.isArray(body?.recipients) ? body.recipients : [];
+    const recipients: Recipient[] = Array.isArray(body?.recipients) ? body.recipients : [];
 
     if (!message) {
       return new Response(JSON.stringify({ error: "תוכן ההודעה חסר" }), {
@@ -69,7 +73,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (recipients.length === 0 || recipients.length > 2000) {
+    if (recipients.length === 0 || recipients.length > 5000) {
       return new Response(JSON.stringify({ error: "רשימת נמענים לא תקינה" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -81,16 +85,43 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // ---- InfoRu credentials (same source as send-sms) ----
+    const { data: config } = await supabase
+      .from("site_content")
+      .select("content")
+      .eq("page", "settings")
+      .eq("section", "inforu")
+      .maybeSingle();
+    const inforuConfig = config?.content as Record<string, string> | null;
+    const username = inforuConfig?.username || Deno.env.get("INFORU_USERNAME");
+    const apiToken = inforuConfig?.token || Deno.env.get("INFORU_TOKEN");
+    const sender = inforuConfig?.sender || Deno.env.get("INFORU_SENDER") || "ELWEJHA";
+
+    if (!username || !apiToken) {
+      return new Response(JSON.stringify({ error: "InforU credentials not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const basicAuth = btoa(`${username}:${apiToken}`);
+
+    // ---- Validate + dedupe ----
     const seen = new Set<string>();
-    const details: { phone: string; name?: string | null; status: string; error?: string }[] = [];
+    const details: Detail[] = [];
+    const logRows: Record<string, unknown>[] = [];
     let sent = 0, failed = 0, skipped = 0;
 
-    const valid: { phone: string; name?: string | null; customer_id?: string | null }[] = [];
+    const valid: Recipient[] = [];
     for (const r of recipients) {
       const phone = normalizePhone(r.phone || "");
       if (!phone) {
         skipped++;
         details.push({ phone: r.phone || "", name: r.name, status: "skipped", error: "מספר לא תקין" });
+        logRows.push({
+          channel: "sms", event_key: "manual_campaign", recipient: String(r.phone || ""),
+          body: message, status: "failed", error: "Invalid phone format",
+          context: { customer_id: r.customer_id || null, customer_name: r.name || null, sender },
+        });
         continue;
       }
       if (seen.has(phone)) {
@@ -102,55 +133,70 @@ Deno.serve(async (req) => {
       valid.push({ ...r, phone });
     }
 
-    const BATCH = 10;
-    for (let i = 0; i < valid.length; i += BATCH) {
-      const batch = valid.slice(i, i + BATCH);
-      const results = await Promise.all(
-        batch.map(async (r) => {
-          const personalized = message
-            .replace(/{customer_name}/g, r.name || "")
-            .replace(/{phone}/g, r.phone);
-          try {
-            const { data, error } = await supabase.functions.invoke("send-sms", {
-              body: {
-                phone: r.phone,
-                message: personalized,
-                event_key: "manual_campaign",
-                context: { customer_id: r.customer_id || null, customer_name: r.name || null },
-              },
-            });
-            if (error) throw new Error(error.message);
-            if (data && data.success === false) throw new Error(data.error || "שליחה נכשלה");
-            return { phone: r.phone, name: r.name, status: "sent" };
-          } catch (e) {
-            const errMsg = e instanceof Error ? e.message : "שגיאה";
-            // send-sms logs its own attempts, but if the invoke itself failed
-            // nothing was written — record it so the SMS log isn't silent.
-            try {
-              await supabase.from("notification_log").insert({
-                channel: "sms",
-                event_key: "manual_campaign",
-                recipient: r.phone,
-                body: personalized,
-                status: "failed",
-                error: errMsg,
-                context: { customer_id: r.customer_id || null, customer_name: r.name || null },
-              });
-            } catch { /* ignore */ }
-            return {
-              phone: r.phone,
-              name: r.name,
-              status: "failed",
-              error: errMsg,
-            };
-          }
-        }),
-      );
-      for (const res of results) {
-        if (res.status === "sent") sent++; else failed++;
-        details.push(res);
+    // ---- Group by final message text (personalization), then chunk ----
+    const groups = new Map<string, Recipient[]>();
+    for (const r of valid) {
+      const text = message
+        .replace(/{customer_name}/g, r.name || "")
+        .replace(/{phone}/g, r.phone);
+      const arr = groups.get(text);
+      if (arr) arr.push(r); else groups.set(text, [r]);
+    }
+
+    async function sendChunk(text: string, chunk: Recipient[]) {
+      const payload = {
+        Message: text,
+        Recipients: chunk.map((r) => ({ Phone: r.phone })),
+        Settings: { Sender: sender },
+      };
+      let ok = false;
+      let errMsg = "שליחה נכשלה";
+      let providerId: string | null = null;
+      try {
+        const res = await fetch("https://capi.inforu.co.il/api/v2/SMS/SendSms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Basic ${basicAuth}` },
+          body: JSON.stringify(payload),
+        });
+        const raw = await res.text();
+        let parsed: Record<string, unknown>;
+        try { parsed = JSON.parse(raw); } catch { parsed = { raw }; }
+        // deno-lint-ignore no-explicit-any
+        const p = parsed as any;
+        ok = res.ok && p?.StatusDescription !== "Error" && p?.StatusId !== -1;
+        if (!ok) errMsg = p?.StatusDescription || p?.Message || raw || errMsg;
+        providerId = p?.Data?.BatchId ? String(p.Data.BatchId) : (p?.Data?.[0]?.MessageId ? String(p.Data[0].MessageId) : null);
+      } catch (e) {
+        ok = false;
+        errMsg = e instanceof Error ? e.message : "שגיאת רשת";
       }
-      if (i + BATCH < valid.length) await new Promise((r) => setTimeout(r, 400));
+
+      for (const r of chunk) {
+        if (ok) sent++; else failed++;
+        details.push({ phone: r.phone, name: r.name, status: ok ? "sent" : "failed", error: ok ? undefined : errMsg });
+        logRows.push({
+          channel: "sms", event_key: "manual_campaign", recipient: r.phone, body: text,
+          status: ok ? "sent" : "failed", error: ok ? null : errMsg,
+          provider_message_id: providerId,
+          sent_at: ok ? new Date().toISOString() : null,
+          context: { customer_id: r.customer_id || null, customer_name: r.name || null, sender },
+        });
+      }
+    }
+
+    for (const [text, list] of groups) {
+      for (let i = 0; i < list.length; i += CHUNK) {
+        await sendChunk(text, list.slice(i, i + CHUNK));
+      }
+    }
+
+    // ---- Bulk log (chunked inserts, best-effort) ----
+    for (let i = 0; i < logRows.length; i += 200) {
+      try {
+        await supabase.from("notification_log").insert(logRows.slice(i, i + 200));
+      } catch (e) {
+        console.error("notification_log insert failed:", e);
+      }
     }
 
     return new Response(JSON.stringify({ sent, failed, skipped, details }), {
