@@ -127,5 +127,11 @@ export const useSendBulkSms = () =>
       if (data?.error) throw new Error(data.error);
       return data as BulkSmsResult;
     },
+    onSuccess: (res: BulkSmsResult) => {
+      if (res.failed > 0) {
+        const firstErr = res.details.find((d) => d.status === "failed")?.error;
+        toast.error(`נכשלו ${res.failed} הודעות${firstErr ? ` · ${firstErr}` : ""}`, { duration: 10000 });
+      }
+    },
     onError: (e: any) => toast.error(e.message || "שגיאה בשליחת הדיוור", { duration: 10000 }),
   });
