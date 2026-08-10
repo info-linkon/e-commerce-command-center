@@ -123,11 +123,25 @@ Deno.serve(async (req) => {
             if (data && data.success === false) throw new Error(data.error || "שליחה נכשלה");
             return { phone: r.phone, name: r.name, status: "sent" };
           } catch (e) {
+            const errMsg = e instanceof Error ? e.message : "שגיאה";
+            // send-sms logs its own attempts, but if the invoke itself failed
+            // nothing was written — record it so the SMS log isn't silent.
+            try {
+              await supabase.from("notification_log").insert({
+                channel: "sms",
+                event_key: "manual_campaign",
+                recipient: r.phone,
+                body: personalized,
+                status: "failed",
+                error: errMsg,
+                context: { customer_id: r.customer_id || null, customer_name: r.name || null },
+              });
+            } catch { /* ignore */ }
             return {
               phone: r.phone,
               name: r.name,
               status: "failed",
-              error: e instanceof Error ? e.message : "שגיאה",
+              error: errMsg,
             };
           }
         }),
