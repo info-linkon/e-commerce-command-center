@@ -184,9 +184,72 @@ Deno.serve(async (req) => {
       }
     }
 
-    for (const [text, list] of groups) {
+    /**
+     * Personalized campaigns produce a different wording per recipient.
+     * InfoRu's documented way to handle that is the "Multiple Requests"
+     * gateway (InforuRoot), recommended up to ~50 packages per request —
+     * instead of one HTTP call per recipient.
+     */
+    function xmlEscape(s: string): string {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    async function sendPackages(entries: [string, Recipient[]][]) {
+      const xml =
+        "<InforuRoot>" +
+        entries.map(([text, list]) =>
+          "<Inforu><User><Username>" + xmlEscape(username!) + "</Username><ApiToken>" +
+          xmlEscape(apiToken!) + "</ApiToken></User><Content Type=\"sms\"><Message><![CDATA[" +
+          text + "]]></Message></Content><Recipients><PhoneNumber>" +
+          list.map((r) => r.phone).join(";") +
+          "</PhoneNumber></Recipients><Settings><Sender>" + xmlEscape(sender) +
+          "</Sender></Settings></Inforu>"
+        ).join("") +
+        "</InforuRoot>";
+
+      let ok = false;
+      let errMsg = "שליחה נכשלה";
+      try {
+        const res = await fetch("https://api.inforu.co.il/SendMessageXml.ashx", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+          body: "InforuXML=" + encodeURIComponent(xml),
+        });
+        const raw = await res.text();
+        ok = res.ok && !/<Status>-?\d+<\/Status>/.test(raw)
+          ? res.ok
+          : res.ok && /<Status>1<\/Status>/.test(raw);
+        if (!ok) errMsg = (raw.match(/<Description>([^<]*)<\/Description>/)?.[1] || raw).slice(0, 300);
+      } catch (e) {
+        ok = false;
+        errMsg = e instanceof Error ? e.message : "שגיאת רשת";
+      }
+
+      for (const [text, list] of entries) {
+        for (const r of list) {
+          if (ok) sent++; else failed++;
+          details.push({ phone: r.phone, name: r.name, status: ok ? "sent" : "failed", error: ok ? undefined : errMsg });
+          logRows.push({
+            channel: "sms", event_key: "manual_campaign", recipient: r.phone, body: text,
+            status: ok ? "sent" : "failed", error: ok ? null : errMsg,
+            sent_at: ok ? new Date().toISOString() : null,
+            context: { customer_id: r.customer_id || null, customer_name: r.name || null, sender },
+          });
+        }
+      }
+    }
+
+    if (groups.size === 1) {
+      // Same text for everyone: one call per 100 recipients (REST v2).
+      const [text, list] = [...groups][0];
       for (let i = 0; i < list.length; i += CHUNK) {
         await sendChunk(text, list.slice(i, i + CHUNK));
+      }
+    } else {
+      // Personalized: up to 50 packages (wordings) per gateway request.
+      const entries = [...groups];
+      for (let i = 0; i < entries.length; i += 50) {
+        await sendPackages(entries.slice(i, i + 50));
       }
     }
 
