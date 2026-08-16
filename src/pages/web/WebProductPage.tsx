@@ -13,6 +13,7 @@ import { ttq } from "@/lib/tiktok-pixel";
 import { gaViewItem, gaAddToCart } from "@/lib/gtag";
 import { useLanguage } from "@/hooks/useLanguage";
 import { RelatedProductsSection } from "@/components/web/RelatedProductsSection";
+import { effectivePrice } from "@/lib/pricing";
 
 export default function WebProductPage() {
   const { lang, t } = useLanguage();
