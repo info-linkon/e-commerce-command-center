@@ -13,6 +13,7 @@ import { ttq } from "@/lib/tiktok-pixel";
 import { gaViewItem, gaAddToCart } from "@/lib/gtag";
 import { useLanguage } from "@/hooks/useLanguage";
 import { RelatedProductsSection } from "@/components/web/RelatedProductsSection";
+import { effectivePrice } from "@/lib/pricing";
 
 export default function WebProductPage() {
   const { lang, t } = useLanguage();
@@ -171,27 +172,15 @@ export default function WebProductPage() {
   // For variable bundles/products, the variation can override the bundle/product
   // level price. If the variation's field is empty (0 / null), fall back to the
   // parent product's value so admins can edit at either level.
-  const bvPrice = activeBundleVariation ? Number(activeBundleVariation.price) || 0 : 0;
-  const vPrice = activeVariation ? Number(activeVariation.price) || 0 : 0;
-  const rawPrice = activeBundleVariation
-    ? (bvPrice > 0 ? bvPrice : Number(product.sale_price) || 0)
-    : activeVariation
-      ? (vPrice > 0 ? vPrice : Number(product.sale_price) || 0)
-      : Number(product.sale_price) || 0;
-  const bvCompare = activeBundleVariation ? Number((activeBundleVariation as any).compare_at_price) || 0 : 0;
-  const vCompare = activeVariation ? Number((activeVariation as any).compare_at_price) || 0 : 0;
-  const productCompare = Number((product as any).compare_at_price) || 0;
-  const rawCompare = activeBundleVariation
-    ? (bvCompare > 0 ? bvCompare : productCompare)
-    : activeVariation
-      ? (vCompare > 0 ? vCompare : productCompare)
-      : productCompare;
-  // Auto-swap: whichever value is lower is the "final" price the customer
-  // pays; the higher one is the crossed-out regular price. This makes the
-  // display forgiving regardless of which field the admin entered where.
-  const price = rawCompare > 0 && rawCompare < Number(rawPrice)
-    ? Number(rawCompare)
-    : Number(rawPrice);
+  const activeVar = (activeBundleVariation || activeVariation) as any | null;
+  const productCompare = (product as any).compare_at_price;
+  // Auto-swap via the shared canonical rule (see src/lib/pricing.ts).
+  const { price, comparePrice, discountPercent } = effectivePrice(
+    activeVar?.price,
+    activeVar?.compare_at_price,
+    product.sale_price,
+    productCompare,
+  );
 
   // When a variation (product or bundle) has its own image, prefer it for the main
   // image slot unless the user already picked a specific thumbnail (`mainImage`).
@@ -200,13 +189,6 @@ export default function WebProductPage() {
     (activeVariation as any)?.image_url ||
     null;
   const displayImage = mainImage || variationImage || allImages[0] || null;
-
-  const comparePrice: number | null = (() => {
-    if (!rawCompare) return null;
-    const higher = Math.max(Number(rawPrice), rawCompare);
-    return higher > price ? higher : null;
-  })();
-  const discountPercent = comparePrice ? Math.round(((comparePrice - price) / comparePrice) * 100) : 0;
 
   const displayName = lang === "he" ? (product.name || product.name_ar) : (product.name_ar || product.name);
 
@@ -472,7 +454,9 @@ export default function WebProductPage() {
                             : "border-border hover:border-primary/50"
                       }`}
                     >
-                      {lang === "he" ? ((bv as any).name_he || bv.name) : (bv.name)} - ₪{bv.price.toFixed(2)}
+                      {lang === "he" ? ((bv as any).name_he || bv.name) : (bv.name)}
+                      {" - ₪"}
+                      {effectivePrice(bv.price, (bv as any).compare_at_price, product.sale_price, productCompare).price.toFixed(2)}
                       {bvOutOfStock && t(" (غير متوفر)", " (אזל)")}
                     </button>
                   );
