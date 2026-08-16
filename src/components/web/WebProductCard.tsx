@@ -1,3 +1,4 @@
+import { effectivePrice } from "@/lib/pricing";
 import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
