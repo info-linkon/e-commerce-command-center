@@ -27,12 +27,9 @@ export function WebProductCard({ id, productNumber, name, nameAr, price: rawPric
   const displayVariation = lang === "he" ? (variationNameHe || variationName) : (variationName || variationNameHe);
   const productHref = localizedPath(`/product/${linkId}${variationId ? `?v=${variationId}` : ""}`);
 
-  // Auto-swap: whichever is lower is the final price; higher becomes crossed-out.
-  const compare = Number(rawOriginal) || 0;
-  const price = compare > 0 && compare < Number(rawPrice) ? compare : Number(rawPrice);
-  const originalPrice = compare > 0 ? Math.max(Number(rawPrice), compare) : null;
+  // Shared canonical rule (src/lib/pricing.ts): lowest value wins, higher is crossed out.
+  const { price, comparePrice: originalPrice, discountPercent } = effectivePrice(rawPrice, rawOriginal);
   const hasDiscount = originalPrice !== null && originalPrice > price;
-  const discountPercent = hasDiscount ? Math.round(((originalPrice! - price) / originalPrice!) * 100) : 0;
 
   return (
     <div className={`group relative bg-card rounded-xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${outOfStock ? "opacity-60" : ""}`}>
