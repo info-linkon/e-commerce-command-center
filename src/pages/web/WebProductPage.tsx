@@ -344,6 +344,20 @@ export default function WebProductPage() {
 
   return (
     <div className="container py-6 md:py-12">
+      <WebBreadcrumb
+        items={[
+          { label: t("المتجر", "חנות"), to: "/shop" },
+          ...((product as any).categories
+            ? [{
+                label: t((product as any).categories.name, (product as any).categories.name_he),
+                to: (product as any).categories.category_number
+                  ? `/category/${(product as any).categories.category_number}`
+                  : undefined,
+              }]
+            : []),
+          { label: displayName },
+        ]}
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
         {/* Image */}
         <div>
