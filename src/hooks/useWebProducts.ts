@@ -214,7 +214,7 @@ export function useWebProduct(productNumber: string | undefined) {
       if (isNaN(num)) return null;
       const { data, error } = await (supabase
         .from("products")
-        .select("*, categories!products_category_id_fkey(name, name_he, slug)") as any)
+        .select("*, categories!products_category_id_fkey(name, name_he, slug, category_number)") as any)
         .eq("product_number", num)
         .eq("is_published", true)
         .single();

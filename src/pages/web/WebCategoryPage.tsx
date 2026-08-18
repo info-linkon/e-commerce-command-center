@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useWebProductsByCategoryNumber } from "@/hooks/useWebProducts";
 import { WebProductCard } from "@/components/web/WebProductCard";
 import { useLanguage } from "@/hooks/useLanguage";
+import { WebBreadcrumb } from "@/components/web/WebBreadcrumb";
 import { useEffect } from "react";
 import { gaViewItemList } from "@/lib/gtag";
 
@@ -30,6 +31,12 @@ export default function WebCategoryPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+      <WebBreadcrumb
+        items={[
+          { label: t("المتجر", "חנות"), to: "/shop" },
+          { label: categoryName },
+        ]}
+      />
       <h1 className="text-3xl font-bold text-foreground mb-8">
         {categoryName}
       </h1>
