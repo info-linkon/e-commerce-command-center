@@ -528,8 +528,73 @@ const OrderDetail = () => {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>סיכום</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>סיכום</CardTitle>
+            {!isCancelled && !isCompleted && !editingTotals && (
+              <Button variant="outline" size="sm" className="gap-1" onClick={openTotalsEditor}>
+                <Edit3 className="h-3.5 w-3.5" />
+                ערוך סכומים
+              </Button>
+            )}
+          </CardHeader>
           <CardContent className="space-y-2">
+            {editingTotals && (
+              <div className="space-y-3 rounded-lg border border-border p-3 bg-muted/30">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-muted-foreground">סה״כ פריטים</span>
+                  <span className="text-sm font-medium">₪{itemsSubtotalNow.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-sm">עלות משלוח</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    className="w-28 h-8"
+                    value={shippingInput}
+                    onChange={(e) => {
+                      setShippingInput(e.target.value);
+                      const s = Math.max(0, Number(e.target.value) || 0);
+                      setTotalInput(String(Math.round((itemsSubtotalNow + s) * 100) / 100));
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-sm font-medium">סה״כ סופי (עיגול)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    className="w-28 h-8"
+                    value={totalInput}
+                    onChange={(e) => setTotalInput(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  {[0, 1, 5, 10].map((r) => (
+                    <Button
+                      key={r}
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const gross = itemsSubtotalNow + (Number(shippingInput) || 0);
+                        const rounded = r === 0 ? Math.round(gross) : Math.floor(gross / r) * r;
+                        setTotalInput(String(rounded));
+                      }}
+                    >
+                      {r === 0 ? "עיגול" : `עיגול ל-${r}`}
+                    </Button>
+                  ))}
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" onClick={handleSaveTotals} disabled={savingTotals}>
+                    {savingTotals ? "שומר..." : "שמור"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditingTotals(false)}>ביטול</Button>
+                </div>
+              </div>
+            )}
             {(() => {
               const itemsSubtotal = items.reduce((sum: number, i: any) => sum + Number(i.total_price), 0);
               const discountAmt = Number((order as any).discount_amount) || 0;
