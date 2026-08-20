@@ -138,6 +138,10 @@ const OrderDetail = () => {
   const [editingItems, setEditingItems] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
+  const [editingTotals, setEditingTotals] = useState(false);
+  const [shippingInput, setShippingInput] = useState("");
+  const [totalInput, setTotalInput] = useState("");
+  const [savingTotals, setSavingTotals] = useState(false);
 
   if (isLoading) return <div className="py-12 text-center text-muted-foreground">טוען...</div>;
   if (!order) return <div className="py-12 text-center text-muted-foreground">הזמנה לא נמצאה</div>;
