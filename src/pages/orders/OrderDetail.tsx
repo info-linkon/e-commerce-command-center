@@ -197,6 +197,43 @@ const OrderDetail = () => {
     await supabase.from("orders").update({ total: newTotal }).eq("id", order.id);
   };
 
+  const itemsSubtotalNow = items.reduce((sum: number, i: any) => sum + Number(i.total_price), 0);
+
+  const openTotalsEditor = () => {
+    setShippingInput(String(Number((order as any).shipping_cost) || 0));
+    setTotalInput(String(Number(order.total) || 0));
+    setEditingTotals(true);
+  };
+
+  const handleSaveTotals = async () => {
+    const shipping = Math.max(0, Number(shippingInput) || 0);
+    const finalTotal = Math.max(0, Number(totalInput) || 0);
+    const gross = itemsSubtotalNow + shipping;
+    const roundDiff = Math.round((gross - finalTotal) * 100) / 100;
+    setSavingTotals(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          shipping_cost: shipping,
+          total: finalTotal,
+          discount_amount: roundDiff > 0 ? roundDiff : 0,
+          ...(roundDiff > 0
+            ? { discount_type: "fixed", discount_value: roundDiff }
+            : { discount_type: null, discount_value: null }),
+        } as any)
+        .eq("id", order.id);
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["orders"] });
+      setEditingTotals(false);
+      toast.success("הסכומים עודכנו");
+    } catch (err: any) {
+      toast.error(err?.message || "שגיאה בעדכון הסכומים");
+    } finally {
+      setSavingTotals(false);
+    }
+  };
+
   const adjustInventoryForItem = async (item: any, qtyDelta: number, reason: string) => {
     if (!isAssigned || !order.assigned_warehouse_id || !item.variation_id) return;
     const warehouseId = order.assigned_warehouse_id;
