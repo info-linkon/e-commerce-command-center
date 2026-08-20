@@ -10,6 +10,7 @@ import { useUserNames } from "@/hooks/useUserNames";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -138,6 +139,10 @@ const OrderDetail = () => {
   const [editingItems, setEditingItems] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
+  const [editingTotals, setEditingTotals] = useState(false);
+  const [shippingInput, setShippingInput] = useState("");
+  const [totalInput, setTotalInput] = useState("");
+  const [savingTotals, setSavingTotals] = useState(false);
 
   if (isLoading) return <div className="py-12 text-center text-muted-foreground">טוען...</div>;
   if (!order) return <div className="py-12 text-center text-muted-foreground">הזמנה לא נמצאה</div>;
@@ -190,6 +195,43 @@ const OrderDetail = () => {
     const discount = Number((order as any).discount_amount) || 0;
     const newTotal = Math.max(0, itemsSum + shipping - discount);
     await supabase.from("orders").update({ total: newTotal }).eq("id", order.id);
+  };
+
+  const itemsSubtotalNow = items.reduce((sum: number, i: any) => sum + Number(i.total_price), 0);
+
+  const openTotalsEditor = () => {
+    setShippingInput(String(Number((order as any).shipping_cost) || 0));
+    setTotalInput(String(Number(order.total) || 0));
+    setEditingTotals(true);
+  };
+
+  const handleSaveTotals = async () => {
+    const shipping = Math.max(0, Number(shippingInput) || 0);
+    const finalTotal = Math.max(0, Number(totalInput) || 0);
+    const gross = itemsSubtotalNow + shipping;
+    const roundDiff = Math.round((gross - finalTotal) * 100) / 100;
+    setSavingTotals(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          shipping_cost: shipping,
+          total: finalTotal,
+          discount_amount: roundDiff > 0 ? roundDiff : 0,
+          ...(roundDiff > 0
+            ? { discount_type: "fixed", discount_value: roundDiff }
+            : { discount_type: null, discount_value: null }),
+        } as any)
+        .eq("id", order.id);
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["orders"] });
+      setEditingTotals(false);
+      toast.success("הסכומים עודכנו");
+    } catch (err: any) {
+      toast.error(err?.message || "שגיאה בעדכון הסכומים");
+    } finally {
+      setSavingTotals(false);
+    }
   };
 
   const adjustInventoryForItem = async (item: any, qtyDelta: number, reason: string) => {
@@ -486,8 +528,73 @@ const OrderDetail = () => {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>סיכום</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>סיכום</CardTitle>
+            {!isCancelled && !isCompleted && !editingTotals && (
+              <Button variant="outline" size="sm" className="gap-1" onClick={openTotalsEditor}>
+                <Edit3 className="h-3.5 w-3.5" />
+                ערוך סכומים
+              </Button>
+            )}
+          </CardHeader>
           <CardContent className="space-y-2">
+            {editingTotals && (
+              <div className="space-y-3 rounded-lg border border-border p-3 bg-muted/30">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-muted-foreground">סה״כ פריטים</span>
+                  <span className="text-sm font-medium">₪{itemsSubtotalNow.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-sm">עלות משלוח</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    className="w-28 h-8"
+                    value={shippingInput}
+                    onChange={(e) => {
+                      setShippingInput(e.target.value);
+                      const s = Math.max(0, Number(e.target.value) || 0);
+                      setTotalInput(String(Math.round((itemsSubtotalNow + s) * 100) / 100));
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-sm font-medium">סה״כ סופי (עיגול)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    className="w-28 h-8"
+                    value={totalInput}
+                    onChange={(e) => setTotalInput(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  {[0, 1, 5, 10].map((r) => (
+                    <Button
+                      key={r}
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const gross = itemsSubtotalNow + (Number(shippingInput) || 0);
+                        const rounded = r === 0 ? Math.round(gross) : Math.floor(gross / r) * r;
+                        setTotalInput(String(rounded));
+                      }}
+                    >
+                      {r === 0 ? "עיגול" : `עיגול ל-${r}`}
+                    </Button>
+                  ))}
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" onClick={handleSaveTotals} disabled={savingTotals}>
+                    {savingTotals ? "שומר..." : "שמור"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditingTotals(false)}>ביטול</Button>
+                </div>
+              </div>
+            )}
             {(() => {
               const itemsSubtotal = items.reduce((sum: number, i: any) => sum + Number(i.total_price), 0);
               const discountAmt = Number((order as any).discount_amount) || 0;
