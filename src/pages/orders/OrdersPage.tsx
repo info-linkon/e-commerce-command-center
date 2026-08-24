@@ -204,6 +204,7 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
             <SelectItem value="processing">בטיפול</SelectItem>
             <SelectItem value="picking">בליקוט</SelectItem>
             <SelectItem value="shipping">במשלוח</SelectItem>
+            <SelectItem value="delivered">נמסרה</SelectItem>
             <SelectItem value="completed">הושלמה</SelectItem>
             <SelectItem value="cancelled">בוטלה</SelectItem>
             <SelectItem value="unfulfilled">לא מומשה</SelectItem>

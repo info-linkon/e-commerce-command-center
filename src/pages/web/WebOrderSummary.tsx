@@ -14,6 +14,7 @@ const statusConfig: Record<string, { label: string; labelHe: string; icon: React
   processing: { label: "قيد المعالجة", labelHe: "בטיפול", icon: Package, color: "bg-blue-100 text-blue-800 border-blue-200" },
   picking: { label: "قيد التجهيز", labelHe: "בליקוט", icon: Package, color: "bg-blue-100 text-blue-800 border-blue-200" },
   shipping: { label: "في الطريق", labelHe: "במשלוח", icon: Truck, color: "bg-purple-100 text-purple-800 border-purple-200" },
+  delivered: { label: "تم التسليم", labelHe: "נמסרה", icon: CheckCircle, color: "bg-teal-100 text-teal-800 border-teal-200" },
   completed: { label: "تم التسليم", labelHe: "הושלמה", icon: CheckCircle, color: "bg-green-100 text-green-800 border-green-200" },
   cancelled: { label: "ملغي", labelHe: "בוטלה", icon: AlertCircle, color: "bg-red-100 text-red-800 border-red-200" },
 };
