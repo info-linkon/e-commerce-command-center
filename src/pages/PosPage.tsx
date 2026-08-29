@@ -615,14 +615,14 @@ const PosPage = () => {
 
       {/* Desktop: Cart Panel */}
       {!isMobile && (
-        <Card className="w-80 flex flex-col shrink-0">
-          <CardHeader className="pb-2">
+        <Card className="w-80 flex flex-col shrink-0 min-h-0 overflow-hidden">
+          <CardHeader className="pb-2 shrink-0">
             <CardTitle className="flex items-center gap-2 text-lg">
               <ShoppingCart className="h-5 w-5" />
               עגלה ({cart.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col p-3 pt-0">
+          <CardContent className="flex-1 flex flex-col min-h-0 p-3 pt-0">
             {cartContent}
           </CardContent>
         </Card>
