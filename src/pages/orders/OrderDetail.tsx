@@ -33,6 +33,8 @@ import PickingChecklist from "@/components/orders/PickingChecklist";
 import AddOrderItemDialog from "@/components/orders/AddOrderItemDialog";
 import CompleteOrderDialog from "@/components/orders/CompleteOrderDialog";
 import SendSmsDialog from "@/components/sms/SendSmsDialog";
+import { reconcileOverpayment } from "@/lib/order-payment-reconcile";
+
 
 const statusLabels: Record<string, string> = {
   pending: "ממתינה",
@@ -195,7 +197,14 @@ const OrderDetail = () => {
     const discount = Number((order as any).discount_amount) || 0;
     const newTotal = Math.max(0, itemsSum + shipping - discount);
     await supabase.from("orders").update({ total: newTotal }).eq("id", order.id);
+    const rolledBack = await reconcileOverpayment(order.id, newTotal);
+    if (rolledBack > 0) {
+      qc.invalidateQueries({ queryKey: ["payments", order.id] });
+      qc.invalidateQueries({ queryKey: ["cash_registers"] });
+      toast.info(`עודכן תשלום: הוחזרו ₪${rolledBack.toFixed(2)} (כולל עדכון הקופה)`);
+    }
   };
+
 
   const itemsSubtotalNow = items.reduce((sum: number, i: any) => sum + Number(i.total_price), 0);
 
@@ -224,9 +233,14 @@ const OrderDetail = () => {
         } as any)
         .eq("id", order.id);
       if (error) throw error;
+      const rolledBack = await reconcileOverpayment(order.id, finalTotal);
       await qc.invalidateQueries({ queryKey: ["orders"] });
+      if (rolledBack > 0) {
+        qc.invalidateQueries({ queryKey: ["payments", order.id] });
+        qc.invalidateQueries({ queryKey: ["cash_registers"] });
+      }
       setEditingTotals(false);
-      toast.success("הסכומים עודכנו");
+      toast.success(rolledBack > 0 ? `הסכומים עודכנו — הוחזרו ₪${rolledBack.toFixed(2)} לקופה` : "הסכומים עודכנו");
     } catch (err: any) {
       toast.error(err?.message || "שגיאה בעדכון הסכומים");
     } finally {
