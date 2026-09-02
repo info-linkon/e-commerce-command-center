@@ -33,6 +33,8 @@ import PickingChecklist from "@/components/orders/PickingChecklist";
 import AddOrderItemDialog from "@/components/orders/AddOrderItemDialog";
 import CompleteOrderDialog from "@/components/orders/CompleteOrderDialog";
 import SendSmsDialog from "@/components/sms/SendSmsDialog";
+import { reconcileOverpayment } from "@/lib/order-payment-reconcile";
+
 
 const statusLabels: Record<string, string> = {
   pending: "ממתינה",
