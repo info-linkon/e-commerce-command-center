@@ -233,9 +233,14 @@ const OrderDetail = () => {
         } as any)
         .eq("id", order.id);
       if (error) throw error;
+      const rolledBack = await reconcileOverpayment(order.id, finalTotal);
       await qc.invalidateQueries({ queryKey: ["orders"] });
+      if (rolledBack > 0) {
+        qc.invalidateQueries({ queryKey: ["payments", order.id] });
+        qc.invalidateQueries({ queryKey: ["cash_registers"] });
+      }
       setEditingTotals(false);
-      toast.success("הסכומים עודכנו");
+      toast.success(rolledBack > 0 ? `הסכומים עודכנו — הוחזרו ₪${rolledBack.toFixed(2)} לקופה` : "הסכומים עודכנו");
     } catch (err: any) {
       toast.error(err?.message || "שגיאה בעדכון הסכומים");
     } finally {
