@@ -52,12 +52,5 @@ export async function reconcileOverpayment(orderId: string, newTotal: number): P
     excess = Math.round((excess - reduce) * 100) / 100;
   }
 
-  // Keep the planned digital amount within the new total
-  await supabase
-    .from("orders")
-    .update({ digital_payment_amount: 0 } as any)
-    .eq("id", orderId)
-    .lt("total", 0); // no-op guard; digital amount handled by payment rows above
-
   return rolledBack;
 }
