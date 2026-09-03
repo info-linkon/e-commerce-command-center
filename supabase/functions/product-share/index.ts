@@ -54,7 +54,9 @@ Deno.serve(async (req) => {
     const title = product.name_ar
       ? `${product.name_ar} | ${product.name}`
       : product.name;
-    const description = product.short_description_ar || product.short_description || `${title} - ₪${effectivePrice}`;
+    const rawDesc = product.short_description_ar || product.short_description || "";
+    const cleanDesc = stripHtml(rawDesc);
+    const description = (cleanDesc.length > 200 ? cleanDesc.slice(0, 197) + "…" : cleanDesc) || `${title} - ₪${effectivePrice}`;
     const imageUrl = product.image_url || `${siteUrl}/og-image.png`;
 
     const html = `<!DOCTYPE html>
