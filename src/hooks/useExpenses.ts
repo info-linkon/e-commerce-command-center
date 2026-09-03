@@ -79,7 +79,7 @@ export function useCreateExpense() {
       qc.invalidateQueries({ queryKey: ["cash_registers"] });
       toast.success("ההוצאה נרשמה");
     },
-    onError: () => toast.error("שגיאה ברישום הוצאה"),
+    onError: (err: any) => toast.error(String(err?.message || "").includes("CASH_PERIOD_LOCKED") ? "שגיאה: התקופה נעולה (בוצעה סגירת חודש לקופה). יש לפתוח מחדש את הסגירה כדי לערוך." : "שגיאה ברישום הוצאה"),
   });
 }
 
@@ -178,7 +178,7 @@ export function useUpdateExpense() {
       qc.invalidateQueries({ queryKey: ["cash_registers"] });
       toast.success("ההוצאה עודכנה");
     },
-    onError: () => toast.error("שגיאה בעדכון הוצאה"),
+    onError: (err: any) => toast.error(String(err?.message || "").includes("CASH_PERIOD_LOCKED") ? "שגיאה: התקופה נעולה (בוצעה סגירת חודש לקופה). יש לפתוח מחדש את הסגירה כדי לערוך." : "שגיאה בעדכון הוצאה"),
   });
 }
 
@@ -216,6 +216,6 @@ export function useDeleteExpense() {
       qc.invalidateQueries({ queryKey: ["cash_registers"] });
       toast.success("ההוצאה נמחקה");
     },
-    onError: () => toast.error("שגיאה במחיקת הוצאה"),
+    onError: (err: any) => toast.error(String(err?.message || "").includes("CASH_PERIOD_LOCKED") ? "שגיאה: התקופה נעולה (בוצעה סגירת חודש לקופה). יש לפתוח מחדש את הסגירה כדי לערוך." : "שגיאה במחיקת הוצאה"),
   });
 }

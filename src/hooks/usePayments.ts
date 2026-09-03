@@ -94,6 +94,6 @@ export function useRecordPayment() {
       qc.invalidateQueries({ queryKey: ["cash_registers"] });
       toast.success("התשלום נרשם");
     },
-    onError: () => toast.error("שגיאה ברישום תשלום"),
+    onError: (err: any) => toast.error(String(err?.message || "").includes("CASH_PERIOD_LOCKED") ? "שגיאה: התקופה נעולה (בוצעה סגירת חודש לקופה). יש לפתוח מחדש את הסגירה כדי לערוך." : "שגיאה ברישום תשלום"),
   });
 }
