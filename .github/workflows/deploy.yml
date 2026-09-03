@@ -38,6 +38,10 @@ jobs:
             RewriteEngine On
             RewriteBase /
 
+            # Social/crawler bots on product links -> dynamic OG tags via edge function
+            RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|TelegramBot|Slackbot|Discordbot|Pinterest|Google-InspectionTool) [NC]
+            RewriteRule ^product/([A-Za-z0-9\-]+)/?$ https://gboskpvfvwrsiqwzpctk.supabase.co/functions/v1/product-share/$1 [R=302,L,QSA]
+
             # If the request is for an existing file or directory, serve it
             RewriteCond %{REQUEST_FILENAME} !-f
             RewriteCond %{REQUEST_FILENAME} !-d
