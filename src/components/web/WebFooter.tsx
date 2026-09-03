@@ -64,7 +64,7 @@ export function WebFooter() {
               </h3>
               <div className="flex flex-col gap-2.5">
                 {categories.map((cat) => (
-                  <Link key={cat.id} to={localizedPath(`/category/${(cat as any).category_number || cat.id}`)} className="text-sm text-sand/70 hover:text-gold transition-colors">
+                  <Link key={cat.id} to={localizedPath(`/category/${(cat as any).slug || (cat as any).category_number || cat.id}`)} className="text-sm text-sand/70 hover:text-gold transition-colors">
                     {lang === "he" ? ((cat as any).name_he || cat.name) : cat.name}
                   </Link>
                 ))}

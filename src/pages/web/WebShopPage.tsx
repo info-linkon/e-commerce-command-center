@@ -55,7 +55,7 @@ export default function WebShopPage() {
             return (
               <Link
                 key={cat.id}
-                to={localizedPath(`/category/${(cat as any).category_number || cat.id}`)}
+                to={localizedPath(`/category/${(cat as any).slug || (cat as any).category_number || cat.id}`)}
                 className="group relative rounded-xl overflow-hidden aspect-square border border-border hover:shadow-xl transition-all duration-300"
               >
                 {imgSrc ? (
@@ -143,6 +143,7 @@ export default function WebShopPage() {
               key={product.id}
               id={product.id}
               productNumber={(product as any).product_number}
+              slug={(product as any).slug}
               name={product.name}
               nameAr={product.name_ar}
               price={product.sale_price}

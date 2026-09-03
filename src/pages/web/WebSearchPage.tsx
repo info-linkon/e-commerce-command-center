@@ -44,6 +44,7 @@ export default function WebSearchPage() {
                 key={product.id}
                 id={product.id}
                 productNumber={(product as any).product_number}
+                slug={(product as any).slug}
                 name={product.name}
                 nameAr={product.name_ar}
                 price={product.sale_price}
