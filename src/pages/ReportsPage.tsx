@@ -16,6 +16,7 @@ import ExpensesTab from "@/components/reports/ExpensesTab";
 import ProfitabilityTab from "@/components/reports/ProfitabilityTab";
 // OrderTypeTab removed — invoice with/without view no longer relevant
 import ActivityLogTab from "@/components/reports/ActivityLogTab";
+import ClosingsTab from "@/components/reports/ClosingsTab";
 
 const ReportsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
