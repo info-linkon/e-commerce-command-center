@@ -127,6 +127,14 @@ const CashRegistersPage = () => {
   const txRegister = registers?.find((r) => r.id === txRegisterId);
   const { data: transactions, isLoading: txLoading } = useCashRegisterTransactions(txRegisterId);
 
+  // Monthly closing
+  const { data: allClosings } = useCashClosings();
+  const reopenPeriod = useReopenCashPeriod();
+  const [closeRegisterId, setCloseRegisterId] = useState<string | null>(null);
+  const closeRegister = registers?.find((r) => r.id === closeRegisterId) || null;
+
+
+
   // Settings dialog (owner only)
   const [settingsRegisterId, setSettingsRegisterId] = useState<string | null>(null);
   const settingsRegister = registers?.find((r) => r.id === settingsRegisterId);
