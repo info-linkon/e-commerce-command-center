@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { normalizeSlug } from "@/lib/slug";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowRight, RefreshCw, Upload, Package, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ const ProductForm = () => {
     name: "",
     name_ar: "",
     sku: "",
+    slug: "",
     description: "",
     description_ar: "",
     short_description: "",
@@ -60,6 +62,7 @@ const ProductForm = () => {
         name: product.name,
         name_ar: (product as any).name_ar || "",
         sku: product.sku || "",
+        slug: (product as any).slug || "",
         description: product.description || "",
         description_ar: (product as any).description_ar || "",
         short_description: product.short_description || "",
@@ -139,6 +142,7 @@ const ProductForm = () => {
     const data = {
       ...form,
       compare_at_price: form.compare_at_price > 0 ? form.compare_at_price : null,
+      slug: normalizeSlug(form.slug) || null,
       category_id: primaryCategoryId,
       gallery_images: galleryImages,
     };
@@ -229,6 +233,20 @@ const ProductForm = () => {
               <div className="space-y-2">
                 <Label>מק״ט</Label>
                 <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} dir="ltr" placeholder="e.g. SKU-001" />
+              </div>
+              <div className="space-y-2">
+                <Label>כתובת מותאמת בקישור (slug)</Label>
+                <Input
+                  value={form.slug}
+                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                  onBlur={(e) => setForm({ ...form, slug: normalizeSlug(e.target.value) })}
+                  dir="ltr"
+                  placeholder="my-product-name"
+                />
+                <p className="text-xs text-muted-foreground" dir="ltr">
+                  https://elwejha.co.il/product/{normalizeSlug(form.slug) || product?.product_number || "60"}
+                </p>
+                <p className="text-xs text-muted-foreground">אם נשאר ריק — הקישור ימשיך לעבוד לפי מספר המוצר. קישורים ישנים ימשיכו לעבוד תמיד.</p>
               </div>
               {/* Categories — multi-select chips. First selected = primary */}
               <div className="space-y-1">
