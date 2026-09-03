@@ -350,8 +350,8 @@ export default function WebProductPage() {
           ...((product as any).categories
             ? [{
                 label: t((product as any).categories.name, (product as any).categories.name_he),
-                to: (product as any).categories.category_number
-                  ? `/category/${(product as any).categories.category_number}`
+                to: (product as any).categories.slug || (product as any).categories.category_number
+                  ? `/category/${(product as any).categories.slug || (product as any).categories.category_number}`
                   : undefined,
               }]
             : []),
@@ -393,7 +393,7 @@ export default function WebProductPage() {
         <div className="flex flex-col justify-center">
           <div className="flex items-start justify-between gap-2 mb-4">
             <h1 className="text-2xl md:text-3xl font-bold">{displayName}</h1>
-            <ShareProductButton productNumber={product.product_number} productName={displayName} />
+            <ShareProductButton productKey={(product as any).slug || product.product_number} productName={displayName} />
           </div>
           {(() => {
             const shortDesc = lang === "he"
@@ -523,10 +523,10 @@ export default function WebProductPage() {
   );
 }
 
-function ShareProductButton({ productNumber, productName }: { productNumber: number; productName: string }) {
+function ShareProductButton({ productKey, productName }: { productKey: string | number; productName: string }) {
   const [copied, setCopied] = useState(false);
   const { t } = useLanguage();
-  const shareUrl = `https://elwejha.co.il/product/${productNumber}`;
+  const shareUrl = `https://elwejha.co.il/product/${productKey}`;
 
   const handleShare = async () => {
     // Try native share first (mobile)
