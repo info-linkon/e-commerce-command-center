@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wallet, ArrowLeftRight, Plus, History, ArrowDownLeft, ArrowUpRight, Receipt, CreditCard, Settings, RotateCcw } from "lucide-react";
+import { Wallet, ArrowLeftRight, Plus, History, ArrowDownLeft, ArrowUpRight, Receipt, CreditCard, Settings, RotateCcw, CalendarCheck, Lock, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useCashRegisters, useCreateCashRegister, useCashRegisterTransactions, useSetCashRegisterBalance, useSetCashRegisterOpeningBalance } from "@/hooks/useCashRegisters";
 import { useCashTransfers, useCreateCashTransfer } from "@/hooks/useCashTransfers";
+import { useCashClosings, useReopenCashPeriod, lastClosed } from "@/hooks/useCashClosings";
+import CloseMonthDialog from "@/components/cash/CloseMonthDialog";
 import { useUserNames } from "@/hooks/useUserNames";
 import { useIsOwner } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -124,6 +126,14 @@ const CashRegistersPage = () => {
   const [txRegisterId, setTxRegisterId] = useState<string | null>(null);
   const txRegister = registers?.find((r) => r.id === txRegisterId);
   const { data: transactions, isLoading: txLoading } = useCashRegisterTransactions(txRegisterId);
+
+  // Monthly closing
+  const { data: allClosings } = useCashClosings();
+  const reopenPeriod = useReopenCashPeriod();
+  const [closeRegisterId, setCloseRegisterId] = useState<string | null>(null);
+  const closeRegister = registers?.find((r) => r.id === closeRegisterId) || null;
+
+
 
   // Settings dialog (owner only)
   const [settingsRegisterId, setSettingsRegisterId] = useState<string | null>(null);
@@ -336,6 +346,48 @@ const CashRegistersPage = () => {
                     </div>
                   );
                 })()}
+                {(() => {
+                  const lc = lastClosed(allClosings, r.id);
+                  return (
+                    <div className="mt-3 rounded-md border p-2.5 text-xs space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          {lc ? <Lock className="h-3.5 w-3.5" /> : <CalendarCheck className="h-3.5 w-3.5" />}
+                          {lc ? `נסגר עד ${new Date(`${lc.period_end}T00:00:00`).toLocaleDateString("he-IL")}` : "החודש טרם נסגר"}
+                        </span>
+                        {lc && Math.abs(Number(lc.difference)) > 0.01 && (
+                          <Badge variant="outline" className="text-[10px]">
+                            פער {Number(lc.difference) > 0 ? "+" : "−"}₪{Math.abs(Number(lc.difference)).toFixed(2)}
+                          </Badge>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={() => setCloseRegisterId(r.id)}
+                      >
+                        <CalendarCheck className="h-4 w-4" />
+                        סגירת חודש
+                      </Button>
+                      {isOwner && lc && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full gap-2 text-muted-foreground"
+                          disabled={reopenPeriod.isPending}
+                          onClick={() => {
+                            if (!confirm(`לפתוח מחדש את התקופה שנסגרה ב-${lc.period_end} בקופת "${r.name}"?\n\nההתאמה שבוצעה בסגירה תבוטל והתקופה תיפתח לעריכה.`)) return;
+                            reopenPeriod.mutate(lc.id);
+                          }}
+                        >
+                          <Unlock className="h-4 w-4" />
+                          פתח מחדש את הסגירה האחרונה
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })()}
                 <Button
                   variant="outline"
                   size="sm"
@@ -361,6 +413,13 @@ const CashRegistersPage = () => {
           ))
         )}
       </div>
+
+      <CloseMonthDialog
+        open={!!closeRegisterId}
+        onOpenChange={(o) => !o && setCloseRegisterId(null)}
+        register={closeRegister}
+      />
+
 
       {/* Settings Dialog (owner only) */}
       {isOwner && (

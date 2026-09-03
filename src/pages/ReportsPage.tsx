@@ -16,6 +16,7 @@ import ExpensesTab from "@/components/reports/ExpensesTab";
 import ProfitabilityTab from "@/components/reports/ProfitabilityTab";
 // OrderTypeTab removed — invoice with/without view no longer relevant
 import ActivityLogTab from "@/components/reports/ActivityLogTab";
+import ClosingsTab from "@/components/reports/ClosingsTab";
 
 const ReportsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -131,8 +132,10 @@ const ReportsPage = () => {
           <TabsTrigger value="cashflow">קופות ותשלומים</TabsTrigger>
           <TabsTrigger value="expenses">הוצאות</TabsTrigger>
           <TabsTrigger value="profitability">רווחיות</TabsTrigger>
+          <TabsTrigger value="closings">סגירות חודש</TabsTrigger>
           <TabsTrigger value="activity-log">לוג פעילות</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="overview">
           <OverviewTab startDate={startDate} endDate={endDate} />
@@ -152,6 +155,10 @@ const ReportsPage = () => {
         <TabsContent value="profitability">
           <ProfitabilityTab startDate={startDate} endDate={endDate} />
         </TabsContent>
+        <TabsContent value="closings">
+          <ClosingsTab startDate={startDate} endDate={endDate} />
+        </TabsContent>
+
         <TabsContent value="activity-log">
           <ActivityLogTab startDate={startDate} endDate={endDate} />
         </TabsContent>

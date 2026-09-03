@@ -50,6 +50,6 @@ export function useCreateCashTransfer() {
       qc.invalidateQueries({ queryKey: ["cash_transfers"] });
       toast.success("ההעברה בוצעה בהצלחה");
     },
-    onError: () => toast.error("שגיאה בהעברת כספים"),
+    onError: (err: any) => toast.error(String(err?.message || "").includes("CASH_PERIOD_LOCKED") ? "שגיאה: התקופה נעולה (בוצעה סגירת חודש לקופה). יש לפתוח מחדש את הסגירה כדי לערוך." : "שגיאה בהעברת כספים"),
   });
 }
