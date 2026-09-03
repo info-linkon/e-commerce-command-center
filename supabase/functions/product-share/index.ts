@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     const comparePrice = Number((product as any).compare_at_price) || 0;
     const effectivePrice =
       comparePrice > 0 && (salePrice <= 0 || comparePrice < salePrice) ? comparePrice : salePrice;
-    const productUrl = `${siteUrl}/product/${product.product_number}`;
+    const productUrl = `${siteUrl}/product/${(product as any).slug || product.product_number}`;
     const title = product.name_ar
       ? `${product.name_ar} | ${product.name}`
       : product.name;
