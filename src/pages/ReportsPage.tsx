@@ -132,8 +132,10 @@ const ReportsPage = () => {
           <TabsTrigger value="cashflow">קופות ותשלומים</TabsTrigger>
           <TabsTrigger value="expenses">הוצאות</TabsTrigger>
           <TabsTrigger value="profitability">רווחיות</TabsTrigger>
+          <TabsTrigger value="closings">סגירות חודש</TabsTrigger>
           <TabsTrigger value="activity-log">לוג פעילות</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="overview">
           <OverviewTab startDate={startDate} endDate={endDate} />
