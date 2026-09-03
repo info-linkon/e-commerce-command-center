@@ -18,12 +18,13 @@ interface WebProductCardProps {
   variationId?: string | null;
   variationName?: string | null;
   variationNameHe?: string | null;
+  slug?: string | null;
 }
 
-export function WebProductCard({ id, productNumber, name, nameAr, price: rawPrice, originalPrice: rawOriginal, imageUrl, categoryName, categoryNameHe, outOfStock, variationId, variationName, variationNameHe }: WebProductCardProps) {
+export function WebProductCard({ id, productNumber, name, nameAr, price: rawPrice, originalPrice: rawOriginal, imageUrl, categoryName, categoryNameHe, outOfStock, variationId, variationName, variationNameHe, slug }: WebProductCardProps) {
   const { lang, localizedPath } = useLanguage();
   const displayName = lang === "he" ? (name || nameAr || "") : (nameAr || name);
-  const linkId = productNumber || id;
+  const linkId = slug || productNumber || id;
   const displayCategory = lang === "he" ? (categoryNameHe || categoryName) : (categoryName || categoryNameHe);
   const displayVariation = lang === "he" ? (variationNameHe || variationName) : (variationName || variationNameHe);
   const productHref = localizedPath(`/product/${linkId}${variationId ? `?v=${variationId}` : ""}`);

@@ -1,3 +1,4 @@
+import { isNumericKey } from "@/lib/slug";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -163,17 +164,23 @@ export function useWebProducts(categoryId?: string) {
   });
 }
 
-export function useWebProductsByCategoryNumber(categoryNumber: number | undefined) {
+/**
+ * Accepts either the numeric category_number or a custom slug from the URL.
+ */
+export function useWebProductsByCategoryNumber(categoryKey: string | number | undefined) {
+  const key = categoryKey === undefined || categoryKey === null ? undefined : String(categoryKey);
   return useQuery({
-    queryKey: ["web-products-by-cat-num", categoryNumber],
-    enabled: !!categoryNumber,
+    queryKey: ["web-products-by-cat-num", key],
+    enabled: !!key,
     queryFn: async () => {
-      // First find category by number
-      const { data: cat } = await (supabase
+      // Find the category either by its numeric id or by its custom slug
+      let catQuery = (supabase
         .from("categories")
-        .select("id, name, name_he") as any)
-        .eq("category_number", categoryNumber!)
-        .single();
+        .select("id, name, name_he, slug, category_number") as any);
+      catQuery = isNumericKey(key)
+        ? catQuery.eq("category_number", parseInt(key!, 10))
+        : catQuery.ilike("slug", key!);
+      const { data: cat } = await catQuery.maybeSingle();
       if (!cat) return { products: [], category: null };
 
       // Collect product ids from both the primary category_id link
@@ -205,19 +212,22 @@ export function useWebProductsByCategoryNumber(categoryNumber: number | undefine
   });
 }
 
-export function useWebProduct(productNumber: string | undefined) {
+/**
+ * Accepts either the numeric product_number or a custom slug from the URL.
+ */
+export function useWebProduct(productKey: string | undefined) {
   return useQuery({
-    queryKey: ["web-product", productNumber],
-    enabled: !!productNumber,
+    queryKey: ["web-product", productKey],
+    enabled: !!productKey,
     queryFn: async () => {
-      const num = parseInt(productNumber!, 10);
-      if (isNaN(num)) return null;
-      const { data, error } = await (supabase
+      let query = (supabase
         .from("products")
         .select("*, categories!products_category_id_fkey(name, name_he, slug, category_number)") as any)
-        .eq("product_number", num)
-        .eq("is_published", true)
-        .single();
+        .eq("is_published", true);
+      query = isNumericKey(productKey)
+        ? query.eq("product_number", parseInt(productKey!, 10))
+        : query.ilike("slug", productKey!);
+      const { data, error } = await query.maybeSingle();
       if (error) throw error;
       return data;
     },

@@ -9,8 +9,9 @@ import { gaViewItemList } from "@/lib/gtag";
 export default function WebCategoryPage() {
   const { lang, t } = useLanguage();
   const { id } = useParams();
-  const categoryNumber = parseInt(id || "", 10);
-  const { data, isLoading } = useWebProductsByCategoryNumber(isNaN(categoryNumber) ? undefined : categoryNumber);
+  // `id` may be the numeric category_number or a custom slug
+  const categoryNumber = id;
+  const { data, isLoading } = useWebProductsByCategoryNumber(id);
   const products = data?.products || [];
   const category = data?.category;
 
@@ -54,6 +55,7 @@ export default function WebCategoryPage() {
               key={product.id}
               id={product.id}
               productNumber={product.product_number}
+              slug={(product as any).slug}
               name={product.name}
               nameAr={product.name_ar}
               price={product.sale_price}

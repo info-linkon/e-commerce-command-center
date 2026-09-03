@@ -7,6 +7,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { normalizeSlug } from "@/lib/slug";
 
 type Category = Tables<"categories">;
 
@@ -14,13 +15,14 @@ interface CategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category?: Category | null;
-  onSave: (data: { name: string; name_he: string | null; display_order: number; image_url: string | null }) => void;
+  onSave: (data: { name: string; name_he: string | null; slug: string | null; display_order: number; image_url: string | null }) => void;
   loading?: boolean;
 }
 
 export function CategoryDialog({ open, onOpenChange, category, onSave, loading }: CategoryDialogProps) {
   const [name, setName] = useState(category?.name ?? "");
   const [nameHe, setNameHe] = useState((category as any)?.name_he ?? "");
+  const [slug, setSlug] = useState(category?.slug ?? "");
   const [displayOrder, setDisplayOrder] = useState(category?.display_order ?? 0);
   const [imageUrl, setImageUrl] = useState<string | null>(category?.image_url ?? null);
   const [uploading, setUploading] = useState(false);
@@ -31,6 +33,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
     if (open) {
       setName(category?.name ?? "");
       setNameHe((category as any)?.name_he ?? "");
+      setSlug(category?.slug ?? "");
       setDisplayOrder(category?.display_order ?? 0);
       setImageUrl(category?.image_url ?? null);
     }
@@ -70,6 +73,21 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
             <Input id="cat-name-he" value={nameHe} onChange={(e) => setNameHe(e.target.value)} placeholder="למשל: סיגרים" />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="cat-slug">כתובת מותאמת בקישור (slug)</Label>
+            <Input
+              id="cat-slug"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              onBlur={(e) => setSlug(normalizeSlug(e.target.value))}
+              dir="ltr"
+              placeholder="my-category"
+            />
+            <p className="text-xs text-muted-foreground" dir="ltr">
+              https://elwejha.co.il/category/{normalizeSlug(slug) || category?.category_number || "1"}
+            </p>
+            <p className="text-xs text-muted-foreground">אם נשאר ריק — הקישור יעבוד לפי מספר הקטגוריה. קישורים ישנים ימשיכו לעבוד.</p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="order">סדר תצוגה</Label>
             <Input id="order" type="number" value={displayOrder} onChange={(e) => setDisplayOrder(Number(e.target.value))} />
           </div>
@@ -97,7 +115,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
-          <Button onClick={() => onSave({ name, name_he: nameHe || null, display_order: displayOrder, image_url: imageUrl })} disabled={!name || loading || uploading}>
+          <Button onClick={() => onSave({ name, name_he: nameHe || null, slug: normalizeSlug(slug) || null, display_order: displayOrder, image_url: imageUrl })} disabled={!name || loading || uploading}>
             {loading ? "שומר..." : "שמור"}
           </Button>
         </DialogFooter>
