@@ -1474,6 +1474,7 @@ export type Database = {
           short_description: string | null
           short_description_ar: string | null
           sku: string | null
+          slug: string | null
           updated_at: string
           woo_id: number | null
         }
@@ -1498,6 +1499,7 @@ export type Database = {
           short_description?: string | null
           short_description_ar?: string | null
           sku?: string | null
+          slug?: string | null
           updated_at?: string
           woo_id?: number | null
         }
@@ -1522,6 +1524,7 @@ export type Database = {
           short_description?: string | null
           short_description_ar?: string | null
           sku?: string | null
+          slug?: string | null
           updated_at?: string
           woo_id?: number | null
         }
