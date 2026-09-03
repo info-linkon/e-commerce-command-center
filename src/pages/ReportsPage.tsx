@@ -155,6 +155,10 @@ const ReportsPage = () => {
         <TabsContent value="profitability">
           <ProfitabilityTab startDate={startDate} endDate={endDate} />
         </TabsContent>
+        <TabsContent value="closings">
+          <ClosingsTab startDate={startDate} endDate={endDate} />
+        </TabsContent>
+
         <TabsContent value="activity-log">
           <ActivityLogTab startDate={startDate} endDate={endDate} />
         </TabsContent>
