@@ -414,6 +414,13 @@ const CashRegistersPage = () => {
         )}
       </div>
 
+      <CloseMonthDialog
+        open={!!closeRegisterId}
+        onOpenChange={(o) => !o && setCloseRegisterId(null)}
+        register={closeRegister}
+      />
+
+
       {/* Settings Dialog (owner only) */}
       {isOwner && (
         <Dialog open={!!settingsRegisterId} onOpenChange={(o) => !o && setSettingsRegisterId(null)}>
