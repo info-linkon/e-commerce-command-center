@@ -13,12 +13,12 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    // Extract product number from path: /product-share/123
+    // Extract product key from path: /product-share/123 or /product-share/my-slug
     const segments = url.pathname.split("/").filter(Boolean);
-    const productNumber = parseInt(segments[segments.length - 1], 10);
+    const productKey = decodeURIComponent(segments[segments.length - 1] || "");
 
-    if (isNaN(productNumber)) {
-      return new Response("Missing product number", { status: 400 });
+    if (!productKey) {
+      return new Response("Missing product key", { status: 400 });
     }
 
     const supabase = createClient(
@@ -26,12 +26,17 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: product, error } = await supabase
+    const isNumeric = /^\d+$/.test(productKey);
+    let query = supabase
       .from("products")
-      .select("name, name_ar, image_url, short_description, short_description_ar, sale_price, compare_at_price, product_number")
-      .eq("product_number", productNumber)
-      .eq("is_published", true)
-      .single();
+      .select("name, name_ar, image_url, short_description, short_description_ar, sale_price, compare_at_price, product_number, slug")
+      .eq("is_published", true);
+
+    query = isNumeric
+      ? query.eq("product_number", parseInt(productKey, 10))
+      : query.ilike("slug", productKey);
+
+    const { data: product, error } = await query.maybeSingle();
 
     if (error || !product) {
       // Redirect to homepage if product not found
@@ -45,11 +50,13 @@ Deno.serve(async (req) => {
     const comparePrice = Number((product as any).compare_at_price) || 0;
     const effectivePrice =
       comparePrice > 0 && (salePrice <= 0 || comparePrice < salePrice) ? comparePrice : salePrice;
-    const productUrl = `${siteUrl}/product/${product.product_number}`;
+    const productUrl = `${siteUrl}/product/${(product as any).slug || product.product_number}`;
     const title = product.name_ar
       ? `${product.name_ar} | ${product.name}`
       : product.name;
-    const description = product.short_description_ar || product.short_description || `${title} - ₪${effectivePrice}`;
+    const rawDesc = product.short_description_ar || product.short_description || "";
+    const cleanDesc = stripHtml(rawDesc);
+    const description = (cleanDesc.length > 200 ? cleanDesc.slice(0, 197) + "…" : cleanDesc) || `${title} - ₪${effectivePrice}`;
     const imageUrl = product.image_url || `${siteUrl}/og-image.png`;
 
     const html = `<!DOCTYPE html>
@@ -98,6 +105,19 @@ Deno.serve(async (req) => {
     return Response.redirect("https://elwejha.co.il", 302);
   }
 });
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 function escapeHtml(str: string): string {
   return str
