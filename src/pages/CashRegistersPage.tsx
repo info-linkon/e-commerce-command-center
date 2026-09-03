@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wallet, ArrowLeftRight, Plus, History, ArrowDownLeft, ArrowUpRight, Receipt, CreditCard, Settings, RotateCcw } from "lucide-react";
+import { Wallet, ArrowLeftRight, Plus, History, ArrowDownLeft, ArrowUpRight, Receipt, CreditCard, Settings, RotateCcw, CalendarCheck, Lock, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useCashRegisters, useCreateCashRegister, useCashRegisterTransactions, useSetCashRegisterBalance, useSetCashRegisterOpeningBalance } from "@/hooks/useCashRegisters";
 import { useCashTransfers, useCreateCashTransfer } from "@/hooks/useCashTransfers";
+import { useCashClosings, useReopenCashPeriod, lastClosed } from "@/hooks/useCashClosings";
+import CloseMonthDialog from "@/components/cash/CloseMonthDialog";
 import { useUserNames } from "@/hooks/useUserNames";
 import { useIsOwner } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
