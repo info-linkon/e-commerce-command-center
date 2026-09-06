@@ -36,10 +36,15 @@ export async function reconcileOverpayment(orderId: string, newTotal: number): P
     const reduce = Math.min(amount, excess);
     const newAmount = Math.round((amount - reduce) * 100) / 100;
 
-    // Reverse the cash register credit only when it was actually applied.
+    // Reverse the register credit only when it was actually applied.
+    // Cash: deferred registers are credited only once the order is completed.
+    // Non-cash (HYP credit): credited at payment time, always reverse.
     const deferred = !!p.cash_registers?.requires_completed_order;
-    const registerCredited =
-      p.payment_method === "cash" && p.cash_register_id && (!deferred || order.status === "completed");
+    const registerCredited = !!p.cash_register_id && (
+      p.payment_method === "cash"
+        ? (!deferred || order.status === "completed")
+        : true
+    );
     if (registerCredited) {
       await supabase.rpc("increment_cash_register", { reg_id: p.cash_register_id, delta: -reduce });
     }

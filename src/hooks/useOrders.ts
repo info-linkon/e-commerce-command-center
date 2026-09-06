@@ -494,16 +494,17 @@ export function useCancelOrder() {
       }
 
       for (const p of payments || []) {
-        if (
-          p.payment_method === "cash" &&
-          p.cash_register_id &&
-          !deferredRegIds.has(p.cash_register_id)
-        ) {
-          await supabase.rpc("increment_cash_register" as any, {
-            reg_id: p.cash_register_id,
-            delta: -Number(p.amount),
-          });
-        }
+        if (!p.cash_register_id) continue;
+        // Non-cash payments (e.g. HYP credit) are credited to their register at
+        // payment time regardless of order status — always reverse them.
+        // Cash payments in "deferred" registers are trigger-managed — skip.
+        const isDeferredCash =
+          p.payment_method === "cash" && deferredRegIds.has(p.cash_register_id);
+        if (isDeferredCash) continue;
+        await supabase.rpc("increment_cash_register" as any, {
+          reg_id: p.cash_register_id,
+          delta: -Number(p.amount),
+        });
       }
 
       if (payments && payments.length > 0) {
@@ -681,21 +682,18 @@ export function useDeleteOrder() {
           if (r.requires_completed_order) deferredRegIds.add(r.id);
         }
       }
-      // Only reverse balance if order is currently completed (otherwise
-      // balance was never added). For deferred registers — never reverse.
-      if (ord?.status === "completed") {
-        for (const p of payments || []) {
-          if (
-            p.payment_method === "cash" &&
-            p.cash_register_id &&
-            !deferredRegIds.has(p.cash_register_id)
-          ) {
-            await supabase.rpc("increment_cash_register" as any, {
-              reg_id: p.cash_register_id,
-              delta: -Number(p.amount),
-            });
-          }
+      for (const p of payments || []) {
+        if (!p.cash_register_id) continue;
+        if (p.payment_method === "cash") {
+          // Deferred registers are trigger-managed and only hold completed orders.
+          if (deferredRegIds.has(p.cash_register_id)) continue;
+          if (ord?.status !== "completed") continue;
         }
+        // Non-cash payments (HYP credit) are credited at payment time.
+        await supabase.rpc("increment_cash_register" as any, {
+          reg_id: p.cash_register_id,
+          delta: -Number(p.amount),
+        });
       }
 
       // 4. Delete dependent rows (no FK CASCADE on most tables)
