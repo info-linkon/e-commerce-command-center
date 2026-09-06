@@ -213,6 +213,68 @@ export type Database = {
           },
         ]
       }
+      cash_register_closings: {
+        Row: {
+          cash_register_id: string
+          closed_at: string
+          closed_by: string | null
+          counted_balance: number
+          created_at: string
+          difference: number | null
+          expected_balance: number
+          id: string
+          is_open: boolean
+          notes: string | null
+          opening_balance: number
+          period_end: string
+          period_start: string
+          reopened_at: string | null
+          reopened_by: string | null
+        }
+        Insert: {
+          cash_register_id: string
+          closed_at?: string
+          closed_by?: string | null
+          counted_balance?: number
+          created_at?: string
+          difference?: number | null
+          expected_balance?: number
+          id?: string
+          is_open?: boolean
+          notes?: string | null
+          opening_balance?: number
+          period_end: string
+          period_start: string
+          reopened_at?: string | null
+          reopened_by?: string | null
+        }
+        Update: {
+          cash_register_id?: string
+          closed_at?: string
+          closed_by?: string | null
+          counted_balance?: number
+          created_at?: string
+          difference?: number | null
+          expected_balance?: number
+          id?: string
+          is_open?: boolean
+          notes?: string | null
+          opening_balance?: number
+          period_end?: string
+          period_start?: string
+          reopened_at?: string | null
+          reopened_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_register_closings_cash_register_id_fkey"
+            columns: ["cash_register_id"]
+            isOneToOne: false
+            referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_registers: {
         Row: {
           created_at: string
@@ -1731,6 +1793,18 @@ export type Database = {
       }
     }
     Functions: {
+      close_cash_period: {
+        Args: {
+          _counted: number
+          _expected: number
+          _notes: string
+          _period_end: string
+          _period_start: string
+          _register_id: string
+          _user: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1741,6 +1815,14 @@ export type Database = {
       increment_cash_register: {
         Args: { delta: number; reg_id: string }
         Returns: number
+      }
+      is_cash_period_locked: {
+        Args: { _register_id: string; _ts: string }
+        Returns: boolean
+      }
+      reopen_cash_period: {
+        Args: { _closing_id: string; _user: string }
+        Returns: undefined
       }
     }
     Enums: {

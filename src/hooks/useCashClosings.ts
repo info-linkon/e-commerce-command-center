@@ -59,7 +59,62 @@ export type PeriodSummary = {
   expected: number;
 };
 
-/** Movements of one register between two dates (inclusive), plus expected balance. */
+type Movements = { payments: number; expenses: number; transfersIn: number; transfersOut: number };
+
+async function fetchMovements(
+  registerId: string,
+  fromTs: string | null,
+  toTs: string,
+  requiresCompleted: boolean,
+): Promise<Movements> {
+  let pq = db
+    .from("payments")
+    .select("amount, payment_method, created_at, orders(status)")
+    .eq("cash_register_id", registerId)
+    .lt("created_at", toTs);
+  let eq_ = db
+    .from("expenses")
+    .select("amount, created_at")
+    .eq("cash_register_id", registerId)
+    .eq("payment_source", "cash_register")
+    .lt("created_at", toTs);
+  let tq = db
+    .from("cash_transfers")
+    .select("amount, from_register_id, to_register_id, created_at")
+    .or(`from_register_id.eq.${registerId},to_register_id.eq.${registerId}`)
+    .lt("created_at", toTs);
+
+  if (fromTs) {
+    pq = pq.gte("created_at", fromTs);
+    eq_ = eq_.gte("created_at", fromTs);
+    tq = tq.gte("created_at", fromTs);
+  }
+
+  const [paymentsRes, expensesRes, transfersRes] = await Promise.all([pq, eq_, tq]);
+  if (paymentsRes.error) throw paymentsRes.error;
+  if (expensesRes.error) throw expensesRes.error;
+  if (transfersRes.error) throw transfersRes.error;
+
+  let payments = 0;
+  for (const p of paymentsRes.data || []) {
+    if (requiresCompleted && p.payment_method === "cash" && p.orders?.status !== "completed") continue;
+    payments += Number(p.amount);
+  }
+  let expenses = 0;
+  for (const e of expensesRes.data || []) expenses += Number(e.amount);
+
+  let transfersIn = 0;
+  let transfersOut = 0;
+  for (const t of transfersRes.data || []) {
+    if (t.to_register_id === registerId) transfersIn += Number(t.amount);
+    if (t.from_register_id === registerId) transfersOut += Number(t.amount);
+  }
+  return { payments, expenses, transfersIn, transfersOut };
+}
+
+/** Movements of one register between two dates (inclusive), plus expected balance.
+ *  The opening balance is cumulative: the last closed count, or the register's
+ *  initial balance plus every movement that happened before the period start. */
 export function useRegisterPeriodSummary(
   registerId: string | null,
   periodStart: string | null,
@@ -74,72 +129,59 @@ export function useRegisterPeriodSummary(
       toDate.setDate(toDate.getDate() + 1);
       const toTs = toDate.toISOString();
 
-      const [regRes, closingRes, paymentsRes, expensesRes, transfersRes] = await Promise.all([
-        db.from("cash_registers").select("opening_balance, requires_completed_order").eq("id", registerId).maybeSingle(),
+      const [regRes, closingRes] = await Promise.all([
+        db
+          .from("cash_registers")
+          .select("opening_balance, requires_completed_order")
+          .eq("id", registerId)
+          .maybeSingle(),
         db
           .from("cash_register_closings")
           .select("counted_balance, period_end")
           .eq("cash_register_id", registerId)
           .eq("is_open", false)
+          .lt("period_end", periodStart)
           .order("period_end", { ascending: false })
           .limit(1),
-        db
-          .from("payments")
-          .select("amount, payment_method, created_at, orders(status)")
-          .eq("cash_register_id", registerId)
-          .gte("created_at", fromTs)
-          .lt("created_at", toTs),
-        db
-          .from("expenses")
-          .select("amount, created_at")
-          .eq("cash_register_id", registerId)
-          .eq("payment_source", "cash_register")
-          .gte("created_at", fromTs)
-          .lt("created_at", toTs),
-        db
-          .from("cash_transfers")
-          .select("amount, from_register_id, to_register_id, created_at")
-          .or(`from_register_id.eq.${registerId},to_register_id.eq.${registerId}`)
-          .gte("created_at", fromTs)
-          .lt("created_at", toTs),
       ]);
-
-      if (paymentsRes.error) throw paymentsRes.error;
-      if (expensesRes.error) throw expensesRes.error;
-      if (transfersRes.error) throw transfersRes.error;
 
       const requiresCompleted = !!regRes.data?.requires_completed_order;
       const prevClosing = (closingRes.data || [])[0];
-      const opening = prevClosing
-        ? Number(prevClosing.counted_balance)
-        : Number(regRes.data?.opening_balance || 0);
 
-      let payments = 0;
-      for (const p of paymentsRes.data || []) {
-        if (requiresCompleted && p.payment_method === "cash" && p.orders?.status !== "completed") continue;
-        payments += Number(p.amount);
+      // Baseline before the period: previous closed count (+ anything after it),
+      // or the register's initial balance plus all earlier movements.
+      let priorFromTs: string | null = null;
+      let base: number;
+      if (prevClosing) {
+        base = Number(prevClosing.counted_balance);
+        const d = new Date(`${prevClosing.period_end}T00:00:00`);
+        d.setDate(d.getDate() + 1);
+        priorFromTs = d.toISOString();
+      } else {
+        base = Number(regRes.data?.opening_balance || 0);
       }
-      let expenses = 0;
-      for (const e of expensesRes.data || []) expenses += Number(e.amount);
 
-      let transfersIn = 0;
-      let transfersOut = 0;
-      for (const t of transfersRes.data || []) {
-        if (t.to_register_id === registerId) transfersIn += Number(t.amount);
-        if (t.from_register_id === registerId) transfersOut += Number(t.amount);
-      }
+      const [prior, period] = await Promise.all([
+        fetchMovements(registerId as string, priorFromTs, fromTs, requiresCompleted),
+        fetchMovements(registerId as string, fromTs, toTs, requiresCompleted),
+      ]);
+
+      const opening =
+        base + prior.payments - prior.expenses + prior.transfersIn - prior.transfersOut;
 
       return {
         opening,
-        payments,
-        expenses,
-        transfersIn,
-        transfersOut,
-        expected: opening + payments - expenses + transfersIn - transfersOut,
+        payments: period.payments,
+        expenses: period.expenses,
+        transfersIn: period.transfersIn,
+        transfersOut: period.transfersOut,
+        expected:
+          opening + period.payments - period.expenses + period.transfersIn - period.transfersOut,
       };
     },
   });
 }
+
 
 export function useCloseCashPeriod() {
   const qc = useQueryClient();
