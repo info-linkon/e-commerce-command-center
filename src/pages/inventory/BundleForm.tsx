@@ -17,6 +17,7 @@ import { BundleVariationsManager } from "@/components/inventory/BundleVariations
 import { RelatedProductsManager } from "@/components/inventory/RelatedProductsManager";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSlug } from "@/lib/slug";
 import { toast } from "sonner";
 
 const BundleForm = () => {
@@ -61,6 +62,7 @@ const BundleForm = () => {
     name: "",
     name_ar: "",
     sku: "",
+    slug: "",
     description: "",
     description_ar: "",
     short_description: "",
@@ -109,6 +111,7 @@ const BundleForm = () => {
         name: product?.name || "",
         name_ar: product?.name_ar || "",
         sku: product?.sku || "",
+        slug: (product as any)?.slug || "",
         description: product?.description || "",
         description_ar: product?.description_ar || "",
         short_description: product?.short_description || "",
@@ -145,6 +148,7 @@ const BundleForm = () => {
         name: sourceProduct.name || "",
         name_ar: sourceProduct.name_ar || "",
         sku: sourceProduct.sku || "",
+        slug: (sourceProduct as any).slug || "",
         description: sourceProduct.description || "",
         description_ar: sourceProduct.description_ar || "",
         short_description: sourceProduct.short_description || "",
@@ -231,6 +235,7 @@ const BundleForm = () => {
       name: form.name,
       name_ar: form.name_ar || null,
       sku: form.sku || null,
+      slug: normalizeSlug(form.slug) || null,
       description: form.description || null,
       description_ar: form.description_ar || null,
       short_description: form.short_description || null,
@@ -244,7 +249,7 @@ const BundleForm = () => {
       image_url: form.image_url || null,
       gallery_images: galleryImages,
       product_type: form.bundle_type === "variable_bundle" ? "variable" as const : "simple" as const,
-    };
+    } as any;
 
     const bundleItems = items.map(({ variation_id, quantity }) => ({ variation_id, quantity }));
 
@@ -376,6 +381,20 @@ const BundleForm = () => {
               <div className="space-y-1">
                 <Label className="text-xs">מק״ט</Label>
                 <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} dir="ltr" placeholder="e.g. BND-001" className="h-9" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">כתובת מותאמת בקישור (slug)</Label>
+                <Input
+                  value={form.slug}
+                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                  onBlur={(e) => setForm({ ...form, slug: normalizeSlug(e.target.value) })}
+                  dir="ltr"
+                  placeholder="ramadan-box"
+                  className="h-9"
+                />
+                <p className="text-xs text-muted-foreground" dir="ltr">
+                  https://elwejha.co.il/product/{normalizeSlug(form.slug) || (bundle as any)?.products?.product_number || "…"}
+                </p>
               </div>
               {/* Categories — multi-select chips. First selected = primary */}
               <div className="space-y-1">
