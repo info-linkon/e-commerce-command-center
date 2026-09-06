@@ -249,7 +249,7 @@ const BundleForm = () => {
       image_url: form.image_url || null,
       gallery_images: galleryImages,
       product_type: form.bundle_type === "variable_bundle" ? "variable" as const : "simple" as const,
-    };
+    } as any;
 
     const bundleItems = items.map(({ variation_id, quantity }) => ({ variation_id, quantity }));
 
@@ -381,6 +381,20 @@ const BundleForm = () => {
               <div className="space-y-1">
                 <Label className="text-xs">מק״ט</Label>
                 <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} dir="ltr" placeholder="e.g. BND-001" className="h-9" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">כתובת מותאמת בקישור (slug)</Label>
+                <Input
+                  value={form.slug}
+                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                  onBlur={(e) => setForm({ ...form, slug: normalizeSlug(e.target.value) })}
+                  dir="ltr"
+                  placeholder="ramadan-box"
+                  className="h-9"
+                />
+                <p className="text-xs text-muted-foreground" dir="ltr">
+                  https://elwejha.co.il/product/{normalizeSlug(form.slug) || (bundle as any)?.products?.product_number || "…"}
+                </p>
               </div>
               {/* Categories — multi-select chips. First selected = primary */}
               <div className="space-y-1">
