@@ -70,7 +70,8 @@ const CloseMonthDialog = ({ open, onOpenChange, register }: Props) => {
 
   const countedNum = parseFloat(counted);
   const hasCounted = isFinite(countedNum);
-  const diff = hasCounted && summary ? countedNum - summary.expected : 0;
+  const currentBalance = Number(register?.current_balance ?? 0);
+  const diff = hasCounted ? countedNum - currentBalance : 0;
 
   const handleClose = () => {
     if (!register || !summary || !hasCounted) return;
@@ -79,7 +80,7 @@ const CloseMonthDialog = ({ open, onOpenChange, register }: Props) => {
         register_id: register.id,
         period_start: period.start,
         period_end: period.end,
-        expected: summary.expected,
+        expected: currentBalance,
         counted: countedNum,
         notes: notes.trim() || undefined,
       },
@@ -127,7 +128,7 @@ const CloseMonthDialog = ({ open, onOpenChange, register }: Props) => {
                 {row("− העברות יוצאות", `−₪${summary.transfersOut.toFixed(2)}`, "text-red-700")}
                 <div className="flex justify-between border-t pt-1 mt-1">
                   <span className="text-muted-foreground">= יתרה צפויה</span>
-                  <span className="font-bold">₪{summary.expected.toFixed(2)}</span>
+                  <span className="font-bold">₪{currentBalance.toFixed(2)}</span>
                 </div>
               </>
             )}
