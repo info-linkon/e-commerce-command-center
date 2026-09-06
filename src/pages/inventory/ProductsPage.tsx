@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Pencil, Trash2, Search, FolderOpen, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +20,19 @@ type Category = Tables<"categories">;
 
 const ProductsPage = () => {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  // Keep search + category filter in the URL so they survive navigation
+  // (e.g. opening a product to edit it and pressing back keeps the filter).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get("q") || "";
+  const categoryFilter = searchParams.get("cat") || "all";
+  const setSearch = (v: string) => setSearchParams(
+    (prev) => { const p = new URLSearchParams(prev); if (v) p.set("q", v); else p.delete("q"); return p; },
+    { replace: true }
+  );
+  const setCategoryFilter = (v: string) => setSearchParams(
+    (prev) => { const p = new URLSearchParams(prev); if (v && v !== "all") p.set("cat", v); else p.delete("cat"); return p; },
+    { replace: true }
+  );
   // Fetch all products and filter client-side so the category filter also matches
   // products linked via the product_categories mapping table.
   const { data: products, isLoading } = useProducts();
