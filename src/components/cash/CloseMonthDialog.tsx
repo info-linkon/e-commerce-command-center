@@ -70,8 +70,8 @@ const CloseMonthDialog = ({ open, onOpenChange, register }: Props) => {
 
   const countedNum = parseFloat(counted);
   const hasCounted = isFinite(countedNum);
-  const currentBalance = Number(register?.current_balance ?? 0);
-  const diff = hasCounted ? countedNum - currentBalance : 0;
+  const expectedBalance = Number(summary?.expected ?? 0);
+  const diff = hasCounted ? countedNum - expectedBalance : 0;
 
   const handleClose = () => {
     if (!register || !summary || !hasCounted) return;
