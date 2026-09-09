@@ -128,7 +128,7 @@ const CloseMonthDialog = ({ open, onOpenChange, register }: Props) => {
                 {row("− העברות יוצאות", `−₪${summary.transfersOut.toFixed(2)}`, "text-red-700")}
                 <div className="flex justify-between border-t pt-1 mt-1">
                   <span className="text-muted-foreground">= יתרה צפויה</span>
-                  <span className="font-bold">₪{currentBalance.toFixed(2)}</span>
+                  <span className="font-bold">₪{summary.expected.toFixed(2)}</span>
                 </div>
               </>
             )}
