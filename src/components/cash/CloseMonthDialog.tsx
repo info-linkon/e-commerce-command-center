@@ -80,7 +80,7 @@ const CloseMonthDialog = ({ open, onOpenChange, register }: Props) => {
         register_id: register.id,
         period_start: period.start,
         period_end: period.end,
-        expected: currentBalance,
+        expected: expectedBalance,
         counted: countedNum,
         notes: notes.trim() || undefined,
       },
