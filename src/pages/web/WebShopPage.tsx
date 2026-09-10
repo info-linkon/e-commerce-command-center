@@ -1,6 +1,7 @@
 import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
 import { WebProductCard } from "@/components/web/WebProductCard";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { Seo } from "@/components/web/Seo";
 import { useLanguage } from "@/hooks/useLanguage";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,10 +26,31 @@ const categoryImageMap: Record<string, string> = {
 };
 
 export default function WebShopPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  // Filter + view state live in the URL so returning from a product page
+  // (browser back) restores exactly the same catalog view.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCategory = searchParams.get("cat") || undefined;
+  const showAll = searchParams.get("all") === "1" || !!selectedCategory;
+
+  const setSelectedCategory = (catId?: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (catId) next.set("cat", catId);
+    else next.delete("cat");
+    next.set("all", "1");
+    setSearchParams(next, { replace: true });
+  };
+  const setShowAll = (value: boolean) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set("all", "1");
+    else {
+      next.delete("all");
+      next.delete("cat");
+    }
+    setSearchParams(next, { replace: true });
+  };
+
   const { data: products, isLoading } = useWebProducts(selectedCategory);
   const { data: categories } = useWebCategories();
-  const [showAll, setShowAll] = useState(false);
   const { lang, t, localizedPath } = useLanguage();
 
   // GA4: view_item_list when viewing the "all products" grid
