@@ -21,15 +21,17 @@ export function ttq(event: string, data?: Record<string, any>) {
 }
 
 /** Advanced matching for TikTok — the SDK hashes the values client-side. */
-export function ttqIdentify(user: { email?: string | null; phone?: string | null }) {
+export function ttqIdentify(user: { email?: string | null; phone?: string | null; external_id?: string | null }) {
   if (typeof window === "undefined" || !window.ttq) return;
   const email = normalizeEmail(user.email);
   const phone_number = normalizePhone(user.phone);
-  if (!email && !phone_number) return;
+  const external_id = user.external_id || undefined;
+  if (!email && !phone_number && !external_id) return;
   try {
     window.ttq.identify({
       ...(email ? { email } : {}),
       ...(phone_number ? { phone_number: `+${phone_number}` } : {}),
+      ...(external_id ? { external_id } : {}),
     });
   } catch (err) {
     console.debug("[tiktok-pixel] identify error:", err);
