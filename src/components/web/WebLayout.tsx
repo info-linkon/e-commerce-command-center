@@ -5,7 +5,7 @@ import { WebBottomNav } from "./WebBottomNav";
 import { MessageCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
-import { fbqPageView, setMetaPixelId } from "@/lib/meta-pixel";
+import { fbqPageView, setMetaPixelId, buildMatchData, loadIdentity, getExternalId } from "@/lib/meta-pixel";
 import { ttqPageView } from "@/lib/tiktok-pixel";
 import { gaPageView } from "@/lib/gtag";
 import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
@@ -38,7 +38,9 @@ function WebLayoutInner() {
     const tryInit = (attempts = 0) => {
       if (typeof window !== "undefined" && window.fbq) {
         setMetaPixelId(pixelId);
-        window.fbq("init", pixelId);
+        // Init with advanced matching: stable external id + any remembered
+        // customer email/phone, so every event carries identifying data.
+        window.fbq("init", pixelId, buildMatchData(loadIdentity()));
         fbqPageView();
         pixelInitialized.current = true;
       } else if (attempts < 20) {
