@@ -68,6 +68,14 @@ export default function WebShopPage() {
   if (!showAll) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+        <Seo
+          title={t("المتجر — أقسام معدات الرحلات", "החנות — קטגוריות ציוד לטיולים")}
+          description={t(
+            "تصفح أقسام متجر الوجهة: خيام، جلسات، مواقد، أطقم شاي وقهوة ومعدات تخييم.",
+            "עיינו בקטגוריות של ELWEJHA: אוהלים, ישיבה, כיריים, ערכות תה וקפה וציוד קמפינג.",
+          )}
+          path="/shop"
+        />
         <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{t("المتجر", "חנות")}</h1>
         <p className="text-muted-foreground mb-8">{t("اختر القسم المطلوب", "בחר קטגוריה")}</p>
 
