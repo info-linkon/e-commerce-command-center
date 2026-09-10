@@ -263,6 +263,10 @@ export default function WebCheckoutPage() {
     const customerEmail = (form.get("email") as string) || "";
     const isCash = selectedPayment === "cash";
 
+    // Advanced matching: identify the shopper before the order events fire.
+    fbqIdentify({ email: customerEmail, phone: customerPhone, name: customerName });
+    ttqIdentify({ email: customerEmail, phone: customerPhone });
+
     try {
       const uniqueCartVariationIds = Array.from(new Set(items.map((item) => item.variationId)));
       const { data: matchedVariations, error: matchedVariationsError } = await supabase
