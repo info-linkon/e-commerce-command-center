@@ -6,7 +6,7 @@ import { MessageCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { fbqPageView, setMetaPixelId, buildMatchData, loadIdentity, getExternalId } from "@/lib/meta-pixel";
-import { ttqPageView } from "@/lib/tiktok-pixel";
+import { ttqPageView, ttqIdentify } from "@/lib/tiktok-pixel";
 import { gaPageView } from "@/lib/gtag";
 import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
@@ -58,6 +58,8 @@ function WebLayoutInner() {
     const tryInit = (attempts = 0) => {
       if (typeof window !== "undefined" && (window as any).ttq && typeof (window as any).ttq.load === "function") {
         (window as any).ttq.load(tiktokPixelId);
+        const saved = loadIdentity();
+        ttqIdentify({ email: saved.email, phone: saved.phone, external_id: getExternalId() });
         (window as any).ttq.page();
         tiktokInitialized.current = true;
       } else if (attempts < 20) {
