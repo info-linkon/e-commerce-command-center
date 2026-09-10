@@ -307,15 +307,10 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     });
   } catch (err) {
     console.error("[meta-pixel] Purchase enrichment failed:", err);
-    fbq("Purchase", {
-      value: isFinite(amount) ? amount : 0,
-      currency: "ILS",
-    });
-    ttq("CompletePayment", {
-      value: isFinite(amount) ? amount : 0,
-      currency: "ILS",
-    });
-    gaPurchase(String(orderNumber), isFinite(amount) ? amount : 0, []);
+    if (!isFinite(amount) || amount <= 0) return;
+    fbq("Purchase", { value: amount, currency: "ILS" });
+    ttq("CompletePayment", { value: amount, currency: "ILS" });
+    gaPurchase(String(orderNumber), amount, []);
   }
 }
 
