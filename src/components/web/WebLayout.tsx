@@ -5,8 +5,8 @@ import { WebBottomNav } from "./WebBottomNav";
 import { MessageCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
-import { fbqPageView, setMetaPixelId } from "@/lib/meta-pixel";
-import { ttqPageView } from "@/lib/tiktok-pixel";
+import { fbqPageView, setMetaPixelId, buildMatchData, loadIdentity, getExternalId } from "@/lib/meta-pixel";
+import { ttqPageView, ttqIdentify } from "@/lib/tiktok-pixel";
 import { gaPageView } from "@/lib/gtag";
 import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
@@ -38,7 +38,9 @@ function WebLayoutInner() {
     const tryInit = (attempts = 0) => {
       if (typeof window !== "undefined" && window.fbq) {
         setMetaPixelId(pixelId);
-        window.fbq("init", pixelId);
+        // Init with advanced matching: stable external id + any remembered
+        // customer email/phone, so every event carries identifying data.
+        window.fbq("init", pixelId, buildMatchData(loadIdentity()));
         fbqPageView();
         pixelInitialized.current = true;
       } else if (attempts < 20) {
@@ -56,6 +58,8 @@ function WebLayoutInner() {
     const tryInit = (attempts = 0) => {
       if (typeof window !== "undefined" && (window as any).ttq && typeof (window as any).ttq.load === "function") {
         (window as any).ttq.load(tiktokPixelId);
+        const saved = loadIdentity();
+        ttqIdentify({ email: saved.email, phone: saved.phone, external_id: getExternalId() });
         (window as any).ttq.page();
         tiktokInitialized.current = true;
       } else if (attempts < 20) {
