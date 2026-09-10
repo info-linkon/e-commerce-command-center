@@ -243,15 +243,10 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     if (!summary) {
       // Last-resort: fire Purchase without content_ids so the conversion
       // is still recorded, even if catalog matching is unavailable.
-      fbq("Purchase", {
-        value: isFinite(amount) ? amount : 0,
-        currency: "ILS",
-      });
-      ttq("CompletePayment", {
-        value: isFinite(amount) ? amount : 0,
-        currency: "ILS",
-      });
-      gaPurchase(String(orderNumber), isFinite(amount) ? amount : 0, []);
+      if (!isFinite(amount) || amount <= 0) return;
+      fbq("Purchase", { value: amount, currency: "ILS" });
+      ttq("CompletePayment", { value: amount, currency: "ILS" });
+      gaPurchase(String(orderNumber), amount, []);
       return;
     }
     const order = summary.order;
