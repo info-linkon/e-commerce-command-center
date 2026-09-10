@@ -10,8 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateCoupon, calcDiscount, Coupon } from "@/hooks/useCoupons";
 import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home, MessageSquare, ShieldCheck, Lock, ChevronLeft, ShoppingBag, Package, Truck } from "lucide-react";
-import { fbq } from "@/lib/meta-pixel";
-import { ttq } from "@/lib/tiktok-pixel";
+import { fbq, fbqIdentify } from "@/lib/meta-pixel";
+import { ttq, ttqIdentify } from "@/lib/tiktok-pixel";
 import { gaBeginCheckout } from "@/lib/gtag";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -262,6 +262,10 @@ export default function WebCheckoutPage() {
     const customerPhone = form.get("phone") as string;
     const customerEmail = (form.get("email") as string) || "";
     const isCash = selectedPayment === "cash";
+
+    // Advanced matching: identify the shopper before the order events fire.
+    fbqIdentify({ email: customerEmail, phone: customerPhone, name: customerName });
+    ttqIdentify({ email: customerEmail, phone: customerPhone });
 
     try {
       const uniqueCartVariationIds = Array.from(new Set(items.map((item) => item.variationId)));

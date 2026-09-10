@@ -1,8 +1,8 @@
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { fbq } from "@/lib/meta-pixel";
-import { ttq } from "@/lib/tiktok-pixel";
+import { fbq, fbqIdentify } from "@/lib/meta-pixel";
+import { ttq, ttqIdentify } from "@/lib/tiktok-pixel";
 import { gaPurchase } from "@/lib/gtag";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/web-cart-store";
@@ -243,20 +243,28 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     if (!summary) {
       // Last-resort: fire Purchase without content_ids so the conversion
       // is still recorded, even if catalog matching is unavailable.
-      fbq("Purchase", {
-        value: isFinite(amount) ? amount : 0,
-        currency: "ILS",
-      });
-      ttq("CompletePayment", {
-        value: isFinite(amount) ? amount : 0,
-        currency: "ILS",
-      });
-      gaPurchase(String(orderNumber), isFinite(amount) ? amount : 0, []);
+      if (!isFinite(amount) || amount <= 0) return;
+      fbq("Purchase", { value: amount, currency: "ILS" });
+      ttq("CompletePayment", { value: amount, currency: "ILS" });
+      gaPurchase(String(orderNumber), amount, []);
       return;
     }
     const order = summary.order;
     const items = summary.items || [];
-    const value = isFinite(amount) ? amount : Number(order?.total || 0);
+    // Purchase value must be a real, positive number — Meta rejects 0/NaN.
+    const orderTotal = Number(order?.total || 0);
+    const value = isFinite(amount) && amount > 0 ? amount : orderTotal > 0 ? orderTotal : 0;
+    if (value <= 0) {
+      console.warn("[pixel] skipping Purchase with non-positive value", { orderNumber });
+      return;
+    }
+    // Advanced matching: attach the buyer's email/phone before the event.
+    fbqIdentify({
+      email: order?.customer_email,
+      phone: order?.customer_phone,
+      name: order?.customer_name,
+    });
+    ttqIdentify({ email: order?.customer_email, phone: order?.customer_phone });
     const contents = items
       .filter((it: any) => it && it.sku)
       .map((it: any) => ({ id: String(it.sku), quantity: Number(it.quantity || 1) }));
@@ -299,15 +307,10 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     });
   } catch (err) {
     console.error("[meta-pixel] Purchase enrichment failed:", err);
-    fbq("Purchase", {
-      value: isFinite(amount) ? amount : 0,
-      currency: "ILS",
-    });
-    ttq("CompletePayment", {
-      value: isFinite(amount) ? amount : 0,
-      currency: "ILS",
-    });
-    gaPurchase(String(orderNumber), isFinite(amount) ? amount : 0, []);
+    if (!isFinite(amount) || amount <= 0) return;
+    fbq("Purchase", { value: amount, currency: "ILS" });
+    ttq("CompletePayment", { value: amount, currency: "ILS" });
+    gaPurchase(String(orderNumber), amount, []);
   }
 }
 

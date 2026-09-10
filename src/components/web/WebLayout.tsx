@@ -5,7 +5,7 @@ import { WebBottomNav } from "./WebBottomNav";
 import { MessageCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
-import { fbqPageView } from "@/lib/meta-pixel";
+import { fbqPageView, setMetaPixelId } from "@/lib/meta-pixel";
 import { ttqPageView } from "@/lib/tiktok-pixel";
 import { gaPageView } from "@/lib/gtag";
 import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
@@ -37,6 +37,7 @@ function WebLayoutInner() {
 
     const tryInit = (attempts = 0) => {
       if (typeof window !== "undefined" && window.fbq) {
+        setMetaPixelId(pixelId);
         window.fbq("init", pixelId);
         fbqPageView();
         pixelInitialized.current = true;

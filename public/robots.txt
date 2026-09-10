@@ -18,3 +18,5 @@ Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
+
+Sitemap: https://elwejha.co.il/sitemap.xml

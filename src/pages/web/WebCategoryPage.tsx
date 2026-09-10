@@ -5,6 +5,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { WebBreadcrumb } from "@/components/web/WebBreadcrumb";
 import { useEffect } from "react";
 import { gaViewItemList } from "@/lib/gtag";
+import { Seo } from "@/components/web/Seo";
 
 export default function WebCategoryPage() {
   const { lang, t } = useLanguage();
@@ -32,6 +33,14 @@ export default function WebCategoryPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+      <Seo
+        title={categoryName}
+        description={t(
+          `تسوق ${categoryName} من الوجهة — معدات رحلات وتخييم بأفضل الأسعار وتوصيل لكل البلاد.`,
+          `קנו ${categoryName} ב-ELWEJHA — ציוד קמפינג וטבע במחירים משתלמים ומשלוח לכל הארץ.`,
+        )}
+        path={`/category/${(category as any)?.slug || (category as any)?.category_number || categoryNumber}`}
+      />
       <WebBreadcrumb
         items={[
           { label: t("المتجر", "חנות"), to: "/shop" },

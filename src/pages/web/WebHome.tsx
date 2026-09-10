@@ -24,6 +24,7 @@ import catTents from "@/assets/cat-tents.jpg";
 import catPackages from "@/assets/cat-packages.jpg";
 import catStoves from "@/assets/cat-stoves.jpg";
 import catCampingGear from "@/assets/cat-camping-gear.jpg";
+import { Seo } from "@/components/web/Seo";
 
 const categoryImageMap: Record<string, string> = {
   "1e7e7bc7-16e4-40b4-a8be-679c5831f8aa": catTeaCoffee,
@@ -76,6 +77,28 @@ export default function WebHome() {
 
   return (
     <div>
+      <Seo
+        title={t(
+          "الوجهة ELWEJHA — معدات التخييم والرحلات",
+          "ELWEJHA הוגהה — ציוד קמפינג וטיולים",
+        )}
+        description={t(
+          "متجر الوجهة لمعدات التخييم والرحلات: خيام، كراسي، مواقد، أطقم شاي وقهوة وعروض حصرية مع توصيل لكل البلاد.",
+          "חנות ELWEJHA לציוד קמפינג וטיולים: אוהלים, כיסאות, כיריים, ערכות תה וקפה ומבצעים בלעדיים עם משלוח לכל הארץ.",
+        )}
+        path="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "ELWEJHA الوجهة",
+          url: "https://elwejha.co.il",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://elwejha.co.il/search?q={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }}
+      />
       {/* Hero Carousel */}
       {bannersLoading ? (
         <section className="relative overflow-hidden aspect-[3/2] bg-muted animate-pulse" />

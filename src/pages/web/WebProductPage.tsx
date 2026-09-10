@@ -15,6 +15,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { RelatedProductsSection } from "@/components/web/RelatedProductsSection";
 import { WebBreadcrumb } from "@/components/web/WebBreadcrumb";
 import { effectivePrice } from "@/lib/pricing";
+import { Seo } from "@/components/web/Seo";
 
 export default function WebProductPage() {
   const { lang, t } = useLanguage();
@@ -342,8 +343,37 @@ export default function WebProductPage() {
     toast.success(t("تمت الإضافة إلى السلة", "נוסף לסל"));
   };
 
+  const seoPath = `/product/${(product as any).slug || product.product_number || product.id}`;
+  const seoDescription =
+    lang === "he"
+      ? product.short_description || product.short_description_ar || product.description || product.description_ar
+      : product.short_description_ar || product.short_description || product.description_ar || product.description;
+  const seoPrice = effectivePrice(product.sale_price, (product as any).compare_at_price).price;
+
   return (
     <div className="container py-6 md:py-12">
+      <Seo
+        title={displayName}
+        description={seoDescription}
+        path={seoPath}
+        image={displayImage}
+        type="product"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: displayName,
+          image: displayImage ? [displayImage] : undefined,
+          sku: product.sku || undefined,
+          brand: { "@type": "Brand", name: "ELWEJHA" },
+          offers: {
+            "@type": "Offer",
+            url: `https://elwejha.co.il${lang === "he" ? "/he" : ""}${seoPath}`,
+            priceCurrency: "ILS",
+            price: Number(seoPrice).toFixed(2),
+            availability: "https://schema.org/InStock",
+          },
+        }}
+      />
       <WebBreadcrumb
         items={[
           { label: t("المتجر", "חנות"), to: "/shop" },

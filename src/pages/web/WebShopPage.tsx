@@ -1,6 +1,7 @@
 import { useWebProducts, useWebCategories } from "@/hooks/useWebProducts";
 import { WebProductCard } from "@/components/web/WebProductCard";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { Seo } from "@/components/web/Seo";
 import { useLanguage } from "@/hooks/useLanguage";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,10 +26,31 @@ const categoryImageMap: Record<string, string> = {
 };
 
 export default function WebShopPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  // Filter + view state live in the URL so returning from a product page
+  // (browser back) restores exactly the same catalog view.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCategory = searchParams.get("cat") || undefined;
+  const showAll = searchParams.get("all") === "1" || !!selectedCategory;
+
+  const setSelectedCategory = (catId?: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (catId) next.set("cat", catId);
+    else next.delete("cat");
+    next.set("all", "1");
+    setSearchParams(next, { replace: true });
+  };
+  const setShowAll = (value: boolean) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set("all", "1");
+    else {
+      next.delete("all");
+      next.delete("cat");
+    }
+    setSearchParams(next, { replace: true });
+  };
+
   const { data: products, isLoading } = useWebProducts(selectedCategory);
   const { data: categories } = useWebCategories();
-  const [showAll, setShowAll] = useState(false);
   const { lang, t, localizedPath } = useLanguage();
 
   // GA4: view_item_list when viewing the "all products" grid
@@ -46,6 +68,14 @@ export default function WebShopPage() {
   if (!showAll) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+        <Seo
+          title={t("المتجر — أقسام معدات الرحلات", "החנות — קטגוריות ציוד לטיולים")}
+          description={t(
+            "تصفح أقسام متجر الوجهة: خيام، جلسات، مواقد، أطقم شاي وقهوة ومعدات تخييم.",
+            "עיינו בקטגוריות של ELWEJHA: אוהלים, ישיבה, כיריים, ערכות תה וקפה וציוד קמפינג.",
+          )}
+          path="/shop"
+        />
         <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{t("المتجر", "חנות")}</h1>
         <p className="text-muted-foreground mb-8">{t("اختر القسم المطلوب", "בחר קטגוריה")}</p>
 
@@ -96,9 +126,17 @@ export default function WebShopPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+      <Seo
+        title={t("جميع المنتجات", "כל המוצרים")}
+        description={t(
+          "كل منتجات الوجهة لمعدات التخييم والرحلات في مكان واحد، مع توصيل لكل البلاد.",
+          "כל מוצרי ELWEJHA לציוד קמפינג וטיולים במקום אחד, עם משלוח לכל הארץ.",
+        )}
+        path="/shop"
+      />
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("جميع المنتجات", "כל המוצרים")}</h1>
-        <Button variant="ghost" onClick={() => { setShowAll(false); setSelectedCategory(undefined); }} className="text-muted-foreground">
+        <Button variant="ghost" onClick={() => setShowAll(false)} className="text-muted-foreground">
           {t("العودة للأقسام", "חזרה לקטגוריות")}
         </Button>
       </div>
