@@ -256,7 +256,20 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     }
     const order = summary.order;
     const items = summary.items || [];
-    const value = isFinite(amount) ? amount : Number(order?.total || 0);
+    // Purchase value must be a real, positive number — Meta rejects 0/NaN.
+    const orderTotal = Number(order?.total || 0);
+    const value = isFinite(amount) && amount > 0 ? amount : orderTotal > 0 ? orderTotal : 0;
+    if (value <= 0) {
+      console.warn("[pixel] skipping Purchase with non-positive value", { orderNumber });
+      return;
+    }
+    // Advanced matching: attach the buyer's email/phone before the event.
+    fbqIdentify({
+      email: order?.customer_email,
+      phone: order?.customer_phone,
+      name: order?.customer_name,
+    });
+    ttqIdentify({ email: order?.customer_email, phone: order?.customer_phone });
     const contents = items
       .filter((it: any) => it && it.sku)
       .map((it: any) => ({ id: String(it.sku), quantity: Number(it.quantity || 1) }));
