@@ -1,0 +1,18 @@
+# الوجهة | ELWEJHA
+
+> متجر إلكتروني إسرائيلي (عربي/עברית) لبيع المنتجات والباقات — الوجهة / ELWEJHA.
+> Online store serving Arabic and Hebrew speaking customers in Israel.
+
+- Site: https://elwejha.co.il
+- Languages: Arabic (default), Hebrew (/he)
+- Sitemap: https://elwejha.co.il/sitemap.xml
+
+## Main pages
+- [Home](https://elwejha.co.il/)
+- [Shop / all products](https://elwejha.co.il/shop)
+- [About](https://elwejha.co.il/about)
+- [Contact](https://elwejha.co.il/contact)
+
+## Notes
+- Product pages live at /product/{slug-or-number}, categories at /category/{slug}.
+- The /crm area is a private admin panel and must not be crawled or cited.
