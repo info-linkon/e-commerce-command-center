@@ -37,6 +37,7 @@ function WebLayoutInner() {
 
     const tryInit = (attempts = 0) => {
       if (typeof window !== "undefined" && window.fbq) {
+        setMetaPixelId(pixelId);
         window.fbq("init", pixelId);
         fbqPageView();
         pixelInitialized.current = true;
