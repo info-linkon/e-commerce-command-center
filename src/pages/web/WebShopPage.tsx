@@ -126,9 +126,17 @@ export default function WebShopPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+      <Seo
+        title={t("جميع المنتجات", "כל המוצרים")}
+        description={t(
+          "كل منتجات الوجهة لمعدات التخييم والرحلات في مكان واحد، مع توصيل لكل البلاد.",
+          "כל מוצרי ELWEJHA לציוד קמפינג וטיולים במקום אחד, עם משלוח לכל הארץ.",
+        )}
+        path="/shop"
+      />
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("جميع المنتجات", "כל המוצרים")}</h1>
-        <Button variant="ghost" onClick={() => { setShowAll(false); setSelectedCategory(undefined); }} className="text-muted-foreground">
+        <Button variant="ghost" onClick={() => setShowAll(false)} className="text-muted-foreground">
           {t("العودة للأقسام", "חזרה לקטגוריות")}
         </Button>
       </div>
