@@ -360,6 +360,10 @@ export type Database = {
           display_order: number
           id: string
           image_url: string | null
+          meta_description: string | null
+          meta_description_he: string | null
+          meta_title: string | null
+          meta_title_he: string | null
           name: string
           name_he: string | null
           slug: string | null
@@ -371,6 +375,10 @@ export type Database = {
           display_order?: number
           id?: string
           image_url?: string | null
+          meta_description?: string | null
+          meta_description_he?: string | null
+          meta_title?: string | null
+          meta_title_he?: string | null
           name: string
           name_he?: string | null
           slug?: string | null
@@ -382,6 +390,10 @@ export type Database = {
           display_order?: number
           id?: string
           image_url?: string | null
+          meta_description?: string | null
+          meta_description_he?: string | null
+          meta_title?: string | null
+          meta_title_he?: string | null
           name?: string
           name_he?: string | null
           slug?: string | null
@@ -1527,6 +1539,10 @@ export type Database = {
           image_url: string | null
           is_featured: boolean
           is_published: boolean
+          meta_description: string | null
+          meta_description_he: string | null
+          meta_title: string | null
+          meta_title_he: string | null
           name: string
           name_ar: string | null
           product_number: number
@@ -1552,6 +1568,10 @@ export type Database = {
           image_url?: string | null
           is_featured?: boolean
           is_published?: boolean
+          meta_description?: string | null
+          meta_description_he?: string | null
+          meta_title?: string | null
+          meta_title_he?: string | null
           name: string
           name_ar?: string | null
           product_number?: number
@@ -1577,6 +1597,10 @@ export type Database = {
           image_url?: string | null
           is_featured?: boolean
           is_published?: boolean
+          meta_description?: string | null
+          meta_description_he?: string | null
+          meta_title?: string | null
+          meta_title_he?: string | null
           name?: string
           name_ar?: string | null
           product_number?: number
