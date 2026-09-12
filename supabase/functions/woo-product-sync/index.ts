@@ -144,18 +144,15 @@ serve(async (req) => {
 
       if (variations && variations.length > 0) {
         // Ensure "Size" attribute exists on the product for variations
-        const attrRes = await fetch(wooUrl(`/products/${wooProductId}`), {
-          method: "PUT",
-          headers: { Authorization: wooAuth(), "Content-Type": "application/json" },
-          body: JSON.stringify({
-            attributes: [{
-              name: "וריאציה",
-              visible: true,
-              variation: true,
-              options: variations.map((v: any) => v.name),
-            }],
-          }),
+        const attrRes = await wooFetch(`/products/${wooProductId}`, "PUT", {
+          attributes: [{
+            name: "וריאציה",
+            visible: true,
+            variation: true,
+            options: variations.map((v: any) => v.name),
+          }],
         });
+
         if (attrRes.ok) await attrRes.json();
 
         for (const variation of variations) {
