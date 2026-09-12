@@ -173,19 +173,12 @@ serve(async (req) => {
 
           if (variation.woo_id) {
             // Update existing variation
-            const res = await fetch(wooUrl(`/products/${wooProductId}/variations/${variation.woo_id}`), {
-              method: "PUT",
-              headers: { Authorization: wooAuth(), "Content-Type": "application/json" },
-              body: JSON.stringify(varData),
-            });
+            const res = await wooFetch(`/products/${wooProductId}/variations/${variation.woo_id}`, "PUT", varData);
             if (res.ok) await res.json();
           } else {
             // Create new variation
-            const res = await fetch(wooUrl(`/products/${wooProductId}/variations`), {
-              method: "POST",
-              headers: { Authorization: wooAuth(), "Content-Type": "application/json" },
-              body: JSON.stringify(varData),
-            });
+            const res = await wooFetch(`/products/${wooProductId}/variations`, "POST", varData);
+
             if (res.ok) {
               const wooVar = await res.json();
               await supabase.from("product_variations").update({ woo_id: wooVar.id }).eq("id", variation.id);
