@@ -344,16 +344,25 @@ export default function WebProductPage() {
   };
 
   const seoPath = `/product/${(product as any).slug || product.product_number || product.id}`;
-  const seoDescription =
+  const metaTitleOverride =
     lang === "he"
+      ? (product as any).meta_title_he || (product as any).meta_title
+      : (product as any).meta_title || (product as any).meta_title_he;
+  const metaDescOverride =
+    lang === "he"
+      ? (product as any).meta_description_he || (product as any).meta_description
+      : (product as any).meta_description || (product as any).meta_description_he;
+  const seoDescription =
+    metaDescOverride ||
+    (lang === "he"
       ? product.short_description || product.short_description_ar || product.description || product.description_ar
-      : product.short_description_ar || product.short_description || product.description_ar || product.description;
+      : product.short_description_ar || product.short_description || product.description_ar || product.description);
   const seoPrice = effectivePrice(product.sale_price, (product as any).compare_at_price).price;
 
   return (
     <div className="container py-6 md:py-12">
       <Seo
-        title={displayName}
+        title={metaTitleOverride || displayName}
         description={seoDescription}
         path={seoPath}
         image={displayImage}
