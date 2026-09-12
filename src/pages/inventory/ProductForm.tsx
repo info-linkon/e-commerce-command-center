@@ -316,6 +316,58 @@ const ProductForm = () => {
                   <RichTextEditor value={form.description_ar} onChange={(v) => setForm({ ...form, description_ar: v })} rows={6} dir="rtl" />
                 </div>
               </div>
+
+              {/* SEO */}
+              <div className="space-y-4 border-t pt-4">
+                <div>
+                  <Label className="text-base">כותרת ותיאור לגוגל (SEO)</Label>
+                  <p className="text-xs text-muted-foreground">
+                    אם נשאר ריק — הכותרת תהיה אוטומטית: "אתר אלוג'הא - {form.name || "שם המוצר"}" והתיאור יילקח מהתיאור הקצר.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>כותרת לגוגל (עברית)</Label>
+                    <Input
+                      value={form.meta_title_he}
+                      onChange={(e) => setForm({ ...form, meta_title_he: e.target.value })}
+                      maxLength={70}
+                      placeholder={form.name || "שם הדף"}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>عنوان جوجل (ערבית)</Label>
+                    <Input
+                      value={form.meta_title}
+                      onChange={(e) => setForm({ ...form, meta_title: e.target.value })}
+                      maxLength={70}
+                      dir="rtl"
+                      placeholder={form.name_ar || "اسم الصفحة"}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>תיאור לגוגל (עברית)</Label>
+                    <Textarea
+                      value={form.meta_description_he}
+                      onChange={(e) => setForm({ ...form, meta_description_he: e.target.value })}
+                      maxLength={160}
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">{form.meta_description_he.length}/160</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>وصف جوجل (ערבית)</Label>
+                    <Textarea
+                      value={form.meta_description}
+                      onChange={(e) => setForm({ ...form, meta_description: e.target.value })}
+                      maxLength={160}
+                      rows={3}
+                      dir="rtl"
+                    />
+                    <p className="text-xs text-muted-foreground">{form.meta_description.length}/160</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
