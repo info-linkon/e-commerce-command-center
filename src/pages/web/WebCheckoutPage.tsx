@@ -91,7 +91,18 @@ export default function WebCheckoutPage() {
     setOtpLoading(false);
   };
 
+  // Attach the shopper's details to the pixels as soon as they're typed, so
+  // checkout events (not just Purchase) carry email/phone for matching.
+  const handleIdentityBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value.trim();
+    if (!value) return;
+    const isEmail = e.target.name === "email";
+    fbqIdentify(isEmail ? { email: value } : { phone: value });
+    ttqIdentify(isEmail ? { email: value } : { phone: value });
+  };
+
   const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    handleIdentityBlur(e);
     const phone = e.target.value.trim();
     if (phone && phone.replace(/[\s\-()]/g, "").length >= 9 && !otpVerified) {
       // Reset if phone changed
@@ -646,7 +657,7 @@ export default function WebCheckoutPage() {
                     <Label htmlFor="email">{t("البريد الإلكتروني", "אימייל")}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input id="email" name="email" type="email" className="pl-10 rounded-xl" placeholder="email@example.com" dir="ltr" />
+                      <Input id="email" name="email" type="email" className="pl-10 rounded-xl" placeholder="email@example.com" dir="ltr" onBlur={handleIdentityBlur} />
                     </div>
                   </div>
                   {shippingMethod === "delivery" && (
