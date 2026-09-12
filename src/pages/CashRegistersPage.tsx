@@ -554,11 +554,21 @@ const CashRegistersPage = () => {
                     <TableHead className="text-right">תיאור</TableHead>
                     <TableHead className="text-right">סטטוס הזמנה</TableHead>
                     <TableHead className="text-right">סכום</TableHead>
+                    <TableHead className="text-right">יתרה</TableHead>
                     <TableHead className="text-right">תאריך</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactions.map((t) => {
+                  {(() => {
+                    // Running balance after each transaction — list is newest-first,
+                    // so start from the current balance and walk backwards.
+                    let running = Number(txRegister?.current_balance || 0);
+                    return transactions.map((t) => {
+                      const balanceAfter = running;
+                      running -= Number(t.amount);
+                      return { t, balanceAfter };
+                    });
+                  })().map(({ t, balanceAfter }) => {
                     const typeMeta = {
                       payment: { label: "תשלום", icon: CreditCard, cls: "text-green-700 bg-green-50 border-green-200" },
                       expense: { label: "הוצאה", icon: Receipt, cls: "text-red-700 bg-red-50 border-red-200" },
@@ -596,6 +606,9 @@ const CashRegistersPage = () => {
                         </TableCell>
                         <TableCell className={`font-bold ${t.amount >= 0 ? "text-green-700" : "text-red-700"}`}>
                           {t.amount >= 0 ? "+" : "−"}₪{Math.abs(t.amount).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-sm font-medium whitespace-nowrap">
+                          ₪{balanceAfter.toFixed(2)}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                           {new Date(t.created_at).toLocaleString("he-IL")}
