@@ -176,7 +176,7 @@ export function useWebProductsByCategoryNumber(categoryKey: string | number | un
       // Find the category either by its numeric id or by its custom slug
       let catQuery = (supabase
         .from("categories")
-        .select("id, name, name_he, slug, category_number") as any);
+        .select("id, name, name_he, slug, category_number, meta_title, meta_title_he, meta_description, meta_description_he") as any);
       catQuery = isNumericKey(key)
         ? catQuery.eq("category_number", parseInt(key!, 10))
         : catQuery.ilike("slug", key!);
