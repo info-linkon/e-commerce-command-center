@@ -254,6 +254,20 @@ export function useAssignWarehouse() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ orderId, warehouseId }: { orderId: string; warehouseId: string }) => {
+      // 0. Atomically CLAIM the order: only the request that actually flips
+      // assigned_warehouse_id from NULL proceeds. This prevents a double-click /
+      // concurrent run from deducting inventory and creating picking rows twice.
+      const { data: claimed, error: claimErr } = await supabase
+        .from("orders")
+        .update({ assigned_warehouse_id: warehouseId })
+        .eq("id", orderId)
+        .is("assigned_warehouse_id", null)
+        .select("id");
+      if (claimErr) throw claimErr;
+      if (!claimed || claimed.length === 0) {
+        throw new Error("ההזמנה כבר שויכה למחסן");
+      }
+
       // 1. Get order with items
       const { data: order, error: orderErr } = await supabase
         .from("orders")
@@ -261,11 +275,6 @@ export function useAssignWarehouse() {
         .eq("id", orderId)
         .single();
       if (orderErr) throw orderErr;
-
-      // Prevent re-assignment if already assigned
-      if (order.assigned_warehouse_id) {
-        throw new Error("ההזמנה כבר שויכה למחסן");
-      }
 
       const items = (order.order_items as any[]) || [];
 
