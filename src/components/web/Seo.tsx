@@ -34,7 +34,9 @@ export function Seo({ title, description, path, image, type = "website", noindex
   const heUrl = `${SITE}/he${basePath}`;
   const canonical = lang === "he" ? heUrl : arUrl;
 
-  const fullTitle = title.includes("ELWEJHA") ? title : `${title} | ELWEJHA الوجهة`;
+  const brand = lang === "he" ? "אתר אלוג'הא" : "الوجهة";
+  const fullTitle =
+    title.includes(brand) || title.includes("ELWEJHA") ? title : `${brand} - ${title}`;
   const desc = clean(description);
   const blocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 

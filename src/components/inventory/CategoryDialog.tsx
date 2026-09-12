@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, X } from "lucide-react";
@@ -15,7 +16,17 @@ interface CategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category?: Category | null;
-  onSave: (data: { name: string; name_he: string | null; slug: string | null; display_order: number; image_url: string | null }) => void;
+  onSave: (data: {
+    name: string;
+    name_he: string | null;
+    slug: string | null;
+    display_order: number;
+    image_url: string | null;
+    meta_title: string | null;
+    meta_title_he: string | null;
+    meta_description: string | null;
+    meta_description_he: string | null;
+  }) => void;
   loading?: boolean;
 }
 
@@ -25,6 +36,10 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
   const [slug, setSlug] = useState(category?.slug ?? "");
   const [displayOrder, setDisplayOrder] = useState(category?.display_order ?? 0);
   const [imageUrl, setImageUrl] = useState<string | null>(category?.image_url ?? null);
+  const [metaTitle, setMetaTitle] = useState((category as any)?.meta_title ?? "");
+  const [metaTitleHe, setMetaTitleHe] = useState((category as any)?.meta_title_he ?? "");
+  const [metaDesc, setMetaDesc] = useState((category as any)?.meta_description ?? "");
+  const [metaDescHe, setMetaDescHe] = useState((category as any)?.meta_description_he ?? "");
   const [uploading, setUploading] = useState(false);
 
   // Sync form state whenever the dialog is opened OR the target category changes
@@ -36,6 +51,10 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
       setSlug(category?.slug ?? "");
       setDisplayOrder(category?.display_order ?? 0);
       setImageUrl(category?.image_url ?? null);
+      setMetaTitle((category as any)?.meta_title ?? "");
+      setMetaTitleHe((category as any)?.meta_title_he ?? "");
+      setMetaDesc((category as any)?.meta_description ?? "");
+      setMetaDescHe((category as any)?.meta_description_he ?? "");
     }
   }, [open, category?.id]);
 
@@ -112,10 +131,50 @@ export function CategoryDialog({ open, onOpenChange, category, onSave, loading }
               </label>
             )}
           </div>
+
+          <div className="space-y-3 border-t pt-4">
+            <div>
+              <Label className="text-base">כותרת ותיאור לגוגל (SEO)</Label>
+              <p className="text-xs text-muted-foreground">
+                אם נשאר ריק — הכותרת תהיה אוטומטית: "אתר אלוג'הא - {nameHe || name || "שם הקטגוריה"}".
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>כותרת לגוגל (עברית)</Label>
+              <Input value={metaTitleHe} onChange={(e) => setMetaTitleHe(e.target.value)} maxLength={70} />
+            </div>
+            <div className="space-y-2">
+              <Label>عنوان جوجل (ערבית)</Label>
+              <Input value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} maxLength={70} dir="rtl" />
+            </div>
+            <div className="space-y-2">
+              <Label>תיאור לגוגל (עברית)</Label>
+              <Textarea value={metaDescHe} onChange={(e) => setMetaDescHe(e.target.value)} maxLength={160} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>وصف جوجل (ערבית)</Label>
+              <Textarea value={metaDesc} onChange={(e) => setMetaDesc(e.target.value)} maxLength={160} rows={3} dir="rtl" />
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
-          <Button onClick={() => onSave({ name, name_he: nameHe || null, slug: normalizeSlug(slug) || null, display_order: displayOrder, image_url: imageUrl })} disabled={!name || loading || uploading}>
+          <Button
+            onClick={() =>
+              onSave({
+                name,
+                name_he: nameHe || null,
+                slug: normalizeSlug(slug) || null,
+                display_order: displayOrder,
+                image_url: imageUrl,
+                meta_title: metaTitle.trim() || null,
+                meta_title_he: metaTitleHe.trim() || null,
+                meta_description: metaDesc.trim() || null,
+                meta_description_he: metaDescHe.trim() || null,
+              })
+            }
+            disabled={!name || loading || uploading}
+          >
             {loading ? "שומר..." : "שמור"}
           </Button>
         </DialogFooter>

@@ -16,11 +16,11 @@ const CategoriesPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
 
-  const handleSave = (data: { name: string; name_he: string | null; slug: string | null; display_order: number; image_url: string | null }) => {
+  const handleSave = (data: Record<string, any>) => {
     if (editing) {
-      updateCategory.mutate({ id: editing.id, ...data }, { onSuccess: () => setDialogOpen(false) });
+      updateCategory.mutate({ id: editing.id, ...data } as any, { onSuccess: () => setDialogOpen(false) });
     } else {
-      createCategory.mutate(data, { onSuccess: () => setDialogOpen(false) });
+      createCategory.mutate(data as any, { onSuccess: () => setDialogOpen(false) });
     }
   };
 
