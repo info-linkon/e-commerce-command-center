@@ -607,6 +607,9 @@ const CashRegistersPage = () => {
                         <TableCell className={`font-bold ${t.amount >= 0 ? "text-green-700" : "text-red-700"}`}>
                           {t.amount >= 0 ? "+" : "−"}₪{Math.abs(t.amount).toFixed(2)}
                         </TableCell>
+                        <TableCell className="text-sm font-medium whitespace-nowrap">
+                          ₪{balanceAfter.toFixed(2)}
+                        </TableCell>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                           {new Date(t.created_at).toLocaleString("he-IL")}
                         </TableCell>
