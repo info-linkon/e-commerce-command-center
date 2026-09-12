@@ -17,6 +17,27 @@ function wooUrl(path: string) {
   return `${base}/wp-json/wc/v3${path}`;
 }
 
+// Some hosts (WAF / mod_security / LiteSpeed) block PUT and answer 501.
+// WooCommerce supports tunnelling PUT over POST via method override.
+async function wooFetch(path: string, method: "GET" | "POST" | "PUT", body?: unknown) {
+  const isPut = method === "PUT";
+  const headers: Record<string, string> = {
+    Authorization: wooAuth(),
+    "Content-Type": "application/json",
+  };
+  if (isPut) {
+    headers["X-HTTP-Method-Override"] = "PUT";
+    headers["X-HTTP-Method"] = "PUT";
+  }
+  const url = isPut ? `${wooUrl(path)}${path.includes("?") ? "&" : "?"}_method=PUT` : wooUrl(path);
+  return await fetch(url, {
+    method: isPut ? "POST" : method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
