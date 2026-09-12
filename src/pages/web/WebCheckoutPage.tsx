@@ -657,7 +657,7 @@ export default function WebCheckoutPage() {
                     <Label htmlFor="email">{t("البريد الإلكتروني", "אימייל")}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input id="email" name="email" type="email" className="pl-10 rounded-xl" placeholder="email@example.com" dir="ltr" />
+                      <Input id="email" name="email" type="email" className="pl-10 rounded-xl" placeholder="email@example.com" dir="ltr" onBlur={handleIdentityBlur} />
                     </div>
                   </div>
                   {shippingMethod === "delivery" && (
