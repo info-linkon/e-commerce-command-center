@@ -34,11 +34,20 @@ export default function WebCategoryPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
       <Seo
-        title={categoryName}
-        description={t(
-          `تسوق ${categoryName} من الوجهة — معدات رحلات وتخييم بأفضل الأسعار وتوصيل لكل البلاد.`,
-          `קנו ${categoryName} ב-ELWEJHA — ציוד קמפינג וטבע במחירים משתלמים ומשלוח לכל הארץ.`,
-        )}
+        title={
+          (lang === "he"
+            ? (category as any)?.meta_title_he || (category as any)?.meta_title
+            : (category as any)?.meta_title || (category as any)?.meta_title_he) || categoryName
+        }
+        description={
+          (lang === "he"
+            ? (category as any)?.meta_description_he || (category as any)?.meta_description
+            : (category as any)?.meta_description || (category as any)?.meta_description_he) ||
+          t(
+            `تسوق ${categoryName} من الوجهة — معدات رحلات وتخييم بأفضل الأسعار وتوصيل لكل البلاد.`,
+            `קנו ${categoryName} ב-ELWEJHA — ציוד קמפינג וטבע במחירים משתלמים ומשלוח לכל הארץ.`,
+          )
+        }
         path={`/category/${(category as any)?.slug || (category as any)?.category_number || categoryNumber}`}
       />
       <WebBreadcrumb
