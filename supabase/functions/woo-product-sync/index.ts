@@ -17,6 +17,27 @@ function wooUrl(path: string) {
   return `${base}/wp-json/wc/v3${path}`;
 }
 
+// Some hosts (WAF / mod_security / LiteSpeed) block PUT and answer 501.
+// WooCommerce supports tunnelling PUT over POST via method override.
+async function wooFetch(path: string, method: "GET" | "POST" | "PUT", body?: unknown) {
+  const isPut = method === "PUT";
+  const headers: Record<string, string> = {
+    Authorization: wooAuth(),
+    "Content-Type": "application/json",
+  };
+  if (isPut) {
+    headers["X-HTTP-Method-Override"] = "PUT";
+    headers["X-HTTP-Method"] = "PUT";
+  }
+  const url = isPut ? `${wooUrl(path)}${path.includes("?") ? "&" : "?"}_method=PUT` : wooUrl(path);
+  return await fetch(url, {
+    method: isPut ? "POST" : method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -90,11 +111,7 @@ serve(async (req) => {
     // 3. Create or update product in WooCommerce
     if (wooProductId) {
       // Update existing
-      const res = await fetch(wooUrl(`/products/${wooProductId}`), {
-        method: "PUT",
-        headers: { Authorization: wooAuth(), "Content-Type": "application/json" },
-        body: JSON.stringify(wooData),
-      });
+      const res = await wooFetch(`/products/${wooProductId}`, "PUT", wooData);
       if (!res.ok) {
         const t = await res.text();
         throw new Error(`WooCommerce update error ${res.status}: ${t}`);
@@ -103,11 +120,8 @@ serve(async (req) => {
       console.log(`Updated WooCommerce product ${wooProductId}`);
     } else {
       // Create new
-      const res = await fetch(wooUrl("/products"), {
-        method: "POST",
-        headers: { Authorization: wooAuth(), "Content-Type": "application/json" },
-        body: JSON.stringify(wooData),
-      });
+      const res = await wooFetch("/products", "POST", wooData);
+
       if (!res.ok) {
         const t = await res.text();
         throw new Error(`WooCommerce create error ${res.status}: ${t}`);
@@ -130,18 +144,15 @@ serve(async (req) => {
 
       if (variations && variations.length > 0) {
         // Ensure "Size" attribute exists on the product for variations
-        const attrRes = await fetch(wooUrl(`/products/${wooProductId}`), {
-          method: "PUT",
-          headers: { Authorization: wooAuth(), "Content-Type": "application/json" },
-          body: JSON.stringify({
-            attributes: [{
-              name: "וריאציה",
-              visible: true,
-              variation: true,
-              options: variations.map((v: any) => v.name),
-            }],
-          }),
+        const attrRes = await wooFetch(`/products/${wooProductId}`, "PUT", {
+          attributes: [{
+            name: "וריאציה",
+            visible: true,
+            variation: true,
+            options: variations.map((v: any) => v.name),
+          }],
         });
+
         if (attrRes.ok) await attrRes.json();
 
         for (const variation of variations) {
@@ -162,19 +173,12 @@ serve(async (req) => {
 
           if (variation.woo_id) {
             // Update existing variation
-            const res = await fetch(wooUrl(`/products/${wooProductId}/variations/${variation.woo_id}`), {
-              method: "PUT",
-              headers: { Authorization: wooAuth(), "Content-Type": "application/json" },
-              body: JSON.stringify(varData),
-            });
+            const res = await wooFetch(`/products/${wooProductId}/variations/${variation.woo_id}`, "PUT", varData);
             if (res.ok) await res.json();
           } else {
             // Create new variation
-            const res = await fetch(wooUrl(`/products/${wooProductId}/variations`), {
-              method: "POST",
-              headers: { Authorization: wooAuth(), "Content-Type": "application/json" },
-              body: JSON.stringify(varData),
-            });
+            const res = await wooFetch(`/products/${wooProductId}/variations`, "POST", varData);
+
             if (res.ok) {
               const wooVar = await res.json();
               await supabase.from("product_variations").update({ woo_id: wooVar.id }).eq("id", variation.id);
