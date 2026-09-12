@@ -111,11 +111,7 @@ serve(async (req) => {
     // 3. Create or update product in WooCommerce
     if (wooProductId) {
       // Update existing
-      const res = await fetch(wooUrl(`/products/${wooProductId}`), {
-        method: "PUT",
-        headers: { Authorization: wooAuth(), "Content-Type": "application/json" },
-        body: JSON.stringify(wooData),
-      });
+      const res = await wooFetch(`/products/${wooProductId}`, "PUT", wooData);
       if (!res.ok) {
         const t = await res.text();
         throw new Error(`WooCommerce update error ${res.status}: ${t}`);
@@ -124,11 +120,8 @@ serve(async (req) => {
       console.log(`Updated WooCommerce product ${wooProductId}`);
     } else {
       // Create new
-      const res = await fetch(wooUrl("/products"), {
-        method: "POST",
-        headers: { Authorization: wooAuth(), "Content-Type": "application/json" },
-        body: JSON.stringify(wooData),
-      });
+      const res = await wooFetch("/products", "POST", wooData);
+
       if (!res.ok) {
         const t = await res.text();
         throw new Error(`WooCommerce create error ${res.status}: ${t}`);
