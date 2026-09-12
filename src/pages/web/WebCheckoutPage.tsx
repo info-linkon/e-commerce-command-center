@@ -91,7 +91,18 @@ export default function WebCheckoutPage() {
     setOtpLoading(false);
   };
 
+  // Attach the shopper's details to the pixels as soon as they're typed, so
+  // checkout events (not just Purchase) carry email/phone for matching.
+  const handleIdentityBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value.trim();
+    if (!value) return;
+    const isEmail = e.target.name === "email";
+    fbqIdentify(isEmail ? { email: value } : { phone: value });
+    ttqIdentify(isEmail ? { email: value } : { phone: value });
+  };
+
   const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    handleIdentityBlur(e);
     const phone = e.target.value.trim();
     if (phone && phone.replace(/[\s\-()]/g, "").length >= 9 && !otpVerified) {
       // Reset if phone changed

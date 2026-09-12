@@ -88,11 +88,15 @@ export default function WebProductPage() {
   // matches `g:item_group_id` in the Meta product feed).
   useEffect(() => {
     if (product && product.sku) {
+      // Always report the price the customer actually pays — a null/0 value
+      // makes Meta & TikTok flag the event as invalid.
+      const viewValue = effectivePrice(product.sale_price, (product as any).compare_at_price).price;
+      if (viewValue <= 0) return;
       fbq("ViewContent", {
         content_ids: [product.sku],
         content_name: product.name_ar || product.name,
         content_type: "product_group",
-        value: product.sale_price,
+        value: viewValue,
         currency: "ILS",
       });
       // TikTok Pixel: ViewContent
@@ -101,17 +105,17 @@ export default function WebProductPage() {
           content_id: product.sku,
           content_type: "product_group",
           content_name: product.name_ar || product.name,
-          price: product.sale_price,
+          price: viewValue,
           quantity: 1,
         }],
-        value: product.sale_price,
+        value: viewValue,
         currency: "ILS",
       });
       // GA4: view_item
-      gaViewItem(product.sale_price, [{
+      gaViewItem(viewValue, [{
         item_id: product.sku,
         item_name: product.name_ar || product.name,
-        price: product.sale_price,
+        price: viewValue,
         quantity: 1,
       }]);
     }
