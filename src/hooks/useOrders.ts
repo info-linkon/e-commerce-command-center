@@ -382,10 +382,17 @@ export function useAssignWarehouse() {
       }
 
       if (pickingItems.length > 0) {
-        const { error: pickErr } = await supabase
+        // Extra safety: never create picking rows twice for the same order
+        const { count: existingCount } = await supabase
           .from("order_picking_items")
-          .insert(pickingItems as any);
-        if (pickErr) throw pickErr;
+          .select("id", { count: "exact", head: true })
+          .eq("order_id", orderId);
+        if (!existingCount) {
+          const { error: pickErr } = await supabase
+            .from("order_picking_items")
+            .insert(pickingItems as any);
+          if (pickErr) throw pickErr;
+        }
       }
 
       // 5. Sync status to WooCommerce only for website orders
