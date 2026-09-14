@@ -261,6 +261,10 @@ const BundleForm = () => {
       image_url: form.image_url || null,
       gallery_images: galleryImages,
       product_type: form.bundle_type === "variable_bundle" ? "variable" as const : "simple" as const,
+      meta_title: form.meta_title.trim() || null,
+      meta_title_he: form.meta_title_he.trim() || null,
+      meta_description: form.meta_description.trim() || null,
+      meta_description_he: form.meta_description_he.trim() || null,
     } as any;
 
     const bundleItems = items.map(({ variation_id, quantity }) => ({ variation_id, quantity }));
