@@ -106,7 +106,15 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
         <div className="space-y-4">
           {Object.values(groupedByOrderItem).map((group: any[], groupIndex) => {
             const first = group[0];
-            const isBundle = group.length > 1;
+            // A group is a bundle only when the order line is a bundle line:
+            // it has a bundle_variation_id, or its picking rows point to other
+            // variations than the line itself. Plain lines with quantity > 1
+            // simply produce one row per unit — they are NOT bundles.
+            const orderLine = first?.order_items;
+            const isBundle =
+              group.length > 1 &&
+              (Boolean(orderLine?.bundle_variation_id) ||
+                group.some((row: any) => row.variation_id !== orderLine?.variation_id));
             const orderItemVar = first?.order_items?.product_variations;
             const parentProductName = isBundle
               ? (orderItemVar?.products?.name_ar || orderItemVar?.products?.name || "מארז")
@@ -145,7 +153,7 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
                 )}
 
                 <div className="space-y-2">
-                  {group.map((item: any) => {
+                  {group.map((item: any, unitIndex: number) => {
                     const variation = item.product_variations;
                     const productName = variation?.products?.name_ar || variation?.products?.name || "—";
                     const variationName = variation?.name_ar || variation?.name || "";
@@ -187,6 +195,11 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
                             {Number(item.quantity) > 1 && (
                               <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
                                 ×{item.quantity}
+                              </Badge>
+                            )}
+                            {!isBundle && group.length > 1 && (
+                              <Badge variant="outline" className="text-[11px] px-1.5 py-0">
+                                יחידה {unitIndex + 1} מתוך {group.length}
                               </Badge>
                             )}
                           </div>
