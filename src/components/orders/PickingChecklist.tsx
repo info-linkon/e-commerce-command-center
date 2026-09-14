@@ -106,7 +106,15 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
         <div className="space-y-4">
           {Object.values(groupedByOrderItem).map((group: any[], groupIndex) => {
             const first = group[0];
-            const isBundle = group.length > 1;
+            // A group is a bundle only when the order line is a bundle line:
+            // it has a bundle_variation_id, or its picking rows point to other
+            // variations than the line itself. Plain lines with quantity > 1
+            // simply produce one row per unit — they are NOT bundles.
+            const orderLine = first?.order_items;
+            const isBundle =
+              group.length > 1 &&
+              (Boolean(orderLine?.bundle_variation_id) ||
+                group.some((row: any) => row.variation_id !== orderLine?.variation_id));
             const orderItemVar = first?.order_items?.product_variations;
             const parentProductName = isBundle
               ? (orderItemVar?.products?.name_ar || orderItemVar?.products?.name || "מארז")
