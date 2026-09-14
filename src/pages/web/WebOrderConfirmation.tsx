@@ -296,15 +296,7 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
       currency: "ILS",
     });
     // TikTok Pixel: CompletePayment
-    ttq("CompletePayment", {
-      contents: contents.map((c) => ({
-        content_id: c.id,
-        content_type: "product",
-        quantity: c.quantity,
-      })),
-      value,
-      currency: "ILS",
-    });
+    ttqPurchase(value, contents, orderNumber);
   } catch (err) {
     console.error("[meta-pixel] Purchase enrichment failed:", err);
     if (!isFinite(amount) || amount <= 0) return;
