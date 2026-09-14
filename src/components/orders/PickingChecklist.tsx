@@ -153,7 +153,7 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
                 )}
 
                 <div className="space-y-2">
-                  {group.map((item: any) => {
+                  {group.map((item: any, unitIndex: number) => {
                     const variation = item.product_variations;
                     const productName = variation?.products?.name_ar || variation?.products?.name || "—";
                     const variationName = variation?.name_ar || variation?.name || "";
