@@ -46,3 +46,40 @@ export function ttqPageView() {
     console.debug("[tiktok-pixel] page error:", err);
   }
 }
+/**
+ * TikTok purchase event.
+ * TikTok reports issues against "Purchase", while the pixel SDK documents
+ * "CompletePayment" — we send both so whichever the ad account tracks
+ * carries a valid numeric value and a non-empty content_id.
+ */
+export function ttqPurchase(
+  value: number,
+  contents: { id: string; quantity: number; price?: number }[],
+  orderNumber?: string | number | null,
+) {
+  const numericValue = Number(Number(value).toFixed(2));
+  if (!isFinite(numericValue) || numericValue <= 0) return;
+
+  const list = (contents || []).filter((c) => c && String(c.id).trim());
+  const payloadContents = (list.length
+    ? list
+    : [{ id: `order-${orderNumber ?? "unknown"}`, quantity: 1 }]
+  ).map((c) => ({
+    content_id: String(c.id),
+    content_type: "product",
+    quantity: Number(c.quantity || 1),
+    ...(c.price ? { price: Number(Number(c.price).toFixed(2)) } : {}),
+  }));
+
+  const payload = {
+    contents: payloadContents,
+    content_id: payloadContents[0].content_id,
+    content_type: "product",
+    value: numericValue,
+    currency: "ILS",
+    ...(orderNumber ? { order_id: String(orderNumber) } : {}),
+  };
+
+  ttq("CompletePayment", payload);
+  ttq("Purchase", payload);
+}
