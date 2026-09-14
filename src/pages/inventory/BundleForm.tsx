@@ -169,6 +169,10 @@ const BundleForm = () => {
         is_published: sourceProduct.is_published || false,
         image_url: sourceProduct.image_url || null,
         bundle_type: "simple_bundle",
+        meta_title: (sourceProduct as any).meta_title || "",
+        meta_title_he: (sourceProduct as any).meta_title_he || "",
+        meta_description: (sourceProduct as any).meta_description || "",
+        meta_description_he: (sourceProduct as any).meta_description_he || "",
       });
       if (sourceProduct.gallery_images && Array.isArray(sourceProduct.gallery_images)) {
         setGalleryImages((sourceProduct.gallery_images as { src: string }[]).filter((img: any) => img.src));
