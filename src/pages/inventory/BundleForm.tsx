@@ -75,6 +75,10 @@ const BundleForm = () => {
     is_published: false,
     image_url: "" as string | null,
     bundle_type: "simple_bundle" as "simple_bundle" | "variable_bundle",
+    meta_title: "",
+    meta_title_he: "",
+    meta_description: "",
+    meta_description_he: "",
   });
 
   const [items, setItems] = useState<{ variation_id: string; quantity: number; label: string }[]>([]);
@@ -124,6 +128,10 @@ const BundleForm = () => {
         is_published: product?.is_published || false,
         image_url: product?.image_url || null,
         bundle_type: bundle.bundle_type,
+        meta_title: (product as any)?.meta_title || "",
+        meta_title_he: (product as any)?.meta_title_he || "",
+        meta_description: (product as any)?.meta_description || "",
+        meta_description_he: (product as any)?.meta_description_he || "",
       });
       if (product?.gallery_images && Array.isArray(product.gallery_images)) {
         setGalleryImages((product.gallery_images as { src: string }[]).filter((img: any) => img.src));
@@ -161,6 +169,10 @@ const BundleForm = () => {
         is_published: sourceProduct.is_published || false,
         image_url: sourceProduct.image_url || null,
         bundle_type: "simple_bundle",
+        meta_title: (sourceProduct as any).meta_title || "",
+        meta_title_he: (sourceProduct as any).meta_title_he || "",
+        meta_description: (sourceProduct as any).meta_description || "",
+        meta_description_he: (sourceProduct as any).meta_description_he || "",
       });
       if (sourceProduct.gallery_images && Array.isArray(sourceProduct.gallery_images)) {
         setGalleryImages((sourceProduct.gallery_images as { src: string }[]).filter((img: any) => img.src));
@@ -249,6 +261,10 @@ const BundleForm = () => {
       image_url: form.image_url || null,
       gallery_images: galleryImages,
       product_type: form.bundle_type === "variable_bundle" ? "variable" as const : "simple" as const,
+      meta_title: form.meta_title.trim() || null,
+      meta_title_he: form.meta_title_he.trim() || null,
+      meta_description: form.meta_description.trim() || null,
+      meta_description_he: form.meta_description_he.trim() || null,
     } as any;
 
     const bundleItems = items.map(({ variation_id, quantity }) => ({ variation_id, quantity }));
@@ -395,6 +411,59 @@ const BundleForm = () => {
                 <p className="text-xs text-muted-foreground" dir="ltr">
                   https://elwejha.co.il/product/{normalizeSlug(form.slug) || (bundle as any)?.products?.product_number || "…"}
                 </p>
+              </div>
+              {/* SEO */}
+              <div className="space-y-3 border-t pt-3">
+                <div>
+                  <Label className="text-sm">כותרת ותיאור לגוגל (SEO)</Label>
+                  <p className="text-xs text-muted-foreground">
+                    אם נשאר ריק — הכותרת תהיה אוטומטית: "אתר אלוג'הא - {form.name || "שם המארז"}" והתיאור יילקח מהתיאור הקצר.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">כותרת לגוגל (עברית)</Label>
+                    <Input
+                      value={form.meta_title_he}
+                      onChange={(e) => setForm({ ...form, meta_title_he: e.target.value })}
+                      maxLength={70}
+                      placeholder={form.name || "שם הדף"}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">عنوان جوجل (ערבית)</Label>
+                    <Input
+                      value={form.meta_title}
+                      onChange={(e) => setForm({ ...form, meta_title: e.target.value })}
+                      maxLength={70}
+                      dir="rtl"
+                      placeholder={form.name_ar || "اسم الصفحة"}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">תיאור לגוגל (עברית)</Label>
+                    <Textarea
+                      value={form.meta_description_he}
+                      onChange={(e) => setForm({ ...form, meta_description_he: e.target.value })}
+                      maxLength={160}
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">{form.meta_description_he.length}/160</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">وصف جوجل (ערבית)</Label>
+                    <Textarea
+                      value={form.meta_description}
+                      onChange={(e) => setForm({ ...form, meta_description: e.target.value })}
+                      maxLength={160}
+                      rows={3}
+                      dir="rtl"
+                    />
+                    <p className="text-xs text-muted-foreground">{form.meta_description.length}/160</p>
+                  </div>
+                </div>
               </div>
               {/* Categories — multi-select chips. First selected = primary */}
               <div className="space-y-1">
