@@ -412,6 +412,59 @@ const BundleForm = () => {
                   https://elwejha.co.il/product/{normalizeSlug(form.slug) || (bundle as any)?.products?.product_number || "…"}
                 </p>
               </div>
+              {/* SEO */}
+              <div className="space-y-3 border-t pt-3">
+                <div>
+                  <Label className="text-sm">כותרת ותיאור לגוגל (SEO)</Label>
+                  <p className="text-xs text-muted-foreground">
+                    אם נשאר ריק — הכותרת תהיה אוטומטית: "אתר אלוג'הא - {form.name || "שם המארז"}" והתיאור יילקח מהתיאור הקצר.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">כותרת לגוגל (עברית)</Label>
+                    <Input
+                      value={form.meta_title_he}
+                      onChange={(e) => setForm({ ...form, meta_title_he: e.target.value })}
+                      maxLength={70}
+                      placeholder={form.name || "שם הדף"}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">عنوان جوجل (ערבית)</Label>
+                    <Input
+                      value={form.meta_title}
+                      onChange={(e) => setForm({ ...form, meta_title: e.target.value })}
+                      maxLength={70}
+                      dir="rtl"
+                      placeholder={form.name_ar || "اسم الصفحة"}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">תיאור לגוגל (עברית)</Label>
+                    <Textarea
+                      value={form.meta_description_he}
+                      onChange={(e) => setForm({ ...form, meta_description_he: e.target.value })}
+                      maxLength={160}
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">{form.meta_description_he.length}/160</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">وصف جوجل (ערבית)</Label>
+                    <Textarea
+                      value={form.meta_description}
+                      onChange={(e) => setForm({ ...form, meta_description: e.target.value })}
+                      maxLength={160}
+                      rows={3}
+                      dir="rtl"
+                    />
+                    <p className="text-xs text-muted-foreground">{form.meta_description.length}/160</p>
+                  </div>
+                </div>
+              </div>
               {/* Categories — multi-select chips. First selected = primary */}
               <div className="space-y-1">
                 <Label className="text-xs">קטגוריות (ניתן לבחור כמה)</Label>
