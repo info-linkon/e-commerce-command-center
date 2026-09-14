@@ -2,7 +2,7 @@ import { useParams, Link, useSearchParams } from "react-router-dom";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { fbq, fbqIdentify } from "@/lib/meta-pixel";
-import { ttq, ttqIdentify } from "@/lib/tiktok-pixel";
+import { ttqIdentify, ttqPurchase } from "@/lib/tiktok-pixel";
 import { gaPurchase } from "@/lib/gtag";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/web-cart-store";
@@ -245,7 +245,7 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
       // is still recorded, even if catalog matching is unavailable.
       if (!isFinite(amount) || amount <= 0) return;
       fbq("Purchase", { value: amount, currency: "ILS" });
-      ttq("CompletePayment", { value: amount, currency: "ILS" });
+      ttqPurchase(amount, [], orderNumber);
       gaPurchase(String(orderNumber), amount, []);
       return;
     }
@@ -284,7 +284,7 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     });
     if (!contents.length) {
       fbq("Purchase", { value, currency: "ILS" });
-      ttq("CompletePayment", { value, currency: "ILS" });
+      ttqPurchase(value, [], orderNumber);
       return;
     }
     fbq("Purchase", {
@@ -296,20 +296,12 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
       currency: "ILS",
     });
     // TikTok Pixel: CompletePayment
-    ttq("CompletePayment", {
-      contents: contents.map((c) => ({
-        content_id: c.id,
-        content_type: "product",
-        quantity: c.quantity,
-      })),
-      value,
-      currency: "ILS",
-    });
+    ttqPurchase(value, contents, orderNumber);
   } catch (err) {
     console.error("[meta-pixel] Purchase enrichment failed:", err);
     if (!isFinite(amount) || amount <= 0) return;
     fbq("Purchase", { value: amount, currency: "ILS" });
-    ttq("CompletePayment", { value: amount, currency: "ILS" });
+    ttqPurchase(amount, [], orderNumber);
     gaPurchase(String(orderNumber), amount, []);
   }
 }
