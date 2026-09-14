@@ -197,6 +197,11 @@ const PickingChecklist = ({ orderId, pickingStatus }: PickingChecklistProps) => 
                                 ×{item.quantity}
                               </Badge>
                             )}
+                            {!isBundle && group.length > 1 && (
+                              <Badge variant="outline" className="text-[11px] px-1.5 py-0">
+                                יחידה {unitIndex + 1} מתוך {group.length}
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             {variationName && !["ברירת מחדל", "default"].includes(variationName.toLowerCase()) && (
