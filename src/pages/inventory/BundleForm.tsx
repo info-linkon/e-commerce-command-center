@@ -75,6 +75,10 @@ const BundleForm = () => {
     is_published: false,
     image_url: "" as string | null,
     bundle_type: "simple_bundle" as "simple_bundle" | "variable_bundle",
+    meta_title: "",
+    meta_title_he: "",
+    meta_description: "",
+    meta_description_he: "",
   });
 
   const [items, setItems] = useState<{ variation_id: string; quantity: number; label: string }[]>([]);
