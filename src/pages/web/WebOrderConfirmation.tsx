@@ -245,7 +245,7 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
       // is still recorded, even if catalog matching is unavailable.
       if (!isFinite(amount) || amount <= 0) return;
       fbq("Purchase", { value: amount, currency: "ILS" });
-      ttq("CompletePayment", { value: amount, currency: "ILS" });
+      ttqPurchase(amount, [], orderNumber);
       gaPurchase(String(orderNumber), amount, []);
       return;
     }
