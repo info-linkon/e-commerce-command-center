@@ -284,7 +284,7 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     });
     if (!contents.length) {
       fbq("Purchase", { value, currency: "ILS" });
-      ttq("CompletePayment", { value, currency: "ILS" });
+      ttqPurchase(value, [], orderNumber);
       return;
     }
     fbq("Purchase", {
