@@ -301,7 +301,7 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     console.error("[meta-pixel] Purchase enrichment failed:", err);
     if (!isFinite(amount) || amount <= 0) return;
     fbq("Purchase", { value: amount, currency: "ILS" });
-    ttq("CompletePayment", { value: amount, currency: "ILS" });
+    ttqPurchase(amount, [], orderNumber);
     gaPurchase(String(orderNumber), amount, []);
   }
 }
