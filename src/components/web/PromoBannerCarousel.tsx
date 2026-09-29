@@ -37,7 +37,7 @@ export function PromoBannerCarousel() {
   if (!visibleBanners.length) return null;
 
   return (
-    <section className="container py-5 md:py-8">
+    <section className="w-full py-5 md:py-8">
       <Carousel
         opts={{ loop: visibleBanners.length > 1, direction: "rtl" }}
         plugins={visibleBanners.length > 1 ? [autoplay.current] : []}
@@ -63,7 +63,7 @@ export function PromoBannerCarousel() {
 
             return (
               <CarouselItem key={banner.id} className="pl-0">
-                <div className="aspect-square overflow-hidden rounded-lg bg-muted md:aspect-[33/14]">
+                <div className="aspect-[4/5] overflow-hidden bg-muted md:aspect-[3/2]">
                   {banner.link ? (
                     <Link
                       to={localizedPath(banner.link.startsWith("/") ? banner.link : `/${banner.link}`)}

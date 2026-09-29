@@ -315,7 +315,7 @@ export default function WebBannersPage() {
               />
             </div>
             <div>
-              <Label>תמונה לטלפון (ריבועית)</Label>
+              <Label>תמונה לטלפון (אנכית)</Label>
               <div className="flex items-center gap-3 mt-1">
                 {form.mobile_image_url && (
                   <img src={form.mobile_image_url} alt="" className="h-20 w-20 rounded border border-border object-cover" />
