@@ -1,4 +1,4 @@
-import { useBannersAdmin, useCreateBanner, useUpdateBanner, useDeleteBanner } from "@/hooks/useBannersPublic";
+import { useBannersAdmin, useCreateBanner, useUpdateBanner, useDeleteBanner, type BannerPlacement } from "@/hooks/useBannersPublic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +26,7 @@ interface BannerForm {
   description_he: string;
   image_url: string;
   link: string;
+  placement: BannerPlacement;
 }
 
 const linkOptions = [
@@ -35,7 +36,32 @@ const linkOptions = [
   { value: "/faq", label: "שאלות נפוצות" },
 ];
 
-const emptyForm: BannerForm = { title: "", title_he: "", subtitle: "", subtitle_he: "", badge: "", badge_he: "", description: "", description_he: "", image_url: "", link: "" };
+const emptyForm: BannerForm = { title: "", title_he: "", subtitle: "", subtitle_he: "", badge: "", badge_he: "", description: "", description_he: "", image_url: "", link: "", placement: "hero" };
+
+async function convertBannerToWebp(file: File): Promise<Blob> {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("IMAGE_LOAD_FAILED"));
+      img.src = objectUrl;
+    });
+    const maxWidth = 1920;
+    const scale = Math.min(1, maxWidth / image.naturalWidth);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(image.naturalWidth * scale);
+    canvas.height = Math.round(image.naturalHeight * scale);
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("CANVAS_UNAVAILABLE");
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("WEBP_CONVERSION_FAILED")), "image/webp", 0.86);
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
 
 export default function WebBannersPage() {
   const { data: banners, isLoading } = useBannersAdmin();
@@ -68,32 +94,42 @@ export default function WebBannersPage() {
       description_he: banner.description_he || "",
       image_url: banner.image_url || "",
       link: banner.link || "",
+      placement: banner.placement === "featured_promo" ? "featured_promo" : "hero",
     });
     setDialogOpen(true);
   };
 
   const handleImageUpload = async (file: File) => {
     setUploading(true);
-    const ext = file.name.split('.').pop();
-    const path = `banners/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: false });
-    if (error) {
+    try {
+      const webp = await convertBannerToWebp(file);
+      const path = `banners/${crypto.randomUUID()}.webp`;
+      const { error } = await supabase.storage.from('product-images').upload(path, webp, { contentType: "image/webp", upsert: false });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
+      setForm((prev) => ({ ...prev, image_url: urlData.publicUrl }));
+    } catch {
       toast.error('שגיאה בהעלאת התמונה');
+    } finally {
       setUploading(false);
-      return;
     }
-    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
-    setForm((prev) => ({ ...prev, image_url: urlData.publicUrl }));
-    setUploading(false);
   };
 
   const handleSave = () => {
+    if (!form.image_url.trim()) {
+      toast.error("יש להעלות תמונה");
+      return;
+    }
+    const normalizedForm = {
+      ...form,
+      link: form.link.trim() ? (form.link.trim().startsWith("/") ? form.link.trim() : `/${form.link.trim()}`) : "",
+    };
     if (editingId) {
-      updateBanner.mutate({ id: editingId, ...form }, {
+      updateBanner.mutate({ id: editingId, ...normalizedForm }, {
         onSuccess: () => { setDialogOpen(false); setEditingId(null); },
       });
     } else {
-      createBanner.mutate(form, {
+      createBanner.mutate(normalizedForm, {
         onSuccess: () => { setDialogOpen(false); setForm(emptyForm); },
       });
     }
@@ -103,7 +139,10 @@ export default function WebBannersPage() {
     if (!banners || index <= 0 || reordering) return;
     setReordering(true);
     const current = banners[index];
-    const prev = banners[index - 1];
+    const samePlacement = banners.filter((banner) => banner.placement === current.placement);
+    const placementIndex = samePlacement.findIndex((banner) => banner.id === current.id);
+    if (placementIndex <= 0) { setReordering(false); return; }
+    const prev = samePlacement[placementIndex - 1];
     // Optimistic update
     queryClient.setQueryData(["banners-admin"], (old: any[] | undefined) => {
       if (!old) return old;
@@ -126,7 +165,10 @@ export default function WebBannersPage() {
     if (!banners || index >= banners.length - 1 || reordering) return;
     setReordering(true);
     const current = banners[index];
-    const next = banners[index + 1];
+    const samePlacement = banners.filter((banner) => banner.placement === current.placement);
+    const placementIndex = samePlacement.findIndex((banner) => banner.id === current.id);
+    if (placementIndex < 0 || placementIndex >= samePlacement.length - 1) { setReordering(false); return; }
+    const next = samePlacement[placementIndex + 1];
     // Optimistic update
     queryClient.setQueryData(["banners-admin"], (old: any[] | undefined) => {
       if (!old) return old;
@@ -165,7 +207,7 @@ export default function WebBannersPage() {
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
-                  disabled={index === 0 || reordering}
+                  disabled={banners.findIndex((item) => item.placement === banner.placement) === index || reordering}
                   onClick={() => handleMoveUp(index)}
                 >
                   <ChevronUp className="h-4 w-4" />
@@ -174,7 +216,7 @@ export default function WebBannersPage() {
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
-                  disabled={index === banners.length - 1 || reordering}
+                  disabled={banners.map((item) => item.placement).lastIndexOf(banner.placement) === index || reordering}
                   onClick={() => handleMoveDown(index)}
                 >
                   <ChevronDown className="h-4 w-4" />
@@ -186,6 +228,7 @@ export default function WebBannersPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground truncate">{banner.title || "ללא כותרת"}</p>
                 <p className="text-sm text-muted-foreground truncate">{banner.subtitle}</p>
+                <p className="text-xs font-medium text-primary">{banner.placement === "featured_promo" ? "באנר קידום בדף הבית" : "באנר ראשי"}</p>
                 {banner.link && <p className="text-xs text-muted-foreground" dir="ltr">{banner.link}</p>}
               </div>
               <div className="flex items-center gap-3 shrink-0" style={{ direction: "ltr" }}>
@@ -216,6 +259,18 @@ export default function WebBannersPage() {
             <DialogTitle>{editingId ? "עריכת באנר" : "באנר חדש"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label>מיקום הבאנר</Label>
+              <Select value={form.placement} onValueChange={(value: BannerPlacement) => setForm({ ...form, placement: value })}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hero">באנר ראשי בראש האתר</SelectItem>
+                  <SelectItem value="featured_promo">אחרי מוצרים מומלצים ולפני מבצעים מיוחדים</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>כותרת (ערבית)</Label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-1" dir="rtl" />
@@ -256,7 +311,7 @@ export default function WebBannersPage() {
                 )}
                 <label className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border hover:border-primary/50 text-sm text-muted-foreground hover:text-foreground transition-colors">
                   <ImagePlus className="w-4 h-4" />
-                  <span>{uploading ? "מעלה..." : "העלה תמונה"}</span>
+                  <span>{uploading ? "ממיר ומעלה..." : "העלה תמונה"}</span>
                   <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) handleImageUpload(f);
