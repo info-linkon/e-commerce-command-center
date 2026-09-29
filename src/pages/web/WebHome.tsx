@@ -287,14 +287,14 @@ export default function WebHome() {
           <img
             src={banner.image_url}
             alt={(lang === "he" ? banner.title_he : banner.title) || t("عرض خاص", "מבצע מיוחד")}
-            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.01]"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.01]"
             loading="lazy"
           />
         );
 
         return (
           <section key={banner.id} className="container py-5 md:py-8">
-            <div className="aspect-[2/1] overflow-hidden rounded-lg bg-muted md:aspect-[4/1]">
+            <div className="aspect-[33/14] overflow-hidden rounded-lg bg-muted">
               {banner.link ? (
                 <Link
                   to={localizedPath(banner.link.startsWith("/") ? banner.link : `/${banner.link}`)}
