@@ -143,13 +143,6 @@ export default function WebBannersPage() {
     const placementIndex = samePlacement.findIndex((banner) => banner.id === current.id);
     if (placementIndex <= 0) { setReordering(false); return; }
     const prev = samePlacement[placementIndex - 1];
-    // Optimistic update
-    queryClient.setQueryData(["banners-admin"], (old: any[] | undefined) => {
-      if (!old) return old;
-      const copy = [...old];
-      [copy[index - 1], copy[index]] = [copy[index], copy[index - 1]];
-      return copy;
-    });
     await Promise.all([
       supabase.from("banners").update({ sort_order: prev.sort_order }).eq("id", current.id),
       supabase.from("banners").update({ sort_order: current.sort_order }).eq("id", prev.id),
@@ -169,13 +162,6 @@ export default function WebBannersPage() {
     const placementIndex = samePlacement.findIndex((banner) => banner.id === current.id);
     if (placementIndex < 0 || placementIndex >= samePlacement.length - 1) { setReordering(false); return; }
     const next = samePlacement[placementIndex + 1];
-    // Optimistic update
-    queryClient.setQueryData(["banners-admin"], (old: any[] | undefined) => {
-      if (!old) return old;
-      const copy = [...old];
-      [copy[index], copy[index + 1]] = [copy[index + 1], copy[index]];
-      return copy;
-    });
     await Promise.all([
       supabase.from("banners").update({ sort_order: next.sort_order }).eq("id", current.id),
       supabase.from("banners").update({ sort_order: current.sort_order }).eq("id", next.id),
