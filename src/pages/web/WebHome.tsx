@@ -4,6 +4,7 @@ import { useWebProducts, useWebCategories, useWebFeaturedProducts, useWebBestSel
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { useBannersPublic } from "@/hooks/useBannersPublic";
 import { ExclusiveDealsSlider } from "@/components/web/ExclusiveDealsSlider";
+import { PromoBannerCarousel } from "@/components/web/PromoBannerCarousel";
 import { defaultContent } from "@/lib/web-default-content";
 import { Truck, Shield, ShoppingBag, RefreshCw, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,6 @@ export default function WebHome() {
   const { data: categories } = useWebCategories();
   const { lang, t, localizedPath } = useLanguage();
   const { data: banners, isLoading: bannersLoading } = useBannersPublic();
-  const { data: promoBanners } = useBannersPublic("featured_promo");
 
   const { data: heroData } = useSiteSection("home", "hero");
   const hero = {
@@ -280,34 +280,8 @@ export default function WebHome() {
         </div>
       </section>
 
-      {/* Promotional banner between featured products and exclusive deals */}
-      {promoBanners?.map((banner) => {
-        if (!banner.image_url) return null;
-        const bannerImage = (
-          <img
-            src={banner.image_url}
-            alt={(lang === "he" ? banner.title_he : banner.title) || t("عرض خاص", "מבצע מיוחד")}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.01]"
-            loading="lazy"
-          />
-        );
-
-        return (
-          <section key={banner.id} className="container py-5 md:py-8">
-            <div className="aspect-[33/14] overflow-hidden rounded-lg bg-muted">
-              {banner.link ? (
-                <Link
-                  to={localizedPath(banner.link.startsWith("/") ? banner.link : `/${banner.link}`)}
-                  className="group block h-full w-full"
-                  aria-label={(lang === "he" ? banner.title_he : banner.title) || t("افتح العرض", "פתח מבצע")}
-                >
-                  {bannerImage}
-                </Link>
-              ) : bannerImage}
-            </div>
-          </section>
-        );
-      })}
+      {/* Promotional banners between featured products and exclusive deals */}
+      <PromoBannerCarousel />
 
       {/* Exclusive Deals */}
       <ExclusiveDealsSlider />
