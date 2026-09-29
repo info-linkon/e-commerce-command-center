@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, GripVertical, Pencil, ImagePlus, Loader2, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Pencil, ImagePlus, Loader2, ChevronUp, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ interface BannerForm {
   description: string;
   description_he: string;
   image_url: string;
+  mobile_image_url: string;
   link: string;
   placement: BannerPlacement;
 }
@@ -36,7 +37,7 @@ const linkOptions = [
   { value: "/faq", label: "שאלות נפוצות" },
 ];
 
-const emptyForm: BannerForm = { title: "", title_he: "", subtitle: "", subtitle_he: "", badge: "", badge_he: "", description: "", description_he: "", image_url: "", link: "", placement: "hero" };
+const emptyForm: BannerForm = { title: "", title_he: "", subtitle: "", subtitle_he: "", badge: "", badge_he: "", description: "", description_he: "", image_url: "", mobile_image_url: "", link: "", placement: "hero" };
 
 async function convertBannerToWebp(file: File): Promise<Blob> {
   const objectUrl = URL.createObjectURL(file);
@@ -72,7 +73,7 @@ export default function WebBannersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<BannerForm>(emptyForm);
-  const [uploading, setUploading] = useState(false);
+  const [uploadingField, setUploadingField] = useState<"image_url" | "mobile_image_url" | null>(null);
   const [reordering, setReordering] = useState(false);
 
   const openCreate = () => {
@@ -93,25 +94,26 @@ export default function WebBannersPage() {
       description: banner.description || "",
       description_he: banner.description_he || "",
       image_url: banner.image_url || "",
+      mobile_image_url: banner.mobile_image_url || "",
       link: banner.link || "",
       placement: banner.placement === "featured_promo" ? "featured_promo" : "hero",
     });
     setDialogOpen(true);
   };
 
-  const handleImageUpload = async (file: File) => {
-    setUploading(true);
+  const handleImageUpload = async (file: File, field: "image_url" | "mobile_image_url") => {
+    setUploadingField(field);
     try {
       const webp = await convertBannerToWebp(file);
       const path = `banners/${crypto.randomUUID()}.webp`;
       const { error } = await supabase.storage.from('product-images').upload(path, webp, { contentType: "image/webp", upsert: false });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
-      setForm((prev) => ({ ...prev, image_url: urlData.publicUrl }));
+      setForm((prev) => ({ ...prev, [field]: urlData.publicUrl }));
     } catch {
       toast.error('שגיאה בהעלאת התמונה');
     } finally {
-      setUploading(false);
+      setUploadingField(null);
     }
   };
 
@@ -290,17 +292,17 @@ export default function WebBannersPage() {
               <Input value={form.description_he} onChange={(e) => setForm({ ...form, description_he: e.target.value })} className="mt-1" dir="rtl" placeholder="ציוד קמפינג וטיולים..." />
             </div>
             <div>
-              <Label>תמונה</Label>
+              <Label>תמונה למחשב (רחבה)</Label>
               <div className="flex items-center gap-3 mt-1">
                 {form.image_url && (
                   <img src={form.image_url} alt="" className="w-24 h-14 object-cover rounded border border-border" />
                 )}
                 <label className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border hover:border-primary/50 text-sm text-muted-foreground hover:text-foreground transition-colors">
                   <ImagePlus className="w-4 h-4" />
-                  <span>{uploading ? "ממיר ומעלה..." : "העלה תמונה"}</span>
-                  <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(e) => {
+                  <span>{uploadingField === "image_url" ? "ממיר ומעלה..." : "העלה תמונת מחשב"}</span>
+                  <input type="file" accept="image/*" className="hidden" disabled={uploadingField !== null} onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) handleImageUpload(f);
+                    if (f) handleImageUpload(f, "image_url");
                   }} />
                 </label>
               </div>
@@ -308,6 +310,29 @@ export default function WebBannersPage() {
                 value={form.image_url}
                 onChange={(e) => setForm({ ...form, image_url: e.target.value })}
                 placeholder="או הדבק כתובת URL"
+                className="mt-2"
+                dir="ltr"
+              />
+            </div>
+            <div>
+              <Label>תמונה לטלפון (ריבועית)</Label>
+              <div className="flex items-center gap-3 mt-1">
+                {form.mobile_image_url && (
+                  <img src={form.mobile_image_url} alt="" className="h-20 w-20 rounded border border-border object-cover" />
+                )}
+                <label className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border hover:border-primary/50 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <ImagePlus className="w-4 h-4" />
+                  <span>{uploadingField === "mobile_image_url" ? "ממיר ומעלה..." : "העלה תמונת טלפון"}</span>
+                  <input type="file" accept="image/*" className="hidden" disabled={uploadingField !== null} onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImageUpload(file, "mobile_image_url");
+                  }} />
+                </label>
+              </div>
+              <Input
+                value={form.mobile_image_url}
+                onChange={(e) => setForm({ ...form, mobile_image_url: e.target.value })}
+                placeholder="או הדבק כתובת URL; אם ריק, תמונת המחשב תוצג"
                 className="mt-2"
                 dir="ltr"
               />
@@ -332,7 +357,7 @@ export default function WebBannersPage() {
                 dir="ltr"
               />
             </div>
-            <Button onClick={handleSave} disabled={createBanner.isPending || updateBanner.isPending} className="w-full">
+            <Button onClick={handleSave} disabled={createBanner.isPending || updateBanner.isPending || uploadingField !== null} className="w-full">
               {(createBanner.isPending || updateBanner.isPending) ? "שומר..." : editingId ? "שמור שינויים" : "צור באנר"}
             </Button>
           </div>

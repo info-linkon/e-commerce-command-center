@@ -14,6 +14,7 @@ type BannerPayload = {
   description?: string;
   description_he?: string;
   image_url?: string;
+  mobile_image_url?: string;
   link?: string;
   placement?: BannerPlacement;
   sort_order?: number;
