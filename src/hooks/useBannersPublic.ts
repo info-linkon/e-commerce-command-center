@@ -2,14 +2,33 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export function useBannersPublic() {
+export type BannerPlacement = "hero" | "featured_promo";
+
+type BannerPayload = {
+  title?: string;
+  title_he?: string;
+  subtitle?: string;
+  subtitle_he?: string;
+  badge?: string;
+  badge_he?: string;
+  description?: string;
+  description_he?: string;
+  image_url?: string;
+  link?: string;
+  placement?: BannerPlacement;
+  sort_order?: number;
+  active?: boolean;
+};
+
+export function useBannersPublic(placement: BannerPlacement = "hero") {
   return useQuery({
-    queryKey: ["banners-public"],
+    queryKey: ["banners-public", placement],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("banners")
         .select("*")
         .eq("active", true)
+        .eq("placement", placement)
         .order("sort_order");
       if (error) throw error;
       return data;
@@ -34,7 +53,7 @@ export function useBannersAdmin() {
 export function useCreateBanner() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (banner: { title?: string; subtitle?: string; image_url?: string; link?: string; sort_order?: number; active?: boolean }) => {
+    mutationFn: async (banner: BannerPayload) => {
       const { data, error } = await supabase.from("banners").insert(banner).select().single();
       if (error) throw error;
       return data;
@@ -51,7 +70,7 @@ export function useCreateBanner() {
 export function useUpdateBanner() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; title?: string; subtitle?: string; image_url?: string; link?: string; sort_order?: number; active?: boolean }) => {
+    mutationFn: async ({ id, ...updates }: BannerPayload & { id: string }) => {
       const { data, error } = await supabase.from("banners").update(updates).eq("id", id).select().single();
       if (error) throw error;
       return data;

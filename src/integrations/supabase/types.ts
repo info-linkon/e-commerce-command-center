@@ -25,6 +25,7 @@ export type Database = {
           id: string
           image_url: string | null
           link: string | null
+          placement: string
           sort_order: number
           subtitle: string | null
           subtitle_he: string | null
@@ -41,6 +42,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           link?: string | null
+          placement?: string
           sort_order?: number
           subtitle?: string | null
           subtitle_he?: string | null
@@ -57,6 +59,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           link?: string | null
+          placement?: string
           sort_order?: number
           subtitle?: string | null
           subtitle_he?: string | null
