@@ -9,6 +9,7 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from "@/components/ui/carousel";
+import { Button } from "@/components/ui/button";
 import { useBannersPublic } from "@/hooks/useBannersPublic";
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -47,8 +48,13 @@ export function PromoBannerCarousel() {
         <CarouselContent className="-ml-0">
           {visibleBanners.map((banner, index) => {
             const title = (lang === "he" ? banner.title_he || banner.title : banner.title || banner.title_he) || t("عرض خاص", "מבצע מיוחד");
-            const image = (
-              <picture className="block h-full w-full">
+            const subtitle = lang === "he" ? banner.subtitle_he || banner.subtitle : banner.subtitle || banner.subtitle_he;
+            const description = lang === "he" ? banner.description_he || banner.description : banner.description || banner.description_he;
+
+            return (
+              <CarouselItem key={banner.id} className="pl-0">
+                <div className="relative aspect-[3/2] overflow-hidden bg-muted">
+                  <picture className="block h-full w-full">
                 {banner.mobile_image_url && <source media="(max-width: 767px)" srcSet={banner.mobile_image_url} />}
                 <img
                   src={banner.image_url || ""}
@@ -58,21 +64,22 @@ export function PromoBannerCarousel() {
                   width={1584}
                   height={672}
                 />
-              </picture>
-            );
-
-            return (
-              <CarouselItem key={banner.id} className="pl-0">
-                <div className="aspect-[4/5] overflow-hidden bg-muted md:aspect-[3/2]">
+                  </picture>
+                  <div className="absolute inset-0 bg-gradient-to-l from-desert/90 via-desert/55 to-transparent" />
+                  <div className="container absolute inset-0 z-10 flex items-center py-6 md:py-12">
+                    <div className="max-w-xl text-desert-foreground">
+                      <h2 className="text-2xl font-black leading-relaxed md:text-5xl">{title}</h2>
+                      {subtitle && <p className="mt-1 text-base font-bold md:mt-3 md:text-2xl">{subtitle}</p>}
+                      {description && <p className="mt-2 hidden max-w-lg text-sm text-desert-foreground/80 sm:block md:mt-4 md:text-lg">{description}</p>}
                   {banner.link ? (
-                    <Link
-                      to={localizedPath(banner.link.startsWith("/") ? banner.link : `/${banner.link}`)}
-                      className="group block h-full w-full"
-                      aria-label={title}
-                    >
-                      {image}
-                    </Link>
-                  ) : image}
+                        <Button asChild size="lg" className="mt-4 bg-gold font-bold text-gold-foreground hover:bg-gold/90 md:mt-6">
+                          <Link to={localizedPath(banner.link.startsWith("/") ? banner.link : `/${banner.link}`)}>
+                            {t("تسوق الآن", "לקנייה")}
+                          </Link>
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               </CarouselItem>
             );

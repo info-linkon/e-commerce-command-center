@@ -7,3 +7,5 @@
 - [x] Add a separate square mobile image to each promotional banner.
 - [x] Turn promotional banners into a linked carousel.
 - [x] Match promotional banners to the full-width hero on desktop and use a taller portrait format on mobile.
+- [x] Show promotional banner titles and a linked button over the image.
+- [x] Match the promotional banner's mobile aspect ratio to the main banner.
