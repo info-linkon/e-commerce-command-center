@@ -33,6 +33,7 @@ const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
 
 export default function WebCheckoutPage() {
   const { items, totalPrice, clearCart, shippingCost, updateQuantity } = useCartStore();
+  const [emailError, setEmailError] = useState("");
   const [geoError, setGeoError] = useState("");
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -271,7 +272,17 @@ export default function WebCheckoutPage() {
     const form = new FormData(e.currentTarget);
     const customerName = form.get("name") as string;
     const customerPhone = form.get("phone") as string;
-    const customerEmail = (form.get("email") as string) || "";
+    // Clean invisible RTL marks / spaces that mobile keyboards & autofill add.
+    const customerEmail = ((form.get("email") as string) || "")
+      .replace(/[\s\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, "")
+      .toLowerCase();
+    if (customerEmail && !/^[^@]+@[^@]+\.[a-z]{2,}$/i.test(customerEmail)) {
+      setEmailError(t("البريد الإلكتروني غير صحيح — صحّحه أو اتركه فارغاً", "כתובת האימייל לא תקינה — תקן או השאר ריק"));
+      setLoading(false);
+      document.getElementById("email")?.focus();
+      return;
+    }
+    setEmailError("");
     const isCash = selectedPayment === "cash";
 
     // Advanced matching: identify the shopper before the order events fire.
@@ -657,8 +668,9 @@ export default function WebCheckoutPage() {
                     <Label htmlFor="email">{t("البريد الإلكتروني", "אימייל")}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input id="email" name="email" type="email" className="pl-10 rounded-xl" placeholder="email@example.com" dir="ltr" onBlur={handleIdentityBlur} />
+                      <Input id="email" name="email" type="text" inputMode="email" autoComplete="email" autoCapitalize="off" autoCorrect="off" spellCheck={false} className="pl-10 rounded-xl" placeholder="email@example.com" dir="ltr" onBlur={handleIdentityBlur} onChange={() => emailError && setEmailError("")} />
                     </div>
+                    {emailError && <p className="text-xs text-destructive">{emailError}</p>}
                   </div>
                   {shippingMethod === "delivery" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
