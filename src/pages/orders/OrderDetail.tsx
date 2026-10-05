@@ -141,6 +141,9 @@ const OrderDetail = () => {
   const [editingItems, setEditingItems] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(false);
+  const [savingCustomer, setSavingCustomer] = useState(false);
+  const [custForm, setCustForm] = useState({ customer_name: "", customer_phone: "", customer_email: "", shipping_city: "", shipping_address: "", notes: "" });
   const [editingTotals, setEditingTotals] = useState(false);
   const [shippingInput, setShippingInput] = useState("");
   const [totalInput, setTotalInput] = useState("");
@@ -504,8 +507,51 @@ const OrderDetail = () => {
       {/* Customer + Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle>פרטי לקוח</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>פרטי לקוח</CardTitle>
+            {!editingCustomer && (
+              <Button variant="ghost" size="sm" className="gap-1" onClick={() => {
+                const o: any = order;
+                setCustForm({ customer_name: o.customer_name || "", customer_phone: o.customer_phone || "", customer_email: o.customer_email || "", shipping_city: o.shipping_city || "", shipping_address: o.shipping_address || "", notes: o.notes || "" });
+                setEditingCustomer(true);
+              }}>
+                <Edit3 className="h-4 w-4" />עריכה
+              </Button>
+            )}
+          </CardHeader>
           <CardContent className="space-y-2 text-sm">
+            {editingCustomer ? (
+              <div className="space-y-2">
+                {([
+                  ["customer_name", "שם", "rtl"],
+                  ["customer_phone", "טלפון", "ltr"],
+                  ["customer_email", "אימייל", "ltr"],
+                  ["shipping_city", "עיר", "rtl"],
+                  ["shipping_address", "כתובת", "rtl"],
+                  ["notes", "הערות", "rtl"],
+                ] as const).map(([k, label, dir]) => (
+                  <div key={k} className="space-y-1">
+                    <span className="text-muted-foreground text-xs">{label}</span>
+                    <Input dir={dir} className="text-right" value={custForm[k]} onChange={(e) => setCustForm({ ...custForm, [k]: e.target.value })} />
+                  </div>
+                ))}
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" disabled={savingCustomer || !custForm.customer_name.trim()} onClick={async () => {
+                    setSavingCustomer(true);
+                    const payload: any = {};
+                    for (const [k, v] of Object.entries(custForm)) payload[k] = v.trim() || null;
+                    payload.customer_name = custForm.customer_name.trim();
+                    const { error } = await supabase.from("orders").update(payload).eq("id", order.id);
+                    setSavingCustomer(false);
+                    if (error) { toast.error("שגיאה בשמירת פרטי הלקוח"); return; }
+                    toast.success("פרטי הלקוח עודכנו");
+                    setEditingCustomer(false);
+                    qc.invalidateQueries({ queryKey: ["orders"] });
+                  }}>{savingCustomer ? "שומר..." : "שמור"}</Button>
+                  <Button size="sm" variant="outline" disabled={savingCustomer} onClick={() => setEditingCustomer(false)}>ביטול</Button>
+                </div>
+              </div>
+            ) : (<>
             <div><span className="text-muted-foreground">שם:</span> {order.customer_name || "—"}</div>
             <div><span className="text-muted-foreground">טלפון:</span> {order.customer_phone || "—"}</div>
             <div><span className="text-muted-foreground">אימייל:</span> {order.customer_email || "—"}</div>
@@ -538,6 +584,7 @@ const OrderDetail = () => {
               </div>
             )}
             {order.notes && <div><span className="text-muted-foreground">הערות:</span> {order.notes}</div>}
+            </>)}
           </CardContent>
         </Card>
 
