@@ -59,6 +59,7 @@ const PosPage = () => {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [shippingCity, setShippingCity] = useState("");
+  const [orderNotes, setOrderNotes] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
@@ -347,6 +348,7 @@ const PosPage = () => {
           shippingCity.trim() ||
           (deliveryMethod === "pickup" ? "איסוף עצמי" : undefined),
         shipping_address: shippingAddress.trim() || undefined,
+        notes: orderNotes.trim() || undefined,
         total,
         // For HYP-link flow the order starts as pending_payment and the payment
         // row is created only after the customer actually pays (via hyp-verify).
@@ -406,6 +408,7 @@ const PosPage = () => {
       setCustomerPhone("");
       setShippingCity("");
       setShippingAddress("");
+      setOrderNotes("");
       setDeliveryMethod("pickup");
       setPaymentMethod("cash");
       setCashRegisterId("");
@@ -726,6 +729,10 @@ const PosPage = () => {
             <div>
               <Label>טלפון *</Label>
               <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} type="tel" dir="ltr" className="text-left" />
+            </div>
+            <div>
+              <Label>הערות להזמנה</Label>
+              <Input value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} className="text-right" dir="rtl" placeholder="הערה פנימית / בקשת לקוח" />
             </div>
             <div>
               <Label>עיר</Label>
