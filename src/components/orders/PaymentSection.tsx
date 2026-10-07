@@ -354,21 +354,40 @@ const PaymentSection = ({
           </div>
         )}
 
-        {/* Send payment link via SMS — hidden if already paid by credit or fully paid */}
-        {!isCancelled && !isCompleted && !isPaidByCredit && remaining > 0 && customerPhone && orderPaymentMethod !== "cash" && (
-          <Button
-            variant="default"
-            className="w-full gap-2"
-            onClick={handleSendPaymentLink}
-            disabled={sendingPaymentLink}
-          >
-            {sendingPaymentLink ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
+        {/* Payment link — hidden if already paid by credit or fully paid.
+            The copy button works without a phone number so the link can be sent
+            by hand (WhatsApp, etc.). */}
+        {!isCancelled && !isCompleted && !isPaidByCredit && remaining > 0 && orderPaymentMethod !== "cash" && (
+          <div className="space-y-2">
+            {customerPhone && (
+              <Button
+                variant="default"
+                className="w-full gap-2"
+                onClick={handleSendPaymentLink}
+                disabled={sendingPaymentLink || copyingPaymentLink}
+              >
+                {sendingPaymentLink ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                {sendingPaymentLink ? "שולח לינק..." : "שלח לינק תשלום באשראי"}
+              </Button>
             )}
-            {sendingPaymentLink ? "שולח לינק..." : "שלח לינק תשלום באשראי"}
-          </Button>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleCopyPaymentLink}
+              disabled={copyingPaymentLink || sendingPaymentLink}
+            >
+              {copyingPaymentLink ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              {copyingPaymentLink ? "יוצר קישור..." : "העתק קישור תשלום"}
+            </Button>
+          </div>
         )}
 
         {/* Payment status badges */}
