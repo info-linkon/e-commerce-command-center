@@ -781,10 +781,15 @@ const PosPage = () => {
                     <SelectTrigger dir="rtl" className="text-right"><SelectValue /></SelectTrigger>
                     <SelectContent dir="rtl">
                       <SelectItem value="cash">מזומן</SelectItem>
-                      <SelectItem value="credit">אשראי (רישום ידני)</SelectItem>
-                      <SelectItem value="credit_link">אשראי - שלח לינק HYP ב-SMS</SelectItem>
+                      <SelectItem value="credit">אשראי — כבר שולם במסוף (בלי לינק)</SelectItem>
+                      <SelectItem value="credit_link">📲 שלח ללקוח לינק תשלום ב-SMS</SelectItem>
                     </SelectContent>
                   </Select>
+                  {paymentMethod === "credit" && (
+                    <p className="text-xs text-destructive mt-1">
+                      שים לב: באפשרות זו לא נשלח לינק ללקוח — התשלום נרשם כאילו כבר בוצע. לשליחת לינק בחר "שלח ללקוח לינק תשלום ב-SMS".
+                    </p>
+                  )}
                   {paymentMethod === "credit_link" && (
                     <p className="text-xs text-muted-foreground mt-1">
                       הלקוח יקבל SMS עם לינק תשלום. ההזמנה תסומן כ"ממתינה לתשלום" עד שהוא ישלם.
