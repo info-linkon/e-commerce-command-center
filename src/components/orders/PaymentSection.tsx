@@ -153,14 +153,21 @@ const PaymentSection = ({
 
   const linesTotal = lines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
 
+  // sendSms=false → link is created/reused but not texted, so it can be pasted
+  // into WhatsApp or any other channel by hand.
+  const requestPaymentLink = async (sendSms: boolean) => {
+    const { data, error } = await supabase.functions.invoke("hyp-payment-link", {
+      body: { order_id: orderId, send_sms: sendSms },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data as { payment_url?: string; sms_sent?: boolean; sms_error?: string };
+  };
+
   const handleSendPaymentLink = async () => {
     setSendingPaymentLink(true);
     try {
-      const { data, error } = await supabase.functions.invoke("hyp-payment-link", {
-        body: { order_id: orderId },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const data = await requestPaymentLink(true);
 
       if (data?.sms_sent) {
         toast.success("לינק תשלום נשלח ללקוח בהצלחה");
@@ -173,6 +180,24 @@ const PaymentSection = ({
       toast.error(err?.message || "שגיאה ביצירת לינק תשלום");
     } finally {
       setSendingPaymentLink(false);
+    }
+  };
+
+  const handleCopyPaymentLink = async () => {
+    setCopyingPaymentLink(true);
+    try {
+      const data = await requestPaymentLink(false);
+      const url = data?.payment_url;
+      if (!url) throw new Error("הלינק לא התקבל");
+      const copied = await copyText(url);
+      if (!copied) throw new Error("ההעתקה נכשלה");
+      toast.success("קישור התשלום הועתק — אפשר לשלוח אותו ללקוח ידנית");
+      qc.invalidateQueries({ queryKey: ["orders", orderId] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+    } catch (err: any) {
+      toast.error(err?.message || "שגיאה בהעתקת קישור תשלום");
+    } finally {
+      setCopyingPaymentLink(false);
     }
   };
 
