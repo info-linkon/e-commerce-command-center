@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, Plus, Trash2, CheckCircle2, Banknote, Smartphone, FileText, ExternalLink, Send, Loader2 } from "lucide-react";
+import { CreditCard, Plus, Trash2, CheckCircle2, Banknote, Smartphone, FileText, ExternalLink, Send, Loader2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import CompleteOrderDialog from "@/components/orders/CompleteOrderDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { copyText } from "@/lib/clipboard";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
 
@@ -72,6 +73,7 @@ const PaymentSection = ({
   const [completeOrder, setCompleteOrder] = useState(true);
   const [issueInvoice, setIssueInvoice] = useState(false);
   const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
+  const [copyingPaymentLink, setCopyingPaymentLink] = useState(false);
   const [issuingInvoiceStandalone, setIssuingInvoiceStandalone] = useState(false);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [lines, setLines] = useState<PaymentLine[]>([
