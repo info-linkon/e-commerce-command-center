@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, ShoppingCart, Plus, Minus, Trash2, Package, Percent, BadgeDollarSign, CalendarIcon, Tag } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, Trash2, Package, Percent, BadgeDollarSign, CalendarIcon, Tag, Copy, Check } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -25,6 +25,7 @@ import { useCashRegisters } from "@/hooks/useCashRegisters";
 import { useBundlesStockBatch } from "@/hooks/useBundleStock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { copyText } from "@/lib/clipboard";
 
 interface CartItem {
   // For regular products: variation_id is the product variation UUID. The cart key uses this id.
@@ -74,6 +75,15 @@ const PosPage = () => {
   const [orderDate, setOrderDate] = useState<Date>(new Date());
   const [customItemOpen, setCustomItemOpen] = useState(false);
   const [customItemPrice, setCustomItemPrice] = useState<string>("");
+  // Payment link created by the "send link to customer" option — shown so it can
+  // also be copied and sent by hand (WhatsApp, etc.).
+  const [paymentLinkInfo, setPaymentLinkInfo] = useState<{
+    orderNumber: number;
+    url: string;
+    smsSent: boolean;
+    smsError?: string;
+  } | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const createOrder = useCreateOrder();
   const { data: categories } = useCategories();
