@@ -399,10 +399,22 @@ const PosPage = () => {
         });
         if (linkErr || linkData?.error) {
           toast.error(`הזמנה נוצרה אך לינק HYP לא נשלח: ${linkErr?.message || linkData?.error}`);
-        } else if (linkData?.sms_sent) {
-          toast.success("ההזמנה נוצרה ולינק תשלום נשלח ללקוח ב-SMS");
         } else {
-          toast.warning(`הזמנה נוצרה. לינק נוצר אך SMS לא נשלח: ${linkData?.sms_error || "שגיאה"}`);
+          // Keep the link on screen so it can be copied and sent by hand too.
+          if (linkData?.payment_url) {
+            setPaymentLinkInfo({
+              orderNumber: newOrder.order_number,
+              url: linkData.payment_url,
+              smsSent: !!linkData?.sms_sent,
+              smsError: linkData?.sms_sent ? undefined : linkData?.sms_error || "שגיאה",
+            });
+            setLinkCopied(false);
+          }
+          if (linkData?.sms_sent) {
+            toast.success("ההזמנה נוצרה ולינק תשלום נשלח ללקוח ב-SMS");
+          } else {
+            toast.warning(`הזמנה נוצרה. לינק נוצר אך SMS לא נשלח: ${linkData?.sms_error || "שגיאה"}`);
+          }
         }
       } else {
         // Trigger SMS for new POS order (non-HYP path)
@@ -955,6 +967,59 @@ const PosPage = () => {
           <DialogFooter>
             <Button onClick={handleCreateOrder} disabled={createOrder.isPending} className="w-full">
               {createOrder.isPending ? "מעבד..." : "צור ושלח להזמנות"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment link dialog — the link can be copied and sent manually */}
+      <Dialog open={!!paymentLinkInfo} onOpenChange={(v) => { if (!v) setPaymentLinkInfo(null); }}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>
+              {paymentLinkInfo?.smsSent ? "לינק תשלום נשלח ללקוח" : "לינק תשלום מוכן"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {paymentLinkInfo?.smsSent
+                ? "ה-SMS נשלח. אפשר גם להעתיק את הקישור ולשלוח אותו ללקוח בוואטסאפ או בכל דרך אחרת."
+                : `ה-SMS לא נשלח (${paymentLinkInfo?.smsError || "שגיאה"}). העתק את הקישור ושלח ללקוח ידנית.`}
+            </p>
+            <div className="flex items-center gap-2">
+              <Input
+                readOnly
+                dir="ltr"
+                value={paymentLinkInfo?.url || ""}
+                className="text-left text-sm"
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <Button
+                type="button"
+                variant={linkCopied ? "secondary" : "default"}
+                className="gap-2 shrink-0"
+                onClick={async () => {
+                  const ok = await copyText(paymentLinkInfo?.url || "");
+                  if (ok) {
+                    setLinkCopied(true);
+                    toast.success("הקישור הועתק");
+                    setTimeout(() => setLinkCopied(false), 2500);
+                  } else {
+                    toast.error("ההעתקה נכשלה — סמן את הקישור והעתק ידנית");
+                  }
+                }}
+              >
+                {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {linkCopied ? "הועתק" : "העתק קישור"}
+              </Button>
+            </div>
+            {paymentLinkInfo?.orderNumber && (
+              <p className="text-xs text-muted-foreground">הזמנה #{paymentLinkInfo.orderNumber}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="w-full" onClick={() => setPaymentLinkInfo(null)}>
+              סגור
             </Button>
           </DialogFooter>
         </DialogContent>
