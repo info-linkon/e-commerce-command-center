@@ -63,7 +63,9 @@ Deno.serve(async (req) => {
       Deno.env.get("SITE_URL") ||
       "https://elwejha.co.il";
 
-    const { order_id } = await req.json();
+    const { order_id, send_sms: sendSmsRaw } = await req.json();
+    // Copy-only mode: generate/refresh the link without texting the customer.
+    const sendSms = sendSmsRaw === undefined ? true : !!sendSmsRaw;
 
     if (!order_id) {
       return new Response(JSON.stringify({ error: "Missing order_id" }), {
@@ -75,7 +77,7 @@ Deno.serve(async (req) => {
     // Fetch order details + paid-status guard
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("id, order_number, total, payment_method, digital_payment_amount, customer_name, customer_phone, customer_email, status, hyp_transaction_id")
+      .select("id, order_number, total, payment_method, digital_payment_amount, customer_name, customer_phone, customer_email, status, hyp_transaction_id, payment_link_url")
       .eq("id", order_id)
       .single();
 
@@ -107,6 +109,21 @@ Deno.serve(async (req) => {
     if (!order.customer_phone) {
       return new Response(JSON.stringify({ error: "ללקוח אין מספר טלפון" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Copy-only mode reuses the link already stored on the order, so copying never
+    // opens a second HYP transaction for the same order.
+    if (!sendSms && order.payment_link_url) {
+      const reusableShortUrl = `${siteUrl.replace(/\/$/, "")}/pay/${order.order_number}`;
+      return new Response(JSON.stringify({
+        success: true,
+        payment_url: reusableShortUrl,
+        sms_sent: false,
+        sms_skipped: true,
+        reused: true,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -180,6 +197,17 @@ Deno.serve(async (req) => {
     const shortPaymentUrl = `${siteUrl.replace(/\/$/, "")}/pay/${order.order_number}`;
 
     // Step 2: Send SMS with SHORT payment link
+    if (!sendSms) {
+      return new Response(JSON.stringify({
+        success: true,
+        payment_url: shortPaymentUrl,
+        sms_sent: false,
+        sms_skipped: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: smsConfig } = await supabase
       .from("site_content")
       .select("content")

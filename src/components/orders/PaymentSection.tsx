@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, Plus, Trash2, CheckCircle2, Banknote, Smartphone, FileText, ExternalLink, Send, Loader2 } from "lucide-react";
+import { CreditCard, Plus, Trash2, CheckCircle2, Banknote, Smartphone, FileText, ExternalLink, Send, Loader2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import CompleteOrderDialog from "@/components/orders/CompleteOrderDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { copyText } from "@/lib/clipboard";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
 
@@ -72,6 +73,7 @@ const PaymentSection = ({
   const [completeOrder, setCompleteOrder] = useState(true);
   const [issueInvoice, setIssueInvoice] = useState(false);
   const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
+  const [copyingPaymentLink, setCopyingPaymentLink] = useState(false);
   const [issuingInvoiceStandalone, setIssuingInvoiceStandalone] = useState(false);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [lines, setLines] = useState<PaymentLine[]>([
@@ -153,14 +155,21 @@ const PaymentSection = ({
 
   const linesTotal = lines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
 
+  // sendSms=false → link is created/reused but not texted, so it can be pasted
+  // into WhatsApp or any other channel by hand.
+  const requestPaymentLink = async (sendSms: boolean) => {
+    const { data, error } = await supabase.functions.invoke("hyp-payment-link", {
+      body: { order_id: orderId, send_sms: sendSms },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data as { payment_url?: string; sms_sent?: boolean; sms_error?: string };
+  };
+
   const handleSendPaymentLink = async () => {
     setSendingPaymentLink(true);
     try {
-      const { data, error } = await supabase.functions.invoke("hyp-payment-link", {
-        body: { order_id: orderId },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const data = await requestPaymentLink(true);
 
       if (data?.sms_sent) {
         toast.success("לינק תשלום נשלח ללקוח בהצלחה");
@@ -173,6 +182,24 @@ const PaymentSection = ({
       toast.error(err?.message || "שגיאה ביצירת לינק תשלום");
     } finally {
       setSendingPaymentLink(false);
+    }
+  };
+
+  const handleCopyPaymentLink = async () => {
+    setCopyingPaymentLink(true);
+    try {
+      const data = await requestPaymentLink(false);
+      const url = data?.payment_url;
+      if (!url) throw new Error("הלינק לא התקבל");
+      const copied = await copyText(url);
+      if (!copied) throw new Error("ההעתקה נכשלה");
+      toast.success("קישור התשלום הועתק — אפשר לשלוח אותו ללקוח ידנית");
+      qc.invalidateQueries({ queryKey: ["orders", orderId] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+    } catch (err: any) {
+      toast.error(err?.message || "שגיאה בהעתקת קישור תשלום");
+    } finally {
+      setCopyingPaymentLink(false);
     }
   };
 
@@ -327,21 +354,40 @@ const PaymentSection = ({
           </div>
         )}
 
-        {/* Send payment link via SMS — hidden if already paid by credit or fully paid */}
-        {!isCancelled && !isCompleted && !isPaidByCredit && remaining > 0 && customerPhone && orderPaymentMethod !== "cash" && (
-          <Button
-            variant="default"
-            className="w-full gap-2"
-            onClick={handleSendPaymentLink}
-            disabled={sendingPaymentLink}
-          >
-            {sendingPaymentLink ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
+        {/* Payment link — hidden if already paid by credit or fully paid.
+            The copy button works without a phone number so the link can be sent
+            by hand (WhatsApp, etc.). */}
+        {!isCancelled && !isCompleted && !isPaidByCredit && remaining > 0 && orderPaymentMethod !== "cash" && (
+          <div className="space-y-2">
+            {customerPhone && (
+              <Button
+                variant="default"
+                className="w-full gap-2"
+                onClick={handleSendPaymentLink}
+                disabled={sendingPaymentLink || copyingPaymentLink}
+              >
+                {sendingPaymentLink ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                {sendingPaymentLink ? "שולח לינק..." : "שלח לינק תשלום באשראי"}
+              </Button>
             )}
-            {sendingPaymentLink ? "שולח לינק..." : "שלח לינק תשלום באשראי"}
-          </Button>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleCopyPaymentLink}
+              disabled={copyingPaymentLink || sendingPaymentLink}
+            >
+              {copyingPaymentLink ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              {copyingPaymentLink ? "יוצר קישור..." : "העתק קישור תשלום"}
+            </Button>
+          </div>
         )}
 
         {/* Payment status badges */}
