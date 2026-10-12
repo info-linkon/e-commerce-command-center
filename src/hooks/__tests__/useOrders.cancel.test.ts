@@ -440,7 +440,9 @@ describe("useDeleteOrder — inventory restoration", () => {
     expect(r.ok).toBe(true);
 
     expect(db.inventory[0].quantity).toBe(6); // 4 + 2
-    expect(db.orders.length).toBe(0); // order deleted
+    expect(db.orders.length).toBe(1);
+    expect(db.orders[0].deleted_at).toBeTruthy();
+    expect(db.orders[0].status).toBe("cancelled"); // order deleted
     expect(db.inventory_log.filter((l) => l.notes?.includes("מחיקת הזמנה")).length).toBe(1);
   });
 
@@ -451,7 +453,9 @@ describe("useDeleteOrder — inventory restoration", () => {
 
     // Inventory unchanged because cancel already restored it.
     expect(db.inventory[0].quantity).toBe(5);
-    expect(db.orders.length).toBe(0);
+    expect(db.orders.length).toBe(1);
+    expect(db.orders[0].deleted_at).toBeTruthy();
+    expect(db.orders[0].status).toBe("cancelled");
     expect(db.inventory_log.length).toBe(0);
   });
 
@@ -460,7 +464,9 @@ describe("useDeleteOrder — inventory restoration", () => {
     const r = await runMutation(useDeleteOrder, "order-1");
     expect(r.ok).toBe(true);
     expect(db.inventory_log.length).toBe(0);
-    expect(db.orders.length).toBe(0);
+    expect(db.orders.length).toBe(1);
+    expect(db.orders[0].deleted_at).toBeTruthy();
+    expect(db.orders[0].status).toBe("cancelled");
   });
 
   it("reverses cash from non-deferred register only when the order was completed", async () => {
