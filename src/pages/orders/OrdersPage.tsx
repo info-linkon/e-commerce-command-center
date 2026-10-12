@@ -259,12 +259,12 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
                     </AlertDialogTrigger>
                     <AlertDialogContent dir="rtl">
                       <AlertDialogHeader>
-                        <AlertDialogTitle>מחיקת הזמנה</AlertDialogTitle>
-                        <AlertDialogDescription>האם אתה בטוח שברצונך למחוק את הזמנה #{order.order_number}?</AlertDialogDescription>
+                        <AlertDialogTitle>העברת הזמנה לפח</AlertDialogTitle>
+                        <AlertDialogDescription>הזמנה #{order.order_number} תועבר לפח: המלאי יוחזר, התשלומים יבוטלו מהקופה והיא תסומן כבוטלה. אפשר לשחזר אותה מהפח.</AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>ביטול</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deleteOrder.mutate(order.id)}>מחק</AlertDialogAction>
+                        <AlertDialogAction onClick={() => deleteOrder.mutate(order.id)}>העבר לפח</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
@@ -285,12 +285,12 @@ const OrdersPage = ({ defaultStatus }: { defaultStatus?: string }) => {
               </AlertDialogTrigger>
               <AlertDialogContent dir="rtl">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>מחיקת הזמנה</AlertDialogTitle>
-                  <AlertDialogDescription>האם אתה בטוח שברצונך למחוק את הזמנה #{order.order_number}?</AlertDialogDescription>
+                  <AlertDialogTitle>העברת הזמנה לפח</AlertDialogTitle>
+                  <AlertDialogDescription>הזמנה #{order.order_number} תועבר לפח: המלאי יוחזר, התשלומים יבוטלו מהקופה והיא תסומן כבוטלה. אפשר לשחזר אותה מהפח.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>ביטול</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => deleteOrder.mutate(order.id)}>מחק</AlertDialogAction>
+                  <AlertDialogAction onClick={() => deleteOrder.mutate(order.id)}>העבר לפח</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

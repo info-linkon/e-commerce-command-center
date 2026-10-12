@@ -56,6 +56,7 @@ export function useOrders(status?: OrderStatus) {
         .from("orders")
         .select("*, warehouses(name), payments(cash_register_id), documents(id, status)")
         .order("created_at", { ascending: false });
+      query = query.is("deleted_at" as any, null);
       if (status) query = query.eq("status", status);
       const { data, error } = await query;
       if (error) throw error;
@@ -716,12 +717,13 @@ export function useDeleteOrder() {
       await supabase.from("deliveries").delete().eq("order_id", id);
       await supabase.from("order_picking_items").delete().eq("order_id", id);
       await supabase.from("payments").delete().eq("order_id", id);
-      await supabase.from("payment_events").delete().eq("order_id", id);
-      await supabase.from("documents").delete().eq("order_id", id);
-      await supabase.from("order_items").delete().eq("order_id", id);
 
-      // 5. Finally delete the order
-      const { error } = await supabase.from("orders").delete().eq("id", id);
+      // 5. Move to trash (soft delete) — order + items + documents are kept
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: "cancelled", deleted_at: new Date().toISOString(), deleted_by: u.user?.id ?? null } as any)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -731,8 +733,55 @@ export function useDeleteOrder() {
       qc.invalidateQueries({ queryKey: ["deliveries"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
       qc.invalidateQueries({ queryKey: ["inventory_log"] });
-      toast.success("ההזמנה נמחקה");
+      toast.success("ההזמנה הועברה לפח");
     },
     onError: (err: any) => toast.error(err?.message || "שגיאה במחיקת הזמנה"),
+  });
+}
+
+export function useDeletedOrders() {
+  return useQuery({
+    queryKey: ["orders", "trash"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .not("deleted_at" as any, "is", null)
+        .order("deleted_at" as any, { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+}
+
+/** Restore from trash — order comes back as "cancelled" (its stock/cash effects were already reversed). */
+export function useRestoreOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("orders").update({ deleted_at: null, deleted_by: null } as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["orders"] }); toast.success("ההזמנה שוחזרה (בסטטוס בוטלה)"); },
+    onError: (e: any) => toast.error(e?.message || "שגיאה בשחזור"),
+  });
+}
+
+/** Permanent delete of an order that is already in the trash. */
+export function usePurgeOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("deliveries").delete().eq("order_id", id);
+      await supabase.from("order_picking_items").delete().eq("order_id", id);
+      await supabase.from("payments").delete().eq("order_id", id);
+      await supabase.from("payment_events").delete().eq("order_id", id);
+      await supabase.from("documents").delete().eq("order_id", id);
+      await supabase.from("order_items").delete().eq("order_id", id);
+      const { error } = await supabase.from("orders").delete().eq("id", id).not("deleted_at" as any, "is", null);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["orders"] }); toast.success("ההזמנה נמחקה לצמיתות"); },
+    onError: (e: any) => toast.error(e?.message || "שגיאה במחיקה"),
   });
 }
