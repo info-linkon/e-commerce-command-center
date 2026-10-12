@@ -19,6 +19,7 @@ import IntakePage from "./pages/inventory/IntakePage";
 import TransfersPage from "./pages/inventory/TransfersPage";
 import InventoryWriteOffPage from "./pages/inventory/InventoryWriteOffPage";
 import OrdersPage from "./pages/orders/OrdersPage";
+import OrdersTrashPage from "./pages/orders/OrdersTrashPage";
 import OrderForm from "./pages/orders/OrderForm";
 import OrderDetail from "./pages/orders/OrderDetail";
 import PickingQueuePage from "./pages/orders/PickingQueuePage";
@@ -142,6 +143,7 @@ const App = () => (
             <Route path="/crm/orders/pending" element={<Protected><OrdersPage defaultStatus="pending" /></Protected>} />
             <Route path="/crm/orders/picking" element={<Protected><PickingQueuePage /></Protected>} />
             <Route path="/crm/orders/in-delivery" element={<Protected><InDeliveryPage /></Protected>} />
+            <Route path="/crm/orders/trash" element={<Protected><OrdersTrashPage /></Protected>} />
             <Route path="/crm/orders/completed" element={<Protected><OrdersPage defaultStatus="completed" /></Protected>} />
             <Route path="/crm/orders/:id" element={<Protected><OrderDetail /></Protected>} />
             <Route path="/crm/pos" element={<Protected><PosPage /></Protected>} />

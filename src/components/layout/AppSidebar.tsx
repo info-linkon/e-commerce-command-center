@@ -51,6 +51,7 @@ const ordersSubItems = [
   { title: "תור ליקוט", url: "/crm/orders/picking", statusKey: "picking" },
   { title: "במשלוח", url: "/crm/orders/in-delivery", statusKey: "shipping" },
   { title: "הושלמו", url: "/crm/orders/completed", statusKey: "completed" },
+  { title: "פח", url: "/crm/orders/trash", statusKey: null },
 ];
 
 const webManagementSubItems = [

@@ -7,7 +7,8 @@ export function useOrderCounts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("status");
+        .select("status")
+        .is("deleted_at" as any, null);
       if (error) throw error;
       const counts: Record<string, number> = {};
       for (const row of data || []) {
