@@ -39,6 +39,7 @@ export default function WebCheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
   const submittedRef = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   // OTP state
   const [otpSent, setOtpSent] = useState(false);
@@ -82,6 +83,8 @@ export default function WebCheckoutPage() {
         setOtpVerified(true);
         setOtpDialogOpen(false);
         toast.success(t("تم التحقق بنجاح", "האימות הצליח"));
+        // Continue the cash order automatically once the phone is verified.
+        setTimeout(() => formRef.current?.requestSubmit(), 0);
       } else {
         setOtpError(data?.error || t("رمز غير صحيح", "קוד שגוי"));
       }
@@ -105,16 +108,11 @@ export default function WebCheckoutPage() {
   const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     handleIdentityBlur(e);
     const phone = e.target.value.trim();
-    if (phone && phone.replace(/[\s\-()]/g, "").length >= 9 && !otpVerified) {
-      // Reset if phone changed
-      if (phone !== otpPhone) {
-        setOtpVerified(false);
-        setOtpSent(false);
-        setOtpCode("");
-      }
-      if (!otpSent || phone !== otpPhone) {
-        sendOtp(phone);
-      }
+    // Phone changed after verification → require verifying the new number.
+    if (otpVerified && phone !== otpPhone) {
+      setOtpVerified(false);
+      setOtpSent(false);
+      setOtpCode("");
     }
   };
 
@@ -242,9 +240,18 @@ export default function WebCheckoutPage() {
       toast.error(t("يرجى اختيار طريقة الدفع", "יש לבחור אמצעי תשלום"));
       return;
     }
-    if (!otpVerified) {
-      toast.error(t("يرجى التحقق من رقم الهاتف أولاً", "יש לאמת את מספר הטלפון קודם"));
-      return;
+    // Phone verification is required only for cash orders (credit is verified by the card payment).
+    if (selectedPayment === "cash") {
+      const phoneNow = String(new FormData(e.currentTarget).get("phone") || "").trim();
+      if (!otpVerified || phoneNow !== otpPhone) {
+        if (phoneNow.replace(/[\s\-()]/g, "").length < 9) {
+          toast.error(t("يرجى إدخال رقم هاتف صحيح", "יש להזין מספר טלפון תקין"));
+          return;
+        }
+        if (otpSent && phoneNow === otpPhone) setOtpDialogOpen(true);
+        else { setOtpVerified(false); setOtpCode(""); sendOtp(phoneNow); }
+        return;
+      }
     }
 
     // Geo-blocking validation
@@ -553,7 +560,7 @@ export default function WebCheckoutPage() {
 
         <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center">{t("إتمام الطلب", "השלמת הזמנה")}</h1>
 
-        <form onSubmit={handleSubmit}>
+        <form ref={formRef} onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
             {/* Right Column — Forms */}
             <div className="md:col-span-7 space-y-6 order-2 md:order-1">
@@ -653,7 +660,7 @@ export default function WebCheckoutPage() {
                           <ShieldCheck className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
                         )}
                       </div>
-                      {otpSent && !otpVerified && (
+                      {selectedPayment === "cash" && otpSent && !otpVerified && (
                         <button
                           type="button"
                           className="text-xs text-primary hover:underline mt-1"
