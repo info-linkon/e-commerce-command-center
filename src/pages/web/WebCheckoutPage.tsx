@@ -50,34 +50,64 @@ export default function WebCheckoutPage() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState("");
 
+  // Step of the verification dialog: sending → enter code → verifying → (done)
+  const [otpStep, setOtpStep] = useState<"sending" | "enter" | "verifying" | "send_failed">("enter");
+  const [resendIn, setResendIn] = useState(0);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendIn]);
+
+  // Lock page scroll while the dialog is open so it can't get "stuck" behind the keyboard.
+  useEffect(() => {
+    if (!otpDialogOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [otpDialogOpen]);
+
+  const withTimeout = <T,>(p: Promise<T>, ms = 15000) =>
+    Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+
   const sendOtp = async (phone: string) => {
     if (!phone || phone.replace(/[\s\-()]/g, "").length < 9) return;
-    setOtpLoading(true);
+    // Open the dialog immediately so the shopper sees progress.
+    setOtpPhone(phone);
+    setOtpCode("");
     setOtpError("");
+    setOtpStep("sending");
+    setOtpDialogOpen(true);
+    setOtpLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-otp", {
-        body: { action: "send", phone },
-      });
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke("send-otp", { body: { action: "send", phone } }),
+      );
       if (error) throw error;
-      if (data?.error) { setOtpError(data.error); setOtpLoading(false); return; }
+      if (data?.error) throw new Error(data.error);
       setOtpSent(true);
-      setOtpPhone(phone);
-      setOtpDialogOpen(true);
+      setOtpStep("enter");
+      setResendIn(60);
     } catch (err) {
       console.error("OTP send error:", err);
-      setOtpError(t("حدث خطأ في إرسال الرمز", "שגיאה בשליחת הקוד"));
+      setOtpError(t("تعذر إرسال الرمز، حاول مرة أخرى", "לא הצלחנו לשלוח את הקוד, נסה שוב"));
+      setOtpStep("send_failed");
+    } finally {
+      setOtpLoading(false);
     }
-    setOtpLoading(false);
   };
 
-  const verifyOtp = async () => {
-    if (!otpCode || otpCode.length < 4) return;
+  const verifyOtp = async (codeArg?: string) => {
+    const code = codeArg ?? otpCode;
+    if (!code || code.length < 4 || otpLoading) return;
     setOtpLoading(true);
     setOtpError("");
+    setOtpStep("verifying");
     try {
-      const { data, error } = await supabase.functions.invoke("send-otp", {
-        body: { action: "verify", phone: otpPhone, code: otpCode },
-      });
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke("send-otp", { body: { action: "verify", phone: otpPhone, code } }),
+      );
       if (error) throw error;
       if (data?.valid) {
         setOtpVerified(true);
@@ -87,12 +117,16 @@ export default function WebCheckoutPage() {
         setTimeout(() => formRef.current?.requestSubmit(), 0);
       } else {
         setOtpError(data?.error || t("رمز غير صحيح", "קוד שגוי"));
+        setOtpCode("");
+        setOtpStep("enter");
       }
     } catch (err) {
       console.error("OTP verify error:", err);
-      setOtpError(t("حدث خطأ في التحقق", "שגיאה באימות"));
+      setOtpError(t("حدث خطأ في التحقق، حاول مرة أخرى", "שגיאה באימות, נסה שוב"));
+      setOtpStep("enter");
+    } finally {
+      setOtpLoading(false);
     }
-    setOtpLoading(false);
   };
 
   // Attach the shopper's details to the pixels as soon as they're typed, so
