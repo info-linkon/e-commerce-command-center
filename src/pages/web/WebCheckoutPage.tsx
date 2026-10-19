@@ -857,6 +857,26 @@ export default function WebCheckoutPage() {
           ))}
         </div>
 
+        {/* Mobile: plain-language instruction for the current step */}
+        <div className="md:hidden mb-4 rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-center">
+          <p className="text-sm font-bold">
+            {mobileStep === 1
+              ? t("الخطوة 1 من 3: اختر طريقة الاستلام وعبّئ معلوماتك", "שלב 1 מתוך 3: בחרו אופן קבלה ומלאו פרטים")
+              : mobileStep === 2
+                ? t("الخطوة 2 من 3: اختر كيف بدك تدفع", "שלב 2 מתוך 3: בחרו איך לשלם")
+                : t("الخطوة 3 من 3: راجع طلبك وأكّده", "שלב 3 מתוך 3: בדקו את ההזמנה ואשרו")}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {mobileStep === 1
+              ? t("الحقول المعلّمة بـ * إلزامية", "שדות עם * הם חובה")
+              : mobileStep === 2
+                ? t("بطاقة ائتمان: بننقلك لصفحة دفع آمنة. نقداً: بتدفع للمندوب عند الاستلام", "אשראי: נעביר אתכם לדף תשלום מאובטח. מזומן: תשלום לשליח בעת הקבלה")
+                : selectedPayment === "cash"
+                  ? t("بعد الضغط على «تأكيد الطلب» رح نبعتلك رمز تحقق على الهاتف", "אחרי «אישור הזמנה» נשלח קוד אימות לטלפון")
+                  : t("بعد الضغط على «ادفع الآن» رح تنتقل لصفحة الدفع الآمنة", "אחרי «שלם עכשיו» תועברו לדף התשלום המאובטח")}
+          </p>
+        </div>
+
         {/* Mobile collapsible order summary strip (steps 1-2) */}
         {mobileStep < 3 && (
           <div className="md:hidden mb-4">
@@ -1113,7 +1133,7 @@ export default function WebCheckoutPage() {
             onClick={goNext}
           >
             <span className="flex items-center gap-2">
-              {t("متابعة", "המשך")}
+              {mobileStep === 1 ? t("التالي: طريقة الدفع", "הבא: אופן תשלום") : t("التالي: مراجعة الطلب", "הבא: סיכום הזמנה")}
               <ChevronLeft className="w-5 h-5" />
             </span>
           </Button>
