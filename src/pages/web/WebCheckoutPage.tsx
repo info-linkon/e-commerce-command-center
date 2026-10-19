@@ -1000,21 +1000,6 @@ export default function WebCheckoutPage() {
                 </Card>
               </div>
 
-              {/* Step 3 (mobile only): review & confirm */}
-              <div className={`${mobileStep === 2 ? "block animate-fade-in" : "hidden"} md:hidden space-y-4`}>
-                <Card className="border-border/60 shadow-sm">
-                  <CardContent className="p-4 space-y-3 text-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="flex items-center gap-2"><Truck className="w-4 h-4 text-primary" />{shippingMethod === "pickup" ? pickupLabel : deliveryLabel}</span>
-                      <button type="button" className="text-xs text-primary underline" onClick={() => { setMobileStep(1); window.scrollTo({ top: 0 }); }}>{t("تعديل", "שינוי")}</button>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="flex items-center gap-2">{selectedPayment === "cash" ? <Banknote className="w-4 h-4 text-primary" /> : <CreditCard className="w-4 h-4 text-primary" />}{selectedPayment === "cash" ? t(paymentSettings.cash.label, "תשלום במזומן במסירה") : t(paymentSettings.credit.label, "כרטיס אשראי")}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-                {summaryCard}
-              </div>
             </div>
 
             {/* Left Column — Order Summary (sticky, desktop only) */}
@@ -1059,19 +1044,6 @@ export default function WebCheckoutPage() {
           <span className="text-sm text-muted-foreground">{t("المجموع", "סה״כ")}</span>
           <span className="text-lg font-black text-primary">₪{finalTotal.toFixed(2)}</span>
         </div>
-        {mobileStep === 1 ? (
-          <Button
-            type="button"
-            size="lg"
-            className="w-full h-12 md:h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold rounded-xl shadow-lg text-base"
-            onClick={goNext}
-          >
-            <span className="flex items-center gap-2">
-              {t("التالي: مراجعة الطلب", "הבא: סיכום הזמנה")}
-              <ChevronLeft className="w-5 h-5" />
-            </span>
-          </Button>
-        ) : (
           <Button
             type="button"
             size="lg"
@@ -1091,13 +1063,7 @@ export default function WebCheckoutPage() {
               </span>
             )}
           </Button>
-        )}
         <div className="flex items-center justify-center gap-3 mt-2">
-          {mobileStep > 1 && (
-            <button type="button" onClick={goBack} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-              {t("→ رجوع", "חזרה ←")}
-            </button>
-          )}
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck className="w-3.5 h-3.5 text-primary" />
             {t("الدفع آمن", "תשלום מאובטח")}
