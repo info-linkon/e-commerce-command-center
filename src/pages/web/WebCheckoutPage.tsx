@@ -356,7 +356,7 @@ export default function WebCheckoutPage() {
     const customerPhone = form.get("phone") as string;
     // Clean invisible RTL marks / spaces that mobile keyboards & autofill add.
     const customerEmail = ((form.get("email") as string) || "")
-      .replace(/[\s‎‏‪-‮⁦-⁩﻿]/g, "")
+      .replace(/[\s\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, "")
       .toLowerCase();
     if (customerEmail && !/^[^@]+@[^@]+\.[a-z]{2,}$/i.test(customerEmail)) {
       setEmailError(t("البريد الإلكتروني غير صحيح — صحّحه أو اتركه فارغاً", "כתובת האימייל לא תקינה — תקן או השאר ריק"));
