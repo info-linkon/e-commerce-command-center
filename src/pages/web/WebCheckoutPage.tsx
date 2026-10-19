@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateCoupon, calcDiscount, Coupon } from "@/hooks/useCoupons";
-import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home, MessageSquare, ShieldCheck, Lock, ChevronLeft, ShoppingBag, Package, Truck } from "lucide-react";
+import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home, MessageSquare, ShieldCheck, Lock, ChevronLeft, ChevronDown, ShoppingBag, Package, Truck, Check } from "lucide-react";
 import { fbq, fbqIdentify } from "@/lib/meta-pixel";
 import { ttq, ttqIdentify } from "@/lib/tiktok-pixel";
 import { gaBeginCheckout } from "@/lib/gtag";
@@ -40,6 +40,10 @@ export default function WebCheckoutPage() {
   const [hypPaymentUrl, setHypPaymentUrl] = useState<string | null>(null);
   const submittedRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Mobile stepper: 1 = details, 2 = payment, 3 = review & confirm
+  const [mobileStep, setMobileStep] = useState<1 | 2 | 3>(1);
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   // OTP state
   const [otpSent, setOtpSent] = useState(false);
@@ -258,6 +262,43 @@ export default function WebCheckoutPage() {
     setAppliedCoupon(null);
     setCouponCode("");
     setCouponError("");
+  };
+
+  // Validate only the fields of the current mobile step before advancing.
+  const validateMobileStep = (step: number): boolean => {
+    const form = formRef.current;
+    if (step === 1) {
+      if (!shippingMethod) {
+        toast.error(t("يرجى اختيار طريقة التوصيل", "יש לבחור שיטת משלוח"));
+        return false;
+      }
+      if (!form) return true;
+      const names = ["name", "phone", ...(shippingMethod === "delivery" ? ["city", "address"] : [])];
+      for (const n of names) {
+        const el = form.querySelector<HTMLInputElement>(`[name="${n}"]`);
+        if (el && !el.checkValidity()) {
+          el.reportValidity();
+          el.focus();
+          return false;
+        }
+      }
+    }
+    if (step === 2 && !selectedPayment) {
+      toast.error(t("يرجى اختيار طريقة الدفع", "יש לבחור אמצעי תשלום"));
+      return false;
+    }
+    return true;
+  };
+
+  const goNext = () => {
+    if (!validateMobileStep(mobileStep)) return;
+    setMobileStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const goBack = () => {
+    setMobileStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -575,15 +616,195 @@ export default function WebCheckoutPage() {
     );
   }
 
-  return (
-    <div className="bg-muted/30 min-h-screen pb-32 md:pb-12">
-      <div className="container py-6 md:py-10 max-w-5xl">
-        {/* Logo + Breadcrumb */}
-        <div className="flex flex-col items-center gap-3 mb-6">
-          <img src={logo} alt="الوجهة" className="w-16 h-16 rounded-full shadow-md ring-2 ring-primary/20" />
-          <span className="text-lg font-bold text-foreground">الوجهة</span>
+  const totalQty = items.reduce((s, i) => s + i.quantity, 0);
+
+  const mobileSteps = [
+    { n: 1, label: t("التفاصيل", "פרטים") },
+    { n: 2, label: t("الدفع", "תשלום") },
+    { n: 3, label: t("التأكيد", "אישור") },
+  ];
+
+  // Shared order-summary card (desktop sidebar, mobile step 3, mobile expanded strip)
+  const summaryCard = (
+    <Card className="border-border/60 shadow-lg">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <ShoppingBag className="h-4 w-4 text-primary" />
+          </div>
+          {t("ملخص الطلب", "סיכום הזמנה")} ({items.length} {t("منتج", "מוצרים")})
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Items */}
+        <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-thin">
+          {items.map((item) => (
+            <div key={item.variationId} className="flex items-center gap-3">
+              {item.imageUrl && (
+                <img
+                  src={item.imageUrl}
+                  alt={item.productName}
+                  className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0"
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{item.productName}</p>
+                {item.variationName && (
+                  <p className="text-xs text-muted-foreground">{item.variationName}</p>
+                )}
+                <div className="flex items-center gap-1.5 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.variationId, item.quantity - 1)}
+                    className="p-1.5 rounded hover:bg-muted transition-colors"
+                  >
+                    <MinusIcon className="w-3 h-3" />
+                  </button>
+                  <span className="text-xs font-medium w-5 text-center">{item.quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.variationId, item.quantity + 1)}
+                    className="p-1.5 rounded hover:bg-muted transition-colors"
+                  >
+                    <PlusIcon className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              <span className="font-semibold text-sm shrink-0">₪{(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+          ))}
         </div>
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">
+
+        {/* Coupon */}
+        <div className="border-t border-border pt-3">
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between bg-primary/10 px-3 py-2.5 rounded-xl">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">{appliedCoupon.code}</span>
+                <span className="text-sm text-primary font-semibold">-₪{discount.toFixed(2)}</span>
+              </div>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={removeCoupon}>
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                value={couponCode}
+                onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
+                placeholder={t("كود الخصم", "קוד הנחה")}
+                className="font-mono text-sm rounded-xl h-12"
+                dir="ltr"
+              />
+              <Button type="button" variant="outline" onClick={handleApplyCoupon} disabled={couponLoading} className="shrink-0 rounded-xl h-12">
+                {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("تطبيق", "החל")}
+              </Button>
+            </div>
+          )}
+          {couponError && <p className="text-destructive text-xs mt-1.5">{couponError}</p>}
+        </div>
+
+        {/* Totals */}
+        <div className="border-t border-border pt-3 space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{t("المجموع الفرعي", "סכום ביניים")}</span>
+            <span className="font-medium">₪{subtotal.toFixed(2)}</span>
+          </div>
+          {discount > 0 && (
+            <div className="flex justify-between text-primary">
+              <span>{t("خصم", "הנחה")}</span>
+              <span className="font-semibold">-₪{discount.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">
+              {shippingMethod === "pickup" ? t("استلام ذاتي", "איסוף עצמי") : t("تكلفة التوصيل", "עלות משלוח")}
+            </span>
+            <span className={`font-medium ${shippingMethod === "pickup" ? "text-primary" : ""}`}>
+              {shippingMethod === null
+                ? t("يُحدَّد حسب الاختيار", "ייקבע לפי הבחירה")
+                : shippingMethod === "pickup"
+                  ? t("مجاناً", "חינם")
+                  : `₪${shipping.toFixed(2)}`}
+            </span>
+          </div>
+          <div className="flex justify-between text-lg font-black pt-3 border-t border-border">
+            <span>{t("المجموع", "סה״כ")}</span>
+            <span className="text-primary">₪{finalTotal.toFixed(2)}</span>
+          </div>
+        </div>
+
+        {/* Submit — desktop */}
+        <div className="hidden md:block space-y-3 pt-2">
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base rounded-xl shadow-lg hover:shadow-xl transition-all"
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {t("جاري المعالجة...", "מעבד...")}
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                {selectedPayment === "cash"
+                  ? `${t("تأكيد الطلب", "אישור הזמנה")} — ₪${finalTotal.toFixed(2)}`
+                  : `${t("ادفع الآن", "שלם עכשיו")} — ₪${finalTotal.toFixed(2)}`}
+              </span>
+            )}
+          </Button>
+          <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <ShieldCheck className="w-4 h-4 text-primary" />
+            {selectedPayment === "credit" ? t("تشفير SSL — تحويل آمن لصفحة الدفع", "הצפנת SSL — מעבר מאובטח לדף תשלום") : t("تأكيد فوري — الدفع عند الاستلام", "אישור מיידי — תשלום בעת קבלה")}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const selectionCard = (
+    selected: boolean,
+    htmlFor: string,
+    value: string,
+    icon: React.ReactNode,
+    label: string,
+    sub?: string,
+  ) => (
+    <label
+      htmlFor={htmlFor}
+      className={`relative flex flex-col items-center gap-2.5 border-2 rounded-2xl p-4 md:p-5 cursor-pointer transition-all active:scale-[0.98] ${
+        selected
+          ? "border-primary bg-primary/5 shadow-md"
+          : "border-border hover:border-muted-foreground/30"
+      }`}
+    >
+      <RadioGroupItem value={value} id={htmlFor} className="sr-only" />
+      {selected && (
+        <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+          <Check className="w-3 h-3" />
+        </span>
+      )}
+      {icon}
+      <div className="text-center">
+        <span className="font-semibold text-sm block">{label}</span>
+        {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
+      </div>
+    </label>
+  );
+
+  return (
+    <div className="bg-muted/30 min-h-screen pb-36 md:pb-12">
+      <div className="container py-4 md:py-10 max-w-5xl">
+        {/* Logo + Breadcrumb */}
+        <div className="flex flex-col items-center gap-2 md:gap-3 mb-4 md:mb-6">
+          <img src={logo} alt="الوجهة" className="w-12 h-12 md:w-16 md:h-16 rounded-full shadow-md ring-2 ring-primary/20" />
+          <span className="text-base md:text-lg font-bold text-foreground">الوجهة</span>
+        </div>
+        <div className="hidden md:flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to={localizedPath("/cart")} className="hover:text-foreground transition-colors flex items-center gap-1">
             <ShoppingBag className="w-4 h-4" />
             {t("السلة", "הסל")}
@@ -592,345 +813,261 @@ export default function WebCheckoutPage() {
           <span className="text-foreground font-medium">{t("إتمام الطلب", "השלמת הזמנה")}</span>
         </div>
 
-        <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center">{t("إتمام الطلب", "השלמת הזמנה")}</h1>
+        <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-8 text-center">{t("إتمام الطلب", "השלמת הזמנה")}</h1>
+
+        {/* Mobile step indicator */}
+        <div className="md:hidden flex items-center justify-center gap-1.5 mb-4" dir="rtl">
+          {mobileSteps.map((s, i) => (
+            <div key={s.n} className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => s.n < mobileStep && setMobileStep(s.n as 1 | 2 | 3)}
+                className="flex items-center gap-1.5"
+              >
+                <span
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                    s.n < mobileStep
+                      ? "bg-primary text-primary-foreground"
+                      : s.n === mobileStep
+                        ? "bg-gold text-gold-foreground"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {s.n < mobileStep ? <Check className="w-3.5 h-3.5" /> : s.n}
+                </span>
+                <span className={`text-xs ${s.n === mobileStep ? "font-bold text-foreground" : "text-muted-foreground"}`}>
+                  {s.label}
+                </span>
+              </button>
+              {i < mobileSteps.length - 1 && <div className="w-6 h-px bg-border" />}
+            </div>
+          ))}
+        </div>
+
+        {/* Mobile collapsible order summary strip (steps 1-2) */}
+        {mobileStep < 3 && (
+          <div className="md:hidden mb-4">
+            <button
+              type="button"
+              onClick={() => setSummaryOpen(!summaryOpen)}
+              className="w-full bg-card border border-border rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex -space-x-2 rtl:space-x-reverse">
+                  {items.slice(0, 3).map((item, i) => (
+                    <div key={i} className="w-8 h-8 rounded-lg border-2 border-card bg-muted overflow-hidden">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ShoppingBag className="w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {totalQty} {t("منتجات", "מוצרים")}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-black text-primary">₪{finalTotal.toFixed(2)}</span>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${summaryOpen ? "rotate-180" : ""}`} />
+              </div>
+            </button>
+            {summaryOpen && <div className="mt-2 animate-fade-in">{summaryCard}</div>}
+          </div>
+        )}
 
         <form ref={formRef} onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
             {/* Right Column — Forms */}
             <div className="md:col-span-7 space-y-6 order-2 md:order-1">
-              {/* Shipping Method Card */}
-              {(deliveryEnabled && pickupEnabled) && (
-              <Card className="border-border/60 shadow-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Truck className="h-4 w-4 text-primary" />
-                    </div>
-                    {t("طريقة الاستلام", "אופן קבלת המשלוח")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup value={shippingMethod ?? ""} onValueChange={(v) => setShippingMethod(v as ShippingMethod)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {deliveryEnabled && (
-                      <label
-                        htmlFor="sm-delivery"
-                        className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                          shippingMethod === "delivery"
-                            ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
-                            : "border-border hover:border-muted-foreground/30"
-                        }`}
-                      >
-                        <RadioGroupItem value="delivery" id="sm-delivery" className="sr-only" />
-                        <Truck className={`w-8 h-8 ${shippingMethod === "delivery" ? "text-primary" : "text-muted-foreground"}`} />
-                        <div className="text-center">
-                          <span className="font-semibold text-sm block">{deliveryLabel}</span>
-                          {shippingCost() > 0 && (
-                            <span className="text-xs text-muted-foreground">₪{shippingCost().toFixed(2)}</span>
-                          )}
-                        </div>
-                      </label>
-                    )}
-                    {pickupEnabled && (
-                      <label
-                        htmlFor="sm-pickup"
-                        className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                          shippingMethod === "pickup"
-                            ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
-                            : "border-border hover:border-muted-foreground/30"
-                        }`}
-                      >
-                        <RadioGroupItem value="pickup" id="sm-pickup" className="sr-only" />
-                        <Package className={`w-8 h-8 ${shippingMethod === "pickup" ? "text-primary" : "text-muted-foreground"}`} />
-                        <div className="text-center">
-                          <span className="font-semibold text-sm block">{pickupLabel}</span>
-                          <span className="text-xs text-muted-foreground">{t("مجاناً", "חינם")}</span>
-                        </div>
-                      </label>
-                    )}
-                  </RadioGroup>
-                  {shippingMethod === "pickup" && pickupNote && (
-                    <p className="text-xs text-muted-foreground mt-3 text-center">
-                      {pickupNote}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-              )}
-
-              {/* Customer / Shipping Info Card */}
-              <Card className="border-border/60 shadow-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      {shippingMethod === "delivery" ? <MapPin className="h-4 w-4 text-primary" /> : <User className="h-4 w-4 text-primary" />}
-                    </div>
-                    {shippingMethod === "delivery" ? t("معلومات التوصيل", "פרטי משלוח") : t("معلومات الزبون", "פרטי לקוח")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">{t("الاسم الكامل *", "שם מלא *")}</Label>
-                      <div className="relative">
-                        <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input id="name" name="name" required className="pr-10 rounded-xl" placeholder={t("أدخل اسمك الكامل", "הזן שם מלא")} />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">{t("رقم الهاتف *", "מספר טלפון *")}</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          id="phone"
-                          name="phone"
-                          type="tel"
-                          required
-                          className={`pl-10 ${otpVerified ? "pr-10" : ""} rounded-xl`}
-                          placeholder="05X-XXX-XXXX"
-                          dir="ltr"
-                          onBlur={handlePhoneBlur}
-                        />
-                        {otpVerified && (
-                          <ShieldCheck className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                        )}
-                      </div>
-                      {selectedPayment === "cash" && otpSent && !otpVerified && (
-                        <button
-                          type="button"
-                          className="text-xs text-primary hover:underline mt-1"
-                          onClick={() => setOtpDialogOpen(true)}
-                        >
-                          {t("أدخل رمز التحقق", "הזן קוד אימות")}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t("البريد الإلكتروني", "אימייל")}</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input id="email" name="email" type="text" inputMode="email" autoComplete="email" autoCapitalize="off" autoCorrect="off" spellCheck={false} className="pl-10 rounded-xl" placeholder="email@example.com" dir="ltr" onBlur={handleIdentityBlur} onChange={() => emailError && setEmailError("")} />
-                    </div>
-                    {emailError && <p className="text-xs text-destructive">{emailError}</p>}
-                  </div>
-                  {shippingMethod === "delivery" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="city">{t("المدينة *", "עיר *")}</Label>
-                        <div className="relative">
-                          <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input id="city" name="city" required className="pr-10 rounded-xl" placeholder={t("المدينة", "עיר")} onChange={() => geoError && setGeoError("")} />
-                        </div>
-                        {geoError && (
-                          <p className="text-destructive text-xs mt-1">{geoError}</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="address">{t("العنوان التفصيلي *", "כתובת מפורטת *")}</Label>
-                        <div className="relative">
-                          <Home className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input id="address" name="address" required className="pr-10 rounded-xl" placeholder={t("الشارع، رقم البيت", "רחוב, מספר בית")} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">{t("ملاحظات", "הערות")}</Label>
-                    <div className="relative">
-                      <MessageSquare className="absolute right-3 top-3 w-4 h-4 text-muted-foreground" />
-                      <Input id="notes" name="notes" className="pr-10 rounded-xl" placeholder={t("ملاحظات إضافية (اختياري)", "הערות נוספות (אופציונלי)")} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Payment Method Card */}
-              <Card className="border-border/60 shadow-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <CreditCard className="h-4 w-4 text-primary" />
-                    </div>
-                    {t("طريقة الدفع", "אופן תשלום")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup value={selectedPayment ?? ""} onValueChange={(v) => setSelectedPayment(v as PaymentMethodType)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {paymentSettings.cash.enabled && (
-                      <label
-                        htmlFor="pm-cash"
-                        className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                          selectedPayment === "cash"
-                            ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
-                            : "border-border hover:border-muted-foreground/30"
-                        }`}
-                      >
-                        <RadioGroupItem value="cash" id="pm-cash" className="sr-only" />
-                        <Banknote className={`w-8 h-8 ${selectedPayment === "cash" ? "text-primary" : "text-muted-foreground"}`} />
-                        <span className="font-semibold text-sm">{t(paymentSettings.cash.label, "תשלום במזומן במסירה")}</span>
-                      </label>
-                    )}
-                    {paymentSettings.credit.enabled && (
-                      <label
-                        htmlFor="pm-credit"
-                        className={`flex flex-col items-center gap-3 border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                          selectedPayment === "credit"
-                            ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
-                            : "border-border hover:border-muted-foreground/30"
-                        }`}
-                      >
-                        <RadioGroupItem value="credit" id="pm-credit" className="sr-only" />
-                        <CreditCard className={`w-8 h-8 ${selectedPayment === "credit" ? "text-primary" : "text-muted-foreground"}`} />
-                        <span className="font-semibold text-sm">{t(paymentSettings.credit.label, "כרטיס אשראי")}</span>
-                      </label>
-                    )}
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Left Column — Order Summary (sticky) */}
-            <div className="md:col-span-5 order-1 md:order-2">
-              <div className="md:sticky md:top-24">
-                <Card className="border-border/60 shadow-lg">
-                  <CardHeader className="pb-3">
+              {/* Step 1 (mobile): shipping method + customer info */}
+              <div key={`step-${mobileStep === 1 ? 1 : "x"}`} className={`${mobileStep === 1 ? "block" : "hidden"} md:block space-y-6 animate-fade-in`}>
+                {/* Shipping Method Card */}
+                {(deliveryEnabled && pickupEnabled) && (
+                <Card className="border-border/60 shadow-sm">
+                  <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <div className="p-2 rounded-lg bg-primary/10">
-                        <ShoppingBag className="h-4 w-4 text-primary" />
+                        <Truck className="h-4 w-4 text-primary" />
                       </div>
-                      {t("ملخص الطلب", "סיכום הזמנה")} ({items.length} {t("منتج", "מוצרים")})
+                      {t("طريقة الاستلام", "אופן קבלת המשלוח")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RadioGroup value={shippingMethod ?? ""} onValueChange={(v) => setShippingMethod(v as ShippingMethod)} className="grid grid-cols-2 gap-3">
+                      {deliveryEnabled && selectionCard(
+                        shippingMethod === "delivery",
+                        "sm-delivery",
+                        "delivery",
+                        <Truck className={`w-8 h-8 ${shippingMethod === "delivery" ? "text-primary" : "text-muted-foreground"}`} />,
+                        deliveryLabel,
+                        shippingCost() > 0 ? `₪${shippingCost().toFixed(2)}` : undefined,
+                      )}
+                      {pickupEnabled && selectionCard(
+                        shippingMethod === "pickup",
+                        "sm-pickup",
+                        "pickup",
+                        <Package className={`w-8 h-8 ${shippingMethod === "pickup" ? "text-primary" : "text-muted-foreground"}`} />,
+                        pickupLabel,
+                        t("مجاناً", "חינם"),
+                      )}
+                    </RadioGroup>
+                    {shippingMethod === "pickup" && pickupNote && (
+                      <p className="text-xs text-muted-foreground mt-3 text-center">
+                        {pickupNote}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+                )}
+
+                {/* Customer / Shipping Info Card */}
+                <Card className="border-border/60 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        {shippingMethod === "delivery" ? <MapPin className="h-4 w-4 text-primary" /> : <User className="h-4 w-4 text-primary" />}
+                      </div>
+                      {shippingMethod === "delivery" ? t("معلومات التوصيل", "פרטי משלוח") : t("معلومات الزبون", "פרטי לקוח")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* Items */}
-                    <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-thin">
-                      {items.map((item) => (
-                        <div key={item.variationId} className="flex items-center gap-3">
-                          {item.imageUrl && (
-                            <img
-                              src={item.imageUrl}
-                              alt={item.productName}
-                              className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{item.productName}</p>
-                            {item.variationName && (
-                              <p className="text-xs text-muted-foreground">{item.variationName}</p>
-                            )}
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <button
-                                type="button"
-                                onClick={() => updateQuantity(item.variationId, item.quantity - 1)}
-                                className="p-0.5 rounded hover:bg-muted transition-colors"
-                              >
-                                <MinusIcon className="w-3 h-3" />
-                              </button>
-                              <span className="text-xs font-medium w-5 text-center">{item.quantity}</span>
-                              <button
-                                type="button"
-                                onClick={() => updateQuantity(item.variationId, item.quantity + 1)}
-                                className="p-0.5 rounded hover:bg-muted transition-colors"
-                              >
-                                <PlusIcon className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-                          <span className="font-semibold text-sm shrink-0">₪{(item.price * item.quantity).toFixed(2)}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">{t("الاسم الكامل *", "שם מלא *")}</Label>
+                        <div className="relative">
+                          <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input id="name" name="name" required autoComplete="name" className="pr-10 rounded-xl h-12 text-base" placeholder={t("أدخل اسمك الكامل", "הזן שם מלא")} />
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Coupon */}
-                    <div className="border-t border-border pt-3">
-                      {appliedCoupon ? (
-                        <div className="flex items-center justify-between bg-primary/10 px-3 py-2.5 rounded-xl">
-                          <div className="flex items-center gap-2">
-                            <Tag className="w-4 h-4 text-primary" />
-                            <span className="text-sm font-medium">{appliedCoupon.code}</span>
-                            <span className="text-sm text-primary font-semibold">-₪{discount.toFixed(2)}</span>
-                          </div>
-                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={removeCoupon}>
-                            <X className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">{t("رقم الهاتف *", "מספר טלפון *")}</Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
-                            value={couponCode}
-                            onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
-                            placeholder={t("كود الخصم", "קוד הנחה")}
-                            className="font-mono text-sm rounded-xl"
+                            id="phone"
+                            name="phone"
+                            type="tel"
+                            required
+                            autoComplete="tel"
+                            inputMode="tel"
+                            className={`pl-10 ${otpVerified ? "pr-10" : ""} rounded-xl h-12 text-base`}
+                            placeholder="05X-XXX-XXXX"
                             dir="ltr"
+                            onBlur={handlePhoneBlur}
                           />
-                          <Button type="button" variant="outline" onClick={handleApplyCoupon} disabled={couponLoading} className="shrink-0 rounded-xl">
-                            {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("تطبيق", "החל")}
-                          </Button>
+                          {otpVerified && (
+                            <ShieldCheck className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-600" />
+                          )}
                         </div>
-                      )}
-                      {couponError && <p className="text-destructive text-xs mt-1.5">{couponError}</p>}
-                    </div>
-
-                    {/* Totals */}
-                    <div className="border-t border-border pt-3 space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">{t("المجموع الفرعي", "סכום ביניים")}</span>
-                        <span className="font-medium">₪{subtotal.toFixed(2)}</span>
-                      </div>
-                      {discount > 0 && (
-                        <div className="flex justify-between text-primary">
-                          <span>{t("خصم", "הנחה")}</span>
-                          <span className="font-semibold">-₪{discount.toFixed(2)}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          {shippingMethod === "pickup" ? t("استلام ذاتي", "איסוף עצמי") : t("تكلفة التوصيل", "עלות משלוח")}
-                        </span>
-                        <span className={`font-medium ${shippingMethod === "pickup" ? "text-primary" : ""}`}>
-                          {shippingMethod === null
-                            ? t("يُحدَّد حسب الاختيار", "ייקבע לפי הבחירה")
-                            : shippingMethod === "pickup"
-                              ? t("مجاناً", "חינם")
-                              : `₪${shipping.toFixed(2)}`}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-lg font-black pt-3 border-t border-border">
-                        <span>{t("المجموع", "סה״כ")}</span>
-                        <span className="text-primary">₪{finalTotal.toFixed(2)}</span>
-                      </div>
-                      
-                    </div>
-
-                    {/* Submit — desktop */}
-                    <div className="hidden md:block space-y-3 pt-2">
-                      <Button
-                        type="submit"
-                        size="lg"
-                        className="w-full h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base rounded-xl shadow-lg hover:shadow-xl transition-all"
-                        disabled={loading}
-                      >
-                        {loading ? (
-                          <span className="flex items-center gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            {t("جاري المعالجة...", "מעבד...")}
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-2">
-                            <Lock className="w-4 h-4" />
-                            {selectedPayment === "cash"
-                              ? `${t("تأكيد الطلب", "אישור הזמנה")} — ₪${finalTotal.toFixed(2)}`
-                              : `${t("ادفع الآن", "שלם עכשיו")} — ₪${finalTotal.toFixed(2)}`}
-                          </span>
+                        {selectedPayment === "cash" && otpSent && !otpVerified && (
+                          <button
+                            type="button"
+                            className="text-xs text-primary hover:underline mt-1"
+                            onClick={() => setOtpDialogOpen(true)}
+                          >
+                            {t("أدخل رمز التحقق", "הזן קוד אימות")}
+                          </button>
                         )}
-                      </Button>
-                      <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                        <ShieldCheck className="w-4 h-4 text-primary" />
-                        {selectedPayment === "credit" ? t("تشفير SSL — تحويل آمن لصفحة الدفع", "הצפנת SSL — מעבר מאובטח לדף תשלום") : t("تأكيد فوري — الدفع عند الاستلام", "אישור מיידי — תשלום בעת קבלה")}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">{t("البريد الإلكتروني", "אימייל")}</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input id="email" name="email" type="text" inputMode="email" autoComplete="email" autoCapitalize="off" autoCorrect="off" spellCheck={false} className="pl-10 rounded-xl h-12 text-base" placeholder="email@example.com" dir="ltr" onBlur={handleIdentityBlur} onChange={() => emailError && setEmailError("")} />
+                      </div>
+                      {emailError && <p className="text-xs text-destructive">{emailError}</p>}
+                    </div>
+                    {shippingMethod === "delivery" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="city">{t("المدينة *", "עיר *")}</Label>
+                          <div className="relative">
+                            <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input id="city" name="city" required autoComplete="address-level2" className="pr-10 rounded-xl h-12 text-base" placeholder={t("المدينة", "עיר")} onChange={() => geoError && setGeoError("")} />
+                          </div>
+                          {geoError && (
+                            <p className="text-destructive text-xs mt-1">{geoError}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="address">{t("العنوان التفصيلي *", "כתובת מפורטת *")}</Label>
+                          <div className="relative">
+                            <Home className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input id="address" name="address" required autoComplete="street-address" className="pr-10 rounded-xl h-12 text-base" placeholder={t("الشارع، رقم البيت", "רחוב, מספר בית")} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">{t("ملاحظات", "הערות")}</Label>
+                      <div className="relative">
+                        <MessageSquare className="absolute right-3 top-3.5 w-4 h-4 text-muted-foreground" />
+                        <Input id="notes" name="notes" className="pr-10 rounded-xl h-12 text-base" placeholder={t("ملاحظات إضافية (اختياري)", "הערות נוספות (אופציונלי)")} />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
+              </div>
+
+              {/* Step 2 (mobile): payment method */}
+              <div className={`${mobileStep === 2 ? "block animate-fade-in" : "hidden"} md:block`}>
+                <Card className="border-border/60 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <CreditCard className="h-4 w-4 text-primary" />
+                      </div>
+                      {t("طريقة الدفع", "אופן תשלום")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <RadioGroup value={selectedPayment ?? ""} onValueChange={(v) => setSelectedPayment(v as PaymentMethodType)} className="grid grid-cols-2 gap-3">
+                      {paymentSettings.cash.enabled && selectionCard(
+                        selectedPayment === "cash",
+                        "pm-cash",
+                        "cash",
+                        <Banknote className={`w-8 h-8 ${selectedPayment === "cash" ? "text-primary" : "text-muted-foreground"}`} />,
+                        t(paymentSettings.cash.label, "תשלום במזומן במסירה"),
+                      )}
+                      {paymentSettings.credit.enabled && selectionCard(
+                        selectedPayment === "credit",
+                        "pm-credit",
+                        "credit",
+                        <CreditCard className={`w-8 h-8 ${selectedPayment === "credit" ? "text-primary" : "text-muted-foreground"}`} />,
+                        t(paymentSettings.credit.label, "כרטיס אשראי"),
+                      )}
+                    </RadioGroup>
+                    {selectedPayment === "credit" && (
+                      <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-xl py-2.5 px-3 animate-fade-in">
+                        <Lock className="w-3.5 h-3.5 text-primary shrink-0" />
+                        {t("تشفير SSL — تحويل آمن لصفحة الدفع", "הצפנת SSL — מעבר מאובטח לדף תשלום")}
+                      </div>
+                    )}
+                    {selectedPayment === "cash" && (
+                      <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-xl py-2.5 px-3 animate-fade-in text-center">
+                        <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                        {t("الدفع للمندوب عند الاستلام — سنرسل رمز تحقق لهاتفك", "תשלום לשליח בעת הקבלה — נשלח קוד אימות לטלפון")}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Step 3 (mobile only): review & confirm */}
+              <div className={`${mobileStep === 3 ? "block animate-fade-in" : "hidden"} md:hidden space-y-4`}>
+                {summaryCard}
+              </div>
+            </div>
+
+            {/* Left Column — Order Summary (sticky, desktop only) */}
+            <div className="hidden md:block md:col-span-5 order-1 md:order-2">
+              <div className="md:sticky md:top-24">
+                {summaryCard}
               </div>
             </div>
           </div>
@@ -938,37 +1075,54 @@ export default function WebCheckoutPage() {
       </div>
 
       {/* Mobile Sticky Bottom Bar */}
-      <div className="fixed bottom-14 inset-x-0 bg-card border-t border-border p-4 md:hidden z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+      <div className="fixed bottom-14 inset-x-0 bg-card border-t border-border px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-muted-foreground">{t("المجموع", "סה״כ")}</span>
           <span className="text-lg font-black text-primary">₪{finalTotal.toFixed(2)}</span>
         </div>
-        <Button
-          type="submit"
-          form=""
-          size="lg"
-          className="w-full h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold rounded-xl shadow-lg text-base"
-          disabled={loading}
-          onClick={() => {
-            const form = document.querySelector("form");
-            if (form) form.requestSubmit();
-          }}
-        >
-          {loading ? (
+        {mobileStep < 3 ? (
+          <Button
+            type="button"
+            size="lg"
+            className="w-full h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold rounded-xl shadow-lg text-base"
+            onClick={goNext}
+          >
             <span className="flex items-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              {t("جاري المعالجة...", "מעבד...")}
+              {t("متابعة", "המשך")}
+              <ChevronLeft className="w-5 h-5" />
             </span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <Lock className="w-4 h-4" />
-              {selectedPayment === "cash" ? t("تأكيد الطلب", "אישור הזמנה") : t("ادفع الآن", "שלם עכשיו")}
-            </span>
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            size="lg"
+            className="w-full h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold rounded-xl shadow-lg text-base"
+            disabled={loading}
+            onClick={() => formRef.current?.requestSubmit()}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {t("جاري المعالجة...", "מעבד...")}
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                {selectedPayment === "cash" ? t("تأكيد الطلب", "אישור הזמנה") : t("ادفع الآن", "שלם עכשיו")}
+              </span>
+            )}
+          </Button>
+        )}
+        <div className="flex items-center justify-center gap-3 mt-2">
+          {mobileStep > 1 && (
+            <button type="button" onClick={goBack} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              {t("→ رجوع", "חזרה ←")}
+            </button>
           )}
-        </Button>
-        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mt-2">
-          <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-          {t("الدفع آمن", "תשלום מאובטח")}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+            {t("الدفع آمن", "תשלום מאובטח")}
+          </div>
         </div>
       </div>
 
