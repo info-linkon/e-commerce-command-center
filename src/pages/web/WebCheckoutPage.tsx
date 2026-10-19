@@ -648,7 +648,7 @@ export default function WebCheckoutPage() {
           {t("ملخص الطلب", "סיכום הזמנה")} ({items.length} {t("منتج", "מוצרים")})
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 md:space-y-4 p-4 pt-0 md:p-6 md:pt-0">
         {/* Items */}
         <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-thin">
           {items.map((item) => (
@@ -753,7 +753,7 @@ export default function WebCheckoutPage() {
           <Button
             type="submit"
             size="lg"
-            className="w-full h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base rounded-xl shadow-lg hover:shadow-xl transition-all"
+            className="w-full h-12 md:h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold text-base rounded-xl shadow-lg hover:shadow-xl transition-all"
             disabled={loading}
           >
             {loading ? (
@@ -789,7 +789,7 @@ export default function WebCheckoutPage() {
   ) => (
     <label
       htmlFor={htmlFor}
-      className={`relative flex flex-col items-center gap-2.5 border-2 rounded-2xl p-4 md:p-5 cursor-pointer transition-all active:scale-[0.98] ${
+      className={`relative flex flex-row md:flex-col items-center justify-center gap-2 md:gap-2.5 border-2 rounded-xl md:rounded-2xl p-3 md:p-5 min-h-14 cursor-pointer transition-all active:scale-[0.98] ${
         selected
           ? "border-primary bg-primary/5 shadow-md"
           : "border-border hover:border-muted-foreground/30"
@@ -802,7 +802,7 @@ export default function WebCheckoutPage() {
         </span>
       )}
       {icon}
-      <div className="text-center">
+      <div className="text-start md:text-center leading-tight">
         <span className="font-semibold text-sm block">{label}</span>
         {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
       </div>
@@ -811,9 +811,9 @@ export default function WebCheckoutPage() {
 
   return (
     <div className="bg-muted/30 min-h-screen pb-36 md:pb-12">
-      <div className="container py-4 md:py-10 max-w-5xl">
+      <div className="container py-3 md:py-10 max-w-5xl">
         {/* Logo + Breadcrumb */}
-        <div className="flex flex-col items-center gap-2 md:gap-3 mb-4 md:mb-6">
+        <div className="hidden md:flex flex-col items-center gap-3 mb-6">
           <img src={logo} alt="الوجهة" className="w-12 h-12 md:w-16 md:h-16 rounded-full shadow-md ring-2 ring-primary/20" />
           <span className="text-base md:text-lg font-bold text-foreground">الوجهة</span>
         </div>
@@ -826,7 +826,7 @@ export default function WebCheckoutPage() {
           <span className="text-foreground font-medium">{t("إتمام الطلب", "השלמת הזמנה")}</span>
         </div>
 
-        <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-8 text-center">{t("إتمام الطلب", "השלמת הזמנה")}</h1>
+        <h1 className="text-lg md:text-3xl font-bold mb-3 md:mb-8 text-center">{t("إتمام الطلب", "השלמת הזמנה")}</h1>
 
         {/* Mobile step indicator */}
         <div className="md:hidden flex items-center justify-center gap-1.5 mb-4" dir="rtl">
@@ -895,13 +895,13 @@ export default function WebCheckoutPage() {
         <form ref={formRef} onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
             {/* Right Column — Forms */}
-            <div className="md:col-span-7 space-y-6 order-2 md:order-1">
+            <div className="md:col-span-7 space-y-3 md:space-y-6 order-2 md:order-1">
               {/* Step 1 (mobile): shipping method + customer info */}
-              <div className={`${mobileStep === 1 ? "block animate-fade-in" : "hidden"} md:block space-y-6`}>
+              <div className={`${mobileStep === 1 ? "block animate-fade-in" : "hidden"} md:block space-y-3 md:space-y-6`}>
                 {/* Shipping Method Card */}
                 {(deliveryEnabled || pickupEnabled) && (
                 <Card className="border-border/60 shadow-sm">
-                  <CardHeader className="pb-4">
+                  <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <div className="p-2 rounded-lg bg-primary/10">
                         <Truck className="h-4 w-4 text-primary" />
@@ -909,13 +909,13 @@ export default function WebCheckoutPage() {
                       {t("طريقة الاستلام", "אופן קבלת המשלוח")}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
                     <RadioGroup value={shippingMethod ?? ""} onValueChange={(v) => setShippingMethod(v as ShippingMethod)} className="grid grid-cols-2 gap-3">
                       {deliveryEnabled && selectionCard(
                         shippingMethod === "delivery",
                         "sm-delivery",
                         "delivery",
-                        <Truck className={`w-8 h-8 ${shippingMethod === "delivery" ? "text-primary" : "text-muted-foreground"}`} />,
+                        <Truck className={`w-6 h-6 md:w-8 md:h-8 shrink-0 ${shippingMethod === "delivery" ? "text-primary" : "text-muted-foreground"}`} />,
                         deliveryLabel,
                         shippingCost() > 0 ? `₪${shippingCost().toFixed(2)}` : undefined,
                       )}
@@ -923,7 +923,7 @@ export default function WebCheckoutPage() {
                         shippingMethod === "pickup",
                         "sm-pickup",
                         "pickup",
-                        <Package className={`w-8 h-8 ${shippingMethod === "pickup" ? "text-primary" : "text-muted-foreground"}`} />,
+                        <Package className={`w-6 h-6 md:w-8 md:h-8 shrink-0 ${shippingMethod === "pickup" ? "text-primary" : "text-muted-foreground"}`} />,
                         pickupLabel,
                         t("مجاناً", "חינם"),
                       )}
@@ -939,7 +939,7 @@ export default function WebCheckoutPage() {
 
                 {/* Customer / Shipping Info Card */}
                 <Card className="border-border/60 shadow-sm">
-                  <CardHeader className="pb-4">
+                  <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <div className="p-2 rounded-lg bg-primary/10">
                         {shippingMethod === "delivery" ? <MapPin className="h-4 w-4 text-primary" /> : <User className="h-4 w-4 text-primary" />}
@@ -947,8 +947,8 @@ export default function WebCheckoutPage() {
                       {shippingMethod === "delivery" ? t("معلومات التوصيل", "פרטי משלוח") : t("معلومات الزبون", "פרטי לקוח")}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <CardContent className="space-y-3 md:space-y-4 p-4 pt-0 md:p-6 md:pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">{t("الاسم الكامل *", "שם מלא *")}</Label>
                         <div className="relative">
@@ -996,7 +996,7 @@ export default function WebCheckoutPage() {
                       {emailError && <p className="text-xs text-destructive">{emailError}</p>}
                     </div>
                     {shippingMethod === "delivery" && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="city">{t("المدينة *", "עיר *")}</Label>
                           <div className="relative">
@@ -1030,7 +1030,7 @@ export default function WebCheckoutPage() {
               {/* Step 2 (mobile): payment method */}
               <div className={`${mobileStep === 2 ? "block animate-fade-in" : "hidden"} md:block`}>
                 <Card className="border-border/60 shadow-sm">
-                  <CardHeader className="pb-4">
+                  <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <div className="p-2 rounded-lg bg-primary/10">
                         <CreditCard className="h-4 w-4 text-primary" />
@@ -1038,20 +1038,20 @@ export default function WebCheckoutPage() {
                       {t("طريقة الدفع", "אופן תשלום")}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-3 p-4 pt-0 md:p-6 md:pt-0">
                     <RadioGroup value={selectedPayment ?? ""} onValueChange={(v) => setSelectedPayment(v as PaymentMethodType)} className="grid grid-cols-2 gap-3">
                       {paymentSettings.cash.enabled && selectionCard(
                         selectedPayment === "cash",
                         "pm-cash",
                         "cash",
-                        <Banknote className={`w-8 h-8 ${selectedPayment === "cash" ? "text-primary" : "text-muted-foreground"}`} />,
+                        <Banknote className={`w-6 h-6 md:w-8 md:h-8 shrink-0 ${selectedPayment === "cash" ? "text-primary" : "text-muted-foreground"}`} />,
                         t(paymentSettings.cash.label, "תשלום במזומן במסירה"),
                       )}
                       {paymentSettings.credit.enabled && selectionCard(
                         selectedPayment === "credit",
                         "pm-credit",
                         "credit",
-                        <CreditCard className={`w-8 h-8 ${selectedPayment === "credit" ? "text-primary" : "text-muted-foreground"}`} />,
+                        <CreditCard className={`w-6 h-6 md:w-8 md:h-8 shrink-0 ${selectedPayment === "credit" ? "text-primary" : "text-muted-foreground"}`} />,
                         t(paymentSettings.credit.label, "כרטיס אשראי"),
                       )}
                     </RadioGroup>
@@ -1109,7 +1109,7 @@ export default function WebCheckoutPage() {
           <Button
             type="button"
             size="lg"
-            className="w-full h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold rounded-xl shadow-lg text-base"
+            className="w-full h-12 md:h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold rounded-xl shadow-lg text-base"
             onClick={goNext}
           >
             <span className="flex items-center gap-2">
@@ -1121,7 +1121,7 @@ export default function WebCheckoutPage() {
           <Button
             type="button"
             size="lg"
-            className="w-full h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold rounded-xl shadow-lg text-base"
+            className="w-full h-12 md:h-14 bg-gold text-gold-foreground hover:bg-gold/90 font-bold rounded-xl shadow-lg text-base"
             disabled={loading}
             onClick={() => formRef.current?.requestSubmit()}
           >
