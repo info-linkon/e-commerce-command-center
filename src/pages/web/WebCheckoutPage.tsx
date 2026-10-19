@@ -41,8 +41,6 @@ export default function WebCheckoutPage() {
   const submittedRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Mobile stepper: 1 = details, 2 = review & confirm (payment is chosen in the compact selector above the button)
-  const [mobileStep, setMobileStep] = useState<1 | 2>(1);
   const [summaryOpen, setSummaryOpen] = useState(false);
 
   // OTP state
@@ -277,38 +275,6 @@ export default function WebCheckoutPage() {
     setCouponError("");
   };
 
-  // Validate only the fields of the current mobile step before advancing.
-  const validateMobileStep = (step: number): boolean => {
-    const form = formRef.current;
-    if (step === 1) {
-      if (!shippingMethod) {
-        toast.error(t("يرجى اختيار طريقة التوصيل", "יש לבחור שיטת משלוח"));
-        return false;
-      }
-      if (!form) return true;
-      const names = ["name", "phone", ...(shippingMethod === "delivery" ? ["city", "address"] : [])];
-      for (const n of names) {
-        const el = form.querySelector<HTMLInputElement>(`[name="${n}"]`);
-        if (el && !el.checkValidity()) {
-          el.reportValidity();
-          el.focus();
-          return false;
-        }
-      }
-    }
-    return true;
-  };
-
-  const goNext = () => {
-    if (!validateMobileStep(mobileStep)) return;
-    setMobileStep((s) => (s < 2 ? ((s + 1) as 1 | 2) : s));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const goBack = () => {
-    setMobileStep((s) => (s > 1 ? ((s - 1) as 1 | 2) : s));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -627,10 +593,6 @@ export default function WebCheckoutPage() {
 
   const totalQty = items.reduce((s, i) => s + i.quantity, 0);
 
-  const mobileSteps = [
-    { n: 1, label: t("التفاصيل", "פרטים") },
-    { n: 2, label: t("التأكيد", "אישור") },
-  ];
 
   // Shared order-summary card (desktop sidebar, mobile step 3, mobile expanded strip)
   const summaryCard = (
@@ -823,37 +785,9 @@ export default function WebCheckoutPage() {
 
         <h1 className="text-lg md:text-3xl font-bold mb-3 md:mb-8 text-center">{t("إتمام الطلب", "השלמת הזמנה")}</h1>
 
-        {/* Mobile step indicator */}
-        <div className="md:hidden flex items-center justify-center gap-1.5 mb-4" dir="rtl">
-          {mobileSteps.map((s, i) => (
-            <div key={s.n} className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => s.n < mobileStep && setMobileStep(s.n as 1 | 2)}
-                className="flex items-center gap-1.5"
-              >
-                <span
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                    s.n < mobileStep
-                      ? "bg-primary text-primary-foreground"
-                      : s.n === mobileStep
-                        ? "bg-gold text-gold-foreground"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {s.n < mobileStep ? <Check className="w-3.5 h-3.5" /> : s.n}
-                </span>
-                <span className={`text-xs ${s.n === mobileStep ? "font-bold text-foreground" : "text-muted-foreground"}`}>
-                  {s.label}
-                </span>
-              </button>
-              {i < mobileSteps.length - 1 && <div className="w-6 h-px bg-border" />}
-            </div>
-          ))}
-        </div>
 
-        {/* Mobile collapsible order summary strip (step 1) */}
-        {mobileStep === 1 && (
+        {/* Mobile collapsible order summary strip */}
+        {items.length > 0 && (
           <div className="md:hidden mb-4">
             <button
               type="button"
@@ -892,7 +826,7 @@ export default function WebCheckoutPage() {
             {/* Right Column — Forms */}
             <div className="md:col-span-7 space-y-3 md:space-y-6 order-2 md:order-1">
               {/* Step 1 (mobile): shipping method + customer info */}
-              <div className={`${mobileStep === 1 ? "block animate-fade-in" : "hidden"} md:block space-y-3 md:space-y-6`}>
+              <div className="space-y-3 md:space-y-6">
                 {/* Shipping Method Card */}
                 {(deliveryEnabled || pickupEnabled) && (
                 <Card className="border-border/60 shadow-sm">
