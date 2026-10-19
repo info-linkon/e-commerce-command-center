@@ -176,6 +176,19 @@ export default function WebCheckoutPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType | null>(null);
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod | null>(null);
 
+  // Auto-select when only one option exists so the customer is never stuck.
+  useEffect(() => {
+    if (!shippingMethod) {
+      if (deliveryEnabled && !pickupEnabled) setShippingMethod("delivery");
+      else if (pickupEnabled && !deliveryEnabled) setShippingMethod("pickup");
+    }
+  }, [deliveryEnabled, pickupEnabled, shippingMethod]);
+  useEffect(() => {
+    if (selectedPayment && !enabledMethods.includes(selectedPayment)) setSelectedPayment(null);
+    else if (!selectedPayment && enabledMethods.length === 1) setSelectedPayment(enabledMethods[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabledMethods.join(","), selectedPayment]);
+
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
@@ -884,9 +897,9 @@ export default function WebCheckoutPage() {
             {/* Right Column — Forms */}
             <div className="md:col-span-7 space-y-6 order-2 md:order-1">
               {/* Step 1 (mobile): shipping method + customer info */}
-              <div key={`step-${mobileStep === 1 ? 1 : "x"}`} className={`${mobileStep === 1 ? "block" : "hidden"} md:block space-y-6 animate-fade-in`}>
+              <div className={`${mobileStep === 1 ? "block animate-fade-in" : "hidden"} md:block space-y-6`}>
                 {/* Shipping Method Card */}
-                {(deliveryEnabled && pickupEnabled) && (
+                {(deliveryEnabled || pickupEnabled) && (
                 <Card className="border-border/60 shadow-sm">
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-base">
@@ -1060,6 +1073,18 @@ export default function WebCheckoutPage() {
 
               {/* Step 3 (mobile only): review & confirm */}
               <div className={`${mobileStep === 3 ? "block animate-fade-in" : "hidden"} md:hidden space-y-4`}>
+                <Card className="border-border/60 shadow-sm">
+                  <CardContent className="p-4 space-y-3 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-2"><Truck className="w-4 h-4 text-primary" />{shippingMethod === "pickup" ? pickupLabel : deliveryLabel}</span>
+                      <button type="button" className="text-xs text-primary underline" onClick={() => { setMobileStep(1); window.scrollTo({ top: 0 }); }}>{t("تعديل", "שינוי")}</button>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-2">{selectedPayment === "cash" ? <Banknote className="w-4 h-4 text-primary" /> : <CreditCard className="w-4 h-4 text-primary" />}{selectedPayment === "cash" ? t(paymentSettings.cash.label, "תשלום במזומן במסירה") : t(paymentSettings.credit.label, "כרטיס אשראי")}</span>
+                      <button type="button" className="text-xs text-primary underline" onClick={() => { setMobileStep(2); window.scrollTo({ top: 0 }); }}>{t("تعديل", "שינוי")}</button>
+                    </div>
+                  </CardContent>
+                </Card>
                 {summaryCard}
               </div>
             </div>
