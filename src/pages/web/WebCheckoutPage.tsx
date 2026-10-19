@@ -974,51 +974,106 @@ export default function WebCheckoutPage() {
 
       {/* OTP Verification Dialog */}
       {otpDialogOpen && (
-        <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[200] bg-foreground/50 flex items-start sm:items-center justify-center p-4 pt-[12vh] sm:pt-4 overflow-y-auto"
+        >
           <div className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-border space-y-4">
+            {/* Step indicator */}
+            <div className="flex items-center justify-center gap-2 text-xs">
+              {[
+                t("إرسال الرمز", "שליחת קוד"),
+                t("إدخال الرمز", "הזנת קוד"),
+                t("إتمام الطلب", "השלמת הזמנה"),
+              ].map((label, i) => {
+                const current = otpStep === "sending" || otpStep === "send_failed" ? 0 : 1;
+                return (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold ${i <= current ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{i + 1}</span>
+                    <span className={i === current ? "font-semibold" : "text-muted-foreground"}>{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+
             <div className="text-center">
               <ShieldCheck className="w-10 h-10 text-primary mx-auto mb-2" />
-              <h3 className="font-bold text-lg">{t("رمز التحقق", "קוד אימות")}</h3>
+              <h3 className="font-bold text-lg">{t("تأكيد رقم الهاتف", "אימות מספר טלפון")}</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                {t("تم إرسال رمز التحقق إلى", "קוד אימות נשלח אל")} {otpPhone}
+                {otpStep === "sending"
+                  ? t("جارٍ إرسال الرمز إلى", "שולחים קוד אל")
+                  : otpStep === "send_failed"
+                    ? t("لم يتم إرسال الرمز إلى", "הקוד לא נשלח אל")
+                    : t("أدخل الرمز المكون من 4 أرقام الذي أُرسل إلى", "הזן את הקוד בן 4 הספרות שנשלח אל")}{" "}
+                <span dir="ltr" className="font-semibold text-foreground">{otpPhone}</span>
               </p>
             </div>
-            <Input
-              value={otpCode}
-              onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 4)); setOtpError(""); }}
-              placeholder="____"
-              className="text-center text-2xl tracking-[0.5em] font-mono rounded-xl"
-              dir="ltr"
-              maxLength={4}
-              autoFocus
-            />
-            {otpError && <p className="text-destructive text-xs text-center">{otpError}</p>}
-            <div className="flex gap-2">
+
+            {otpStep === "sending" ? (
+              <div className="flex justify-center py-4"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+            ) : otpStep === "send_failed" ? (
+              <Button type="button" className="w-full rounded-xl" onClick={() => sendOtp(otpPhone)}>
+                {t("حاول مرة أخرى", "נסה שוב")}
+              </Button>
+            ) : (
+              <Input
+                value={otpCode}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                  setOtpCode(v);
+                  setOtpError("");
+                  if (v.length === 4) verifyOtp(v);
+                }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); verifyOtp(); } }}
+                placeholder="____"
+                className="text-center text-2xl tracking-[0.5em] font-mono rounded-xl"
+                dir="ltr"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="[0-9]*"
+                maxLength={4}
+                disabled={otpStep === "verifying"}
+                autoFocus
+              />
+            )}
+
+            {otpError && <p className="text-destructive text-sm text-center">{otpError}</p>}
+
+            {otpStep !== "sending" && otpStep !== "send_failed" && (
               <Button
                 type="button"
-                variant="outline"
-                className="flex-1 rounded-xl"
+                className="w-full rounded-xl bg-gold text-gold-foreground hover:bg-gold/90"
+                disabled={otpCode.length < 4 || otpLoading}
+                onClick={() => verifyOtp()}
+              >
+                {otpStep === "verifying"
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("جارٍ التحقق...", "מאמת...")}</>
+                  : t("تحقق وأكمل الطلب", "אמת והשלם הזמנה")}
+              </Button>
+            )}
+
+            <div className="flex items-center justify-between text-xs">
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-primary transition-colors"
                 onClick={() => setOtpDialogOpen(false)}
               >
-                {t("إلغاء", "ביטול")}
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 rounded-xl bg-gold text-gold-foreground hover:bg-gold/90"
-                disabled={otpCode.length < 4 || otpLoading}
-                onClick={verifyOtp}
-              >
-                {otpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("تحقق", "אמת")}
-              </Button>
+                {t("تعديل رقم الهاتف", "שינוי מספר טלפון")}
+              </button>
+              {otpStep === "enter" && (
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+                  onClick={() => sendOtp(otpPhone)}
+                  disabled={otpLoading || resendIn > 0}
+                >
+                  {resendIn > 0
+                    ? t(`إعادة الإرسال بعد ${resendIn} ث`, `שליחה חוזרת בעוד ${resendIn} שנ׳`)
+                    : t("إعادة إرسال الرمز", "שלח קוד מחדש")}
+                </button>
+              )}
             </div>
-            <button
-              type="button"
-              className="w-full text-xs text-muted-foreground hover:text-primary transition-colors"
-              onClick={() => sendOtp(otpPhone)}
-              disabled={otpLoading}
-            >
-              {t("إعادة إرسال الرمز", "שלח קוד מחדש")}
-            </button>
           </div>
         </div>
       )}
