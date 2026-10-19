@@ -282,7 +282,7 @@ export default function WebCheckoutPage() {
           toast.error(t("يرجى إدخال رقم هاتف صحيح", "יש להזין מספר טלפון תקין"));
           return;
         }
-        if (otpSent && phoneNow === otpPhone) setOtpDialogOpen(true);
+        if (otpSent && phoneNow === otpPhone) { setOtpStep("enter"); setOtpDialogOpen(true); }
         else { setOtpVerified(false); setOtpCode(""); sendOtp(phoneNow); }
         return;
       }
