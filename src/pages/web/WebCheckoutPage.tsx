@@ -41,8 +41,8 @@ export default function WebCheckoutPage() {
   const submittedRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Mobile stepper: 1 = details, 2 = payment, 3 = review & confirm
-  const [mobileStep, setMobileStep] = useState<1 | 2 | 3>(1);
+  // Mobile stepper: 1 = details, 2 = review & confirm (payment is chosen in the compact selector above the button)
+  const [mobileStep, setMobileStep] = useState<1 | 2>(1);
   const [summaryOpen, setSummaryOpen] = useState(false);
 
   // OTP state
@@ -296,21 +296,17 @@ export default function WebCheckoutPage() {
         }
       }
     }
-    if (step === 2 && !selectedPayment) {
-      toast.error(t("يرجى اختيار طريقة الدفع", "יש לבחור אמצעי תשלום"));
-      return false;
-    }
     return true;
   };
 
   const goNext = () => {
     if (!validateMobileStep(mobileStep)) return;
-    setMobileStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s));
+    setMobileStep((s) => (s < 2 ? ((s + 1) as 1 | 2) : s));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goBack = () => {
-    setMobileStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s));
+    setMobileStep((s) => (s > 1 ? ((s - 1) as 1 | 2) : s));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -633,8 +629,7 @@ export default function WebCheckoutPage() {
 
   const mobileSteps = [
     { n: 1, label: t("التفاصيل", "פרטים") },
-    { n: 2, label: t("الدفع", "תשלום") },
-    { n: 3, label: t("التأكيد", "אישור") },
+    { n: 2, label: t("التأكيد", "אישור") },
   ];
 
   // Shared order-summary card (desktop sidebar, mobile step 3, mobile expanded strip)
@@ -834,7 +829,7 @@ export default function WebCheckoutPage() {
             <div key={s.n} className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => s.n < mobileStep && setMobileStep(s.n as 1 | 2 | 3)}
+                onClick={() => s.n < mobileStep && setMobileStep(s.n as 1 | 2)}
                 className="flex items-center gap-1.5"
               >
                 <span
@@ -857,8 +852,8 @@ export default function WebCheckoutPage() {
           ))}
         </div>
 
-        {/* Mobile collapsible order summary strip (steps 1-2) */}
-        {mobileStep < 3 && (
+        {/* Mobile collapsible order summary strip (step 1) */}
+        {mobileStep === 1 && (
           <div className="md:hidden mb-4">
             <button
               type="button"
@@ -1028,7 +1023,7 @@ export default function WebCheckoutPage() {
               </div>
 
               {/* Step 2 (mobile): payment method */}
-              <div className={`${mobileStep === 2 ? "block animate-fade-in" : "hidden"} md:block`}>
+              <div className="hidden md:block">
                 <Card className="border-border/60 shadow-sm">
                   <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
                     <CardTitle className="flex items-center gap-2 text-base">
@@ -1072,7 +1067,7 @@ export default function WebCheckoutPage() {
               </div>
 
               {/* Step 3 (mobile only): review & confirm */}
-              <div className={`${mobileStep === 3 ? "block animate-fade-in" : "hidden"} md:hidden space-y-4`}>
+              <div className={`${mobileStep === 2 ? "block animate-fade-in" : "hidden"} md:hidden space-y-4`}>
                 <Card className="border-border/60 shadow-sm">
                   <CardContent className="p-4 space-y-3 text-sm">
                     <div className="flex items-center justify-between gap-3">
@@ -1081,7 +1076,6 @@ export default function WebCheckoutPage() {
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <span className="flex items-center gap-2">{selectedPayment === "cash" ? <Banknote className="w-4 h-4 text-primary" /> : <CreditCard className="w-4 h-4 text-primary" />}{selectedPayment === "cash" ? t(paymentSettings.cash.label, "תשלום במזומן במסירה") : t(paymentSettings.credit.label, "כרטיס אשראי")}</span>
-                      <button type="button" className="text-xs text-primary underline" onClick={() => { setMobileStep(2); window.scrollTo({ top: 0 }); }}>{t("تعديل", "שינוי")}</button>
                     </div>
                   </CardContent>
                 </Card>
@@ -1101,11 +1095,37 @@ export default function WebCheckoutPage() {
 
       {/* Mobile Sticky Bottom Bar */}
       <div className="fixed bottom-14 inset-x-0 bg-card border-t border-border px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+        {/* Compact payment selector — attached directly above the action button */}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className="text-xs text-muted-foreground shrink-0">{t("طريقة الدفع", "אמצעי תשלום")}</span>
+          <div className="flex items-center gap-1.5">
+            {paymentSettings.cash.enabled && (
+              <button
+                type="button"
+                onClick={() => setSelectedPayment("cash")}
+                className={`flex items-center gap-1 px-2.5 h-8 rounded-full border-2 text-xs font-semibold transition-all active:scale-95 ${selectedPayment === "cash" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
+              >
+                <Banknote className="w-3.5 h-3.5" />
+                {t("نقداً", "מזומן")}
+              </button>
+            )}
+            {paymentSettings.credit.enabled && (
+              <button
+                type="button"
+                onClick={() => setSelectedPayment("credit")}
+                className={`flex items-center gap-1 px-2.5 h-8 rounded-full border-2 text-xs font-semibold transition-all active:scale-95 ${selectedPayment === "credit" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                {t("بطاقة", "אשראי")}
+              </button>
+            )}
+          </div>
+        </div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-muted-foreground">{t("المجموع", "סה״כ")}</span>
           <span className="text-lg font-black text-primary">₪{finalTotal.toFixed(2)}</span>
         </div>
-        {mobileStep < 3 ? (
+        {mobileStep === 1 ? (
           <Button
             type="button"
             size="lg"
@@ -1113,7 +1133,7 @@ export default function WebCheckoutPage() {
             onClick={goNext}
           >
             <span className="flex items-center gap-2">
-              {mobileStep === 1 ? t("التالي: طريقة الدفع", "הבא: אופן תשלום") : t("التالي: مراجعة الطلب", "הבא: סיכום הזמנה")}
+              {t("التالي: مراجعة الطلب", "הבא: סיכום הזמנה")}
               <ChevronLeft className="w-5 h-5" />
             </span>
           </Button>
