@@ -17,7 +17,7 @@ export function WebBottomNav() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-desert border-t border-desert-light safe-area-bottom" dir="rtl">
+    <nav data-web-floating className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-desert border-t border-desert-light safe-area-bottom" dir="rtl">
       <div className="flex items-center justify-around h-14">
         {navItems.map(({ icon: Icon, label, to, showBadge }) => {
           const isActive = location.pathname === to;

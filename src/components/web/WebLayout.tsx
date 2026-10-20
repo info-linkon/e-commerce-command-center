@@ -126,6 +126,7 @@ function WebLayoutInner() {
 
       {/* WhatsApp float */}
       <a
+        data-web-floating
         href={`https://wa.me/${whatsapp}`}
         target="_blank"
         rel="noopener noreferrer"
