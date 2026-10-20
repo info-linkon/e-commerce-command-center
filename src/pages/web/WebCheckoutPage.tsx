@@ -664,7 +664,7 @@ export default function WebCheckoutPage() {
                 value={couponCode}
                 onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
                 placeholder={t("كود الخصم", "קוד הנחה")}
-                className="font-mono text-sm rounded-xl h-12"
+                className="font-mono text-base md:text-sm rounded-xl h-12"
                 dir="ltr"
               />
               <Button type="button" variant="outline" onClick={handleApplyCoupon} disabled={couponLoading} className="shrink-0 rounded-xl h-12">
@@ -767,7 +767,7 @@ export default function WebCheckoutPage() {
   );
 
   return (
-    <div className="bg-muted/30 min-h-screen pb-36 md:pb-12">
+    <div data-checkout-page className="bg-muted/30 min-h-[100svh] pb-36 md:pb-12">
       <div className="container py-3 md:py-10 max-w-5xl">
         {/* Logo + Breadcrumb */}
         <div className="hidden md:flex flex-col items-center gap-3 mb-6">
@@ -1013,7 +1013,7 @@ export default function WebCheckoutPage() {
       </div>
 
       {/* Mobile Sticky Bottom Bar */}
-      <div className="fixed bottom-14 inset-x-0 bg-card border-t border-border px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+      <div data-checkout-actions className="fixed bottom-14 inset-x-0 bg-card border-t border-border px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
         {/* Compact payment selector — attached directly above the action button */}
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="text-xs text-muted-foreground shrink-0">{t("طريقة الدفع", "אמצעי תשלום")}</span>

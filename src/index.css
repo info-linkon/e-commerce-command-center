@@ -112,6 +112,19 @@
   }
 }
 
+/* Leave mobile keyboard scrolling to the browser. Visibility keeps the form's
+   geometry unchanged while floating controls stay out of the typing area. */
+@media (max-width: 767px) {
+  body:has([data-checkout-page] input:focus) [data-web-floating],
+  body:has([data-checkout-page] input:focus) [data-web-floating] *,
+  [data-checkout-page]:has(input:focus) [data-checkout-actions],
+  [data-checkout-page]:has(input:focus) [data-checkout-actions] * {
+    visibility: hidden !important;
+    pointer-events: none;
+    transition: none !important;
+  }
+}
+
 @layer utilities {
   .text-gradient-gold {
     background: linear-gradient(135deg, hsl(42 75% 55%), hsl(30 55% 28%));
