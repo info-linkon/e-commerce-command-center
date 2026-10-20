@@ -121,6 +121,7 @@
   [data-checkout-page]:has(input:focus) [data-checkout-actions] * {
     visibility: hidden !important;
     pointer-events: none;
+    transition: none !important;
   }
 }
 
