@@ -116,8 +116,10 @@
    geometry unchanged while floating controls stay out of the typing area. */
 @media (max-width: 767px) {
   body:has([data-checkout-page] input:focus) [data-web-floating],
-  [data-checkout-page]:has(input:focus) [data-checkout-actions] {
-    visibility: hidden;
+  body:has([data-checkout-page] input:focus) [data-web-floating] *,
+  [data-checkout-page]:has(input:focus) [data-checkout-actions],
+  [data-checkout-page]:has(input:focus) [data-checkout-actions] * {
+    visibility: hidden !important;
     pointer-events: none;
   }
 }
