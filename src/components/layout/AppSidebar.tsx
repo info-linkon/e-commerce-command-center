@@ -34,7 +34,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import logo from "@/assets/logo.webp";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { X as CloseIcon } from "lucide-react";
 
 const inventorySubItems = [
   { title: "תצוגת מלאי", url: "/crm/inventory" },
@@ -80,10 +82,24 @@ export function AppSidebar() {
   const closeMobileSidebar = useCallback(() => {
     if (isMobile) setOpenMobile(false);
   }, [isMobile, setOpenMobile]);
+  const location = useLocation();
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [location.pathname, location.search, setOpenMobile]);
 
   return (
     <Sidebar side="right" className="border-l-0 border-r">
-      <div className="p-4 border-b border-sidebar-border flex flex-col items-center gap-2">
+      <div className="relative p-4 border-b border-sidebar-border flex flex-col items-center gap-2">
+        {isMobile && (
+          <button
+            type="button"
+            onClick={() => setOpenMobile(false)}
+            aria-label="סגור תפריט"
+            className="absolute top-3 left-3 h-9 w-9 flex items-center justify-center rounded-full bg-sidebar-accent text-sidebar-foreground"
+          >
+            <CloseIcon className="h-5 w-5" />
+          </button>
+        )}
         <img src={logo} alt="Elwejha" className="w-14 h-14 rounded-full" />
         <h2 className="text-sm font-bold text-sidebar-foreground">الوجهة</h2>
       </div>
