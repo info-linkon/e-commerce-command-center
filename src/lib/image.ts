@@ -11,12 +11,18 @@ export function isTransformableImage(url: string | null | undefined): url is str
   return !!url && url.includes(OBJECT_SEGMENT) && !url.toLowerCase().split("?")[0].endsWith(".svg");
 }
 
-/** URL of `url` resized to `width` px wide (aspect ratio kept). Non-Supabase URLs are returned unchanged. */
-export function resizedImage(url: string | null | undefined, width: number, quality = 75): string {
+/**
+ * URL of `url` scaled to fit inside a `size`×`size` box, aspect ratio kept.
+ * Both dimensions + resize=contain are required: with `width` alone Supabase
+ * keeps the original height and stretches the image (e.g. 160×2430).
+ * Non-Supabase URLs are returned unchanged.
+ */
+export function resizedImage(url: string | null | undefined, size: number, quality = 75): string {
   if (!url) return "";
   if (!isTransformableImage(url)) return url;
   const base = url.replace(OBJECT_SEGMENT, RENDER_SEGMENT).split("?")[0];
-  return `${base}?width=${Math.round(width)}&quality=${quality}`;
+  const px = Math.round(size);
+  return `${base}?width=${px}&height=${px}&resize=contain&quality=${quality}`;
 }
 
 /** `srcset` value for the given widths, or undefined for non-Supabase URLs. */

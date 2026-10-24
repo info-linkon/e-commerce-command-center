@@ -6,7 +6,7 @@ const SUPA = "https://x.supabase.co/storage/v1/object/public/product-images/a/b.
 describe("resizedImage", () => {
   it("rewrites Supabase public object URLs to the render endpoint", () => {
     expect(resizedImage(SUPA, 300)).toBe(
-      "https://x.supabase.co/storage/v1/render/image/public/product-images/a/b.webp?width=300&quality=75",
+      "https://x.supabase.co/storage/v1/render/image/public/product-images/a/b.webp?width=300&height=300&resize=contain&quality=75",
     );
   });
 
@@ -16,7 +16,7 @@ describe("resizedImage", () => {
   });
 
   it("builds a srcset only for transformable URLs", () => {
-    expect(imageSrcSet(SUPA, [300, 600])).toContain("?width=600&quality=75 600w");
+    expect(imageSrcSet(SUPA, [300, 600])).toContain("?width=600&height=600&resize=contain&quality=75 600w");
     expect(imageSrcSet("/logo.webp", [300])).toBeUndefined();
   });
 });
