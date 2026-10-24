@@ -12,6 +12,7 @@ import { useInventory } from "@/hooks/useInventory";
 import { useWarehouses, useCreateWarehouse, useUpdateWarehouse, useDeleteWarehouse } from "@/hooks/useWarehouses";
 import { useCategories } from "@/hooks/useCategories";
 import { WarehouseDialog } from "@/components/inventory/WarehouseDialog";
+import { ConsolidateWarehousesCard } from "@/components/inventory/ConsolidateWarehousesCard";
 import { Tables } from "@/integrations/supabase/types";
 
 type WarehouseType = Tables<"warehouses">;
@@ -206,7 +207,7 @@ const InventoryIndex = () => {
 
       {/* Warehouses Manager Dialog */}
       <Dialog open={whManagerOpen} onOpenChange={setWhManagerOpen}>
-        <DialogContent className="sm:max-w-xl w-[95vw]" dir="rtl">
+        <DialogContent className="sm:max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
             <DialogTitle>ניהול מחסנים</DialogTitle>
           </DialogHeader>
@@ -254,6 +255,7 @@ const InventoryIndex = () => {
                 )}
               </TableBody>
             </Table>
+            <ConsolidateWarehousesCard />
           </div>
         </DialogContent>
       </Dialog>

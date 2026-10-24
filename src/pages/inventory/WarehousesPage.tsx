@@ -5,7 +5,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useWarehouses, useCreateWarehouse, useUpdateWarehouse, useDeleteWarehouse } from "@/hooks/useWarehouses";
 import { WarehouseDialog } from "@/components/inventory/WarehouseDialog";
-import { ConsolidateWarehousesCard } from "@/components/inventory/ConsolidateWarehousesCard";
 import { Tables } from "@/integrations/supabase/types";
 
 type Warehouse = Tables<"warehouses">;
@@ -77,8 +76,6 @@ const WarehousesPage = () => {
           </TableBody>
         </Table>
       </div>
-
-      <ConsolidateWarehousesCard />
 
       <WarehouseDialog
         open={dialogOpen}
