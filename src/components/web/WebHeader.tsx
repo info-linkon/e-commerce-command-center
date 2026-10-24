@@ -79,7 +79,7 @@ export function WebHeader() {
 
         {/* Mobile Nav */}
         {menuOpen && (
-          <nav className="md:hidden pb-4 border-t border-desert-light animate-fade-in">
+          <nav className="md:hidden pb-4 border-t border-desert-light animate-fade-in max-h-[calc(100dvh-4rem)] overflow-y-auto">
             <div className="flex flex-col gap-1 pt-3">
               {navLinks.map((link) => (
                 <Link
@@ -94,6 +94,28 @@ export function WebHeader() {
                 </Link>
               ))}
             </div>
+            {categories && categories.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-desert-light">
+                <p className="px-4 pb-1 text-xs font-bold text-gold/80">{t("الأقسام", "קטגוריות")}</p>
+                <div className="grid grid-cols-2 gap-1">
+                  {categories.map((cat) => {
+                    const to = localizedPath(`/category/${cat.slug || cat.category_number}`);
+                    return (
+                      <Link
+                        key={cat.id}
+                        to={to}
+                        onClick={() => setMenuOpen(false)}
+                        className={`px-4 py-2 text-sm rounded-lg transition-all hover:bg-desert-light truncate ${
+                          location.pathname === to ? "text-gold bg-desert-light font-medium" : "text-sand/80"
+                        }`}
+                      >
+                        {t(cat.name, cat.name_he || cat.name)}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </nav>
         )}
       </div>

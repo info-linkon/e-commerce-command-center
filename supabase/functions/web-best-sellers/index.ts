@@ -1,4 +1,7 @@
 // Public best-sellers feed for the storefront home page.
+// With body `{ ranking: true }` it instead returns `{ ranking: [product_id…] }`
+// — every product that has sales, best seller first — used for the
+// "most popular" sort on category pages.
 //
 // `order_items` is restricted to authenticated CRM users (it joins to orders
 // which contain PII). To still surface the "most-purchased" carousel on the
@@ -30,14 +33,28 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // 1. Sum quantities per variation across all order_items.
-    const { data: items, error: itemsErr } = await supabase
-      .from("order_items")
-      .select("variation_id, quantity");
-    if (itemsErr) throw itemsErr;
+    const body = await req.json().catch(() => ({}));
+    const wantRanking = body?.ranking === true;
+
+    // 1. Sum quantities per variation across all order_items of orders that
+    //    weren't cancelled. Paged: PostgREST caps a single response at 1000
+    //    rows, which silently truncated the totals before.
+    const items: { variation_id: string | null; quantity: number | null }[] = [];
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      const { data: page, error: itemsErr } = await supabase
+        .from("order_items")
+        .select("variation_id, quantity, orders!inner(status)")
+        .not("orders.status", "in", "(cancelled,unfulfilled,external_unfulfilled)")
+        .order("id")
+        .range(from, from + PAGE - 1);
+      if (itemsErr) throw itemsErr;
+      items.push(...((page || []) as typeof items));
+      if (!page || page.length < PAGE) break;
+    }
 
     const variationTotals = new Map<string, number>();
-    for (const it of items || []) {
+    for (const it of items) {
       if (!it.variation_id) continue;
       variationTotals.set(
         it.variation_id,
@@ -45,29 +62,35 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (variationTotals.size === 0) return json({ products: [] });
+    if (variationTotals.size === 0) return json(wantRanking ? { ranking: [] } : { products: [] });
 
-    // 2. Variation → product mapping.
+    // 2. Variation → product mapping (chunked to keep the URL short).
     const variationIds = Array.from(variationTotals.keys());
-    const { data: variations, error: varErr } = await supabase
-      .from("product_variations")
-      .select("id, product_id")
-      .in("id", variationIds);
-    if (varErr) throw varErr;
+    const variations: { id: string; product_id: string }[] = [];
+    for (let i = 0; i < variationIds.length; i += 200) {
+      const { data: chunk, error: varErr } = await supabase
+        .from("product_variations")
+        .select("id, product_id")
+        .in("id", variationIds.slice(i, i + 200));
+      if (varErr) throw varErr;
+      variations.push(...(chunk || []));
+    }
 
     const productTotals = new Map<string, number>();
-    for (const v of variations || []) {
+    for (const v of variations) {
       productTotals.set(
         v.product_id,
         (productTotals.get(v.product_id) || 0) + (variationTotals.get(v.id) || 0),
       );
     }
 
-    // 3. Top 12 product ids by quantity sold.
-    const topIds = Array.from(productTotals.entries())
+    const ranked = Array.from(productTotals.entries())
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 12)
       .map(([id]) => id);
+    if (wantRanking) return json({ ranking: ranked });
+
+    // 3. Top 12 product ids by quantity sold.
+    const topIds = ranked.slice(0, 12);
 
     if (topIds.length === 0) return json({ products: [] });
 

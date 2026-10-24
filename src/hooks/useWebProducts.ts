@@ -310,6 +310,24 @@ export function useWebBestSellers() {
   });
 }
 
+/**
+ * Product ids ordered by units sold (best seller first), for the "popular"
+ * sort. Falls back to the home-page top-12 order if the edge function doesn't
+ * support `ranking` yet.
+ */
+export function useWebPopularityRanking() {
+  return useQuery({
+    queryKey: ["web-popularity-ranking"],
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("web-best-sellers", { body: { ranking: true } });
+      if (error) throw error;
+      if (Array.isArray(data?.ranking)) return data.ranking as string[];
+      return ((data?.products || []) as { id: string }[]).map((p) => p.id);
+    },
+  });
+}
+
 export function useWebSearch(query: string) {
   return useQuery({
     queryKey: ["web-search", query],
