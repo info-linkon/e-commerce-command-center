@@ -5,6 +5,7 @@ import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2,
 import { useOrderPayments } from "@/hooks/usePayments";
 import DeliveryAssignment from "@/components/orders/DeliveryAssignment";
 import PaymentSection from "@/components/orders/PaymentSection";
+import { OrderOriginInfo } from "@/components/orders/OrderOriginInfo";
 import { useOrderDelivery } from "@/hooks/useDeliveries";
 import { useUserNames } from "@/hooks/useUserNames";
 import { useQueryClient } from "@tanstack/react-query";
@@ -28,7 +29,7 @@ import {
 import { useOrder, useUpdateOrderStatus, useAssignWarehouse, useCancelOrder, type OrderStatus } from "@/hooks/useOrders";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useWarehouses } from "@/hooks/useWarehouses";
+import { useWarehouses, useMainWarehouseId } from "@/hooks/useWarehouses";
 import PickingChecklist from "@/components/orders/PickingChecklist";
 import AddOrderItemDialog from "@/components/orders/AddOrderItemDialog";
 import CompleteOrderDialog from "@/components/orders/CompleteOrderDialog";
@@ -131,6 +132,7 @@ const OrderDetail = () => {
   const qc = useQueryClient();
   const { data: order, isLoading } = useOrder(id);
   const { data: warehouses } = useWarehouses();
+  const { data: mainWarehouseId } = useMainWarehouseId();
   const { data: delivery } = useOrderDelivery(id);
   const { data: payments } = useOrderPayments(id);
   const updateStatus = useUpdateOrderStatus();
@@ -184,9 +186,17 @@ const OrderDetail = () => {
     (order.notes || "").startsWith("🏪 איסוף עצמי") ||
     (Number((order as any).shipping_cost || 0) === 0 && !shippingAddrAny && !shippingCityAny);
 
+  // Default to the main warehouse (set by warehouse consolidation), or the
+  // only active warehouse, so every sale deducts from the same stock.
+  const activeWarehouses = (warehouses || []).filter((w) => w.is_active);
+  const defaultWarehouseId =
+    (mainWarehouseId && activeWarehouses.some((w) => w.id === mainWarehouseId) ? mainWarehouseId : "") ||
+    (activeWarehouses.length === 1 ? activeWarehouses[0].id : "");
+  const warehouseToAssign = selectedWarehouse || defaultWarehouseId;
+
   const handleAssign = () => {
-    if (!selectedWarehouse) return;
-    assignWarehouse.mutate({ orderId: order.id, warehouseId: selectedWarehouse });
+    if (!warehouseToAssign) return;
+    assignWarehouse.mutate({ orderId: order.id, warehouseId: warehouseToAssign });
   };
 
   const handleCancel = () => {
@@ -482,7 +492,7 @@ const OrderDetail = () => {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
+                <Select value={warehouseToAssign} onValueChange={setSelectedWarehouse}>
                   <SelectTrigger className="w-64">
                     <SelectValue placeholder="בחר מחסן..." />
                   </SelectTrigger>
@@ -494,7 +504,7 @@ const OrderDetail = () => {
                 </Select>
                 <Button
                   onClick={handleAssign}
-                  disabled={!selectedWarehouse || assignWarehouse.isPending}
+                  disabled={!warehouseToAssign || assignWarehouse.isPending}
                 >
                   {assignWarehouse.isPending ? "משייך..." : "שייך והורד מלאי"}
                 </Button>
@@ -691,6 +701,7 @@ const OrderDetail = () => {
               <span>מקור:</span>
               <Badge variant="outline" className="text-xs">{sourceLabels[order.source] || order.source}</Badge>
             </div>
+            <OrderOriginInfo orderId={order.id} source={order.source} channel={(order as any).order_channel} />
             {(order as any).created_by && (
               <div className="flex gap-1.5 items-center text-xs text-muted-foreground">
                 <User className="h-3 w-3" />

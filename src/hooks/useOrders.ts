@@ -631,7 +631,7 @@ export function useDeleteOrder() {
       if (ord?.assigned_warehouse_id && ord.status !== "cancelled") {
         const { data: itemsForRestore } = await supabase
           .from("order_items")
-          .select("variation_id, quantity, product_variations(product_id)")
+          .select("variation_id, bundle_variation_id, quantity, product_variations(product_id)")
           .eq("order_id", id);
 
         const inventoryRows = await expandToInventoryRows((itemsForRestore || []) as any);

@@ -20,7 +20,8 @@ const SalesChart = ({ startDate, endDate }: SalesChartProps) => {
         .select("total, created_at")
         .gte("created_at", startDate)
         .lte("created_at", endDate)
-        .neq("status", "cancelled");
+        .not("status", "in", "(cancelled,unfulfilled,external_unfulfilled)")
+        .is("deleted_at" as any, null);
       if (error) throw error;
       return data;
     },

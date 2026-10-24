@@ -65,3 +65,20 @@ export function useDeleteWarehouse() {
     onError: () => toast.error("שגיאה במחיקת מחסן"),
   });
 }
+
+/** The main warehouse every sale is assigned to (CRM setting settings/inventory.main_warehouse_id). */
+export function useMainWarehouseId() {
+  return useQuery({
+    queryKey: ["site-content", "settings", "inventory"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("site_content")
+        .select("content")
+        .eq("page", "settings")
+        .eq("section", "inventory")
+        .maybeSingle();
+      if (error) throw error;
+      return ((data?.content as { main_warehouse_id?: string } | null)?.main_warehouse_id || null) as string | null;
+    },
+  });
+}

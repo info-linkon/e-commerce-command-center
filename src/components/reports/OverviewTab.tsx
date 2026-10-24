@@ -41,6 +41,7 @@ export default function OverviewTab({ startDate, endDate }: Props) {
           .select("total, created_at")
           .gte("created_at", startDate)
           .not("status", "in", "(cancelled,unfulfilled,external_unfulfilled)")
+          .is("deleted_at" as any, null)
           .order("created_at");
         if (endDate) q = q.lte("created_at", endDate);
         const { data, error } = await q;
@@ -54,7 +55,8 @@ export default function OverviewTab({ startDate, endDate }: Props) {
       }
       let q = supabase
         .from("order_items")
-        .select("total_price, product_variations!inner(products!inner(category_id)), orders!inner(created_at, status)")
+        .select("total_price, product_variations!inner(products!inner(category_id)), orders!inner(created_at, status, deleted_at)")
+        .is("orders.deleted_at" as any, null)
         .gte("orders.created_at", startDate)
         .not("orders.status", "in", "(cancelled,unfulfilled,external_unfulfilled)")
         .eq("product_variations.products.category_id", categoryId);
@@ -94,7 +96,8 @@ export default function OverviewTab({ startDate, endDate }: Props) {
     queryFn: async () => {
       let q = supabase
         .from("order_items")
-        .select("quantity, total_price, product_variations!inner(cost_price, products!inner(category_id)), orders!inner(status, created_at)")
+        .select("quantity, total_price, product_variations!inner(cost_price, products!inner(category_id)), orders!inner(status, created_at, deleted_at)")
+        .is("orders.deleted_at" as any, null)
         .gte("orders.created_at", startDate)
         .not("orders.status", "in", "(cancelled,unfulfilled,external_unfulfilled)");
       if (endDate) q = q.lte("orders.created_at", endDate);

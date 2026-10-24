@@ -41,6 +41,9 @@ export default function SalesTab({ startDate, endDate }: Props) {
       let q = supabase
         .from("orders")
         .select("id, order_number, total, created_at, status, customer_name, source")
+        // Cancelled and trashed orders never count as sales (client notes §7.2).
+        .not("status", "in", "(cancelled,unfulfilled,external_unfulfilled)")
+        .is("deleted_at" as any, null)
         .gte("created_at", startDate)
         .order("created_at", { ascending: false })
         .limit(200);
@@ -56,7 +59,8 @@ export default function SalesTab({ startDate, endDate }: Props) {
     queryFn: async () => {
       let q = supabase
         .from("order_items")
-        .select("quantity, total_price, product_variations(cost_price, name, products!inner(id, product_number, name, name_ar, category_id)), orders!inner(status, created_at)")
+        .select("quantity, total_price, product_variations(cost_price, name, products!inner(id, product_number, name, name_ar, category_id)), orders!inner(status, created_at, deleted_at)")
+        .is("orders.deleted_at" as any, null)
         .gte("orders.created_at", startDate)
         .eq("orders.status", "completed");
       if (endDate) q = q.lte("orders.created_at", endDate);

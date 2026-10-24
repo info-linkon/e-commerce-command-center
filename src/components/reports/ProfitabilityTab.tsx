@@ -35,7 +35,8 @@ export default function ProfitabilityTab({ startDate, endDate }: Props) {
     queryFn: async () => {
       let q = supabase
         .from("order_items")
-        .select("quantity, total_price, bundle_variation_id, product_variations(cost_price, name, products!inner(id, name, name_ar, category_id, cost_price)), orders!inner(status, created_at, includes_vat)")
+        .select("quantity, total_price, bundle_variation_id, product_variations(cost_price, name, products!inner(id, name, name_ar, category_id, cost_price)), orders!inner(status, created_at, includes_vat, deleted_at)")
+        .is("orders.deleted_at" as any, null)
         .gte("orders.created_at", startDate)
         .eq("orders.status", "completed");
       if (endDate) q = q.lte("orders.created_at", endDate);

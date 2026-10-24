@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 export interface OrderItemForExpansion {
   variation_id?: string | null;
   quantity: number;
+  // The bundle variation the customer actually chose (variable bundles).
+  bundle_variation_id?: string | null;
   product_variations?: { product_id?: string } | null;
 }
 
@@ -53,17 +55,25 @@ export async function expandToInventoryRows(
     let components: Array<{ variation_id: string; quantity: number }> = [];
 
     if (bundle.bundle_type === "variable_bundle") {
-      const { data: bvs } = await supabase
-        .from("bundle_variations")
-        .select("id")
-        .eq("bundle_id", bundle.id)
-        .limit(1);
+      // Deduct the components of the variation that was sold. Older lines
+      // without bundle_variation_id fall back to the bundle's first variation
+      // (the previous behaviour, which deducted the wrong components for any
+      // other choice).
+      let bundleVariationId = item.bundle_variation_id || null;
+      if (!bundleVariationId) {
+        const { data: bvs } = await supabase
+          .from("bundle_variations")
+          .select("id")
+          .eq("bundle_id", bundle.id)
+          .limit(1);
+        bundleVariationId = bvs?.[0]?.id || null;
+      }
 
-      if (bvs && bvs.length > 0) {
+      if (bundleVariationId) {
         const { data: bvItems } = await supabase
           .from("bundle_variation_items")
           .select("variation_id, quantity")
-          .eq("bundle_variation_id", bvs[0].id);
+          .eq("bundle_variation_id", bundleVariationId);
         components = bvItems || [];
       }
     } else {

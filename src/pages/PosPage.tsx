@@ -26,6 +26,7 @@ import { useBundlesStockBatch } from "@/hooks/useBundleStock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { copyText } from "@/lib/clipboard";
+import { ORDER_CHANNELS, saveOrderChannel, type OrderChannel } from "@/lib/order-channel";
 
 interface CartItem {
   // For regular products: variation_id is the product variation UUID. The cart key uses this id.
@@ -63,6 +64,7 @@ const PosPage = () => {
   const [orderNotes, setOrderNotes] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
+  const [orderChannel, setOrderChannel] = useState<OrderChannel | "">("");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [cashRegisterId, setCashRegisterId] = useState<string>("");
   const [splitMode, setSplitMode] = useState<boolean>(false);
@@ -328,6 +330,7 @@ const PosPage = () => {
   const handleCreateOrder = async () => {
     if (!customerName.trim()) { toast.error("שם לקוח הוא שדה חובה"); return; }
     if (!customerPhone.trim()) { toast.error("טלפון הוא שדה חובה"); return; }
+    if (!orderChannel) { toast.error("בחר מקור הזמנה"); return; }
     if (!splitMode && paymentMethod === "cash" && !cashRegisterId) { toast.error("בחר קופה לתשלום במזומן"); return; }
 
     // Split-payment validations
@@ -392,6 +395,10 @@ const PosPage = () => {
         })),
       } as any);
 
+      if (!(await saveOrderChannel(newOrder.id, orderChannel))) {
+        toast.warning("ההזמנה נוצרה, אבל מקור ההזמנה לא נשמר");
+      }
+
       if (isHypLink) {
         // Send HYP payment link via SMS to the customer.
         const { data: linkData, error: linkErr } = await supabase.functions.invoke("hyp-payment-link", {
@@ -432,6 +439,7 @@ const PosPage = () => {
       setShippingAddress("");
       setOrderNotes("");
       setDeliveryMethod("pickup");
+      setOrderChannel("");
       setPaymentMethod("cash");
       setCashRegisterId("");
       setSplitMode(false);
@@ -773,6 +781,17 @@ const PosPage = () => {
                   <SelectItem value="pickup">איסוף עצמי</SelectItem>
                   {deliveryCompanies?.map((dc) => (
                     <SelectItem key={dc.id} value={dc.id}>{dc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>מקור ההזמנה *</Label>
+              <Select value={orderChannel} onValueChange={(v) => setOrderChannel(v as OrderChannel)} dir="rtl">
+                <SelectTrigger dir="rtl" className="text-right"><SelectValue placeholder="איך הלקוח הגיע?" /></SelectTrigger>
+                <SelectContent dir="rtl">
+                  {ORDER_CHANNELS.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
