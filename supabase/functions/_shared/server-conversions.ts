@@ -15,16 +15,14 @@
 // are not website purchases), never test orders, and at most once per order
 // (guarded by a `server_conversion` row in payment_events).
 //
-// Configuration (Edge Function secrets — every platform is skipped when its
-// secret is missing):
-//   GA4_API_SECRET             — GA4 › Admin › Data streams › Measurement Protocol API secrets
-//   GA4_MEASUREMENT_ID         — optional, defaults to the site's G-M0ST7YDS0C
-//   META_CAPI_ACCESS_TOKEN     — Events Manager › pixel › Settings › Conversions API › Generate access token
-//   TIKTOK_EVENTS_ACCESS_TOKEN — TikTok Events Manager › pixel › Settings › Events API › Generate access token
-// Pixel ids are read from the CRM settings (site_content settings/meta_pixel
-// and settings/tiktok_pixel), the same ones the storefront uses.
+// Configuration: access tokens are entered in the CRM (Settings › חיבור שרת
+// לפרסום) and read via _shared/tracking-secrets.ts — every platform is skipped
+// while its token is missing. Pixel ids are read from the CRM settings
+// (site_content settings/meta_pixel and settings/tiktok_pixel), the same ones
+// the storefront uses.
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { loadTrackingSecrets, TrackingSecrets } from "./tracking-secrets.ts";
 
 const DEFAULT_GA4_MEASUREMENT_ID = "G-M0ST7YDS0C";
 const META_GRAPH_VERSION = "v21.0";
@@ -226,10 +224,10 @@ async function readPixelId(supabase: SupabaseClient, section: string): Promise<s
 
 type PlatformResult = { platform: string; ok: boolean; skipped?: string; status?: number; detail?: string };
 
-async function sendGa4(order: OrderForConversion, lines: Line[], ctx: TrackingContext, value: number): Promise<PlatformResult> {
-  const apiSecret = Deno.env.get("GA4_API_SECRET");
+async function sendGa4(secrets: TrackingSecrets, order: OrderForConversion, lines: Line[], ctx: TrackingContext, value: number): Promise<PlatformResult> {
+  const apiSecret = secrets.ga4_api_secret;
   if (!apiSecret) return { platform: "ga4", ok: false, skipped: "no_api_secret" };
-  const measurementId = Deno.env.get("GA4_MEASUREMENT_ID") || DEFAULT_GA4_MEASUREMENT_ID;
+  const measurementId = secrets.ga4_measurement_id || DEFAULT_GA4_MEASUREMENT_ID;
   // Without the browser's client id GA still records the revenue, just
   // without the session's traffic source.
   const clientId = ctx.ga_client_id || `${Math.floor(Math.random() * 1e9)}.${Math.floor(Date.now() / 1000)}`;
@@ -255,6 +253,7 @@ async function sendGa4(order: OrderForConversion, lines: Line[], ctx: TrackingCo
 }
 
 async function sendMeta(
+  secrets: TrackingSecrets,
   supabase: SupabaseClient,
   order: OrderForConversion,
   lines: Line[],
@@ -262,7 +261,7 @@ async function sendMeta(
   value: number,
   eventId: string,
 ): Promise<PlatformResult> {
-  const token = Deno.env.get("META_CAPI_ACCESS_TOKEN");
+  const token = secrets.meta_capi_access_token;
   if (!token) return { platform: "meta", ok: false, skipped: "no_access_token" };
   const pixelId = await readPixelId(supabase, "meta_pixel");
   if (!pixelId) return { platform: "meta", ok: false, skipped: "no_pixel_id" };
@@ -312,6 +311,7 @@ async function sendMeta(
 }
 
 async function sendTikTok(
+  secrets: TrackingSecrets,
   supabase: SupabaseClient,
   order: OrderForConversion,
   lines: Line[],
@@ -319,7 +319,7 @@ async function sendTikTok(
   value: number,
   eventId: string,
 ): Promise<PlatformResult> {
-  const token = Deno.env.get("TIKTOK_EVENTS_ACCESS_TOKEN");
+  const token = secrets.tiktok_events_access_token;
   if (!token) return { platform: "tiktok", ok: false, skipped: "no_access_token" };
   const pixelCode = await readPixelId(supabase, "tiktok_pixel");
   if (!pixelCode) return { platform: "tiktok", ok: false, skipped: "no_pixel_id" };
@@ -412,14 +412,15 @@ export async function sendServerPurchase(
       return;
     }
 
+    const secrets = await loadTrackingSecrets(supabase);
     const ctx = opts.tracking || await loadTrackingContext(supabase, orderId);
     const lines = await loadLines(supabase, orderId);
     const eventId = purchaseEventId(o.order_number);
 
     const results = await Promise.all([
-      sendGa4(o, lines, ctx, value),
-      sendMeta(supabase, o, lines, ctx, value, eventId),
-      sendTikTok(supabase, o, lines, ctx, value, eventId),
+      sendGa4(secrets, o, lines, ctx, value),
+      sendMeta(secrets, supabase, o, lines, ctx, value, eventId),
+      sendTikTok(secrets, supabase, o, lines, ctx, value, eventId),
     ]);
     const sent = results.filter((r) => r.ok).map((r) => r.platform);
     const failed = results.filter((r) => !r.ok && !r.skipped);

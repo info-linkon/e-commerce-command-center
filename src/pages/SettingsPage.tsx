@@ -1,4 +1,4 @@
-import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText, History, Trash2, RefreshCw, Send } from "lucide-react";
+import { Truck, Wallet, Globe, MessageSquare, CreditCard, BarChart3, Settings as SettingsIcon, FileText, History, Trash2, RefreshCw, Send, ServerCog } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -66,6 +66,12 @@ const settingsSections = [
     description: "הגדרת Pixel ID של TikTok למעקב המרות",
     icon: BarChart3,
     url: "/crm/admin/tiktok-pixel",
+  },
+  {
+    title: "חיבור שרת לפרסום",
+    description: "מפתחות Google / Meta / TikTok לדיווח רכישות מהשרת",
+    icon: ServerCog,
+    url: "/crm/admin/conversions-api",
   },
   {
     title: "הגדרות סליקה",
