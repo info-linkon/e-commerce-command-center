@@ -2,11 +2,6 @@
   RewriteEngine On
   RewriteBase /
 
-  # One canonical host: www.elwejha.co.il → elwejha.co.il (301), so analytics
-  # and SEO don't split the same site across two hostnames.
-  RewriteCond %{HTTP_HOST} ^www\.elwejha\.co\.il$ [NC]
-  RewriteRule ^(.*)$ https://elwejha.co.il/$1 [R=301,L]
-
   # If the request is for an existing file or directory, serve it
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
