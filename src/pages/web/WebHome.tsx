@@ -26,6 +26,7 @@ import catPackages from "@/assets/cat-packages.jpg";
 import catStoves from "@/assets/cat-stoves.jpg";
 import catCampingGear from "@/assets/cat-camping-gear.jpg";
 import { Seo } from "@/components/web/Seo";
+import { imageSrcSet, resizedImage } from "@/lib/image";
 
 const categoryImageMap: Record<string, string> = {
   "1e7e7bc7-16e4-40b4-a8be-679c5831f8aa": catTeaCoffee,
@@ -224,7 +225,9 @@ export default function WebHome() {
                 >
                   {imgSrc ? (
                     <img
-                      src={imgSrc}
+                      src={resizedImage(imgSrc, 400)}
+                      srcSet={imageSrcSet(imgSrc, [300, 600])}
+                      sizes="(min-width: 768px) 25vw, 50vw"
                       alt={cat.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       loading="lazy"

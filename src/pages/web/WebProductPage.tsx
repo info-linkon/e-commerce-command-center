@@ -16,6 +16,8 @@ import { RelatedProductsSection } from "@/components/web/RelatedProductsSection"
 import { WebBreadcrumb } from "@/components/web/WebBreadcrumb";
 import { effectivePrice } from "@/lib/pricing";
 import { Seo } from "@/components/web/Seo";
+import { imageSrcSet, resizedImage } from "@/lib/image";
+import { useSiteSection } from "@/hooks/useSiteContent";
 
 export default function WebProductPage() {
   const { lang, t } = useLanguage();
@@ -37,6 +39,8 @@ export default function WebProductPage() {
   }, [preselectVariationId, variations]);
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState<string | null>(null);
+  const { data: shippingSettingsRow } = useSiteSection("settings", "shipping_methods");
+  const { data: paymentSettingsRow } = useSiteSection("settings", "payment_methods");
 
   // Check if product is a bundle
   const { data: bundleData } = useQuery({
@@ -197,6 +201,16 @@ export default function WebProductPage() {
   const displayImage = mainImage || variationImage || allImages[0] || null;
 
   const displayName = lang === "he" ? (product.name || product.name_ar) : (product.name_ar || product.name);
+
+  // Shipping + installments info shown next to the price (previously only
+  // visible on the checkout page). Shipping is per-product, same as the cart.
+  const shippingSettings = (shippingSettingsRow?.content || {}) as any;
+  const paymentSettings = (paymentSettingsRow?.content || {}) as any;
+  const deliveryEnabled = shippingSettings.delivery_enabled !== false;
+  const pickupEnabled = shippingSettings.pickup_enabled !== false;
+  const shippingPrice = Number((product as any).shipping_price || 0);
+  const creditEnabled = paymentSettings.credit?.enabled !== false;
+  const maxInstallments = Math.max(1, Math.floor(Number(paymentSettings.max_installments ?? 3)) || 1);
 
   // Bundle stock check
   const isBundleOutOfStock = (() => {
@@ -364,7 +378,7 @@ export default function WebProductPage() {
   const seoPrice = effectivePrice(product.sale_price, (product as any).compare_at_price).price;
 
   return (
-    <div className="container py-6 md:py-12">
+    <div className="container pt-6 pb-24 md:py-12">
       <Seo
         title={metaTitleOverride || displayName}
         description={seoDescription}
@@ -406,7 +420,14 @@ export default function WebProductPage() {
         <div>
           <div className="bg-card rounded-xl border border-border overflow-hidden mb-4 flex items-center justify-center min-h-[300px] md:min-h-[400px]">
             {displayImage ? (
-              <img src={displayImage} alt={displayName} className="w-full h-auto max-h-[600px] object-contain rounded-xl" />
+              <img
+                src={resizedImage(displayImage, 1200)}
+                srcSet={imageSrcSet(displayImage, [600, 900, 1200])}
+                sizes="(min-width: 768px) 50vw, 100vw"
+                alt={displayName}
+                loading="eager"
+                className="w-full h-auto max-h-[600px] object-contain rounded-xl"
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                 <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24">
@@ -416,16 +437,16 @@ export default function WebProductPage() {
             )}
           </div>
           {allImages.length > 1 && (
-            <div className="grid grid-cols-4 md:grid-cols-5 gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-1 snap-x scrollbar-thin">
               {allImages.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => setMainImage(img)}
-                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                  className={`w-16 h-16 md:w-20 md:h-20 shrink-0 snap-start rounded-lg overflow-hidden border-2 transition-all ${
                     (mainImage || allImages[0]) === img ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-contain" />
+                  <img src={resizedImage(img, 160)} alt="" loading="lazy" className="w-full h-full object-contain" />
                 </button>
               ))}
             </div>
@@ -461,6 +482,23 @@ export default function WebProductPage() {
               </>
             )}
           </div>
+
+          {(deliveryEnabled || pickupEnabled || (creditEnabled && maxInstallments > 1)) && (
+            <div className="text-sm text-muted-foreground -mt-4 mb-6 space-y-1">
+              {(deliveryEnabled || pickupEnabled) && (
+                <p>
+                  {deliveryEnabled && (shippingPrice > 0
+                    ? t(`توصيل ₪${shippingPrice}`, `משלוח ₪${shippingPrice}`)
+                    : t("توصيل مجاني", "משלוח חינם"))}
+                  {deliveryEnabled && pickupEnabled && ", "}
+                  {pickupEnabled && t("استلام ذاتي مجاناً", "איסוף עצמי חינם")}
+                </p>
+              )}
+              {creditEnabled && maxInstallments > 1 && (
+                <p>{t(`إمكانية الدفع حتى ${maxInstallments} دفعات ببطاقة الائتمان`, `אפשרות לשלם עד ${maxInstallments} תשלומים בכרטיס אשראי`)}</p>
+              )}
+            </div>
+          )}
 
           {/* Regular product variations */}
           {isVariable && variations && (
@@ -562,6 +600,25 @@ export default function WebProductPage() {
       </div>
 
       <RelatedProductsSection productId={product.id} />
+
+      {/* Mobile: price + add-to-cart pinned above the bottom nav, so the
+          button is reachable without scrolling past the gallery. */}
+      <div className="md:hidden fixed inset-x-0 bottom-14 z-40 bg-card/95 backdrop-blur border-t border-border px-4 py-2 flex items-center gap-3">
+        <div className="flex flex-col leading-tight">
+          <span className="text-lg font-black text-primary">₪{price.toFixed(2)}</span>
+          {comparePrice && (
+            <span className="text-xs text-muted-foreground line-through">₪{comparePrice.toFixed(2)}</span>
+          )}
+        </div>
+        <Button
+          className="flex-1 bg-gold text-gold-foreground hover:bg-gold/90 font-bold"
+          onClick={handleAddToCart}
+          disabled={isOutOfStock}
+        >
+          <ShoppingCart className="w-4 h-4 ml-2" />
+          {isOutOfStock ? t("غير متوفر", "אזל מהמלאי") : t("أضف إلى السلة", "הוסף לסל")}
+        </Button>
+      </div>
     </div>
   );
 }

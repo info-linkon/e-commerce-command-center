@@ -7,6 +7,7 @@ import { Package, MapPin, Calendar, CreditCard, Loader2, AlertCircle, CheckCircl
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { resizedImage } from "@/lib/image";
 
 const statusConfig: Record<string, { label: string; labelHe: string; icon: React.ElementType; color: string }> = {
   pending: { label: "بانتظار التأكيد", labelHe: "ממתינה לאישור", icon: Clock, color: "bg-amber-100 text-amber-800 border-amber-200" },
@@ -241,7 +242,7 @@ export default function WebOrderSummary() {
           {items?.map((item: any, i: number) => (
             <div key={i} className="p-4 flex gap-3 items-center">
               {item.imageUrl ? (
-                <img src={item.imageUrl} alt={item.name} className="w-14 h-14 rounded-lg object-cover border border-border shrink-0" />
+                <img src={resizedImage(item.imageUrl, 160)} alt={item.name} className="w-14 h-14 rounded-lg object-cover border border-border shrink-0" />
               ) : (
                 <div className="w-14 h-14 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
                   <Package className="h-6 w-6 text-muted-foreground" />

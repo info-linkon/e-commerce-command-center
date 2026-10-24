@@ -100,6 +100,22 @@ Deno.serve(async (req) => {
 
     const notifyUrl = `${supabaseUrl}/functions/v1/hyp-notify`;
 
+    // Max installments offered on the HYP page — configured in CRM
+    // (settings/payment_methods.max_installments, also shown on product pages).
+    let maxInstallments = 3;
+    try {
+      const { data: pmRow } = await supabase
+        .from("site_content")
+        .select("content")
+        .eq("page", "settings")
+        .eq("section", "payment_methods")
+        .maybeSingle();
+      const configured = Math.floor(Number((pmRow?.content as Record<string, unknown> | null)?.max_installments));
+      if (configured >= 1 && configured <= 12) maxInstallments = configured;
+    } catch (pmErr) {
+      console.warn("failed to read max_installments, using default:", pmErr);
+    }
+
     // Amount must be a valid positive number — pass through with 2dp to match
     // what HYP will echo back on the callback (avoids false amount-mismatches).
     const numericTotal = Number(total);
@@ -136,7 +152,7 @@ Deno.serve(async (req) => {
       FixTash: "False",
       // Allow customer to split into up to 3 payments (1/2/3). FixTash=False
       // keeps it customer-selectable up to this maximum.
-      Tash: "3",
+      Tash: String(maxInstallments),
       J5: "False",
       Postpone: "False",
       pageTimeOut: "True",

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
+import { imageSrcSet, resizedImage } from "@/lib/image";
 
 interface WebProductCardProps {
   id: string;
@@ -49,7 +50,9 @@ export function WebProductCard({ id, productNumber, name, nameAr, price: rawPric
         <div className="aspect-square bg-muted flex items-center justify-center">
           {imageUrl ? (
             <img
-              src={imageUrl}
+              src={resizedImage(imageUrl, 400)}
+              srcSet={imageSrcSet(imageUrl, [300, 600])}
+              sizes="(min-width: 1024px) 20vw, (min-width: 768px) 30vw, 50vw"
               alt={displayName}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               loading="lazy"

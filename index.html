@@ -38,13 +38,23 @@
     <!-- End TikTok Pixel base -->
 
     <!-- Google tag (gtag.js) — GA4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M0ST7YDS0C"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      // send_page_view:false — SPA page_view sent manually from WebLayout on every route change
-      gtag('config', 'G-M0ST7YDS0C', { send_page_view: false });
+      // Only elwejha's own domain reports to elwejha's GA property. Sites that
+      // were built from a copy of this code (xfitness, toygo) and preview
+      // hosts were sending their traffic and purchases into this property.
+      (function () {
+        var host = location.hostname.toLowerCase();
+        if (host !== 'elwejha.co.il' && host !== 'www.elwejha.co.il') return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-M0ST7YDS0C';
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { dataLayer.push(arguments); };
+        gtag('js', new Date());
+        // send_page_view:false — SPA page_view sent manually from WebLayout on every route change
+        gtag('config', 'G-M0ST7YDS0C', { send_page_view: false });
+      })();
     </script>
     <!-- End Google tag -->
 

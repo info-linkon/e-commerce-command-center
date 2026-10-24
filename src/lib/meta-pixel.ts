@@ -97,13 +97,20 @@ export function fbqIdentify(user: PixelIdentity) {
   }
 }
 
-export function fbq(event: string, data?: Record<string, any>) {
+/**
+ * `eventId` is forwarded as Meta's `eventID` so a browser event and the
+ * matching Conversions API event (sent from our edge functions) are
+ * deduplicated instead of being counted twice.
+ */
+export function fbq(event: string, data?: Record<string, any>, eventId?: string) {
   if (typeof window !== "undefined" && window.fbq) {
     if (!(window.fbq as any)?.loaded) {
       // queued — fbq base script keeps a queue and replays on init
       console.debug("[meta-pixel] queued event before init:", event);
     }
-    if (data) {
+    if (eventId) {
+      window.fbq("track", event, data || {}, { eventID: eventId });
+    } else if (data) {
       window.fbq("track", event, data);
     } else {
       window.fbq("track", event);

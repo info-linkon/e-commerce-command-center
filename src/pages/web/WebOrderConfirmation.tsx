@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { fbq, fbqIdentify } from "@/lib/meta-pixel";
 import { ttqIdentify, ttqPurchase } from "@/lib/tiktok-pixel";
 import { gaPurchase } from "@/lib/gtag";
+import { isTestOrderName, purchaseEventId } from "@/lib/attribution";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/web-cart-store";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -233,6 +234,13 @@ async function fetchOrderSummary(
 async function firePurchasePixel(orderNumber: string | null, amountStr: string | null): Promise<void> {
   if (!orderNumber) return;
   const amount = amountStr ? parseFloat(amountStr) : NaN;
+  // Same id the edge functions use for the server-side purchase event, so
+  // Meta/TikTok dedupe the pair (GA dedupes on transaction_id).
+  const eventId = purchaseEventId(orderNumber);
+  // Orders created by this browser's checkout. A POS order paid through an
+  // SMS payment link also lands here (via hyp-callback) but has no checkout
+  // session — it must not be reported as a website purchase.
+  const placedHere = sessionStorage.getItem("hyp_order_number") === String(orderNumber);
 
   // Fetch order summary so the Purchase event carries product SKUs as
   // content_ids (matching the Meta catalog feed's g:id). We deliberately
@@ -243,14 +251,17 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
     if (!summary) {
       // Last-resort: fire Purchase without content_ids so the conversion
       // is still recorded, even if catalog matching is unavailable.
-      if (!isFinite(amount) || amount <= 0) return;
-      fbq("Purchase", { value: amount, currency: "ILS" });
-      ttqPurchase(amount, [], orderNumber);
+      if (!placedHere || !isFinite(amount) || amount <= 0) return;
+      fbq("Purchase", { value: amount, currency: "ILS" }, eventId);
+      ttqPurchase(amount, [], orderNumber, eventId);
       gaPurchase(String(orderNumber), amount, []);
       return;
     }
     const order = summary.order;
     const items = summary.items || [];
+    // Only website orders are purchases on the site; skip test orders too.
+    if (order?.source && order.source !== "website") return;
+    if (isTestOrderName(order?.customer_name)) return;
     // Purchase value must be a real, positive number — Meta rejects 0/NaN.
     const orderTotal = Number(order?.total || 0);
     const value = isFinite(amount) && amount > 0 ? amount : orderTotal > 0 ? orderTotal : 0;
@@ -283,8 +294,8 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
       coupon: order?.coupon_code || undefined,
     });
     if (!contents.length) {
-      fbq("Purchase", { value, currency: "ILS" });
-      ttqPurchase(value, [], orderNumber);
+      fbq("Purchase", { value, currency: "ILS" }, eventId);
+      ttqPurchase(value, [], orderNumber, eventId);
       return;
     }
     fbq("Purchase", {
@@ -294,14 +305,14 @@ async function firePurchasePixel(orderNumber: string | null, amountStr: string |
       num_items: items.reduce((s: number, it: any) => s + Number(it.quantity || 0), 0) || undefined,
       value,
       currency: "ILS",
-    });
+    }, eventId);
     // TikTok Pixel: CompletePayment
-    ttqPurchase(value, contents, orderNumber);
+    ttqPurchase(value, contents, orderNumber, eventId);
   } catch (err) {
     console.error("[meta-pixel] Purchase enrichment failed:", err);
-    if (!isFinite(amount) || amount <= 0) return;
-    fbq("Purchase", { value: amount, currency: "ILS" });
-    ttqPurchase(amount, [], orderNumber);
+    if (!placedHere || !isFinite(amount) || amount <= 0) return;
+    fbq("Purchase", { value: amount, currency: "ILS" }, eventId);
+    ttqPurchase(amount, [], orderNumber, eventId);
     gaPurchase(String(orderNumber), amount, []);
   }
 }

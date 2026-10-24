@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Loader2, CreditCard, Banknote } from "lucide-react";
 import { useSiteSection, useUpsertSiteContent } from "@/hooks/useSiteContent";
 import { toast } from "sonner";
@@ -10,6 +11,9 @@ import { toast } from "sonner";
 const DEFAULT_SETTINGS = {
   cash: { enabled: true, label: "الدفع عند الاستلام" },
   credit: { enabled: true, label: "بطاقة ائتمان" },
+  // Max credit-card installments offered on the HYP page (Tash) and shown on
+  // product pages. 1 = single payment only.
+  max_installments: 3,
 };
 
 export default function PaymentMethodsSettingsPage() {
@@ -23,6 +27,7 @@ export default function PaymentMethodsSettingsPage() {
       setSettings({
         cash: { ...DEFAULT_SETTINGS.cash, ...c.cash },
         credit: { ...DEFAULT_SETTINGS.credit, ...c.credit },
+        max_installments: Number(c.max_installments ?? DEFAULT_SETTINGS.max_installments) || 1,
       });
     }
   }, [existing]);
@@ -80,6 +85,22 @@ export default function PaymentMethodsSettingsPage() {
               onCheckedChange={(v) => setSettings((s) => ({ ...s, credit: { ...s.credit, enabled: v } }))}
             />
             <Label htmlFor="credit-enabled">{settings.credit.enabled ? "מופעל" : "כבוי"}</Label>
+          </div>
+          <div className="flex items-center gap-3 mt-4">
+            <Label htmlFor="max-installments" className="shrink-0">מקסימום תשלומים</Label>
+            <Input
+              id="max-installments"
+              type="number"
+              min={1}
+              max={12}
+              className="w-24"
+              value={settings.max_installments}
+              onChange={(e) => {
+                const n = Math.min(12, Math.max(1, Math.floor(Number(e.target.value) || 1)));
+                setSettings((s) => ({ ...s, max_installments: n }));
+              }}
+            />
+            <span className="text-xs text-muted-foreground">מוצג בדף המוצר ונשלח לדף התשלום של HYP (1 = תשלום אחד בלבד)</span>
           </div>
         </CardContent>
       </Card>

@@ -17,6 +17,7 @@
 //      (id, order_number, access_token).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { runInBackground, sanitizeTrackingContext, saveTrackingContext, sendServerPurchase } from "../_shared/server-conversions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,6 +54,8 @@ interface IncomingPayload {
   coupon_code?: string | null;
   lang?: "ar" | "he" | null;
   items: IncomingItem[];
+  // Browser ids for server-side conversions (see _shared/server-conversions.ts).
+  tracking?: Record<string, unknown> | null;
 }
 
 Deno.serve(async (req) => {
@@ -532,6 +535,15 @@ Deno.serve(async (req) => {
         order_id: order.id,
         order_number: order.order_number,
       });
+    }
+
+    // ── Tracking context + server-side purchase (cash) ─────────────────
+    // Saved for every order so the HYP confirmation can report credit
+    // purchases later. Cash orders are complete purchases right now.
+    const tracking = sanitizeTrackingContext(payload.tracking, req);
+    await saveTrackingContext(supabase, order.id, tracking);
+    if (isCash) {
+      await runInBackground(sendServerPurchase(supabase, order.id, { trigger: "web-create-order", tracking }));
     }
 
     return jsonResponse({

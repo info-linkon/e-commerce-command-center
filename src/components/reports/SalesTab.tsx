@@ -10,6 +10,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { ExternalLink, Download } from "lucide-react";
+import { toast } from "sonner";
+import { buildMetaOfflineCsv } from "@/lib/meta-offline-export";
 
 interface Props {
   startDate: string;
@@ -103,6 +105,43 @@ export default function SalesTab({ startDate, endDate }: Props) {
     URL.revokeObjectURL(url);
   };
 
+  // POS (קופה) sales for the selected period, formatted for Meta's offline
+  // events upload so in-store sales count toward the ads that drove them.
+  const [exportingPos, setExportingPos] = useState(false);
+  const exportPosForMeta = async () => {
+    setExportingPos(true);
+    try {
+      let q = supabase
+        .from("orders")
+        .select("order_number, created_at, total, status, customer_name, customer_phone, customer_email, shipping_city")
+        .eq("source", "pos")
+        .is("deleted_at" as any, null)
+        .gte("created_at", startDate)
+        .order("created_at", { ascending: true })
+        .limit(5000);
+      if (endDate) q = q.lte("created_at", endDate);
+      const { data, error } = await q;
+      if (error) throw error;
+      const { csv, count } = buildMetaOfflineCsv((data || []) as any);
+      if (!count) {
+        toast.info("אין מכירות קופה עם טלפון בתקופה שנבחרה");
+        return;
+      }
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `meta-offline-pos-${startDate.slice(0, 10)}_${(endDate || new Date().toISOString()).slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`יוצאו ${count} מכירות קופה`);
+    } catch (err: any) {
+      toast.error(`ייצוא נכשל: ${err?.message || err}`);
+    } finally {
+      setExportingPos(false);
+    }
+  };
+
   const statusLabels: Record<string, string> = { pending: "ממתין", processing: "בטיפול", completed: "הושלם", cancelled: "בוטל", unfulfilled: "לא מומשה" };
   const sourceLabels: Record<string, string> = { manual: "ידני", pos: "קופה", website: "אתר" };
 
@@ -130,6 +169,9 @@ export default function SalesTab({ startDate, endDate }: Props) {
           </Select>
           <Button size="sm" variant="outline" onClick={exportCsv} className="gap-1 mr-auto">
             <Download className="h-4 w-4" /> ייצוא CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={exportPosForMeta} disabled={exportingPos} className="gap-1" title="מכירות קופה בתקופה הנבחרת, בפורמט העלאת אירועים אופליין ל-Meta">
+            <Download className="h-4 w-4" /> מכירות קופה ל-Meta
           </Button>
         </CardContent>
       </Card>

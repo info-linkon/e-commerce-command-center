@@ -4,6 +4,7 @@ import { Trash2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
 import { gaRemoveFromCart } from "@/lib/gtag";
+import { resizedImage } from "@/lib/image";
 
 export default function WebCartPage() {
   const { items, removeItem, updateQuantity, clearCart, totalPrice, shippingCost } = useCartStore();
@@ -57,7 +58,7 @@ export default function WebCartPage() {
             >
               <div className="w-16 h-16 md:w-20 md:h-20 bg-muted rounded-lg overflow-hidden shrink-0">
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
+                  <img src={resizedImage(item.imageUrl, 160)} alt={item.productName} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">📦</div>
                 )}

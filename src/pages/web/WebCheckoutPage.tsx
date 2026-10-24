@@ -13,10 +13,12 @@ import { Loader2, Tag, X, CreditCard, Banknote, MapPin, User, Phone, Mail, Home,
 import { fbq, fbqIdentify } from "@/lib/meta-pixel";
 import { ttq, ttqIdentify } from "@/lib/tiktok-pixel";
 import { gaBeginCheckout } from "@/lib/gtag";
+import { getTrackingContext } from "@/lib/attribution";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLanguage } from "@/hooks/useLanguage";
 import logo from "@/assets/logo.webp";
+import { resizedImage } from "@/lib/image";
 
 type ShippingMethod = "delivery" | "pickup";
 type PaymentMethodType = "cash" | "credit";
@@ -421,6 +423,9 @@ export default function WebCheckoutPage() {
             payment_method: isCash ? "cash" : "credit",
             coupon_code: appliedCoupon ? appliedCoupon.code : null,
             lang,
+            // Browser ids (GA client id, _fbp/_fbc, ttclid, UTM…) for the
+            // server-side purchase events sent from the edge functions.
+            tracking: getTrackingContext(),
             notes: [
               shippingMethod === "pickup" ? "🏪 איסוף עצמי" : "",
               (form.get("notes") as string) || "",
@@ -465,6 +470,11 @@ export default function WebCheckoutPage() {
         supabase.functions.invoke("order-email-notify", {
           body: { order_id: order.id },
         }).catch(console.error);
+        // The confirmation page reads the order back through `order-summary`,
+        // which requires the order's access token. Without it the cash
+        // Purchase event was never sent (regression since 2026-09-03).
+        sessionStorage.setItem("hyp_order_number", String(order.order_number));
+        sessionStorage.setItem("hyp_order_token", order.access_token);
         submittedRef.current = true;
         navigate(localizedPath(`/order-confirmation/${order.order_number}`));
         clearCart();
@@ -556,7 +566,7 @@ export default function WebCheckoutPage() {
                 {items.slice(0, 3).map((item, i) => (
                   <div key={i} className="w-10 h-10 rounded-lg border-2 border-background bg-muted overflow-hidden shadow-sm">
                     {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
+                      <img src={resizedImage(item.imageUrl, 160)} alt={item.productName} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
                         <ShoppingBag className="w-4 h-4" />
@@ -612,7 +622,7 @@ export default function WebCheckoutPage() {
             <div key={item.variationId} className="flex items-center gap-3">
               {item.imageUrl && (
                 <img
-                  src={item.imageUrl}
+                  src={resizedImage(item.imageUrl, 160)}
                   alt={item.productName}
                   className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0"
                 />
@@ -799,7 +809,7 @@ export default function WebCheckoutPage() {
                   {items.slice(0, 3).map((item, i) => (
                     <div key={i} className="w-8 h-8 rounded-lg border-2 border-card bg-muted overflow-hidden">
                       {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
+                        <img src={resizedImage(item.imageUrl, 160)} alt={item.productName} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <ShoppingBag className="w-3.5 h-3.5 text-muted-foreground" />

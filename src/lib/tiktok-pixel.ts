@@ -7,10 +7,13 @@ declare global {
   }
 }
 
-export function ttq(event: string, data?: Record<string, any>) {
+export function ttq(event: string, data?: Record<string, any>, eventId?: string) {
   if (typeof window === "undefined" || !window.ttq) return;
   try {
-    if (data) {
+    if (eventId) {
+      // Same event_id as the server-side Events API call → TikTok dedupes.
+      window.ttq.track(event, data || {}, { event_id: eventId });
+    } else if (data) {
       window.ttq.track(event, data);
     } else {
       window.ttq.track(event);
@@ -56,6 +59,7 @@ export function ttqPurchase(
   value: number,
   contents: { id: string; quantity: number; price?: number }[],
   orderNumber?: string | number | null,
+  eventId?: string,
 ) {
   const numericValue = Number(Number(value).toFixed(2));
   if (!isFinite(numericValue) || numericValue <= 0) return;
@@ -80,6 +84,6 @@ export function ttqPurchase(
     ...(orderNumber ? { order_id: String(orderNumber) } : {}),
   };
 
-  ttq("CompletePayment", payload);
-  ttq("Purchase", payload);
+  ttq("CompletePayment", payload, eventId);
+  ttq("Purchase", payload, eventId ? `${eventId}-p` : undefined);
 }

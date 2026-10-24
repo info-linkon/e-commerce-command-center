@@ -10,6 +10,7 @@ import { ttqPageView, ttqIdentify } from "@/lib/tiktok-pixel";
 import { gaPageView } from "@/lib/gtag";
 import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
+import { captureClickIds } from "@/lib/attribution";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -28,6 +29,8 @@ function WebLayoutInner() {
   useVersionCheck();
 
   const settings = (settingsData?.content || {}) as any;
+  const isCheckoutPage = /\/checkout(\/|$)/.test(pathname);
+  const isProductPage = /\/product\//.test(pathname);
   const whatsapp = settings.whatsapp || "972526573185";
 
   // Initialize pixel with retry
@@ -81,6 +84,7 @@ function WebLayoutInner() {
 
   // GA4 page_view on every SPA route change (gtag loaded in index.html with send_page_view:false)
   useEffect(() => {
+    captureClickIds();
     gaPageView(pathname + window.location.search);
   }, [pathname]);
 
@@ -124,17 +128,18 @@ function WebLayoutInner() {
         </noscript>
       )}
 
-      {/* WhatsApp float */}
-      <a
+      {/* WhatsApp float — hidden on checkout (it covered the "pay now" button
+          on phones) and lifted above the sticky add-to-cart bar on product pages. */}
+      {!isCheckoutPage && <a
         data-web-floating
         href={`https://wa.me/${whatsapp}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-[4.5rem] md:bottom-6 left-4 md:left-6 z-50 w-12 h-12 md:w-14 md:h-14 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 hover:scale-110 transition-all duration-200"
+        className={`fixed ${isProductPage ? "bottom-[8.5rem]" : "bottom-[4.5rem]"} md:bottom-6 left-4 md:left-6 z-50 w-12 h-12 md:w-14 md:h-14 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 hover:scale-110 transition-all duration-200`}
         aria-label="WhatsApp"
       >
         <MessageCircle className="h-6 w-6 md:h-7 md:w-7" />
-      </a>
+      </a>}
     </div>
   );
 }
