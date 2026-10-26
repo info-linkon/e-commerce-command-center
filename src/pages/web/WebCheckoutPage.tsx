@@ -1,4 +1,5 @@
 import { useCartStore } from "@/lib/web-cart-store";
+import { requiresPhoneVerification } from "@/lib/phone-verification";
 import { Minus as MinusIcon, Plus as PlusIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
@@ -293,8 +294,9 @@ export default function WebCheckoutPage() {
       return;
     }
     // Phone verification is required only for cash orders (credit is verified by the card payment).
-    if (selectedPayment === "cash") {
-      const phoneNow = String(new FormData(e.currentTarget).get("phone") || "").trim();
+    // Non-Israeli 059/056 numbers skip it (SMS can't reach them).
+    const phoneNow = String(new FormData(e.currentTarget).get("phone") || "").trim();
+    if (selectedPayment === "cash" && requiresPhoneVerification(phoneNow)) {
       if (!otpVerified || phoneNow !== otpPhone) {
         if (phoneNow.replace(/[\s\-()]/g, "").length < 9) {
           toast.error(t("يرجى إدخال رقم هاتف صحيح", "יש להזין מספר טלפון תקין"));

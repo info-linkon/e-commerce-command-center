@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWarehouses } from "@/hooks/useWarehouses";
 import { useInventory } from "@/hooks/useInventory";
+import { useBundles } from "@/hooks/useBundles";
+import { useBundleVariations } from "@/hooks/useBundleVariations";
 import { supabase } from "@/integrations/supabase/client";
 import { logInventoryChange } from "@/hooks/useInventoryLog";
 import { syncStockToWoo } from "@/lib/wooStockSync";
@@ -36,6 +38,13 @@ const InventoryWriteOffPage = () => {
   const [lines, setLines] = useState<WriteOffLine[]>([]);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { data: bundles } = useBundles();
+  const [bundleId, setBundleId] = useState<string>("");
+  const [bundleVariationId, setBundleVariationId] = useState<string>("");
+  const [bundleQty, setBundleQty] = useState(1);
+  const selectedBundle = bundles?.find((b) => b.id === bundleId);
+  const isVariableBundle = selectedBundle?.bundle_type === "variable_bundle";
+  const { data: bundleVariations } = useBundleVariations(isVariableBundle ? bundleId : undefined);
 
   const filteredInventory = useMemo(() => {
     if (!inventoryData || !warehouseId) return [];
@@ -64,6 +73,58 @@ const InventoryWriteOffPage = () => {
       write_off_qty: 1,
       inventory_id: item.id,
     }]);
+  };
+
+  // A bundle has no stock of its own — writing one off removes its components
+  // (bundle_items, or the chosen bundle variation's items) from the warehouse.
+  const addBundle = () => {
+    if (!selectedBundle || !inventoryData) return;
+    const components: Array<{ variation_id: string; quantity: number }> = isVariableBundle
+      ? (bundleVariations?.find((bv) => bv.id === bundleVariationId)?.bundle_variation_items || [])
+      : (selectedBundle.bundle_items || []);
+    if (components.length === 0) {
+      toast.error("למארז אין רכיבים מוגדרים");
+      return;
+    }
+
+    const next = [...lines];
+    const missing: string[] = [];
+    const capped: string[] = [];
+    for (const c of components) {
+      const need = c.quantity * bundleQty;
+      const existing = next.findIndex((l) => l.variation_id === c.variation_id);
+      if (existing >= 0) {
+        const l = next[existing];
+        const qty = Math.min(l.write_off_qty + need, l.current_qty);
+        if (qty < l.write_off_qty + need) capped.push(`${l.product_name} — ${l.variation_name}`);
+        next[existing] = { ...l, write_off_qty: qty };
+        continue;
+      }
+      const item = inventoryData.find((i) => i.variation_id === c.variation_id && i.quantity > 0);
+      const variation = item?.product_variations as any;
+      if (!item) {
+        missing.push(c.variation_id);
+        continue;
+      }
+      const name = `${variation?.products?.name || "—"} — ${variation?.name || "—"}`;
+      if (need > item.quantity) capped.push(name);
+      next.push({
+        variation_id: item.variation_id,
+        warehouse_id: item.warehouse_id,
+        product_name: variation?.products?.name || "—",
+        variation_name: variation?.name || "—",
+        current_qty: item.quantity,
+        write_off_qty: Math.min(need, item.quantity),
+        inventory_id: item.id,
+      });
+    }
+    setLines(next);
+    if (!reason) setReason(`פחת מארז: ${(selectedBundle.products as any)?.name || ""} × ${bundleQty}`);
+    if (missing.length) toast.warning(`${missing.length} רכיבים של המארז אינם במלאי במחסן הזה`);
+    if (capped.length) toast.warning(`אין מספיק מלאי, הכמות הוגבלה: ${capped.join(", ")}`);
+    setBundleId("");
+    setBundleVariationId("");
+    setBundleQty(1);
   };
 
   const updateQty = (idx: number, qty: number) => {
@@ -150,6 +211,48 @@ const InventoryWriteOffPage = () => {
                   })}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>פחת מארז</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">בחירת מארז מוסיפה לרשימה את המוצרים שבתוכו, לפי הכמות.</p>
+              <div className="flex flex-wrap gap-3">
+                <Select value={bundleId} onValueChange={(v) => { setBundleId(v); setBundleVariationId(""); }} disabled={!warehouseId}>
+                  <SelectTrigger className="w-56"><SelectValue placeholder="בחר מארז..." /></SelectTrigger>
+                  <SelectContent>
+                    {bundles?.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>{(b.products as any)?.name || "—"}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {isVariableBundle && (
+                  <Select value={bundleVariationId} onValueChange={setBundleVariationId}>
+                    <SelectTrigger className="w-48"><SelectValue placeholder="בחר סוג..." /></SelectTrigger>
+                    <SelectContent>
+                      {bundleVariations?.map((bv) => (
+                        <SelectItem key={bv.id} value={bv.id}>{bv.name_he || bv.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Input
+                  type="number"
+                  min={1}
+                  value={bundleQty}
+                  className="w-20"
+                  onChange={(e) => setBundleQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+                  disabled={!warehouseId}
+                />
+                <Button
+                  variant="outline"
+                  onClick={addBundle}
+                  disabled={!warehouseId || !bundleId || (isVariableBundle && !bundleVariationId)}
+                >
+                  הוסף רכיבי מארז
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

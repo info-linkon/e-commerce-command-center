@@ -1,9 +1,9 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigationType } from "react-router-dom";
 import { WebHeader } from "./WebHeader";
 import { WebFooter } from "./WebFooter";
 import { WebBottomNav } from "./WebBottomNav";
 import { MessageCircle } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useSiteSection } from "@/hooks/useSiteContent";
 import { fbqPageView, setMetaPixelId, buildMatchData, loadIdentity, getExternalId } from "@/lib/meta-pixel";
 import { ttqPageView, ttqIdentify } from "@/lib/tiktok-pixel";
@@ -12,9 +12,48 @@ import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
 import { captureClickIds } from "@/lib/attribution";
 
-function ScrollToTop() {
-  const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+// Scroll position per history entry, so Back (e.g. product → category) returns
+// to where the customer was instead of the top of the page.
+const scrollPositions = new Map<string, number>();
+
+function ScrollManager() {
+  const { pathname, key } = useLocation();
+  const navType = useNavigationType();
+
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+  }, []);
+
+  // Layout effect: the old entry's listener is removed during the commit, before
+  // the browser fires the scroll event caused by the new, shorter page.
+  useLayoutEffect(() => {
+    const save = () => scrollPositions.set(key, window.scrollY);
+    window.addEventListener("scroll", save, { passive: true });
+    return () => window.removeEventListener("scroll", save);
+  }, [key]);
+
+  useEffect(() => {
+    const target = navType === "POP" ? scrollPositions.get(key) : undefined;
+    if (!target) {
+      window.scrollTo(0, 0);
+      return;
+    }
+    // The list may still be rendering (images, async data) — retry until the
+    // page is tall enough to reach the saved position, for up to ~2s.
+    let tries = 0;
+    let frame = 0;
+    const restore = () => {
+      const maxY = document.documentElement.scrollHeight - window.innerHeight;
+      if (maxY >= target || tries++ > 120) {
+        window.scrollTo(0, Math.min(target, maxY));
+        return;
+      }
+      frame = requestAnimationFrame(restore);
+    };
+    restore();
+    return () => cancelAnimationFrame(frame);
+  }, [pathname, key, navType]);
+
   return null;
 }
 
@@ -94,7 +133,7 @@ function WebLayoutInner() {
 
   return (
     <div className="min-h-screen flex flex-col bg-sand" dir="rtl">
-      <ScrollToTop />
+      <ScrollManager />
       <WebHeader />
       <main className="flex-1 pb-14 md:pb-0">
         <Outlet />
