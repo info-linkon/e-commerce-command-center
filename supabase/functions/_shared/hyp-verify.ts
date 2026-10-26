@@ -8,7 +8,6 @@
 //   - docs/hypay.apib §"Returned parameters" — Amount is the amount actually charged (Coin=1 → ILS)
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { runInBackground, sendServerPurchase } from "./server-conversions.ts";
 
 export interface HypCallbackParams {
   Id?: string;
@@ -468,11 +467,6 @@ export async function runHypVerify(
   } catch (emailErr) {
     await logEvent(supabase, resolvedOrderId, "order_email", false, String(emailErr));
   }
-
-  // ── Server-side purchase event (GA4 / Meta CAPI / TikTok Events API) ──
-  // Website orders only; skipped inside for POS payment links and tests.
-  // Runs once per order even though callback + notify both land here.
-  await runInBackground(sendServerPurchase(supabase, resolvedOrderId, { trigger: `hyp_${source}` }));
 
   // ── WooCommerce sync (website orders only) ──
   if (orderData.source === "website") {

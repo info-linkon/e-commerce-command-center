@@ -210,7 +210,8 @@ export default function WebProductPage() {
   const pickupEnabled = shippingSettings.pickup_enabled !== false;
   const shippingPrice = Number((product as any).shipping_price || 0);
   const creditEnabled = paymentSettings.credit?.enabled !== false;
-  const maxInstallments = Math.max(1, Math.floor(Number(paymentSettings.max_installments ?? 3)) || 1);
+  // Matches Tash="3" hardcoded in hyp-create-payment.
+  const maxInstallments = 3;
 
   // Bundle stock check
   const isBundleOutOfStock = (() => {
