@@ -41,18 +41,18 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/category/camp-kitchen-bags</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/category/camp-kitchen-bags" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/category/camp-kitchen-bags" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/category/camp-kitchen-bags" />
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://elwejha.co.il/category/outdoor-seating</loc>
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/category/outdoor-seating" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/category/outdoor-seating" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/category/outdoor-seating" />
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://elwejha.co.il/category/camp-kitchen-bags</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/category/camp-kitchen-bags" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/category/camp-kitchen-bags" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/category/camp-kitchen-bags" />
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -65,18 +65,10 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/category/storage-bags</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/category/storage-bags" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/category/storage-bags" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/category/storage-bags" />
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://elwejha.co.il/category/outdoor-cooking-and-dining</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/category/outdoor-cooking-and-dining" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/category/outdoor-cooking-and-dining" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/category/outdoor-cooking-and-dining" />
+    <loc>https://elwejha.co.il/category/stoves-and-fire-gear</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/category/stoves-and-fire-gear" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/category/stoves-and-fire-gear" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/category/stoves-and-fire-gear" />
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -89,6 +81,14 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://elwejha.co.il/category/storage-bags</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/category/storage-bags" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/category/storage-bags" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/category/storage-bags" />
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://elwejha.co.il/category/outdoor-lighting</loc>
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/category/outdoor-lighting" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/category/outdoor-lighting" />
@@ -97,10 +97,10 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/category/stoves-and-fire-gear</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/category/stoves-and-fire-gear" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/category/stoves-and-fire-gear" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/category/stoves-and-fire-gear" />
+    <loc>https://elwejha.co.il/category/outdoor-cooking-and-dining</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/category/outdoor-cooking-and-dining" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/category/outdoor-cooking-and-dining" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/category/outdoor-cooking-and-dining" />
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -113,20 +113,20 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/5</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/5" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/5" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/5" />
-    <lastmod>2026-05-15</lastmod>
+    <loc>https://elwejha.co.il/product/mifwah</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/mifwah" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/mifwah" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/mifwah" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/6</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/6" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/6" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/6" />
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://elwejha.co.il/product/al-wathba-bag-empty</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-wathba-bag-empty" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-wathba-bag-empty" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-wathba-bag-empty" />
+    <lastmod>2026-11-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -135,61 +135,61 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/kovea-gas-torch-kit" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/kovea-gas-torch-kit" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/kovea-gas-torch-kit" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/14</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/14" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/14" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/14" />
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://elwejha.co.il/product/al-wanasa-double-seat</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-wanasa-double-seat" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-wanasa-double-seat" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-wanasa-double-seat" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/21</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/21" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/21" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/21" />
-    <lastmod>2026-10-03</lastmod>
+    <loc>https://elwejha.co.il/product/al-rawha-bag-red-empty</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-rawha-bag-red-empty" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-rawha-bag-red-empty" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-rawha-bag-red-empty" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/24</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/24" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/24" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/24" />
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://elwejha.co.il/product/charcoal-tongs</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/charcoal-tongs" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/charcoal-tongs" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/charcoal-tongs" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/25</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/25" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/25" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/25" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/hard-plastic-cups</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/hard-plastic-cups" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/hard-plastic-cups" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/hard-plastic-cups" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/27</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/27" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/27" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/27" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/premium-kettle-finjan</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/premium-kettle-finjan" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/premium-kettle-finjan" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/premium-kettle-finjan" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/33</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/33" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/33" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/33" />
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://elwejha.co.il/product/bamboo-fiber-folding-table</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/bamboo-fiber-folding-table" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/bamboo-fiber-folding-table" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/bamboo-fiber-folding-table" />
+    <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -198,34 +198,34 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/bamboo-fiber-tables-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/bamboo-fiber-tables-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/bamboo-fiber-tables-bundle" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/35</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/35" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/35" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/35" />
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://elwejha.co.il/product/aluminum-folding-table</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/aluminum-folding-table" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/aluminum-folding-table" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/aluminum-folding-table" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/36</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/36" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/36" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/36" />
-    <lastmod>2026-05-15</lastmod>
+    <loc>https://elwejha.co.il/product/camping-gas-canister</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/camping-gas-canister" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/camping-gas-canister" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/camping-gas-canister" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/37</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/37" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/37" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/37" />
-    <lastmod>2026-06-25</lastmod>
+    <loc>https://elwejha.co.il/product/teapot-thermal-cover-tarboosh</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/teapot-thermal-cover-tarboosh" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/teapot-thermal-cover-tarboosh" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/teapot-thermal-cover-tarboosh" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -234,16 +234,16 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/fot" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/fot" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/fot" />
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/39</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/39" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/39" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/39" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/arabic-coffee-dallah</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/arabic-coffee-dallah" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/arabic-coffee-dallah" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/arabic-coffee-dallah" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -252,16 +252,16 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/marka-floor-seating-armrest" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/marka-floor-seating-armrest" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/marka-floor-seating-armrest" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/44</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/44" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/44" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/44" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/cups-storage-case</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/cups-storage-case" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/cups-storage-case" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/cups-storage-case" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -270,97 +270,97 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/oroq-alshamal-sleep-bag" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/oroq-alshamal-sleep-bag" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/oroq-alshamal-sleep-bag" />
-    <lastmod>2026-10-03</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/46</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/46" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/46" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/46" />
-    <lastmod>2026-10-17</lastmod>
+    <loc>https://elwejha.co.il/product/fire-pit-stand-markab</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/fire-pit-stand-markab" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/fire-pit-stand-markab" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/fire-pit-stand-markab" />
+    <lastmod>2026-11-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/47</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/47" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/47" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/47" />
-    <lastmod>2026-06-27</lastmod>
+    <loc>https://elwejha.co.il/product/portable-travel-bidet-shattaf</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/portable-travel-bidet-shattaf" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/portable-travel-bidet-shattaf" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/portable-travel-bidet-shattaf" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/49</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/49" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/49" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/49" />
-    <lastmod>2026-04-23</lastmod>
+    <loc>https://elwejha.co.il/product/cups-storage-hard-case</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/cups-storage-hard-case" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/cups-storage-hard-case" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/cups-storage-hard-case" />
+    <lastmod>2026-11-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/51</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/51" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/51" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/51" />
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://elwejha.co.il/product/elwejha-floor-mattress-matrah</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/elwejha-floor-mattress-matrah" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/elwejha-floor-mattress-matrah" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/elwejha-floor-mattress-matrah" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/52</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/52" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/52" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/52" />
-    <lastmod>2026-05-15</lastmod>
+    <loc>https://elwejha.co.il/product/kovea-gas-cartridge-220g</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/kovea-gas-cartridge-220g" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/kovea-gas-cartridge-220g" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/kovea-gas-cartridge-220g" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/53</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/53" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/53" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/53" />
-    <lastmod>2026-05-15</lastmod>
+    <loc>https://elwejha.co.il/product/elwejha-tea-coffee-stickers</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/elwejha-tea-coffee-stickers" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/elwejha-tea-coffee-stickers" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/elwejha-tea-coffee-stickers" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/54</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/54" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/54" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/54" />
-    <lastmod>2026-05-15</lastmod>
+    <loc>https://elwejha.co.il/product/folding-wind-shield-20x30</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/folding-wind-shield-20x30" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/folding-wind-shield-20x30" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/folding-wind-shield-20x30" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/55</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/55" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/55" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/55" />
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://elwejha.co.il/product/dish-drying-rack-with-case</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/dish-drying-rack-with-case" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/dish-drying-rack-with-case" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/dish-drying-rack-with-case" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/56</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/56" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/56" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/56" />
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://elwejha.co.il/product/elwejha-picnic-rug</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/elwejha-picnic-rug" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/elwejha-picnic-rug" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/elwejha-picnic-rug" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/57</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/57" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/57" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/57" />
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://elwejha.co.il/product/glass-teapot</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/glass-teapot" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/glass-teapot" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/glass-teapot" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -369,16 +369,16 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/diwan-tent" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/diwan-tent" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/diwan-tent" />
-    <lastmod>2026-10-03</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/61</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/61" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/61" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/61" />
-    <lastmod>2026-05-15</lastmod>
+    <loc>https://elwejha.co.il/product/omega-camping-lighter</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/omega-camping-lighter" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/omega-camping-lighter" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/omega-camping-lighter" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -387,16 +387,16 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/kovea-cb220-gas-organizer-set" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/kovea-cb220-gas-organizer-set" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/kovea-cb220-gas-organizer-set" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/65</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/65" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/65" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/65" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/abu-taj-lisbon-teapot</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/abu-taj-lisbon-teapot" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/abu-taj-lisbon-teapot" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/abu-taj-lisbon-teapot" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -410,20 +410,20 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/71</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/71" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/71" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/71" />
-    <lastmod>2026-07-07</lastmod>
+    <loc>https://elwejha.co.il/product/ghadar-clay-teapot</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/ghadar-clay-teapot" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/ghadar-clay-teapot" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/ghadar-clay-teapot" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/72</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/72" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/72" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/72" />
-    <lastmod>2026-04-21</lastmod>
+    <loc>https://elwejha.co.il/product/kovea-hiker-stove</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/kovea-hiker-stove" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/kovea-hiker-stove" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/kovea-hiker-stove" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -432,7 +432,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/mabet-tent" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/mabet-tent" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/mabet-tent" />
-    <lastmod>2026-10-11</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -441,43 +441,43 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/manara-light" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/manara-light" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/manara-light" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/75</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/75" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/75" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/75" />
-    <lastmod>2026-05-15</lastmod>
+    <loc>https://elwejha.co.il/product/firelight-gas-stove</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/firelight-gas-stove" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/firelight-gas-stove" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/firelight-gas-stove" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/76</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/76" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/76" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/76" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/copper-teapot</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/copper-teapot" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/copper-teapot" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/copper-teapot" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/77</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/77" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/77" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/77" />
-    <lastmod>2026-05-15</lastmod>
+    <loc>https://elwejha.co.il/product/volcano-gas-burner</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/volcano-gas-burner" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/volcano-gas-burner" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/volcano-gas-burner" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/78</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/78" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/78" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/78" />
-    <lastmod>2026-10-03</lastmod>
+    <loc>https://elwejha.co.il/product/al-rawha-bag-blue-empty</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-rawha-bag-blue-empty" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-rawha-bag-blue-empty" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-rawha-bag-blue-empty" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -486,7 +486,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/79" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/79" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/79" />
-    <lastmod>2026-05-15</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -495,7 +495,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-roha-basic-coffee-tea-set" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-roha-basic-coffee-tea-set" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-roha-basic-coffee-tea-set" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -504,7 +504,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/wadi-araba-camping-set" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/wadi-araba-camping-set" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/wadi-araba-camping-set" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -513,7 +513,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-mabeet-tent-camping-set" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-mabeet-tent-camping-set" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-mabeet-tent-camping-set" />
-    <lastmod>2026-10-03</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -522,7 +522,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-roha-premium-coffee-tea-set" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-roha-premium-coffee-tea-set" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-roha-premium-coffee-tea-set" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -531,16 +531,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-carmel-premium-coffee-tea-blue-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-carmel-premium-coffee-tea-blue-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-carmel-premium-coffee-tea-blue-bundle" />
-    <lastmod>2026-09-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://elwejha.co.il/product/al-carmel-basic-coffee-tea-blue-set</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-carmel-basic-coffee-tea-blue-set" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-carmel-basic-coffee-tea-blue-set" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-carmel-basic-coffee-tea-blue-set" />
-    <lastmod>2026-09-08</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -549,7 +540,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-wanasa-premium-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-wanasa-premium-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-wanasa-premium-bundle" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -558,151 +549,142 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/matrah-al-carmel-blue-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/matrah-al-carmel-blue-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/matrah-al-carmel-blue-bundle" />
-    <lastmod>2026-09-08</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/130</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/130" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/130" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/130" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-stormridge-fixed-blade-c23041-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-stormridge-fixed-blade-c23041-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-stormridge-fixed-blade-c23041-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-stormridge-fixed-blade-c23041-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/131</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/131" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/131" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/131" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-vexron-orange-c24066-3</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-vexron-orange-c24066-3" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-vexron-orange-c24066-3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-vexron-orange-c24066-3" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/132</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/132" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/132" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/132" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-vexron-green-c24066-ds1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-vexron-green-c24066-ds1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-vexron-green-c24066-ds1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-vexron-green-c24066-ds1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/133</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/133" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/133" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/133" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-thug-2-black-c20028c-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-thug-2-black-c20028c-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-thug-2-black-c20028c-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-thug-2-black-c20028c-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/134</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/134" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/134" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/134" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-thug-2-dark-green-c20028c-3</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-thug-2-dark-green-c20028c-3" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-thug-2-dark-green-c20028c-3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-thug-2-dark-green-c20028c-3" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/135</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/135" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/135" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/135" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-sokoke-burlap-micarta-c22007-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-sokoke-burlap-micarta-c22007-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-sokoke-burlap-micarta-c22007-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-sokoke-burlap-micarta-c22007-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/136</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/136" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/136" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/136" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-sokoke-canvas-micarta-c22007-ds2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-sokoke-canvas-micarta-c22007-ds2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-sokoke-canvas-micarta-c22007-ds2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-sokoke-canvas-micarta-c22007-ds2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/137</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/137" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/137" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/137" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-brazen-flipper-natural-jade-c2023e</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-brazen-flipper-natural-jade-c2023e" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-brazen-flipper-natural-jade-c2023e" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-brazen-flipper-natural-jade-c2023e" />
+    <lastmod>2026-11-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/138</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/138" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/138" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/138" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-sendy-guibourtia-wood-c21004a-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-sendy-guibourtia-wood-c21004a-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-sendy-guibourtia-wood-c21004a-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-sendy-guibourtia-wood-c21004a-2" />
+    <lastmod>2026-11-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/139</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/139" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/139" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/139" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-sendy-green-g10-c21004b-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-sendy-green-g10-c21004b-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-sendy-green-g10-c21004b-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-sendy-green-g10-c21004b-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/140</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/140" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/140" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/140" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-timberbark-green-c23094-3</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-timberbark-green-c23094-3" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-timberbark-green-c23094-3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-timberbark-green-c23094-3" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/141</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/141" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/141" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/141" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-timberbark-orange-c23094-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-timberbark-orange-c23094-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-timberbark-orange-c23094-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-timberbark-orange-c23094-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/142</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/142" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/142" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/142" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-gander-wood-c24058b-3</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-gander-wood-c24058b-3" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-gander-wood-c24058b-3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-gander-wood-c24058b-3" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/143</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/143" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/143" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/143" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-baby-banter-fixed-blade-c23045-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-baby-banter-fixed-blade-c23045-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-baby-banter-fixed-blade-c23045-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-baby-banter-fixed-blade-c23045-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/144</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/144" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/144" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/144" />
-    <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://elwejha.co.il/product/145</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/145" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/145" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/145" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-baby-banter-2-tg-c24074-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-baby-banter-2-tg-c24074-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-baby-banter-2-tg-c24074-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-baby-banter-2-tg-c24074-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -711,34 +693,25 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-baby-banter-damascus-carbon-fiber-c19068s-ds1" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-baby-banter-damascus-carbon-fiber-c19068s-ds1" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-baby-banter-damascus-carbon-fiber-c19068s-ds1" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/civivi-baby-banter-guibourtia-wood-c19068sb-2</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-baby-banter-guibourtia-wood-c19068sb-2" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-baby-banter-guibourtia-wood-c19068sb-2" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-baby-banter-guibourtia-wood-c19068sb-2" />
-    <lastmod>2026-09-06</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-baby-banter-wharncliffe-c19068sc-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-baby-banter-wharncliffe-c19068sc-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-baby-banter-wharncliffe-c19068sc-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-baby-banter-wharncliffe-c19068sc-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/148</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/148" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/148" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/148" />
-    <lastmod>2026-09-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://elwejha.co.il/product/149</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/149" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/149" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/149" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-baby-banter-ivory-c19068s-7</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-baby-banter-ivory-c19068s-7" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-baby-banter-ivory-c19068s-7" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-baby-banter-ivory-c19068s-7" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -756,7 +729,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-baby-banter-powder-pink-c19068s-10" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-baby-banter-powder-pink-c19068s-10" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-baby-banter-powder-pink-c19068s-10" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -765,7 +738,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-elementum-2-od-green-c18062p-3" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-elementum-2-od-green-c18062p-3" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-elementum-2-od-green-c18062p-3" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -779,29 +752,20 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/156</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/156" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/156" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/156" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-mini-praxis-green-c18026c-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-mini-praxis-green-c18026c-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-mini-praxis-green-c18026c-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-mini-praxis-green-c18026c-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/157</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/157" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/157" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/157" />
-    <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://elwejha.co.il/product/159</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/159" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/159" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/159" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/abu-taj-lamigo-teapot-2l</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/abu-taj-lamigo-teapot-2l" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/abu-taj-lamigo-teapot-2l" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/abu-taj-lamigo-teapot-2l" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -815,11 +779,11 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/176</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/176" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/176" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/176" />
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://elwejha.co.il/product/al-zad-bag</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-zad-bag" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-zad-bag" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-zad-bag" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -828,16 +792,16 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-sahel-coffee-tea-set" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-sahel-coffee-tea-set" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-sahel-coffee-tea-set" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/179</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/179" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/179" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/179" />
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://elwejha.co.il/product/al-ariaf-cooler-bag</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-ariaf-cooler-bag" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-ariaf-cooler-bag" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-ariaf-cooler-bag" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -846,7 +810,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/sinai-4m-tent" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/sinai-4m-tent" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/sinai-4m-tent" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -855,106 +819,106 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/ref" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/ref" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/ref" />
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/182</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/182" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/182" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/182" />
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://elwejha.co.il/product/aluminum-folding-table-wood</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/aluminum-folding-table-wood" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/aluminum-folding-table-wood" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/aluminum-folding-table-wood" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/183</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/183" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/183" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/183" />
-    <lastmod>2026-08-15</lastmod>
+    <loc>https://elwejha.co.il/product/premium-measuring-spoon</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/premium-measuring-spoon" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/premium-measuring-spoon" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/premium-measuring-spoon" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/186</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/186" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/186" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/186" />
-    <lastmod>2026-06-16</lastmod>
+    <loc>https://elwejha.co.il/product/stainless-measuring-spoon</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/stainless-measuring-spoon" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/stainless-measuring-spoon" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/stainless-measuring-spoon" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/187</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/187" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/187" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/187" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/abu-taj-lamigo-teapot-0-5l</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/abu-taj-lamigo-teapot-0-5l" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/abu-taj-lamigo-teapot-0-5l" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/abu-taj-lamigo-teapot-0-5l" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/188</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/188" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/188" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/188" />
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://elwejha.co.il/product/al-wanasa-single-chair</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-wanasa-single-chair" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-wanasa-single-chair" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-wanasa-single-chair" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/189</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/189" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/189" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/189" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/camping-trash-bin</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/camping-trash-bin" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/camping-trash-bin" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/camping-trash-bin" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/190</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/190" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/190" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/190" />
-    <lastmod>2026-07-01</lastmod>
+    <loc>https://elwejha.co.il/product/cutlery-set</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/cutlery-set" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/cutlery-set" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/cutlery-set" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/191</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/191" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/191" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/191" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/elwejha-cooking-pot-set</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/elwejha-cooking-pot-set" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/elwejha-cooking-pot-set" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/elwejha-cooking-pot-set" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/192</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/192" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/192" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/192" />
-    <lastmod>2026-04-24</lastmod>
+    <loc>https://elwejha.co.il/product/folding-wind-shield-30x10</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/folding-wind-shield-30x10" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/folding-wind-shield-30x10" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/folding-wind-shield-30x10" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/193</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/193" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/193" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/193" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/ghadar-clay-teapot-1-1l</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/ghadar-clay-teapot-1-1l" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/ghadar-clay-teapot-1-1l" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/ghadar-clay-teapot-1-1l" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/194</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/194" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/194" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/194" />
-    <lastmod>2026-07-10</lastmod>
+    <loc>https://elwejha.co.il/product/stainless-plates-set-14-with-bag</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/stainless-plates-set-14-with-bag" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/stainless-plates-set-14-with-bag" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/stainless-plates-set-14-with-bag" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -963,34 +927,34 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/wadi-rum-tent" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/wadi-rum-tent" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/wadi-rum-tent" />
-    <lastmod>2026-09-22</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/199</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/199" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/199" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/199" />
-    <lastmod>2026-06-01</lastmod>
+    <loc>https://elwejha.co.il/product/al-ariaf-towel</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-ariaf-towel" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-ariaf-towel" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-ariaf-towel" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/200</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/200" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/200" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/200" />
-    <lastmod>2026-09-29</lastmod>
+    <loc>https://elwejha.co.il/product/al-ariaf-bag-green-empty</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-ariaf-bag-green-empty" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-ariaf-bag-green-empty" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-ariaf-bag-green-empty" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/201</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/201" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/201" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/201" />
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://elwejha.co.il/product/al-ariaf-bag-orange-empty</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-ariaf-bag-orange-empty" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-ariaf-bag-orange-empty" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-ariaf-bag-orange-empty" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -999,7 +963,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-ariaf-coffee-tea-green-set" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-ariaf-coffee-tea-green-set" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-ariaf-coffee-tea-green-set" />
-    <lastmod>2026-09-29</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1008,7 +972,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-ariaf-coffee-tea-orange-set" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-ariaf-coffee-tea-orange-set" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-ariaf-coffee-tea-orange-set" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1017,7 +981,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/jalsat-al-rif-camping-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/jalsat-al-rif-camping-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/jalsat-al-rif-camping-bundle" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1026,7 +990,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/zad-camping-kitchen-set" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/zad-camping-kitchen-set" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/zad-camping-kitchen-set" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1035,7 +999,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/matrah-al-ariaf-camping-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/matrah-al-ariaf-camping-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/matrah-al-ariaf-camping-bundle" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1044,7 +1008,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-wanasa-premium-yellow-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-wanasa-premium-yellow-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-wanasa-premium-yellow-bundle" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1053,7 +1017,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-wanasa-premium-purple-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-wanasa-premium-purple-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-wanasa-premium-purple-bundle" />
-    <lastmod>2026-09-14</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1062,7 +1026,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/ezbat-al-sahel-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/ezbat-al-sahel-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/ezbat-al-sahel-bundle" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1071,7 +1035,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/ezbat-al-rif-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/ezbat-al-rif-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/ezbat-al-rif-bundle" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1080,7 +1044,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/matrah-al-sahel-camping-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/matrah-al-sahel-camping-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/matrah-al-sahel-camping-bundle" />
-    <lastmod>2026-09-07</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1089,7 +1053,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/jalsat-al-ariaf-camping-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/jalsat-al-ariaf-camping-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/jalsat-al-ariaf-camping-bundle" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1098,214 +1062,178 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/al-sahel-camping-bundle" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/al-sahel-camping-bundle" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/al-sahel-camping-bundle" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/235</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/235" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/235" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/235" />
-    <lastmod>2026-08-30</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-mini-praxis-black-c18026c-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-mini-praxis-black-c18026c-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-mini-praxis-black-c18026c-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-mini-praxis-black-c18026c-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/236</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/236" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/236" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/236" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-mini-praxis-ultem-polished-c18026c-4</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-mini-praxis-ultem-polished-c18026c-4" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-mini-praxis-ultem-polished-c18026c-4" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-mini-praxis-ultem-polished-c18026c-4" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/237</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/237" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/237" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/237" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-mini-praxis-ultem-bead-blasted-c18026c-5</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-mini-praxis-ultem-bead-blasted-c18026c-5" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-mini-praxis-ultem-bead-blasted-c18026c-5" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-mini-praxis-ultem-bead-blasted-c18026c-5" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/238</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/238" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/238" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/238" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-mini-elementum-brass-c18062q-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-mini-elementum-brass-c18062q-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-mini-elementum-brass-c18062q-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-mini-elementum-brass-c18062q-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/239</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/239" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/239" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/239" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-mini-elementum-copper-c18062q-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-mini-elementum-copper-c18062q-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-mini-elementum-copper-c18062q-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-mini-elementum-copper-c18062q-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/240</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/240" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/240" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/240" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-brazen-flipper-gray-c2023f</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-brazen-flipper-gray-c2023f" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-brazen-flipper-gray-c2023f" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-brazen-flipper-gray-c2023f" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/241</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/241" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/241" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/241" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-brazen-flipper-purple-c2102a</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-brazen-flipper-purple-c2102a" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-brazen-flipper-purple-c2102a" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-brazen-flipper-purple-c2102a" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/242</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/242" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/242" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/242" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-brazen-flipper-burgundy-c2023b</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-brazen-flipper-burgundy-c2023b" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-brazen-flipper-burgundy-c2023b" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-brazen-flipper-burgundy-c2023b" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/243</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/243" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/243" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/243" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-propugnator-black-c23002-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-propugnator-black-c23002-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-propugnator-black-c23002-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-propugnator-black-c23002-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/244</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/244" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/244" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/244" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-propugnator-green-c23002-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-propugnator-green-c23002-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-propugnator-green-c23002-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-propugnator-green-c23002-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/245</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/245" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/245" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/245" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-hid-green-c23008-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-hid-green-c23008-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-hid-green-c23008-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-hid-green-c23008-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/246</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/246" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/246" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/246" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-hid-gray-c23008-3</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-hid-gray-c23008-3" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-hid-gray-c23008-3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-hid-gray-c23008-3" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/247</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/247" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/247" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/247" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-hid-orange-c23008-4</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-hid-orange-c23008-4" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-hid-orange-c23008-4" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-hid-orange-c23008-4" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/248</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/248" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/248" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/248" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-elementum-utility-blue-c23039b-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-elementum-utility-blue-c23039b-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-elementum-utility-blue-c23039b-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-elementum-utility-blue-c23039b-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/249</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/249" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/249" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/249" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-cloud-peak-fixed-blade-c23044-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-cloud-peak-fixed-blade-c23044-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-cloud-peak-fixed-blade-c23044-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-cloud-peak-fixed-blade-c23044-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/250</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/250" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/250" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/250" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-clingman-burgundy-c23065-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-clingman-burgundy-c23065-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-clingman-burgundy-c23065-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-clingman-burgundy-c23065-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/251</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/251" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/251" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/251" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-neurohaptic-od-green-c23080-3</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-neurohaptic-od-green-c23080-3" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-neurohaptic-od-green-c23080-3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-neurohaptic-od-green-c23080-3" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/252</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/252" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/252" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/252" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-timberbark-guibourtia-wood-c23094-4</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-timberbark-guibourtia-wood-c23094-4" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-timberbark-guibourtia-wood-c23094-4" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-timberbark-guibourtia-wood-c23094-4" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/253</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/253" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/253" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/253" />
-    <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://elwejha.co.il/product/254</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/254" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/254" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/254" />
-    <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://elwejha.co.il/product/255</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/255" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/255" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/255" />
-    <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://elwejha.co.il/product/256</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/256" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/256" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/256" />
-    <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://elwejha.co.il/product/257</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/257" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/257" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/257" />
-    <lastmod>2026-08-26</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-gander-black-canvas-micarta-c24058b-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-gander-black-canvas-micarta-c24058b-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-gander-black-canvas-micarta-c24058b-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-gander-black-canvas-micarta-c24058b-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1314,7 +1242,7 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-gander-orange-c24058b-1" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-gander-orange-c24058b-1" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-gander-orange-c24058b-1" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1323,97 +1251,97 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/string-lights" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/string-lights" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/string-lights" />
-    <lastmod>2026-09-07</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/260</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/260" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/260" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/260" />
-    <lastmod>2026-08-29</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-jencks-black-c24051-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-jencks-black-c24051-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-jencks-black-c24051-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-jencks-black-c24051-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/261</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/261" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/261" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/261" />
-    <lastmod>2026-08-29</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-jencks-od-green-c24051-2</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-jencks-od-green-c24051-2" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-jencks-od-green-c24051-2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-jencks-od-green-c24051-2" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/263</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/263" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/263" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/263" />
-    <lastmod>2026-08-29</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-praxis-od-green-c803f</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-praxis-od-green-c803f" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-praxis-od-green-c803f" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-praxis-od-green-c803f" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/264</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/264" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/264" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/264" />
-    <lastmod>2026-08-29</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-praxis-black-c803g</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-praxis-black-c803g" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-praxis-black-c803g" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-praxis-black-c803g" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/265</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/265" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/265" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/265" />
-    <lastmod>2026-08-29</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-praxis-guibourtia-wood-c803h</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-praxis-guibourtia-wood-c803h" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-praxis-guibourtia-wood-c803h" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-praxis-guibourtia-wood-c803h" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/266</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/266" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/266" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/266" />
-    <lastmod>2026-08-29</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-praxis-carbon-fiber-c803j</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-praxis-carbon-fiber-c803j" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-praxis-carbon-fiber-c803j" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-praxis-carbon-fiber-c803j" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/267</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/267" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/267" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/267" />
-    <lastmod>2026-08-29</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-praxis-polished-ultem-c803l</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-praxis-polished-ultem-c803l" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-praxis-polished-ultem-c803l" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-praxis-polished-ultem-c803l" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/268</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/268" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/268" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/268" />
-    <lastmod>2026-08-29</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-praxis-ultem-bead-blasted-c803m</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-praxis-ultem-bead-blasted-c803m" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-praxis-ultem-bead-blasted-c803m" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-praxis-ultem-bead-blasted-c803m" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/269</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/269" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/269" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/269" />
-    <lastmod>2026-08-29</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-elementum-burgundy-c907a-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-elementum-burgundy-c907a-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-elementum-burgundy-c907a-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-elementum-burgundy-c907a-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/270</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/270" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/270" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/270" />
-    <lastmod>2026-08-29</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-elementum-orange-c907y</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-elementum-orange-c907y" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-elementum-orange-c907y" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-elementum-orange-c907y" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1422,34 +1350,34 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-elite-brova-ce25093-2" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-elite-brova-ce25093-2" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-elite-brova-ce25093-2" />
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/272</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/272" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/272" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/272" />
-    <lastmod>2026-08-30</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-glenspar-s25046-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-glenspar-s25046-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-glenspar-s25046-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-glenspar-s25046-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/273</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/273" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/273" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/273" />
-    <lastmod>2026-08-30</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-tauron-black-s25060-1</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-tauron-black-s25060-1" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-tauron-black-s25060-1" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-tauron-black-s25060-1" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/274</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/274" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/274" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/274" />
-    <lastmod>2026-08-30</lastmod>
+    <loc>https://elwejha.co.il/product/civivi-tauron-olive-s25060-3</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/civivi-tauron-olive-s25060-3" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/civivi-tauron-olive-s25060-3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/civivi-tauron-olive-s25060-3" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1467,16 +1395,16 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/httpselwejhacoilproduct-qubit-red" />
     <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/httpselwejhacoilproduct-qubit-red" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/httpselwejhacoilproduct-qubit-red" />
-    <lastmod>2026-09-15</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://elwejha.co.il/product/277</loc>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/277" />
-    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/277" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/277" />
-    <lastmod>2026-10-04</lastmod>
+    <loc>https://elwejha.co.il/product/elwejha-dtf-color-stickers</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://elwejha.co.il/product/elwejha-dtf-color-stickers" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://elwejha.co.il/he/product/elwejha-dtf-color-stickers" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://elwejha.co.il/product/elwejha-dtf-color-stickers" />
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

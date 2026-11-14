@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     // Get order
     const { data: order, error: orderErr } = await supabase
       .from("orders")
-      .select("id, order_number, status, total, digital_payment_amount, created_at, customer_name, customer_phone, shipping_address, shipping_city, payment_method, discount_amount, shipping_cost, notes, source, hyp_transaction_id, payment_link_url, access_token")
+      .select("id, order_number, status, total, digital_payment_amount, created_at, customer_name, customer_phone, shipping_address, shipping_city, payment_method, discount_amount, shipping_cost, notes, source, hyp_transaction_id, payment_link_url, access_token, lang")
       .eq("order_number", num)
       .single();
 
@@ -111,8 +111,13 @@ Deno.serve(async (req) => {
     // Enrich items with names
     const items: any[] = [];
     for (const item of rawItems || []) {
-      let name = "";
-      let variationName = "";
+      // `products.name` / `product_variations.name` hold Hebrew, `name_ar` holds
+      // Arabic. For bundle variations `name` is Arabic and `name_he` Hebrew.
+      // Return both so the page can show names in the viewer's language.
+      let nameAr = "";
+      let nameHe = "";
+      let variationNameAr = "";
+      let variationNameHe = "";
       let imageUrl = "";
       let compareAt: number | null = null;
 
@@ -124,7 +129,8 @@ Deno.serve(async (req) => {
           .single();
 
         if (variation) {
-          variationName = variation.name_ar || variation.name;
+          variationNameAr = variation.name_ar || variation.name || "";
+          variationNameHe = variation.name || variation.name_ar || "";
           // capture sku for downstream pixel use
           (item as any)._sku = variation.sku || null;
           compareAt = variation.compare_at_price != null ? Number(variation.compare_at_price) : null;
@@ -134,7 +140,8 @@ Deno.serve(async (req) => {
             .eq("id", variation.product_id)
             .single();
           if (product) {
-            name = product.name_ar || product.name;
+            nameAr = product.name_ar || product.name || "";
+            nameHe = product.name || product.name_ar || "";
             imageUrl = variation.image_url || product.image_url || "";
             if (!(item as any)._sku) (item as any)._sku = product.sku || null;
             if (!compareAt && product.compare_at_price != null) compareAt = Number(product.compare_at_price);
@@ -149,7 +156,8 @@ Deno.serve(async (req) => {
           .eq("id", item.bundle_variation_id)
           .single();
         if (bv) {
-          variationName = bv.name;
+          variationNameAr = bv.name || bv.name_he || "";
+          variationNameHe = bv.name_he || bv.name || "";
           (item as any)._sku = bv.sku || null;
           if (bv.compare_at_price != null) compareAt = Number(bv.compare_at_price);
         }
@@ -160,9 +168,15 @@ Deno.serve(async (req) => {
       const unit = Number(item.unit_price || 0);
       const compareAtPrice = compareAt && compareAt > unit ? compareAt : null;
 
+      const isHe = (order as any).lang === "he";
       items.push({
-        name,
-        variationName,
+        // Default to the order's language; the page overrides by viewer language.
+        name: isHe ? nameHe : nameAr,
+        variationName: isHe ? variationNameHe : variationNameAr,
+        nameAr,
+        nameHe,
+        variationNameAr,
+        variationNameHe,
         imageUrl,
         sku: (item as any)._sku || null,
         quantity: item.quantity,

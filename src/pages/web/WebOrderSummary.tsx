@@ -145,7 +145,16 @@ export default function WebOrderSummary() {
     );
   }
 
-  const { order, items } = data;
+  const { order } = data;
+  // Show product names in the language the page is viewed in (the edge
+  // function returns both Hebrew and Arabic names; older responses only `name`).
+  const items = (data.items || []).map((it: any) => ({
+    ...it,
+    name: (lang === "he" ? it.nameHe || it.nameAr : it.nameAr || it.nameHe) || it.name,
+    variationName:
+      (lang === "he" ? it.variationNameHe || it.variationNameAr : it.variationNameAr || it.variationNameHe) ||
+      it.variationName,
+  }));
   const statusInfo = statusConfig[order.status] || statusConfig.pending;
   const StatusIcon = statusInfo.icon;
   const createdDate = new Date(order.created_at);

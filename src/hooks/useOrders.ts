@@ -115,6 +115,8 @@ export function useCreateOrder() {
       customer_name?: string;
       customer_phone?: string;
       customer_email?: string;
+      /** Customer's language for SMS / order page: "ar" (default) or "he". */
+      lang?: "ar" | "he";
       notes?: string;
       total: number;
       status?: OrderStatus;
