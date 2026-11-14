@@ -97,7 +97,8 @@ Deno.serve(async (req) => {
       // page can be opened from the SMS link without an extra verification step,
       // while still preventing strangers from enumerating order numbers.
       const tokenParam = (order as any).access_token ? `?t=${(order as any).access_token}` : "";
-      const orderLink = `https://elwejha.co.il/order/${order.order_number}${tokenParam}`;
+      const langPrefix = orderLang === "he" ? "/he" : "";
+      const orderLink = `https://elwejha.co.il${langPrefix}/order/${order.order_number}${tokenParam}`;
 
       // Build absolute invoice URL (handles both relative legacy paths and full URLs)
       const rawInvoice = (order as any).invoice_url || "";

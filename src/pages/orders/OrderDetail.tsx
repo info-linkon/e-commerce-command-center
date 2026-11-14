@@ -465,7 +465,8 @@ const OrderDetail = () => {
           onClick={() => {
             const token = (order as any).access_token;
             const tokenQs = token ? `?t=${token}` : "";
-            window.open(`/order/${order.order_number}${tokenQs}`, "_blank");
+            const langPrefix = (order as any).lang === "he" ? "/he" : "";
+            window.open(`${langPrefix}/order/${order.order_number}${tokenQs}`, "_blank");
           }}
         >
           <ExternalLink className="h-4 w-4 ml-1" />

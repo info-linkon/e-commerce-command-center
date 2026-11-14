@@ -60,6 +60,8 @@ const PosPage = () => {
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  // Customer's language — picks the SMS template / order page language.
+  const [customerLang, setCustomerLang] = useState<"ar" | "he">("ar");
   const [shippingCity, setShippingCity] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
@@ -357,6 +359,7 @@ const PosPage = () => {
       const newOrder = await createOrder.mutateAsync({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
+        lang: customerLang,
         shipping_city:
           shippingCity.trim() ||
           (deliveryMethod === "pickup" ? "איסוף עצמי" : undefined),
@@ -435,6 +438,7 @@ const PosPage = () => {
       setShowCreateOrder(false);
       setCustomerName("");
       setCustomerPhone("");
+      setCustomerLang("ar");
       setShippingCity("");
       setShippingAddress("");
       setOrderNotes("");
@@ -759,6 +763,17 @@ const PosPage = () => {
             <div>
               <Label>טלפון *</Label>
               <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} type="tel" dir="ltr" className="text-left" />
+            </div>
+            <div>
+              <Label>שפת הלקוח (להודעות SMS)</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <Button type="button" size="sm" variant={customerLang === "ar" ? "default" : "outline"} onClick={() => setCustomerLang("ar")}>
+                  ערבית
+                </Button>
+                <Button type="button" size="sm" variant={customerLang === "he" ? "default" : "outline"} onClick={() => setCustomerLang("he")}>
+                  עברית
+                </Button>
+              </div>
             </div>
             <div>
               <Label>הערות להזמנה</Label>

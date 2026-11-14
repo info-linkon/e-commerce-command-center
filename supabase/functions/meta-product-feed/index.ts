@@ -17,10 +17,16 @@ Deno.serve(async (req) => {
   // Get site URL from query param or default
   const url = new URL(req.url);
   const siteUrl = url.searchParams.get("site_url") || "https://elwejha.co.il";
+  // ?lang=he serves the Hebrew catalog (Hebrew titles/descriptions, /he/ links).
+  // Default is Arabic. Products: `name` = Hebrew, `name_ar` = Arabic.
+  // Bundle variations: `name` = Arabic, `name_he` = Hebrew.
+  const isHe = url.searchParams.get("lang") === "he";
+  const pick = (he: string | null | undefined, ar: string | null | undefined) =>
+    (isHe ? he || ar : ar || he) || "";
 
   const { data: products, error } = await supabase
     .from("products")
-    .select("id, product_number, name, name_ar, description, description_ar, short_description, short_description_ar, sale_price, compare_at_price, image_url, sku, is_published, category_id, categories!products_category_id_fkey(name), shipping_price")
+    .select("id, product_number, name, name_ar, description, description_ar, short_description, short_description_ar, sale_price, compare_at_price, image_url, sku, is_published, category_id, categories!products_category_id_fkey(name, name_he), shipping_price")
     .eq("is_published", true);
 
   if (error) {
@@ -102,12 +108,14 @@ Deno.serve(async (req) => {
   const items: string[] = [];
 
   for (const p of (products || []) as any[]) {
-    const baseTitle = p.name_ar || p.name;
-    const desc = p.short_description_ar || p.short_description || p.description_ar || p.description || baseTitle;
+    const baseTitle = pick(p.name, p.name_ar);
+    const desc = isHe
+      ? p.short_description || p.description || p.short_description_ar || p.description_ar || baseTitle
+      : p.short_description_ar || p.short_description || p.description_ar || p.description || baseTitle;
     const cleanDesc = desc.replace(/<[^>]*>/g, "").substring(0, 5000);
-    const category = p.categories?.name || "General";
+    const category = (isHe ? p.categories?.name_he || p.categories?.name : p.categories?.name) || "General";
     const imageUrl = p.image_url || "";
-    const link = `${siteUrl}/product/${p.product_number}`;
+    const link = `${siteUrl}${isHe ? "/he" : ""}/product/${p.product_number}`;
     // Group all variations under the parent product's SKU so Meta Catalog
     // groups them as one product. Fall back to product_number for legacy
     // products that don't have a SKU yet.
@@ -160,7 +168,7 @@ Deno.serve(async (req) => {
         for (const bv of bvs) {
           const components = componentsByBundleVar.get(bv.id) || [];
           const stock = computeBundleStock(components);
-          const variantTitle = `${baseTitle} - ${bv.name_he || bv.name}`;
+          const variantTitle = `${baseTitle} - ${pick(bv.name_he, bv.name)}`;
           items.push(renderItem({
             // g:id MUST match the SKU sent by the pixel in AddToCart /
             // InitiateCheckout / Purchase. Pixel sends `bv.sku || p.sku`,
@@ -197,7 +205,7 @@ Deno.serve(async (req) => {
     if (productVars.length > 1 || realVars.length >= 1 && productVars.length > 1) {
       for (const v of productVars) {
         const stock = varStock.get(v.id) || 0;
-        const vName = v.name_ar || v.name;
+        const vName = pick(v.name, v.name_ar);
         const isDefault = (v.name || "").toLowerCase() === "default";
         const title = isDefault ? baseTitle : `${baseTitle} - ${vName}`;
         items.push(renderItem({
@@ -233,8 +241,8 @@ Deno.serve(async (req) => {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
-    <title>ELWEJHA Product Feed</title>
-    <link>${siteUrl}</link>
+    <title>ELWEJHA Product Feed${isHe ? " (HE)" : ""}</title>
+    <link>${siteUrl}${isHe ? "/he" : ""}</link>
     <description>Product feed for Meta catalog</description>
 ${items.join("\n")}
   </channel>
