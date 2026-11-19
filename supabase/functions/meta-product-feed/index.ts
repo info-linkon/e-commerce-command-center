@@ -146,6 +146,7 @@ Deno.serve(async (req) => {
       const availability = opts.stock > 0 ? "in stock" : "out of stock";
       return `    <item>
       <g:id>${escapeXml(opts.id)}</g:id>
+      ${isHe ? "<g:override>he_IL</g:override>" : ""}
       <g:title><![CDATA[${opts.title}]]></g:title>
       <g:description><![CDATA[${cleanDesc}]]></g:description>
       <g:link>${link}</g:link>
