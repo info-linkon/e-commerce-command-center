@@ -806,7 +806,7 @@ const OrderDetail = () => {
 
       {/* Delivery Assignment */}
       {isAssigned && !isCancelled && !isPickup && (
-        <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} />
+        <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} order={order} />
       )}
 
       {/* Self-pickup notice (replaces delivery assignment) */}

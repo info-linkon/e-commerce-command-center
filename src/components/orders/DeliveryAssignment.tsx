@@ -1,11 +1,23 @@
-import { useState } from "react";
-import { Truck, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Truck, CheckCircle2, RefreshCw, AlertTriangle, Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { useOrderDelivery, useCreateDelivery, useUpdateDeliveryStatus } from "@/hooks/useDeliveries";
+import { Label } from "@/components/ui/label";
+import {
+  useOrderDelivery,
+  useCreateDelivery,
+  useUpdateDeliveryStatus,
+  useOliveryAreas,
+  useOliverySubAreas,
+  useCreateOliveryDelivery,
+  useSendDeliveryToOlivery,
+  useSyncOliveryDelivery,
+  oliveryStatusLabels,
+  printLabelsForDeliveries,
+} from "@/hooks/useDeliveries";
 import { useDeliveryCompanies } from "@/hooks/useDeliveryCompanies";
 
 const statusLabels: Record<string, string> = {
@@ -23,23 +35,137 @@ const statusColors: Record<string, string> = {
 interface DeliveryAssignmentProps {
   orderId: string;
   pickingCompleted: boolean;
+  order?: {
+    total?: number | null;
+    digital_payment_amount?: number | null;
+    shipping_address?: string | null;
+    shipping_city?: string | null;
+  };
 }
 
-const DeliveryAssignment = ({ orderId, pickingCompleted }: DeliveryAssignmentProps) => {
+const norm = (s?: string | null) => (s || "").replace(/[\s\u0640]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").toLowerCase();
+
+/** Area + sub-area + COD fields for Olivery shipments. */
+const OliveryFields = ({
+  area, setArea, subArea, setSubArea, cod, setCod, address, setAddress, city,
+}: {
+  area: string; setArea: (v: string) => void;
+  subArea: string; setSubArea: (v: string) => void;
+  cod: string; setCod: (v: string) => void;
+  address: string; setAddress: (v: string) => void;
+  city?: string | null;
+}) => {
+  const { data: areas, isLoading: areasLoading, error: areasError } = useOliveryAreas();
+  const { data: subAreas } = useOliverySubAreas();
+
+  const selectedArea = areas?.find((a) => a.name === area);
+  const areaSubs = useMemo(
+    () => (subAreas || []).filter((s) => selectedArea && s.area_id === selectedArea.id),
+    [subAreas, selectedArea],
+  );
+
+  // Try to pre-select area / sub-area from the order's city
+  useEffect(() => {
+    if (area || !city || !areas?.length) return;
+    const c = norm(city);
+    const sub = subAreas?.find((s) => norm(s.name) === c);
+    if (sub) {
+      setArea(sub.area_name);
+      setSubArea(sub.name);
+      return;
+    }
+    const a = areas.find((x) => norm(x.name) === c);
+    if (a) setArea(a.name);
+  }, [city, areas, subAreas, area, setArea, setSubArea]);
+
+  if (areasError) {
+    return (
+      <div className="text-sm text-destructive flex items-center gap-1">
+        <AlertTriangle className="h-4 w-4" /> שגיאה בטעינת אזורי Olivery: {(areasError as Error).message}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 rounded-md border p-3 bg-muted/30">
+      <div className="space-y-1">
+        <Label className="text-xs">אזור (Olivery) *</Label>
+        <Select value={area} onValueChange={(v) => { setArea(v); setSubArea(""); }}>
+          <SelectTrigger><SelectValue placeholder={areasLoading ? "טוען אזורים..." : "בחר אזור..."} /></SelectTrigger>
+          <SelectContent>
+            {areas?.map((a) => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      {areaSubs.length > 0 && (
+        <div className="space-y-1">
+          <Label className="text-xs">תת-אזור</Label>
+          <Select value={subArea} onValueChange={setSubArea}>
+            <SelectTrigger><SelectValue placeholder="בחר תת-אזור..." /></SelectTrigger>
+            <SelectContent>
+              {areaSubs.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div className="space-y-1">
+        <Label className="text-xs">כתובת למשלוח</Label>
+        <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">סכום לגבייה מהלקוח (₪)</Label>
+        <Input type="number" min={0} step="0.01" value={cod} onChange={(e) => setCod(e.target.value)} />
+      </div>
+    </div>
+  );
+};
+
+const DeliveryAssignment = ({ orderId, pickingCompleted, order }: DeliveryAssignmentProps) => {
   const { data: delivery, isLoading } = useOrderDelivery(orderId);
   const { data: companies } = useDeliveryCompanies(true);
   const createDelivery = useCreateDelivery();
   const updateStatus = useUpdateDeliveryStatus();
+  const createOlivery = useCreateOliveryDelivery();
+  const sendToOlivery = useSendDeliveryToOlivery();
+  const syncOlivery = useSyncOliveryDelivery();
+
+  const defaultCod = Math.max(0, Number(order?.total || 0) - Number(order?.digital_payment_amount || 0));
+  const defaultAddress = [order?.shipping_address, order?.shipping_city].filter(Boolean).join(", ");
 
   const [companyId, setCompanyId] = useState("");
   const [notes, setNotes] = useState("");
+  const [area, setArea] = useState("");
+  const [subArea, setSubArea] = useState("");
+  const [cod, setCod] = useState(String(defaultCod));
+  const [address, setAddress] = useState(defaultAddress);
+  const [showRetry, setShowRetry] = useState(false);
+
+  useEffect(() => { setCod(String(defaultCod)); }, [defaultCod]);
+  useEffect(() => { setAddress(defaultAddress); }, [defaultAddress]);
+
+  const selectedCompany = companies?.find((c) => c.id === companyId);
+  const isOliveryCompany = selectedCompany?.provider === "olivery";
 
   if (isLoading) return null;
 
   const handleCreate = () => {
     if (!companyId) return;
+    if (isOliveryCompany) {
+      if (!area) return;
+      createOlivery.mutate({
+        order_id: orderId,
+        delivery_company_id: companyId,
+        notes: notes || undefined,
+        area,
+        sub_area: subArea || undefined,
+        cod_amount: Number(cod) || 0,
+        address: address || undefined,
+      });
+      return;
+    }
     createDelivery.mutate({ order_id: orderId, delivery_company_id: companyId, notes: notes || undefined });
   };
+  const creating = createDelivery.isPending || createOlivery.isPending;
 
   // Delivery already exists
   if (delivery) {
@@ -57,6 +183,10 @@ const DeliveryAssignment = ({ orderId, pickingCompleted }: DeliveryAssignmentPro
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <Button size="sm" variant="outline" className="w-full" onClick={() => printLabelsForDeliveries([delivery.id])}>
+            <Printer className="h-4 w-4 ml-1" />
+            הדפס מדבקה
+          </Button>
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">חברה:</span>
             <span className="font-medium">{(delivery as any).delivery_companies?.name}</span>
@@ -64,6 +194,74 @@ const DeliveryAssignment = ({ orderId, pickingCompleted }: DeliveryAssignmentPro
               <Badge variant="outline" className="text-xs">פנימי</Badge>
             )}
           </div>
+          {(delivery as any).delivery_companies?.provider === "olivery" && (
+            <div className="space-y-2 rounded-md border bg-background p-3 text-sm">
+              {delivery.external_id ? (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <span className="text-muted-foreground">מס׳ משלוח Olivery:</span>{" "}
+                      <span className="font-mono font-medium">{delivery.external_sequence || delivery.external_id}</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => syncOlivery.mutate(delivery.id)}
+                      disabled={syncOlivery.isPending}
+                      title="רענן סטטוס מ-Olivery"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${syncOlivery.isPending ? "animate-spin" : ""}`} />
+                    </Button>
+                  </div>
+                  {delivery.external_status && (
+                    <div>
+                      <span className="text-muted-foreground">סטטוס Olivery:</span>{" "}
+                      <Badge variant="outline">{oliveryStatusLabels[delivery.external_status] || delivery.external_status}</Badge>
+                    </div>
+                  )}
+                  <div className="text-muted-foreground">
+                    {[delivery.external_area, delivery.external_sub_area].filter(Boolean).join(" / ")}
+                    {delivery.cod_amount != null && <> · גבייה: ₪{Number(delivery.cod_amount).toFixed(2)}</>}
+                  </div>
+                  {delivery.external_synced_at && (
+                    <div className="text-xs text-muted-foreground">
+                      עודכן: {new Date(delivery.external_synced_at).toLocaleString("he-IL")}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="text-destructive flex items-center gap-1">
+                    <AlertTriangle className="h-4 w-4" /> המשלוח לא נשלח ל-Olivery
+                  </div>
+                  {showRetry ? (
+                    <>
+                      <OliveryFields
+                        area={area} setArea={setArea} subArea={subArea} setSubArea={setSubArea}
+                        cod={cod} setCod={setCod} address={address} setAddress={setAddress} city={order?.shipping_city}
+                      />
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        disabled={!area || sendToOlivery.isPending}
+                        onClick={() => sendToOlivery.mutate({
+                          delivery_id: delivery.id, area, sub_area: subArea || undefined,
+                          cod_amount: Number(cod) || 0, address: address || undefined,
+                        })}
+                      >
+                        {sendToOlivery.isPending ? "שולח..." : "שלח ל-Olivery"}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => setShowRetry(true)}>שלח ל-Olivery</Button>
+                  )}
+                </>
+              )}
+              {delivery.external_error && (
+                <div className="text-xs text-destructive break-words">{delivery.external_error}</div>
+              )}
+            </div>
+          )}
           {delivery.notes && (
             <div className="text-sm"><span className="text-muted-foreground">הערות:</span> {delivery.notes}</div>
           )}
@@ -73,7 +271,7 @@ const DeliveryAssignment = ({ orderId, pickingCompleted }: DeliveryAssignmentPro
               נמסר ב-{new Date(delivery.delivered_at).toLocaleString("he-IL")}
             </div>
           )}
-          {delivery.status !== "delivered" && (
+          {delivery.status !== "delivered" && !delivery.external_id && (
             <div className="flex gap-2 pt-1">
               {delivery.status === "pending" && (
                 <Button
@@ -134,6 +332,12 @@ const DeliveryAssignment = ({ orderId, pickingCompleted }: DeliveryAssignmentPro
             ))}
           </SelectContent>
         </Select>
+        {isOliveryCompany && (
+          <OliveryFields
+            area={area} setArea={setArea} subArea={subArea} setSubArea={setSubArea}
+            cod={cod} setCod={setCod} address={address} setAddress={setAddress} city={order?.shipping_city}
+          />
+        )}
         <Input
           placeholder="הערות (אופציונלי)"
           value={notes}
@@ -141,10 +345,10 @@ const DeliveryAssignment = ({ orderId, pickingCompleted }: DeliveryAssignmentPro
         />
         <Button
           onClick={handleCreate}
-          disabled={!companyId || createDelivery.isPending}
+          disabled={!companyId || creating || (isOliveryCompany && !area)}
           className="w-full"
         >
-          {createDelivery.isPending ? "יוצר..." : "צור משלוח"}
+          {creating ? "יוצר..." : isOliveryCompany ? "צור משלוח ב-Olivery" : "צור משלוח"}
         </Button>
       </CardContent>
     </Card>
