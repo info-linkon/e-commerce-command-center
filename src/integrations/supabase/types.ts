@@ -1221,6 +1221,7 @@ export type Database = {
           invoice_url: string | null
           lang: string
           notes: string | null
+          order_channel: string | null
           order_number: number
           payment_link_url: string | null
           payment_method: string | null
@@ -1263,6 +1264,7 @@ export type Database = {
           invoice_url?: string | null
           lang?: string
           notes?: string | null
+          order_channel?: string | null
           order_number?: number
           payment_link_url?: string | null
           payment_method?: string | null
@@ -1305,6 +1307,7 @@ export type Database = {
           invoice_url?: string | null
           lang?: string
           notes?: string | null
+          order_channel?: string | null
           order_number?: number
           payment_link_url?: string | null
           payment_method?: string | null
