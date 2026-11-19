@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Truck, ArrowLeftRight } from "lucide-react";
+import { Truck, ArrowLeftRight, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MobileCardList, type ColumnDef } from "@/components/ui/mobile-card-list";
-import { useDeliveries, useUpdateDeliveryStatus } from "@/hooks/useDeliveries";
+import { useDeliveries, useUpdateDeliveryStatus, useSyncAllOliveryDeliveries, oliveryStatusLabels } from "@/hooks/useDeliveries";
 import { useNavigate } from "react-router-dom";
 
 const statusLabels: Record<string, string> = {
@@ -23,6 +23,7 @@ const DeliveriesPage = () => {
   const [filter, setFilter] = useState<string>("all");
   const { data: deliveries, isLoading } = useDeliveries(filter === "all" ? undefined : filter as any);
   const updateStatus = useUpdateDeliveryStatus();
+  const syncAll = useSyncAllOliveryDeliveries();
   const navigate = useNavigate();
 
   const data = (deliveries || []) as any[];
@@ -51,6 +52,17 @@ const DeliveriesPage = () => {
       label: "סטטוס",
       render: (d) => <Badge className={`${statusColors[d.status]} border-0`}>{statusLabels[d.status]}</Badge>,
     },
+    {
+      label: "Olivery",
+      render: (d) =>
+        d.external_id ? (
+          <div className="text-xs space-y-0.5">
+            <div className="font-mono">{d.external_sequence || d.external_id}</div>
+            {d.external_status && <div className="text-muted-foreground">{oliveryStatusLabels[d.external_status] || d.external_status}</div>}
+          </div>
+        ) : "—",
+      hideOnMobile: true,
+    },
     { label: "תאריך", render: (d) => new Date(d.created_at).toLocaleDateString("he-IL"), hideOnMobile: true },
   ];
 
@@ -61,6 +73,11 @@ const DeliveriesPage = () => {
           <Truck className="h-6 w-6" />
           משלוחים
         </h1>
+        <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => syncAll.mutate()} disabled={syncAll.isPending}>
+          <RefreshCw className={`h-4 w-4 ml-1 ${syncAll.isPending ? "animate-spin" : ""}`} />
+          סנכרן Olivery
+        </Button>
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger className="w-32 sm:w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -70,6 +87,7 @@ const DeliveriesPage = () => {
             <SelectItem value="delivered">נמסר</SelectItem>
           </SelectContent>
         </Select>
+        </div>
       </div>
 
       <MobileCardList
@@ -87,10 +105,14 @@ const DeliveriesPage = () => {
               </Button>
             </div>
             <div className="flex justify-between items-center mt-2 text-sm">
-              <span className="text-muted-foreground">{d.delivery_companies?.name}</span>
+              <span className="text-muted-foreground">
+                {d.delivery_companies?.name}
+                {d.external_sequence && <span className="font-mono"> · {d.external_sequence}</span>}
+                {d.external_status && <> · {oliveryStatusLabels[d.external_status] || d.external_status}</>}
+              </span>
               <span>{d.orders?.customer_name || "—"}</span>
             </div>
-            {d.status !== "delivered" && (
+            {d.status !== "delivered" && !d.external_id && (
               <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                 <Select value={d.status} onValueChange={(v) => updateStatus.mutate({ id: d.id, status: v as any })}>
                   <SelectTrigger className="w-full h-8 text-xs">
@@ -108,7 +130,7 @@ const DeliveriesPage = () => {
           </div>
         )}
         actions={(d) =>
-          d.status !== "delivered" ? (
+          d.status !== "delivered" && !d.external_id ? (
             <Select value={d.status} onValueChange={(v) => updateStatus.mutate({ id: d.id, status: v as any })}>
               <SelectTrigger className="w-32 h-8">
                 <ArrowLeftRight className="h-3 w-3 ml-1" />

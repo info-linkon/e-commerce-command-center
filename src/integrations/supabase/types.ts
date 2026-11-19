@@ -481,27 +481,51 @@ export type Database = {
       }
       deliveries: {
         Row: {
+          cod_amount: number | null
           created_at: string
           delivered_at: string | null
           delivery_company_id: string
+          external_area: string | null
+          external_error: string | null
+          external_id: string | null
+          external_sequence: string | null
+          external_status: string | null
+          external_sub_area: string | null
+          external_synced_at: string | null
           id: string
           notes: string | null
           order_id: string
           status: Database["public"]["Enums"]["delivery_status"]
         }
         Insert: {
+          cod_amount?: number | null
           created_at?: string
           delivered_at?: string | null
           delivery_company_id: string
+          external_area?: string | null
+          external_error?: string | null
+          external_id?: string | null
+          external_sequence?: string | null
+          external_status?: string | null
+          external_sub_area?: string | null
+          external_synced_at?: string | null
           id?: string
           notes?: string | null
           order_id: string
           status?: Database["public"]["Enums"]["delivery_status"]
         }
         Update: {
+          cod_amount?: number | null
           created_at?: string
           delivered_at?: string | null
           delivery_company_id?: string
+          external_area?: string | null
+          external_error?: string | null
+          external_id?: string | null
+          external_sequence?: string | null
+          external_status?: string | null
+          external_sub_area?: string | null
+          external_synced_at?: string | null
           id?: string
           notes?: string | null
           order_id?: string
@@ -532,6 +556,7 @@ export type Database = {
           is_active: boolean
           is_internal: boolean
           name: string
+          provider: string | null
         }
         Insert: {
           cash_register_id?: string | null
@@ -540,6 +565,7 @@ export type Database = {
           is_active?: boolean
           is_internal?: boolean
           name: string
+          provider?: string | null
         }
         Update: {
           cash_register_id?: string | null
@@ -548,6 +574,7 @@ export type Database = {
           is_active?: boolean
           is_internal?: boolean
           name?: string
+          provider?: string | null
         }
         Relationships: [
           {
