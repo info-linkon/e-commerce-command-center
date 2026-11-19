@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Truck, CheckCircle2, RefreshCw, AlertTriangle } from "lucide-react";
+import { Truck, CheckCircle2, RefreshCw, AlertTriangle, Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   useSendDeliveryToOlivery,
   useSyncOliveryDelivery,
   oliveryStatusLabels,
+  printLabelsForDeliveries,
 } from "@/hooks/useDeliveries";
 import { useDeliveryCompanies } from "@/hooks/useDeliveryCompanies";
 
@@ -182,6 +183,10 @@ const DeliveryAssignment = ({ orderId, pickingCompleted, order }: DeliveryAssign
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <Button size="sm" variant="outline" className="w-full" onClick={() => printLabelsForDeliveries([delivery.id])}>
+            <Printer className="h-4 w-4 ml-1" />
+            הדפס מדבקה
+          </Button>
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">חברה:</span>
             <span className="font-medium">{(delivery as any).delivery_companies?.name}</span>

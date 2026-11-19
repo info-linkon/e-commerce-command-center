@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { printDeliveryLabels, type DeliveryLabelData } from "@/lib/delivery-label";
 
 type DeliveryStatus = Database["public"]["Enums"]["delivery_status"];
 
@@ -226,3 +227,73 @@ export const oliveryStatusLabels: Record<string, string> = {
   canceled: "בוטל",
   deleted: "נמחק",
 };
+
+// ---------- Shipping labels ----------
+
+interface LabelRow {
+  external_sequence: string | null;
+  external_area: string | null;
+  external_sub_area: string | null;
+  cod_amount: number | null;
+  notes: string | null;
+  created_at: string;
+  delivery_companies: { name: string } | null;
+  orders: {
+    order_number: number;
+    customer_name: string | null;
+    customer_phone: string | null;
+    shipping_address: string | null;
+    shipping_city: string | null;
+    total: number;
+    digital_payment_amount: number;
+    order_items: {
+      quantity: number;
+      product_variations: { products: { name: string } | null } | null;
+      bundle_variations: { name: string; name_he: string | null } | null;
+    }[];
+  } | null;
+}
+
+/** Loads everything needed to print labels for the given delivery ids (keeps the given order). */
+export async function fetchDeliveryLabelData(deliveryIds: string[]): Promise<DeliveryLabelData[]> {
+  const { data, error } = await supabase
+    .from("deliveries")
+    .select(
+      "id, external_sequence, external_area, external_sub_area, cod_amount, notes, created_at, delivery_companies(name), orders(order_number, customer_name, customer_phone, shipping_address, shipping_city, total, digital_payment_amount, order_items(quantity, product_variations(products(name)), bundle_variations(name, name_he)))",
+    )
+    .in("id", deliveryIds);
+  if (error) throw error;
+  const byId = new Map((data as unknown as (LabelRow & { id: string })[]).map((d) => [d.id, d]));
+  return deliveryIds
+    .map((id) => byId.get(id))
+    .filter((d): d is LabelRow & { id: string } => !!d && !!d.orders)
+    .map((d) => {
+      const o = d.orders!;
+      const items = (o.order_items || []).map((i) => ({
+        name: i.product_variations?.products?.name || i.bundle_variations?.name_he || i.bundle_variations?.name || "",
+        quantity: Number(i.quantity) || 0,
+      }));
+      return {
+        orderNumber: o.order_number,
+        trackingNumber: d.external_sequence,
+        companyName: d.delivery_companies?.name,
+        customerName: o.customer_name,
+        customerPhone: o.customer_phone,
+        address: [o.shipping_address, o.shipping_city].filter(Boolean).join(", "),
+        area: d.external_area,
+        subArea: d.external_sub_area,
+        codAmount: d.cod_amount ?? Math.max(0, Number(o.total || 0) - Number(o.digital_payment_amount || 0)),
+        itemCount: items.reduce((s, i) => s + i.quantity, 0),
+        items,
+        notes: d.notes,
+        createdAt: d.created_at,
+      };
+    });
+}
+
+/** Call from a click handler: opens the print window and fills it with the labels. */
+export function printLabelsForDeliveries(deliveryIds: string[]) {
+  printDeliveryLabels(() => fetchDeliveryLabelData(deliveryIds)).catch((e: Error) =>
+    toast.error(`שגיאה בהדפסת מדבקה: ${e.message}`),
+  );
+}
