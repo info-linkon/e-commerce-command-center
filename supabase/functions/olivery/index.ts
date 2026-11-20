@@ -89,6 +89,16 @@ function normalizePhone(p: string | null | undefined): string {
   return s;
 }
 
+/** Finds an Olivery shipment by our reference id (order number) via the bulk /order endpoint. */
+async function findByReference(ref: string): Promise<{ id: string; sequence: string | null; state: string | null } | null> {
+  const result = await olivery("order", { order_ids: [ref] });
+  const list: any[] = Array.isArray(result?.response) ? result.response : [];
+  const matches = list.filter((o) => String(o.reference_id) === ref && o.state !== "deleted" && o.state !== "canceled");
+  if (!matches.length) return null;
+  const best = matches.sort((x, y) => Number(y.id) - Number(x.id))[0];
+  return { id: String(best.id), sequence: best.sequence ? String(best.sequence) : null, state: best.state ?? null };
+}
+
 async function syncOne(admin: any, delivery: any) {
   const orderId = delivery.external_sequence || delivery.external_id;
   if (!orderId) return { id: delivery.id, skipped: true };
@@ -188,38 +198,70 @@ Deno.serve(async (req) => {
         };
         if (notes || delivery.notes) params.note = notes || delivery.notes;
 
+        const reference = String(params.reference_id);
+        let externalId: string | null = null;
+        let sequence: string | null = null;
+        let extStatus: string | null = "waiting";
+        let linkedExisting = false;
+
         try {
           const result = await olivery("create_order", params);
-          const externalId = result?.ID != null ? String(result.ID) : null;
-
-          // Fetch the sequence (tracking number) — the status endpoints are keyed by it.
-          let sequence: string | null = null;
-          let extStatus: string | null = "waiting";
-          if (externalId) {
-            try {
-              const st = await olivery("get_order_status", { order_id: externalId });
-              if (st?.response?.sequence) sequence = String(st.response.sequence);
-              if (st?.response?.status) extStatus = String(st.response.status);
-            } catch (_) { /* non-fatal */ }
-          }
-
-          await admin.from("deliveries").update({
-            external_id: externalId,
-            external_sequence: sequence,
-            external_status: extStatus,
-            external_area: String(area),
-            external_sub_area: sub_area ? String(sub_area) : null,
-            cod_amount: cost,
-            external_synced_at: new Date().toISOString(),
-            external_error: null,
-          }).eq("id", delivery_id);
-
-          return json({ success: true, external_id: externalId, external_sequence: sequence });
+          console.log("olivery create_order result:", JSON.stringify(result));
+          const rawId = result?.ID ?? result?.id ?? result?.order_id ?? result?.IDs?.[0] ?? null;
+          externalId = rawId != null && rawId !== false ? String(rawId) : null;
+          const rawSeq = result?.Sequence ?? result?.sequence ?? result?.Sequences?.[0] ?? null;
+          sequence = rawSeq ? String(rawSeq) : null;
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
+          // The shipment already exists in Olivery (e.g. an earlier attempt succeeded) → link to it.
+          if (!/reference id already exists/i.test(msg)) {
+            await admin.from("deliveries").update({ external_error: msg }).eq("id", delivery_id);
+            return json({ error: msg }, 502);
+          }
+          linkedExisting = true;
+        }
+
+        // Resolve id / sequence / status by reference id (authoritative, works for both paths).
+        if (reference && (!externalId || !sequence || linkedExisting)) {
+          try {
+            const found = await findByReference(reference);
+            if (found) {
+              externalId = found.id;
+              sequence = found.sequence;
+              if (found.state) extStatus = found.state;
+            }
+          } catch (e) {
+            console.error("olivery findByReference failed:", e instanceof Error ? e.message : e);
+          }
+        }
+        if (externalId && !sequence) {
+          try {
+            const st = await olivery("get_order_status", { order_id: externalId });
+            if (st?.response?.sequence) sequence = String(st.response.sequence);
+            if (st?.response?.status) extStatus = String(st.response.status);
+          } catch (_) { /* non-fatal */ }
+        }
+
+        if (!externalId) {
+          const msg = linkedExisting
+            ? `Olivery: הזמנה עם מספר אסמכתא ${reference} כבר קיימת אך לא נמצאה לקישור`
+            : "Olivery: המשלוח נוצר אך לא התקבל מספר משלוח";
           await admin.from("deliveries").update({ external_error: msg }).eq("id", delivery_id);
           return json({ error: msg }, 502);
         }
+
+        await admin.from("deliveries").update({
+          external_id: externalId,
+          external_sequence: sequence,
+          external_status: extStatus,
+          external_area: String(area),
+          external_sub_area: sub_area ? String(sub_area) : null,
+          cod_amount: cost,
+          external_synced_at: new Date().toISOString(),
+          external_error: null,
+        }).eq("id", delivery_id);
+
+        return json({ success: true, external_id: externalId, external_sequence: sequence, linked_existing: linkedExisting });
       }
 
       case "sync": {
