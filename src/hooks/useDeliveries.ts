@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { printDeliveryLabels, type DeliveryLabelData } from "@/lib/delivery-label";
+import { computePaidAmount, computeAmountDue, type PaymentLike } from "@/lib/order-payments";
 
 type DeliveryStatus = Database["public"]["Enums"]["delivery_status"];
 
@@ -245,7 +246,9 @@ interface LabelRow {
     shipping_address: string | null;
     shipping_city: string | null;
     total: number;
-    digital_payment_amount: number;
+    status: string | null;
+    payment_method: string | null;
+    payments: PaymentLike[];
     order_items: {
       quantity: number;
       product_variations: { products: { name: string } | null } | null;
@@ -259,7 +262,7 @@ export async function fetchDeliveryLabelData(deliveryIds: string[]): Promise<Del
   const { data, error } = await supabase
     .from("deliveries")
     .select(
-      "id, external_sequence, external_area, external_sub_area, cod_amount, notes, created_at, delivery_companies(name), orders(order_number, customer_name, customer_phone, shipping_address, shipping_city, total, digital_payment_amount, order_items(quantity, product_variations(products(name)), bundle_variations(name, name_he)))",
+      "id, external_sequence, external_area, external_sub_area, cod_amount, notes, created_at, delivery_companies(name), orders(order_number, customer_name, customer_phone, shipping_address, shipping_city, total, status, payment_method, payments(amount, payment_method, reference, cash_registers(requires_completed_order)), order_items(quantity, product_variations(products(name)), bundle_variations(name, name_he)))",
     )
     .in("id", deliveryIds);
   if (error) throw error;
@@ -282,7 +285,7 @@ export async function fetchDeliveryLabelData(deliveryIds: string[]): Promise<Del
         address: [o.shipping_address, o.shipping_city].filter(Boolean).join(", "),
         area: d.external_area,
         subArea: d.external_sub_area,
-        codAmount: d.cod_amount ?? Math.max(0, Number(o.total || 0) - Number(o.digital_payment_amount || 0)),
+        codAmount: d.cod_amount ?? computeAmountDue(o.total, computePaidAmount(o, o.payments)),
         itemCount: items.reduce((s, i) => s + i.quantity, 0),
         items,
         notes: d.notes,

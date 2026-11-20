@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2, Loader2, AlertCircle, FileText, ExternalLink, ShieldCheck, ShieldAlert, Plus, Minus, Trash2, Edit3, User } from "lucide-react";
 import { useOrderPayments } from "@/hooks/usePayments";
 import DeliveryAssignment from "@/components/orders/DeliveryAssignment";
+import { computePaidAmount } from "@/lib/order-payments";
 import PaymentSection from "@/components/orders/PaymentSection";
 import { OrderOriginInfo } from "@/components/orders/OrderOriginInfo";
 import { useOrderDelivery } from "@/hooks/useDeliveries";
@@ -161,13 +162,7 @@ const OrderDetail = () => {
   const isCompleted = status === "completed";
   const warehouseName = (order as any).warehouses?.name;
 
-  const totalPaid = (payments || []).reduce((sum, p: any) => {
-    const isPlannedSplitCredit =
-      (order as any).payment_method === "split" && p.payment_method === "credit" && !p.reference;
-    const isDeferredCash =
-      p.payment_method === "cash" && p.cash_registers?.requires_completed_order;
-    return isPlannedSplitCredit || (!isCompleted && isDeferredCash) ? sum : sum + Number(p.amount);
-  }, 0);
+  const totalPaid = computePaidAmount(order as any, payments as any);
   const plannedDigitalPayment = Number((order as any).digital_payment_amount || 0) ||
     (payments || []).reduce((sum, p: any) => (
       (order as any).payment_method === "split" && p.payment_method === "credit" && !p.reference
@@ -806,7 +801,7 @@ const OrderDetail = () => {
 
       {/* Delivery Assignment */}
       {isAssigned && !isCancelled && !isPickup && (
-        <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} order={order} />
+        <DeliveryAssignment orderId={order.id} pickingCompleted={order.picking_status === "completed"} order={order} amountPaid={totalPaid} />
       )}
 
       {/* Self-pickup notice (replaces delivery assignment) */}
