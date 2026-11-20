@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { computeAmountDue } from "@/lib/order-payments";
 import {
   useOrderDelivery,
   useCreateDelivery,
@@ -35,6 +36,8 @@ const statusColors: Record<string, string> = {
 interface DeliveryAssignmentProps {
   orderId: string;
   pickingCompleted: boolean;
+  /** Amount already paid (same calculation as the order page badge). */
+  amountPaid?: number;
   order?: {
     total?: number | null;
     digital_payment_amount?: number | null;
@@ -47,13 +50,14 @@ const norm = (s?: string | null) => (s || "").replace(/[\s\u0640]/g, "").replace
 
 /** Area + sub-area + COD fields for Olivery shipments. */
 const OliveryFields = ({
-  area, setArea, subArea, setSubArea, cod, setCod, address, setAddress, city,
+  area, setArea, subArea, setSubArea, cod, setCod, address, setAddress, city, paid = 0, total = 0,
 }: {
   area: string; setArea: (v: string) => void;
   subArea: string; setSubArea: (v: string) => void;
   cod: string; setCod: (v: string) => void;
   address: string; setAddress: (v: string) => void;
   city?: string | null;
+  paid?: number; total?: number;
 }) => {
   const { data: areas, isLoading: areasLoading, error: areasError } = useOliveryAreas();
   const { data: subAreas } = useOliverySubAreas();
@@ -115,12 +119,21 @@ const OliveryFields = ({
       <div className="space-y-1">
         <Label className="text-xs">סכום לגבייה מהלקוח (₪)</Label>
         <Input type="number" min={0} step="0.01" value={cod} onChange={(e) => setCod(e.target.value)} />
+        <p className="text-xs text-muted-foreground">
+          סה״כ ₪{total.toFixed(2)} · שולם ₪{paid.toFixed(2)}
+          {paid >= total && total > 0 && " · ההזמנה שולמה במלואה – אין לגבות מהלקוח"}
+        </p>
+        {Number(cod) > 0 && paid >= total && total > 0 && (
+          <p className="text-xs text-destructive flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" /> ההזמנה כבר שולמה – השליח יגבה ₪{Number(cod).toFixed(2)} מהלקוח
+          </p>
+        )}
       </div>
     </div>
   );
 };
 
-const DeliveryAssignment = ({ orderId, pickingCompleted, order }: DeliveryAssignmentProps) => {
+const DeliveryAssignment = ({ orderId, pickingCompleted, order, amountPaid = 0 }: DeliveryAssignmentProps) => {
   const { data: delivery, isLoading } = useOrderDelivery(orderId);
   const { data: companies } = useDeliveryCompanies(true);
   const createDelivery = useCreateDelivery();
@@ -129,7 +142,7 @@ const DeliveryAssignment = ({ orderId, pickingCompleted, order }: DeliveryAssign
   const sendToOlivery = useSendDeliveryToOlivery();
   const syncOlivery = useSyncOliveryDelivery();
 
-  const defaultCod = Math.max(0, Number(order?.total || 0) - Number(order?.digital_payment_amount || 0));
+  const defaultCod = computeAmountDue(order?.total, amountPaid);
   const defaultAddress = [order?.shipping_address, order?.shipping_city].filter(Boolean).join(", ");
 
   const [companyId, setCompanyId] = useState("");
@@ -239,6 +252,7 @@ const DeliveryAssignment = ({ orderId, pickingCompleted, order }: DeliveryAssign
                       <OliveryFields
                         area={area} setArea={setArea} subArea={subArea} setSubArea={setSubArea}
                         cod={cod} setCod={setCod} address={address} setAddress={setAddress} city={order?.shipping_city}
+            paid={amountPaid} total={Number(order?.total || 0)}
                       />
                       <Button
                         size="sm"
@@ -336,6 +350,7 @@ const DeliveryAssignment = ({ orderId, pickingCompleted, order }: DeliveryAssign
           <OliveryFields
             area={area} setArea={setArea} subArea={subArea} setSubArea={setSubArea}
             cod={cod} setCod={setCod} address={address} setAddress={setAddress} city={order?.shipping_city}
+            paid={amountPaid} total={Number(order?.total || 0)}
           />
         )}
         <Input
