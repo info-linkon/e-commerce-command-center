@@ -5,9 +5,10 @@ import { ArrowRight, Warehouse, XCircle, AlertTriangle, RefreshCw, CheckCircle2,
 import { useOrderPayments } from "@/hooks/usePayments";
 import DeliveryAssignment from "@/components/orders/DeliveryAssignment";
 import { computePaidAmount } from "@/lib/order-payments";
+import PrintLabelButton from "@/components/orders/PrintLabelButton";
 import PaymentSection from "@/components/orders/PaymentSection";
 import { OrderOriginInfo } from "@/components/orders/OrderOriginInfo";
-import { useOrderDelivery } from "@/hooks/useDeliveries";
+import { useOrderDelivery, printPickupLabel } from "@/hooks/useDeliveries";
 import { useUserNames } from "@/hooks/useUserNames";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -814,6 +815,7 @@ const OrderDetail = () => {
               ההזמנה תיאסף ע״י הלקוח בחנות — אין צורך בשיוך משלוח. ניתן לרשום תשלום ולסגור את ההזמנה ישירות.
             </div>
           </div>
+          <PrintLabelButton onPrint={(n) => printPickupLabel(order.id, n)} />
         </div>
       )}
 

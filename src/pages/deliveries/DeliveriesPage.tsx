@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Truck, ArrowLeftRight, RefreshCw, Printer } from "lucide-react";
+import { Truck, ArrowLeftRight, RefreshCw } from "lucide-react";
+import PrintLabelButton from "@/components/orders/PrintLabelButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -75,16 +76,12 @@ const DeliveriesPage = () => {
           משלוחים
         </h1>
         <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          variant="outline"
-          size="sm"
+        <PrintLabelButton
           disabled={!pendingIds.length}
-          onClick={() => printLabelsForDeliveries(pendingIds)}
-          title="הדפס מדבקות לכל המשלוחים שממתינים לאיסוף"
-        >
-          <Printer className="h-4 w-4 ml-1" />
-          מדבקות ({pendingIds.length})
-        </Button>
+          label={`מדבקות (${pendingIds.length})`}
+          orderCount={pendingIds.length}
+          onPrint={(n) => printLabelsForDeliveries(pendingIds, n)}
+        />
         <Button variant="outline" size="sm" onClick={() => syncAll.mutate()} disabled={syncAll.isPending}>
           <RefreshCw className={`h-4 w-4 ml-1 ${syncAll.isPending ? "animate-spin" : ""}`} />
           סנכרן Olivery
@@ -123,15 +120,7 @@ const DeliveriesPage = () => {
               </span>
               <span>{d.orders?.customer_name || "—"}</span>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full mt-2 h-8 text-xs"
-              onClick={(e) => { e.stopPropagation(); printLabelsForDeliveries([d.id]); }}
-            >
-              <Printer className="h-3 w-3 ml-1" />
-              הדפס מדבקה
-            </Button>
+            <PrintLabelButton className="w-full mt-2 h-8 text-xs" onPrint={(n) => printLabelsForDeliveries([d.id], n)} />
             {d.status !== "delivered" && !d.external_id && (
               <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                 <Select value={d.status} onValueChange={(v) => updateStatus.mutate({ id: d.id, status: v as any })}>
@@ -151,9 +140,7 @@ const DeliveriesPage = () => {
         )}
         actions={(d) => (
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8" title="הדפס מדבקה" onClick={() => printLabelsForDeliveries([d.id])}>
-              <Printer className="h-4 w-4" />
-            </Button>
+            <PrintLabelButton iconOnly variant="ghost" className="h-8 w-8" onPrint={(n) => printLabelsForDeliveries([d.id], n)} />
             {d.status !== "delivered" && !d.external_id && (
             <Select value={d.status} onValueChange={(v) => updateStatus.mutate({ id: d.id, status: v as any })}>
               <SelectTrigger className="w-32 h-8">
