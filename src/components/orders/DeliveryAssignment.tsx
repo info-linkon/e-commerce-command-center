@@ -19,6 +19,7 @@ import {
   useSyncOliveryDelivery,
   oliveryStatusLabels,
   printLabelsForDeliveries,
+  printOrderLabel,
 } from "@/hooks/useDeliveries";
 import { useDeliveryCompanies } from "@/hooks/useDeliveryCompanies";
 
@@ -315,9 +316,12 @@ const DeliveryAssignment = ({ orderId, pickingCompleted, order, amountPaid = 0 }
   if (!pickingCompleted) {
     return (
       <Card className="border-dashed border-2 border-muted-foreground/30">
-        <CardContent className="py-6 text-center text-muted-foreground text-sm">
-          <Truck className="h-5 w-5 mx-auto mb-2 opacity-50" />
-          שיוך משלוח יהיה זמין לאחר השלמת הליקוט
+        <CardContent className="py-6 text-center text-muted-foreground text-sm space-y-3">
+          <div>
+            <Truck className="h-5 w-5 mx-auto mb-2 opacity-50" />
+            שיוך משלוח יהיה זמין לאחר השלמת הליקוט
+          </div>
+          <PrintLabelButton className="w-full" onPrint={(n) => printOrderLabel(orderId, n)} />
         </CardContent>
       </Card>
     );
@@ -332,6 +336,7 @@ const DeliveryAssignment = ({ orderId, pickingCompleted, order, amountPaid = 0 }
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        <PrintLabelButton className="w-full" label="הדפס מדבקה (לפני שיוך שליח)" onPrint={(n) => printOrderLabel(orderId, n)} />
         <Select value={companyId} onValueChange={setCompanyId}>
           <SelectTrigger>
             <SelectValue placeholder="בחר חברת משלוח..." />

@@ -8,7 +8,7 @@ import { computePaidAmount } from "@/lib/order-payments";
 import PrintLabelButton from "@/components/orders/PrintLabelButton";
 import PaymentSection from "@/components/orders/PaymentSection";
 import { OrderOriginInfo } from "@/components/orders/OrderOriginInfo";
-import { useOrderDelivery, printPickupLabel } from "@/hooks/useDeliveries";
+import { useOrderDelivery, printPickupLabel, printOrderLabel } from "@/hooks/useDeliveries";
 import { useUserNames } from "@/hooks/useUserNames";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -798,6 +798,14 @@ const OrderDetail = () => {
       {/* Picking Checklist */}
       {isAssigned && !isCancelled && (
         <PickingChecklist orderId={order.id} pickingStatus={order.picking_status} />
+      )}
+
+      {/* Label printing for orders not yet assigned to a warehouse (no delivery card yet) */}
+      {!isAssigned && !isCancelled && (
+        <div className="rounded-lg border p-4 flex items-center justify-between gap-3">
+          <div className="text-sm text-muted-foreground">מדבקה להזמנה</div>
+          <PrintLabelButton onPrint={(n) => printOrderLabel(order.id, n, { pickup: isPickup })} />
+        </div>
       )}
 
       {/* Delivery Assignment */}
