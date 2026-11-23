@@ -15,6 +15,7 @@
 //                                 → creates the shipment in Olivery, stores its id/sequence
 //   sync { delivery_id }          → refreshes the Olivery status for one delivery
 //   sync_all                      → refreshes every open Olivery delivery
+//                                   (also run every 15 min by pg_cron, see migration olivery_status_cron)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -136,16 +137,25 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    // Allow the service role (e.g. a scheduled job calling sync_all), otherwise require a logged-in user.
-    if (token !== serviceKey) {
+    const body = await req.json().catch(() => ({}));
+    const action = body.action as string;
+
+    // Scheduled job (pg_cron): a Vault-stored token that only allows "sync_all".
+    const cronToken = req.headers.get("x-cron-token");
+    let isCron = false;
+    if (cronToken) {
+      const { data: ok } = await admin.rpc("verify_olivery_cron_token", { p_token: cronToken });
+      if (!ok || action !== "sync_all") return json({ error: "Unauthorized" }, 401);
+      isCron = true;
+    }
+
+    // Otherwise allow the service role, or require a logged-in user.
+    if (!isCron && token !== serviceKey) {
       if (!token) return json({ error: "Missing authorization" }, 401);
       const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
       const { data: userData, error: userErr } = await userClient.auth.getUser();
       if (userErr || !userData?.user) return json({ error: "Unauthorized" }, 401);
     }
-
-    const body = await req.json().catch(() => ({}));
-    const action = body.action as string;
 
     switch (action) {
       case "areas": {
