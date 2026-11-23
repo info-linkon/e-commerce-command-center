@@ -55,8 +55,9 @@ function labelHtml(d: DeliveryLabelData, logoSrc: string): string {
   const items = (d.items || []).filter((i) => i.name);
   const pkg = d.packageCount && d.packageCount > 1 ? `${d.packageIndex}/${d.packageCount}` : "";
   const company = d.isPickup ? "استلام ذاتي · איסוף עצמי" : d.companyName || "";
-  // Self-pickup labels use the order number as the main barcode.
-  const mainCode = tracking || (d.isPickup ? orderNo : "");
+  // Main barcode: the courier's tracking number (Olivery), otherwise the order number
+  // (self-pickup, internal couriers, or no courier assigned yet).
+  const mainCode = tracking || orderNo;
 
   return `
   <section class="label" data-order="${esc(orderNo)}" data-pkg="${esc(pkg)}" data-pkg-index="${esc(d.packageIndex ?? 1)}">
@@ -70,7 +71,7 @@ function labelHtml(d: DeliveryLabelData, logoSrc: string): string {
       </div>
       <div class="head-right">
         ${pkg ? `<div class="pkg"><div class="lbl">كرتونة · קרטון</div><div class="pkg-val" dir="ltr">${esc(pkg)}</div></div>` : ""}
-        <div class="company ${d.isPickup ? "pickup" : ""}">${esc(company)}</div>
+        ${company ? `<div class="company ${d.isPickup ? "pickup" : ""}">${esc(company)}</div>` : ""}
       </div>
     </header>
 

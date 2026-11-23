@@ -301,12 +301,15 @@ export function printLabelsForDeliveries(deliveryIds: string[], packages = 1) {
   );
 }
 
-/** Label data for a self-pickup order (no delivery row). */
-export async function fetchPickupLabelData(orderId: string): Promise<DeliveryLabelData[]> {
+/**
+ * Label data straight from an order (no delivery row needed): self-pickup orders,
+ * and orders that don't have a courier assigned yet.
+ */
+export async function fetchOrderLabelData(orderId: string, opts: { pickup?: boolean } = {}): Promise<DeliveryLabelData[]> {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "order_number, customer_name, customer_phone, notes, created_at, total, status, payment_method, payments(amount, payment_method, reference, cash_registers(requires_completed_order)), order_items(quantity, product_variations(products(name)), bundle_variations(name, name_he))",
+      "order_number, customer_name, customer_phone, shipping_address, shipping_city, notes, created_at, total, status, payment_method, payments(amount, payment_method, reference, cash_registers(requires_completed_order)), order_items(quantity, product_variations(products(name)), bundle_variations(name, name_he))",
     )
     .eq("id", orderId)
     .single();
@@ -318,11 +321,13 @@ export async function fetchPickupLabelData(orderId: string): Promise<DeliveryLab
   }));
   // The web checkout prefixes pickup orders' notes with "🏪 איסוף עצמי" — drop that marker.
   const notes = (o.notes || "").replace(/^🏪\s*איסוף עצמי\s*[-–·:]?\s*/u, "").trim();
+  const city = o.shipping_city === "איסוף עצמי" ? null : o.shipping_city;
   return [{
     orderNumber: o.order_number,
-    isPickup: true,
+    isPickup: !!opts.pickup,
     customerName: o.customer_name,
     customerPhone: o.customer_phone,
+    address: opts.pickup ? null : [o.shipping_address, city].filter(Boolean).join(", ") || null,
     codAmount: computeAmountDue(o.total, computePaidAmount(o, o.payments)),
     itemCount: items.reduce((s, i) => s + i.quantity, 0),
     items,
@@ -331,8 +336,13 @@ export async function fetchPickupLabelData(orderId: string): Promise<DeliveryLab
   }];
 }
 
-export function printPickupLabel(orderId: string, packages = 1) {
-  return printDeliveryLabels(() => fetchPickupLabelData(orderId), { packages }).catch((e: Error) =>
+/** Prints a label for an order with no delivery row (pickup, or courier not assigned yet). */
+export function printOrderLabel(orderId: string, packages = 1, opts: { pickup?: boolean } = {}) {
+  return printDeliveryLabels(() => fetchOrderLabelData(orderId, opts), { packages }).catch((e: Error) =>
     toast.error(`שגיאה בהדפסת מדבקה: ${e.message}`),
   );
+}
+
+export function printPickupLabel(orderId: string, packages = 1) {
+  return printOrderLabel(orderId, packages, { pickup: true });
 }

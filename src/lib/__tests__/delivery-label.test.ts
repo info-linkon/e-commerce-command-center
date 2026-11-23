@@ -37,4 +37,11 @@ describe("delivery labels", () => {
     expect(html).not.toMatch(/\+\d+…/);
     expect(html).toContain("__fitLabels");
   });
+
+  it("labels without a courier tracking number still get the order-number barcode", () => {
+    const html = buildDeliveryLabelsHtml([{ orderNumber: 1801, companyName: "טארק" }, { orderNumber: 1802 }]);
+    expect((html.match(/class="barcode main"/g) || []).length).toBe(2);
+    expect(html).toContain(">טארק<");
+    expect(html).not.toContain('<div class="company "></div>');
+  });
 });
