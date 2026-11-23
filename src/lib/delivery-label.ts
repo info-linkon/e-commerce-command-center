@@ -53,15 +53,13 @@ function labelHtml(d: DeliveryLabelData, logoSrc: string): string {
   const cod = Number(d.codAmount ?? 0);
   const date = d.createdAt ? new Date(d.createdAt) : new Date();
   const items = (d.items || []).filter((i) => i.name);
-  const shownItems = items.slice(0, 6);
-  const moreItems = items.length - shownItems.length;
   const pkg = d.packageCount && d.packageCount > 1 ? `${d.packageIndex}/${d.packageCount}` : "";
   const company = d.isPickup ? "استلام ذاتي · איסוף עצמי" : d.companyName || "";
   // Self-pickup labels use the order number as the main barcode.
   const mainCode = tracking || (d.isPickup ? orderNo : "");
 
   return `
-  <section class="label">
+  <section class="label" data-order="${esc(orderNo)}" data-pkg="${esc(pkg)}" data-pkg-index="${esc(d.packageIndex ?? 1)}">
     <header>
       <div class="sender">
         ${logoSrc ? `<img src="${logoSrc}" alt="" />` : ""}
@@ -103,8 +101,9 @@ function labelHtml(d: DeliveryLabelData, logoSrc: string): string {
 
     <div class="box items">
       <div class="lbl">المحتويات · תכולה (${esc(d.itemCount ?? items.reduce((s, i) => s + i.quantity, 0))})</div>
-      ${shownItems.map((i) => `<div class="item"><span>${esc(i.name)}</span><span>×${esc(i.quantity)}</span></div>`).join("")}
-      ${moreItems > 0 ? `<div class="muted">+${moreItems}…</div>` : ""}
+      <div class="item-list">
+        ${items.map((i) => `<div class="item"><span>${esc(i.name)}</span><span>×${esc(i.quantity)}</span></div>`).join("")}
+      </div>
     </div>
 
     ${d.notes ? `<div class="box notes"><div class="lbl">ملاحظات · הערות</div><div class="val">${esc(d.notes)}</div></div>` : ""}
@@ -159,10 +158,71 @@ const STYLES = `
   .recipient .addr { font-size: 10pt; line-height: 1.3; }
   .items .item { display: flex; justify-content: space-between; font-size: 8.5pt; border-bottom: 0.2mm dashed #999; }
   .notes .val { font-size: 9pt; }
+  /* Long item lists: smaller font in two columns, then continuation labels (see FIT_SCRIPT). */
+  .items.compact .item-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 3mm; }
+  .items.compact .item { font-size: 7.5pt; line-height: 1.35; }
+  .item span:first-child { overflow-wrap: anywhere; }
+  /* Dense stage: tighter list, lower main barcode, drop the small order barcode
+     (the order number is printed large anyway). */
+  .label.dense .items.compact .item { font-size: 7pt; line-height: 1.2; }
+  .label.dense .barcode.main svg { height: 44px; }
+  .label.dense .barcode.small { display: none; }
+  .label.dense .recipient .name, .label.dense .recipient .phone, .label.dense .recipient .area { line-height: 1.2; }
+  .cont-note { font-size: 8pt; font-weight: 800; text-align: center; margin-top: 1mm; }
+  .cont-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 0.6mm solid #000; padding-bottom: 1.5mm; }
   @media screen {
     body { background: #e5e5e5; padding: 8mm; }
     .label { background: #fff; margin: 0 auto 8mm; box-shadow: 0 1mm 4mm rgba(0,0,0,.2); }
   }
+`;
+
+// Runs inside the print document after fonts load. Every item is always printed:
+// 1) if the list overflows, switch to a compact two-column layout;
+// 2) then a denser layout (smaller font, lower barcode, no small order barcode);
+// 3) if it still overflows, move the remaining items to continuation labels
+//    printed right after (box 1 only; other boxes point to box 1).
+const FIT_SCRIPT = `
+window.__fitLabels = function () {
+  function over(el) { return el.scrollHeight > el.clientHeight; }
+  function fits(label, box) { return !over(label) && !over(box); }
+  function fit(label) {
+    var box = label.querySelector(".items");
+    if (!box || fits(label, box)) return;
+    box.classList.add("compact");
+    if (fits(label, box)) return;
+    label.classList.add("dense");
+    if (fits(label, box)) return;
+    var list = box.querySelector(".item-list");
+    var firstBox = (label.getAttribute("data-pkg-index") || "1") === "1";
+    var note = document.createElement("div");
+    note.className = "cont-note";
+    note.textContent = firstBox
+      ? "← המשך במדבקה הבאה · تكملة في الملصق التالي"
+      : "← הרשימה המלאה בקרטון 1 · القائمة الكاملة على الكرتونة 1";
+    box.appendChild(note);
+    var moved = [];
+    while (!fits(label, box) && list.children.length > 1) {
+      moved.unshift(list.lastElementChild);
+      list.removeChild(list.lastElementChild);
+    }
+    if (!moved.length) { note.remove(); return; }
+    if (!firstBox) return;
+    var cont = document.createElement("section");
+    cont.className = "label cont";
+    cont.setAttribute("data-pkg-index", "1");
+    var pkg = label.getAttribute("data-pkg");
+    cont.innerHTML =
+      '<header class="cont-head"><div><div class="lbl">تكملة المحتويات · המשך תכולה</div>' +
+      '<div class="val big">#' + label.getAttribute("data-order") + '</div></div>' +
+      (pkg ? '<div class="pkg"><div class="pkg-val" dir="ltr">' + pkg + '</div></div>' : '') +
+      '</header><div class="box items compact"><div class="item-list"></div></div>';
+    var cl = cont.querySelector(".item-list");
+    moved.forEach(function (m) { cl.appendChild(m); });
+    label.parentNode.insertBefore(cont, label.nextSibling);
+    fit(cont);
+  }
+  Array.prototype.slice.call(document.querySelectorAll("section.label")).forEach(fit);
+};
 `;
 
 export function buildDeliveryLabelsHtml(labels: DeliveryLabelData[], logoSrc = ""): string {
@@ -177,6 +237,7 @@ export function buildDeliveryLabelsHtml(labels: DeliveryLabelData[], logoSrc = "
 </head>
 <body>
 ${labels.map((l) => labelHtml(l, logoSrc)).join("\n")}
+<script>${FIT_SCRIPT}</script>
 </body>
 </html>`;
 }
@@ -236,6 +297,11 @@ export async function printDeliveryLabels(
   });
   try {
     await Promise.race([doc.fonts?.ready, new Promise((r) => setTimeout(r, 3000))]);
+  } catch { /* ignore */ }
+
+  // Make sure every item is printed (compact layout / continuation labels).
+  try {
+    (win as unknown as { __fitLabels?: () => void }).__fitLabels?.();
   } catch { /* ignore */ }
 
   const cleanup = () => setTimeout(() => iframe.remove(), 500);
