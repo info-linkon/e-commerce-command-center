@@ -29,4 +29,12 @@ describe("delivery labels", () => {
     expect(html).toContain("איסוף עצמי");
     expect(html).toContain("₪320.00");
   });
+
+  it("writes every item to the label (no '+N' truncation)", () => {
+    const items = Array.from({ length: 11 }, (_, i) => ({ name: `item-${i + 1}`, quantity: 1 }));
+    const html = buildDeliveryLabelsHtml([{ ...base, items }]);
+    for (const it of items) expect(html).toContain(`>${it.name}<`);
+    expect(html).not.toMatch(/\+\d+…/);
+    expect(html).toContain("__fitLabels");
+  });
 });
