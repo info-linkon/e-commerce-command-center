@@ -15,7 +15,7 @@
 //                                 → creates the shipment in Olivery, stores its id/sequence
 //   sync { delivery_id }          → refreshes the Olivery status for one delivery
 //   sync_all                      → refreshes every open Olivery delivery
-//                                   (also run every 15 min by pg_cron, see migration olivery_status_cron)
+//                                   (also run every 30 min by pg_cron, see migration olivery_status_cron)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

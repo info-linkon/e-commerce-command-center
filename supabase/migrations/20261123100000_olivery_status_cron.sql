@@ -1,4 +1,4 @@
--- Automatic Olivery status sync every 15 minutes.
+-- Automatic Olivery status sync every 30 minutes.
 --
 -- pg_cron calls the `olivery` edge function with action "sync_all".
 -- Auth: a random token kept in Vault (never in code). The function checks it
@@ -36,7 +36,7 @@ SELECT cron.unschedule(jobid) FROM cron.job WHERE jobname = 'olivery-status-sync
 
 SELECT cron.schedule(
   'olivery-status-sync',
-  '*/15 * * * *',
+  '*/30 * * * *',
   $cron$
   SELECT net.http_post(
     url := 'https://gboskpvfvwrsiqwzpctk.supabase.co/functions/v1/olivery',
