@@ -294,9 +294,45 @@ export async function fetchDeliveryLabelData(deliveryIds: string[]): Promise<Del
     });
 }
 
-/** Call from a click handler: opens the print window and fills it with the labels. */
-export function printLabelsForDeliveries(deliveryIds: string[]) {
-  printDeliveryLabels(() => fetchDeliveryLabelData(deliveryIds)).catch((e: Error) =>
+/** Prints labels for deliveries; `packages` > 1 prints numbered copies (1/3, 2/3, 3/3) of each. */
+export function printLabelsForDeliveries(deliveryIds: string[], packages = 1) {
+  return printDeliveryLabels(() => fetchDeliveryLabelData(deliveryIds), { packages }).catch((e: Error) =>
+    toast.error(`שגיאה בהדפסת מדבקה: ${e.message}`),
+  );
+}
+
+/** Label data for a self-pickup order (no delivery row). */
+export async function fetchPickupLabelData(orderId: string): Promise<DeliveryLabelData[]> {
+  const { data, error } = await supabase
+    .from("orders")
+    .select(
+      "order_number, customer_name, customer_phone, notes, created_at, total, status, payment_method, payments(amount, payment_method, reference, cash_registers(requires_completed_order)), order_items(quantity, product_variations(products(name)), bundle_variations(name, name_he))",
+    )
+    .eq("id", orderId)
+    .single();
+  if (error) throw error;
+  const o = data as unknown as NonNullable<LabelRow["orders"]> & { notes: string | null; created_at: string };
+  const items = (o.order_items || []).map((i) => ({
+    name: i.product_variations?.products?.name || i.bundle_variations?.name_he || i.bundle_variations?.name || "",
+    quantity: Number(i.quantity) || 0,
+  }));
+  // The web checkout prefixes pickup orders' notes with "🏪 איסוף עצמי" — drop that marker.
+  const notes = (o.notes || "").replace(/^🏪\s*איסוף עצמי\s*[-–·:]?\s*/u, "").trim();
+  return [{
+    orderNumber: o.order_number,
+    isPickup: true,
+    customerName: o.customer_name,
+    customerPhone: o.customer_phone,
+    codAmount: computeAmountDue(o.total, computePaidAmount(o, o.payments)),
+    itemCount: items.reduce((s, i) => s + i.quantity, 0),
+    items,
+    notes: notes || null,
+    createdAt: o.created_at,
+  }];
+}
+
+export function printPickupLabel(orderId: string, packages = 1) {
+  return printDeliveryLabels(() => fetchPickupLabelData(orderId), { packages }).catch((e: Error) =>
     toast.error(`שגיאה בהדפסת מדבקה: ${e.message}`),
   );
 }

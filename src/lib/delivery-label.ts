@@ -1,10 +1,12 @@
-// Printable 100×150mm shipping labels for deliveries (Olivery or any other company).
+// Printable 4×6 inch shipping labels (Olivery, other couriers, or self-pickup).
 import { code128Svg } from "@/lib/code128";
+import logoUrl from "@/assets/logo.webp";
 
 export interface DeliveryLabelData {
   orderNumber: number | string;
   trackingNumber?: string | null; // Olivery sequence
   companyName?: string | null;
+  isPickup?: boolean;
   customerName?: string | null;
   customerPhone?: string | null;
   address?: string | null;
@@ -15,6 +17,9 @@ export interface DeliveryLabelData {
   items?: { name: string; quantity: number }[];
   notes?: string | null;
   createdAt?: string | null;
+  /** Box number (1-based) and total boxes, e.g. 2 of 3. */
+  packageIndex?: number;
+  packageCount?: number;
 }
 
 const SENDER_NAME = "Elwejha";
@@ -34,7 +39,15 @@ const safeBarcode = (text: string, opts?: Parameters<typeof code128Svg>[1]) => {
   }
 };
 
-function labelHtml(d: DeliveryLabelData): string {
+/** Expands each label into `count` copies numbered 1/count … count/count. */
+export function expandPackages(labels: DeliveryLabelData[], count: number): DeliveryLabelData[] {
+  const n = Math.max(1, Math.min(50, Math.floor(count) || 1));
+  return labels.flatMap((l) =>
+    Array.from({ length: n }, (_, i) => ({ ...l, packageIndex: i + 1, packageCount: n })),
+  );
+}
+
+function labelHtml(d: DeliveryLabelData, logoSrc: string): string {
   const tracking = d.trackingNumber ? String(d.trackingNumber) : "";
   const orderNo = String(d.orderNumber);
   const cod = Number(d.codAmount ?? 0);
@@ -42,24 +55,31 @@ function labelHtml(d: DeliveryLabelData): string {
   const items = (d.items || []).filter((i) => i.name);
   const shownItems = items.slice(0, 6);
   const moreItems = items.length - shownItems.length;
+  const pkg = d.packageCount && d.packageCount > 1 ? `${d.packageIndex}/${d.packageCount}` : "";
+  const company = d.isPickup ? "استلام ذاتي · איסוף עצמי" : d.companyName || "";
+  // Self-pickup labels use the order number as the main barcode.
+  const mainCode = tracking || (d.isPickup ? orderNo : "");
 
   return `
   <section class="label">
     <header>
       <div class="sender">
-        <img src="/logo.webp" alt="" onerror="this.style.display='none'" />
+        ${logoSrc ? `<img src="${logoSrc}" alt="" />` : ""}
         <div>
           <div class="sender-name">${esc(SENDER_NAME)}</div>
           <div class="muted">${esc(date.toLocaleDateString("he-IL"))}</div>
         </div>
       </div>
-      <div class="company">${esc(d.companyName || "")}</div>
+      <div class="head-right">
+        ${pkg ? `<div class="pkg"><div class="lbl">كرتونة · קרטון</div><div class="pkg-val" dir="ltr">${esc(pkg)}</div></div>` : ""}
+        <div class="company ${d.isPickup ? "pickup" : ""}">${esc(company)}</div>
+      </div>
     </header>
 
-    ${tracking ? `
+    ${mainCode ? `
     <div class="barcode main">
-      ${safeBarcode(tracking, { height: 56, moduleWidth: 2 })}
-      <div class="code">${esc(tracking)}</div>
+      ${safeBarcode(mainCode, { height: 56, moduleWidth: 2 })}
+      <div class="code">${esc(mainCode)}</div>
     </div>` : ""}
 
     <div class="row two">
@@ -68,17 +88,17 @@ function labelHtml(d: DeliveryLabelData): string {
         <div class="val big">#${esc(orderNo)}</div>
       </div>
       <div class="box cod ${cod > 0 ? "" : "paid"}">
-        <div class="lbl">المبلغ للتحصيل · לגבייה</div>
+        <div class="lbl">${d.isPickup ? "للدفع · לתשלום" : "المبلغ للتحصيل · לגבייה"}</div>
         <div class="val big">${cod > 0 ? `₪${cod.toFixed(2)}` : "مدفوع · שולם"}</div>
       </div>
     </div>
 
     <div class="box recipient">
-      <div class="lbl">المستلم · נמען</div>
+      <div class="lbl">${d.isPickup ? "الزبون · לקוח" : "المستلم · נמען"}</div>
       <div class="val name">${esc(d.customerName || "")}</div>
       <div class="val phone" dir="ltr">${esc(d.customerPhone || "")}</div>
-      ${d.area || d.subArea ? `<div class="val area">${esc([d.area, d.subArea].filter(Boolean).join(" / "))}</div>` : ""}
-      <div class="val addr">${esc(d.address || "")}</div>
+      ${!d.isPickup && (d.area || d.subArea) ? `<div class="val area">${esc([d.area, d.subArea].filter(Boolean).join(" / "))}</div>` : ""}
+      ${!d.isPickup && d.address ? `<div class="val addr">${esc(d.address)}</div>` : ""}
     </div>
 
     <div class="box items">
@@ -89,33 +109,38 @@ function labelHtml(d: DeliveryLabelData): string {
 
     ${d.notes ? `<div class="box notes"><div class="lbl">ملاحظات · הערות</div><div class="val">${esc(d.notes)}</div></div>` : ""}
 
-    <footer class="barcode small">
-      ${safeBarcode(orderNo, { height: 26, moduleWidth: 2 })}
-    </footer>
+    ${tracking ? `<footer class="barcode small">${safeBarcode(orderNo, { height: 26, moduleWidth: 2 })}</footer>` : ""}
   </section>`;
 }
 
+// 4×6 inch (101.6×152.4mm). The 5mm inner margin keeps content clear of the
+// printer's non-printable edge, which is what was cutting off the top/logo.
 const STYLES = `
-  @page { size: 100mm 150mm; margin: 0; }
+  @page { size: 4in 6in; margin: 0; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #fff; color: #000; }
   body { font-family: "Cairo", Arial, "Noto Sans Hebrew", sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .label {
-    width: 100mm; height: 150mm; padding: 4mm; overflow: hidden;
+    width: 4in; height: 6in; padding: 5mm 5mm 4mm; overflow: hidden;
     display: flex; flex-direction: column; gap: 1.5mm;
     page-break-after: always; break-after: page;
   }
   .label:last-child { page-break-after: auto; break-after: auto; }
-  header { display: flex; justify-content: space-between; align-items: center; border-bottom: 0.6mm solid #000; padding-bottom: 1.5mm; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 2mm; border-bottom: 0.6mm solid #000; padding-bottom: 1.5mm; }
   .sender { display: flex; align-items: center; gap: 2mm; }
-  .sender img { width: 10mm; height: 10mm; border-radius: 50%; object-fit: cover; }
+  .sender img { width: 11mm; height: 11mm; border-radius: 50%; object-fit: cover; }
   .sender-name { font-weight: 800; font-size: 13pt; line-height: 1; }
-  .company { font-weight: 800; font-size: 14pt; border: 0.5mm solid #000; padding: 0.5mm 2mm; border-radius: 1.5mm; }
+  .head-right { display: flex; align-items: center; gap: 2mm; }
+  .company { font-weight: 800; font-size: 13pt; border: 0.5mm solid #000; padding: 0.5mm 2mm; border-radius: 1.5mm; }
+  .company.pickup { font-size: 10pt; background: #000; color: #fff; }
+  .pkg { text-align: center; border: 0.6mm solid #000; border-radius: 1.5mm; padding: 0 2mm; line-height: 1.1; }
+  .pkg .lbl { font-size: 6.5pt; }
+  .pkg-val { font-size: 17pt; font-weight: 800; }
   .muted { color: #444; font-size: 8pt; }
   .barcode { text-align: center; }
   .barcode svg { display: block; width: 100%; }
   .barcode .code { font-family: monospace; font-size: 13pt; font-weight: 700; letter-spacing: 1px; }
-  .barcode.small { margin-top: auto; flex: none; }
+  .barcode.small { margin-top: auto; }
   .label > * { flex: none; }
   .label > .items { flex: 1 1 auto; min-height: 8mm; overflow: hidden; }
   .barcode.small svg { width: 60%; margin: 0 auto; }
@@ -140,7 +165,7 @@ const STYLES = `
   }
 `;
 
-export function buildDeliveryLabelsHtml(labels: DeliveryLabelData[]): string {
+export function buildDeliveryLabelsHtml(labels: DeliveryLabelData[], logoSrc = ""): string {
   return `<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
@@ -151,37 +176,71 @@ export function buildDeliveryLabelsHtml(labels: DeliveryLabelData[]): string {
 <style>${STYLES}</style>
 </head>
 <body>
-${labels.map(labelHtml).join("\n")}
-<script>
-  window.addEventListener("load", function () {
-    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {
-      setTimeout(function () { window.focus(); window.print(); }, 150);
-    });
-  });
-</script>
+${labels.map((l) => labelHtml(l, logoSrc)).join("\n")}
 </body>
 </html>`;
 }
 
+let logoDataUrl: Promise<string> | null = null;
+/** Logo as a data: URL, so the print document never depends on loading it over the network. */
+function getLogoDataUrl(): Promise<string> {
+  if (!logoDataUrl) {
+    logoDataUrl = fetch(new URL(logoUrl, window.location.origin).toString())
+      .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+      .then(
+        (blob) =>
+          new Promise<string>((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(String(fr.result));
+            fr.onerror = () => reject(fr.error);
+            fr.readAsDataURL(blob);
+          }),
+      )
+      .catch(() => {
+        logoDataUrl = null;
+        return "";
+      });
+  }
+  return logoDataUrl;
+}
+
 /**
- * Opens the print window synchronously (so popup blockers allow it), then loads the label data
- * and writes the labels into it. Throws if the popup is blocked or loading fails.
+ * Prints labels through a hidden iframe (no new window / tab).
+ * With Chrome started with --kiosk-printing this prints straight to the default
+ * printer with no dialog; otherwise the normal print dialog opens.
  */
 export async function printDeliveryLabels(
   load: DeliveryLabelData[] | (() => Promise<DeliveryLabelData[]>),
+  options: { packages?: number } = {},
 ): Promise<void> {
-  const w = window.open("", "_blank", "width=480,height=720");
-  if (!w) throw new Error("החלון נחסם על ידי הדפדפן – אפשר חלונות קופצים לאתר");
-  w.document.write('<p dir="rtl" style="font-family:sans-serif;padding:16px">טוען מדבקות…</p>');
+  const [loaded, logo] = await Promise.all([typeof load === "function" ? load() : Promise.resolve(load), getLogoDataUrl()]);
+  if (!loaded.length) throw new Error("אין משלוחים להדפסה");
+  const labels = options.packages && options.packages > 1 ? expandPackages(loaded, options.packages) : loaded;
+
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
+  document.body.appendChild(iframe);
+  const doc = iframe.contentDocument!;
+  doc.open();
+  doc.write(buildDeliveryLabelsHtml(labels, logo));
+  doc.close();
+
+  const win = iframe.contentWindow!;
+  // Wait for fonts and images so the first print isn't missing the logo or Cairo font.
+  await new Promise<void>((resolve) => {
+    const done = () => resolve();
+    if (doc.readyState === "complete") done();
+    else win.addEventListener("load", done, { once: true });
+    setTimeout(done, 4000);
+  });
   try {
-    const labels = typeof load === "function" ? await load() : load;
-    if (!labels.length) throw new Error("אין משלוחים להדפסה");
-    const html = buildDeliveryLabelsHtml(labels).replace(/src="\/logo\.webp"/g, `src="${window.location.origin}/logo.webp"`);
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-  } catch (e) {
-    w.close();
-    throw e;
-  }
+    await Promise.race([doc.fonts?.ready, new Promise((r) => setTimeout(r, 3000))]);
+  } catch { /* ignore */ }
+
+  const cleanup = () => setTimeout(() => iframe.remove(), 500);
+  win.addEventListener("afterprint", cleanup, { once: true });
+  setTimeout(() => iframe.isConnected && iframe.remove(), 120_000);
+  win.focus();
+  win.print();
 }
