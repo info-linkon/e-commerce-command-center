@@ -1,6 +1,7 @@
 // Printable 4×6 inch shipping labels (Olivery, other couriers, or self-pickup).
 import { code128Svg } from "@/lib/code128";
-import logoUrl from "@/assets/logo.webp";
+// Black & white store logo — prints crisply on thermal label printers.
+import logoUrl from "@/assets/label-logo.png";
 
 export interface DeliveryLabelData {
   orderNumber: number | string;
@@ -63,11 +64,8 @@ function labelHtml(d: DeliveryLabelData, logoSrc: string): string {
   <section class="label" data-order="${esc(orderNo)}" data-pkg="${esc(pkg)}" data-pkg-index="${esc(d.packageIndex ?? 1)}">
     <header>
       <div class="sender">
-        ${logoSrc ? `<img src="${logoSrc}" alt="" />` : ""}
-        <div>
-          <div class="sender-name">${esc(SENDER_NAME)}</div>
-          <div class="muted">${esc(date.toLocaleDateString("he-IL"))}</div>
-        </div>
+        ${logoSrc ? `<img src="${logoSrc}" alt="" />` : `<div class="sender-name">${esc(SENDER_NAME)}</div>`}
+        <div class="muted">${esc(date.toLocaleDateString("he-IL"))}</div>
       </div>
       <div class="head-right">
         ${pkg ? `<div class="pkg"><div class="lbl">كرتونة · קרטון</div><div class="pkg-val" dir="ltr">${esc(pkg)}</div></div>` : ""}
@@ -128,7 +126,7 @@ const STYLES = `
   .label:last-child { page-break-after: auto; break-after: auto; }
   header { display: flex; justify-content: space-between; align-items: center; gap: 2mm; border-bottom: 0.6mm solid #000; padding-bottom: 1.5mm; }
   .sender { display: flex; align-items: center; gap: 2mm; }
-  .sender img { width: 11mm; height: 11mm; border-radius: 50%; object-fit: cover; }
+  .sender img { width: 19mm; height: 19mm; object-fit: contain; }
   .sender-name { font-weight: 800; font-size: 13pt; line-height: 1; }
   .head-right { display: flex; align-items: center; gap: 2mm; }
   .company { font-weight: 800; font-size: 13pt; border: 0.5mm solid #000; padding: 0.5mm 2mm; border-radius: 1.5mm; }
